@@ -1,0 +1,26 @@
+/*
+ * Copyright 2021 LI LI of JINGTIAN & GONGCHENG.
+ * */
+
+pragma solidity ^0.4.24;
+pragma experimental ABIEncoderV2;
+
+import "../LockUp.sol";
+
+contract ILockUp {
+    function setLocker(uint256 shareNumber, uint256 dueDate) external;
+
+    function delLocker(uint256 shareNumber) external;
+
+    function addKeyholder(uint256 shareNumber, address keyholder) external;
+
+    function removeKeyholder(uint256 shareNumber, address keyholder) external;
+
+    // ################
+    // ##  查询接口  ##
+    // ################
+
+    function lockerExist(uint256 shareNumber) public view returns (bool);
+
+    function getLocker(uint256 shareNumber) public view returns (LockUp.Locker);
+}

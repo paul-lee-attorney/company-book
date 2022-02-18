@@ -18,7 +18,7 @@ pragma solidity ^0.4.24;
 
 import "./SafeMath.sol";
 
-library ArrayUtils {
+library LibArrayForUint256Utils {
     /**
      * @dev Searches a sortd uint256 array and returns the first element index that
      * match the key value, Time complexity O(log n)

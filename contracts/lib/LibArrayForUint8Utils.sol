@@ -16,7 +16,7 @@
 
 pragma solidity ^0.4.24;
 
-library ArrayUtils {
+library LibArrayFrUint8Utils {
     function firstIndexOf(uint8[] storage array, uint8 key)
         internal
         view

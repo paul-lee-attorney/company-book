@@ -16,7 +16,7 @@
 
 pragma solidity ^0.4.24;
 
-library ArrayUtils {
+library LibArrayForAddressUtils {
     function firstIndexOf(address[] storage array, address key)
         internal
         view

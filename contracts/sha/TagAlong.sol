@@ -3,7 +3,7 @@
  * */
 
 pragma solidity ^0.4.24;
-pragma experimental ABIEncoderV2;
+// pragma experimental ABIEncoderV2;
 
 import "../config/BOSSetting.sol";
 import "../config/BOMSetting.sol";
@@ -226,10 +226,18 @@ contract TagAlong is BOSSetting, BOMSetting, DraftSetting {
         view
         onlyStakeholders
         beDrager(_groupNumOf[seller])
-        returns (Tag)
+        returns (
+            address[] followers,
+            uint8 triggerType,
+            uint256 threshold,
+            bool proRata
+        )
     {
         // require (_isDrager[_groupNumOf[seller]], "跟随安排 不存在!");
-        return _tags[_groupNumOf[seller]];
+        followers = _tags[_groupNumOf[seller]].followers;
+        triggerType = _tags[_groupNumOf[seller]].triggerType;
+        threshold = _tags[_groupNumOf[seller]].threshold;
+        proRata = _tags[_groupNumOf[seller]].proRata;
     }
 
     // ################

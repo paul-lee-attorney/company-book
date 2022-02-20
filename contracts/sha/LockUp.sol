@@ -3,7 +3,7 @@
  * */
 
 pragma solidity ^0.4.24;
-pragma experimental ABIEncoderV2;
+// pragma experimental ABIEncoderV2;
 
 import "../config/BOSSetting.sol";
 import "../config/BOMSetting.sol";
@@ -128,10 +128,10 @@ contract LockUp is BOSSetting, BOMSetting, DraftSetting {
         view
         onlyStakeholders
         beLocked(shareNumber)
-        returns (Locker)
+        returns (uint256 dueDate, address[] keyHolders)
     {
-        // require(_isLocked[shareNumber], "股权未被锁定");
-        return _lockers[shareNumber];
+        dueDate = _lockers[shareNumber].dueDate;
+        keyHolders = _lockers[shareNumber].keyHolders;
     }
 
     // ################

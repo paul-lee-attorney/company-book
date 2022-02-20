@@ -3,7 +3,7 @@
  * */
 
 pragma solidity ^0.4.24;
-pragma experimental ABIEncoderV2;
+// pragma experimental ABIEncoderV2;
 
 import "../AntiDilution.sol";
 
@@ -25,5 +25,9 @@ interface IAntiDilution {
     function getBenchmark(uint8 class)
         external
         view
-        returns (AntiDilution.Benchmark);
+        returns (
+            uint8 rank,
+            uint256 price,
+            address[] obligors
+        );
 }

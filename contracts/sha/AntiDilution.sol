@@ -3,7 +3,7 @@
  * */
 
 pragma solidity ^0.4.24;
-pragma experimental ABIEncoderV2;
+// pragma experimental ABIEncoderV2;
 
 import "../config/BOSSetting.sol";
 import "../config/BOMSetting.sol";
@@ -173,9 +173,15 @@ contract AntiDilution is BOSSetting, BOMSetting, DraftSetting {
         view
         onlyStakeholders
         onlyMarked(class)
-        returns (Benchmark)
+        returns (
+            uint8 rank,
+            uint256 price,
+            address[] obligors
+        )
     {
-        return (_benchmarks[class]);
+        rank = _benchmarks[class].rank;
+        price = _benchmarks[class].price;
+        obligors = _benchmarks[class].obligors;
     }
 
     // ################

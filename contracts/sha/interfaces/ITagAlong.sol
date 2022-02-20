@@ -3,7 +3,7 @@
  * */
 
 pragma solidity ^0.4.24;
-pragma experimental ABIEncoderV2;
+// pragma experimental ABIEncoderV2;
 
 import "../TagAlong.sol";
 
@@ -39,5 +39,13 @@ interface ITagAlong {
 
     function tagExist(address seller) external view returns (bool);
 
-    function getTag(address seller) external view returns (TagAlong.Tag);
+    function getTag(address seller)
+        external
+        view
+        returns (
+            address[] followers,
+            uint8 triggerType,
+            uint256 threshold,
+            bool proRata
+        );
 }

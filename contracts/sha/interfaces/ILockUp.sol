@@ -3,7 +3,7 @@
  * */
 
 pragma solidity ^0.4.24;
-pragma experimental ABIEncoderV2;
+// pragma experimental ABIEncoderV2;
 
 import "../LockUp.sol";
 
@@ -22,5 +22,8 @@ contract ILockUp {
 
     function lockerExist(uint256 shareNumber) public view returns (bool);
 
-    function getLocker(uint256 shareNumber) public view returns (LockUp.Locker);
+    function getLocker(uint256 shareNumber)
+        public
+        view
+        returns (uint256 dueDate, address[] keyHolders);
 }

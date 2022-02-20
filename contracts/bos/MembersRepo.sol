@@ -67,7 +67,7 @@ contract MembersRepo is SharesRepo {
         _maxQtyOfMembers = max;
     }
 
-    function _addMember(address acct) internal onlyBookkeeper {
+    function _addMember(address acct) internal onlyBookeeper {
         (bool exist, ) = _memberList.firstIndexOf(acct);
 
         if (!exist) {
@@ -85,7 +85,7 @@ contract MembersRepo is SharesRepo {
         uint256 shareNumber,
         uint256 parValue,
         uint256 paidInAmount
-    ) internal onlyBookkeeper {
+    ) internal onlyBookeeper {
         _members[acct].sharesInHand.push(shareNumber);
         _members[acct].regCap = _members[acct].regCap.add(parValue);
         _members[acct].paidInCap = _members[acct].paidInCap.add(paidInAmount);
@@ -95,7 +95,7 @@ contract MembersRepo is SharesRepo {
 
     function _payInCapitalToMember(address acct, uint256 amount)
         internal
-        onlyBookkeeper
+        onlyBookeeper
     {
         _members[acct].paidInCap += amount;
 
@@ -106,7 +106,7 @@ contract MembersRepo is SharesRepo {
         address acct,
         uint256 parValue,
         uint256 paidInAmount
-    ) internal onlyBookkeeper {
+    ) internal onlyBookeeper {
         _members[acct].regCap -= parValue;
         _members[acct].paidInCap -= paidInAmount;
 
@@ -118,7 +118,7 @@ contract MembersRepo is SharesRepo {
         uint256 shareNumber,
         uint256 parValue,
         uint256 paidInAmount
-    ) internal onlyBookkeeper {
+    ) internal onlyBookeeper {
         if (_members[acct].regCap == parValue) {
             delete _members[acct];
             _memberList.removeByValue(acct);

@@ -39,8 +39,8 @@ contract BookOfMotions is IBookOfMotions, EnumsRepo, BOSSetting, BOHSetting {
 
     uint256 private _qtyOfMotions;
 
-    constructor(address bookkeeper) public {
-        init(msg.sender, bookkeeper);
+    constructor(address bookeeper) public {
+        init(msg.sender, bookeeper);
     }
 
     //####################
@@ -106,7 +106,7 @@ contract BookOfMotions is IBookOfMotions, EnumsRepo, BOSSetting, BOHSetting {
 
     function proposeMotion(address ia, uint8 votingDays)
         external
-        onlyBookkeeper
+        onlyBookeeper
         notProposed(ia)
         notInternalST(ia)
     {
@@ -130,9 +130,9 @@ contract BookOfMotions is IBookOfMotions, EnumsRepo, BOSSetting, BOHSetting {
             IVotingRules(getSHA().getTerm(uint8(TermTitle.VOTING_RULES)))
                 .basedOnParValue()
         ) {
-            (, amount, ) = getBOS().getMember(sender);
+            (, amount, ) = _bos.getMember(sender);
         } else {
-            (, , amount) = getBOS().getMember(sender);
+            (, , amount) = _bos.getMember(sender);
         }
     }
 
@@ -214,16 +214,16 @@ contract BookOfMotions is IBookOfMotions, EnumsRepo, BOSSetting, BOHSetting {
             votingType
         );
 
-        totalHead = getBOS().getQtyOfMembers();
+        totalHead = _bos.getQtyOfMembers();
 
         totalAmt = rules.basedOnParValue()
-            ? getBOS().getRegCap()
-            : getBOS().getPaidInCap();
+            ? _bos.getRegCap()
+            : _bos.getPaidInCap();
 
         if (impliedConsent) {
             motion.supportPar += (totalAmt - motion.votedPar);
 
-            address[] memory members = getBOS().getMemberList();
+            address[] memory members = _bos.getMemberList();
             for (uint8 i = 0; i < members.length; i++) {
                 if (!motion.voted[members[i]])
                     motion.membersOfYea.push(members[i]);

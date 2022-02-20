@@ -21,7 +21,7 @@ import "../sha/interfaces/IVotingRules.sol";
 
 import "../common/EnumsRepo.sol";
 
-contract Bookkeeper is
+contract Bookeeper is
     EnumsRepo,
     BOSSetting,
     BOASetting,
@@ -30,8 +30,8 @@ contract Bookkeeper is
 {
     address[18] private _termsTemplate;
 
-    constructor(address bookkeeper) public {
-        init(msg.sender, bookkeeper);
+    constructor(address bookeeper) public {
+        init(msg.sender, bookeeper);
     }
 
     // ################
@@ -43,11 +43,6 @@ contract Bookkeeper is
     // ##################
     // ##   Modifier   ##
     // ##################
-
-    modifier onlyMember() {
-        require(getBOS().isMember(msg.sender), "仅 股东 可操作");
-        _;
-    }
 
     modifier beEstablished(address body) {
         require(ISigPage(body).isEstablished(), "文件 尚未 成立");
@@ -76,11 +71,11 @@ contract Bookkeeper is
     // ##   Admin   ##
     // ###############
 
-    function setKeeperOfBook(address book, address bookkeeper)
+    function setKeeperOfBook(address book, address bookeeper)
         external
-        onlyBookkeeper
+        onlyBookeeper
     {
-        IAdminSetting(book).setBookkeeper(bookkeeper);
+        IAdminSetting(book).setBookkeeper(bookeeper);
     }
 
     // #############
@@ -106,12 +101,12 @@ contract Bookkeeper is
         onlyMember
         returns (address body)
     {
-        body = getBOH().createDoc(docType);
+        body = _boh.createDoc(docType);
 
         IAdminSetting(body).init(msg.sender, this);
         IShareholdersAgreement(body).setTermsTemplate(_termsTemplate);
-        // IBOSSetting(body).setBOS(address(getBOS()));
-        // IBOMSetting(body).setBOM(address(getBOM()));
+        IShareholdersAgreement(body).setBOS(address(_bos));
+        IShareholdersAgreement(body).setBOM(address(_bom));
     }
 
     function removeSHA(address body)
@@ -119,7 +114,7 @@ contract Bookkeeper is
         onlyAdminOf(body)
         notEstablished(body)
     {
-        getBOH().removeDoc(body);
+        _boh.removeDoc(body);
     }
 
     function submitSHA(address body, bytes32 docHash)
@@ -127,7 +122,7 @@ contract Bookkeeper is
         onlyAdminOf(body)
         beEstablished(body)
     {
-        getBOH().submitDoc(body, docHash);
+        _boh.submitDoc(body, docHash);
         IAdminSetting(body).abandonAdmin();
     }
 
@@ -140,10 +135,10 @@ contract Bookkeeper is
         onlyMember
         returns (address body)
     {
-        body = getBOA().createDoc(docType);
+        body = _boa.createDoc(docType);
 
         IAdminSetting(body).init(msg.sender, this);
-        IBOSSetting(body).setBOS(address(getBOS()));
+        IBOSSetting(body).setBOS(address(_bos));
     }
 
     function removeIA(address body)
@@ -151,7 +146,7 @@ contract Bookkeeper is
         onlyAdminOf(body)
         notEstablished(body)
     {
-        getBOA().removeDoc(body);
+        _boa.removeDoc(body);
     }
 
     function submitIA(address body, bytes32 docHash)
@@ -159,7 +154,7 @@ contract Bookkeeper is
         onlyAdminOf(body)
         beEstablished(body)
     {
-        getBOA().submitDoc(body, docHash);
+        _boa.submitDoc(body, docHash);
         IAdminSetting(body).abandonAdmin();
     }
 
@@ -172,7 +167,7 @@ contract Bookkeeper is
             getSHA().getTerm(uint8(TermTitle.VOTING_RULES))
         ).getVotingDays();
 
-        getBOM().proposeMotion(ia, votingDays);
+        _bom.proposeMotion(ia, votingDays);
     }
 
     // ##############
@@ -186,7 +181,7 @@ contract Bookkeeper is
         uint256 closingDate
     ) external returns (bool flag, uint8[] triggers) {
         //校验IA是否表决通过
-        require(getBOM().isPassed(ia), "动议表决 未通过");
+        require(_bom.isPassed(ia), "动议表决 未通过");
 
         // Agreement.Deal memory deal = IAgreement(ia).getDeal(sn);
 
@@ -204,10 +199,10 @@ contract Bookkeeper is
 
         ) = IAgreement(ia).getDeal(sn);
 
-        //交易发起人为卖方或簿记管理人(Bookkeeper);
+        //交易发起人为卖方或簿记管理人(Bookeeper);
         address sender = msg.sender;
         require(
-            (typeOfDeal == 1 && sender == getBookkeeper()) || sender == seller,
+            (typeOfDeal == 1 && sender == getBookeeper()) || sender == seller,
             "无权操作"
         );
 
@@ -216,7 +211,7 @@ contract Bookkeeper is
 
         if (flag) {
             IAgreement(ia).clearDealCP(sn, hashLock, closingDate);
-            if (typeOfDeal > 1) getBOS().updateShareState(shareNumber, 2);
+            if (typeOfDeal > 1) _bos.updateShareState(shareNumber, 2);
         }
     }
 
@@ -226,7 +221,7 @@ contract Bookkeeper is
         bytes32 hashKey
     ) external returns (bool flag) {
         //校验ia是否注册；
-        require(getBOA().isRegistered(ia), "协议  未注册");
+        require(_boa.isRegistered(ia), "协议  未注册");
 
         //获取Deal
         // Agreement.Deal memory deal = IAgreement(ia).getDeal(sn);
@@ -255,8 +250,8 @@ contract Bookkeeper is
 
         //释放Share的质押标记(若需)，执行交易
         if (shareNumber > 0) {
-            getBOS().updateShareState(shareNumber, 0);
-            getBOS().transferShare(
+            _bos.updateShareState(shareNumber, 0);
+            _bos.transferShare(
                 shareNumber,
                 parValue,
                 paidInAmount,
@@ -267,7 +262,7 @@ contract Bookkeeper is
         } else {
             if (paidInAmount > 0) paidInDate = closingDate;
 
-            getBOS().issueShare(
+            _bos.issueShare(
                 buyer,
                 class,
                 parValue,

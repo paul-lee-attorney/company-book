@@ -124,7 +124,7 @@ contract SharesRepo is AdminSetting {
         uint256 paidInDate,
         uint256 paidInAmount,
         uint8 state
-    ) internal onlyBookkeeper {
+    ) internal onlyBookeeper {
         require(shareNumber != 0, "股票编号 不能为 0 ");
         require(!_isShareNum[shareNumber], "股票编号 已经存在");
 
@@ -177,7 +177,7 @@ contract SharesRepo is AdminSetting {
         uint256 splitDate,
         uint256 transferPrice,
         uint256 paidInAmount
-    ) internal onlyBookkeeper {
+    ) internal onlyBookeeper {
         require(newShareNumber != 0, "新股票编号 不能为 0");
         require(!_isShareNum[newShareNumber], "股票编号 已经存在");
 
@@ -222,7 +222,7 @@ contract SharesRepo is AdminSetting {
         );
     }
 
-    function _deregisterShare(uint256 shareNumber) internal onlyBookkeeper {
+    function _deregisterShare(uint256 shareNumber) internal onlyBookeeper {
         uint8 class = _shares[shareNumber].class;
         address shareholder = _shares[shareNumber].shareholder;
 
@@ -250,7 +250,7 @@ contract SharesRepo is AdminSetting {
         uint256 shareNumber,
         uint256 amount,
         uint256 paidInDate
-    ) internal onlyBookkeeper {
+    ) internal onlyBookeeper {
         require(
             paidInDate == 0 || paidInDate <= now + 2 hours,
             "实缴日期不能晚于当前时间+2小时"
@@ -277,7 +277,7 @@ contract SharesRepo is AdminSetting {
         uint256 shareNumber,
         uint256 parValue,
         uint256 paidInAmount
-    ) internal onlyBookkeeper {
+    ) internal onlyBookeeper {
         Share storage share = _shares[shareNumber];
 
         require(
@@ -293,7 +293,7 @@ contract SharesRepo is AdminSetting {
 
     function _capIncrease(uint256 parValue, uint256 paidInAmount)
         internal
-        onlyBookkeeper
+        onlyBookeeper
     {
         _regCap = _regCap.add(parValue);
         _paidInCap = _paidInCap.add(paidInAmount);
@@ -303,7 +303,7 @@ contract SharesRepo is AdminSetting {
 
     function _capDecrease(uint256 parValue, uint256 paidInAmount)
         internal
-        onlyBookkeeper
+        onlyBookeeper
     {
         _regCap -= parValue;
         _paidInCap -= paidInAmount;
@@ -313,7 +313,7 @@ contract SharesRepo is AdminSetting {
 
     function _updateShareState(uint256 shareNumber, uint8 state)
         internal
-        onlyBookkeeper
+        onlyBookeeper
     {
         require(_isShareNum[shareNumber], "标的股权不存在");
 
@@ -324,7 +324,7 @@ contract SharesRepo is AdminSetting {
 
     function _updatePaidInDeadline(uint256 shareNumber, uint256 paidInDeadline)
         internal
-        onlyBookkeeper
+        onlyBookeeper
     {
         require(_isShareNum[shareNumber], "标的股权不存在");
 

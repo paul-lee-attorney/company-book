@@ -9,12 +9,12 @@ import "../interfaces/IBookOfShares.sol";
 import "../config/AdminSetting.sol";
 
 contract BOSSetting is AdminSetting {
-    IBookOfShares private _bos;
+    IBookOfShares internal _bos;
 
     event SetBOS(address bos);
 
     modifier onlyMember() {
-        require(_bos.isMember(msg.sender), "仅 股东 可操作");
+        require(_bos.isMember(msg.sender), "NOT Member");
         _;
     }
 
@@ -22,24 +22,24 @@ contract BOSSetting is AdminSetting {
         address sender = msg.sender;
         require(
             sender == getAdmin() ||
-                sender == getBookkeeper() ||
+                sender == getBookeeper() ||
                 _bos.isMember(sender),
-            "仅 利害关系方 可操作"
+            "NOT Stakeholders"
         );
         _;
     }
 
     modifier beShare(uint256 shareNumber) {
-        require(_bos.shareExist(shareNumber), "股权不存在");
+        require(_bos.shareExist(shareNumber), "shareNumber NOT exist");
         _;
     }
 
-    function setBOS(address bos) public onlyBookkeeper {
+    function setBOS(address bos) external onlyBookeeper {
         _bos = IBookOfShares(bos);
         emit SetBOS(bos);
     }
 
-    function getBOS() public view returns (IBookOfShares) {
-        return _bos;
+    function getBOS() external view returns (address) {
+        return address(_bos);
     }
 }

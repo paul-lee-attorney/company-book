@@ -11,5 +11,5 @@ interface IBOMSetting {
 
     function setBOM(address bom) external;
 
-    function getBOM() external view returns (IBookOfMotions);
+    // function getBOM() external view returns (IBookOfMotions);
 }

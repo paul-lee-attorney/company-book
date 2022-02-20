@@ -89,7 +89,7 @@ contract LockUp is BOSSetting, BOMSetting, DraftSetting {
     // isMemberOrInvestor(keyholder)
     {
         // require(_getBOS().isMember(keyholder) || _isInvestor(keyholder), "权利人 应为股东或者投资人");
-        ISigPage(getBookkeeper()).isParty(keyholder);
+        ISigPage(getBookeeper()).isParty(keyholder);
 
         _lockers[shareNumber].keyHolders.addValue(keyholder);
 
@@ -141,7 +141,7 @@ contract LockUp is BOSSetting, BOMSetting, DraftSetting {
     function isTriggered(address ia)
         external
         view
-        onlyBookkeeper
+        onlyBookeeper
         returns (bool)
     {
         IAgreement _ia = IAgreement(ia);
@@ -149,11 +149,11 @@ contract LockUp is BOSSetting, BOMSetting, DraftSetting {
         uint8 qtyOfDeals = _ia.getQtyOfDeals();
 
         for (uint8 i = 0; i < qtyOfDeals; i++) {
-            (uint256 shareNumber, , , , , , , uint256 closingDate, , , ) = _ia.getDeal(i);
+            (uint256 shareNumber, , , , , , , uint256 closingDate, , , ) = _ia
+                .getDeal(i);
 
             if (!_isLocked[shareNumber]) continue;
-            else if (_lockers[shareNumber].dueDate >= closingDate)
-                return true;
+            else if (_lockers[shareNumber].dueDate >= closingDate) return true;
         }
 
         return false;
@@ -188,12 +188,14 @@ contract LockUp is BOSSetting, BOMSetting, DraftSetting {
     function isExempted(address ia, uint8 snOfDeal)
         external
         view
-        onlyBookkeeper
+        onlyBookeeper
         returns (bool)
     {
-        (address[] memory consentParties, ) = getBOM().getYea(ia);
+        (address[] memory consentParties, ) = _bom.getYea(ia);
 
-        (uint256 shareNumber, , , , , , , , uint8 typeOfDeal, , ) = IAgreement(ia).getDeal(snOfDeal);
+        (uint256 shareNumber, , , , , , , , uint8 typeOfDeal, , ) = IAgreement(
+            ia
+        ).getDeal(snOfDeal);
 
         require(typeOfDeal == 2 || typeOfDeal == 3, "Not a ShareTransfer Deal");
 

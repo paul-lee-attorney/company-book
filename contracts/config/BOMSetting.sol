@@ -9,16 +9,16 @@ import "../interfaces/IBookOfMotions.sol";
 import "../config/AdminSetting.sol";
 
 contract BOMSetting is AdminSetting {
-    IBookOfMotions private _bom;
+    IBookOfMotions internal _bom;
 
     event SetBOM(address bom);
 
-    function setBOM(address bom) public onlyBookkeeper {
+    function setBOM(address bom) external onlyBookeeper {
         _bom = IBookOfMotions(bom);
         emit SetBOM(bom);
     }
 
-    function getBOM() public view returns (IBookOfMotions) {
-        return _bom;
-    }
+    // function getBOM() public view returns (IBookOfMotions) {
+    //     return _bom;
+    // }
 }

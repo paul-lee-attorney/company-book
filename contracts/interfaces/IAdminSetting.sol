@@ -17,13 +17,13 @@ interface IAdminSetting {
 
     event SetBackup(address indexed backup);
 
-    event SetBookkeeper(address indexed bookkeeper);
+    event SetBookeeper(address indexed bookeeper);
 
     // ##################
     // ##   设置端口   ##
     // ##################
 
-    function init(address admin, address bookkeeper) external;
+    function init(address admin, address bookeeper) external;
 
     function setBackup(address backup) external;
 
@@ -31,7 +31,7 @@ interface IAdminSetting {
 
     function abandonAdmin() external;
 
-    function setBookkeeper(address bookkeeper) external;
+    function setBookkeeper(address bookeeper) external;
 
     // ##################
     // ##   查询端口   ##
@@ -41,5 +41,5 @@ interface IAdminSetting {
 
     function getBackup() external view returns (address);
 
-    function getBookkeeper() external view returns (address);
+    function getBookeeper() external view returns (address);
 }

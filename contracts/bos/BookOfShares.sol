@@ -48,10 +48,10 @@ contract BookOfShares is IBookOfShares, MembersRepo {
     constructor(
         bytes32 regNumHash,
         uint8 maxQtyOfMembers,
-        address bookkeeper
+        address bookeeper
     ) public MembersRepo(maxQtyOfMembers) {
         _regNumHash = regNumHash;
-        init(msg.sender, bookkeeper);
+        init(msg.sender, bookeeper);
     }
 
     /// @param shareholder - 股东账户地址
@@ -79,7 +79,7 @@ contract BookOfShares is IBookOfShares, MembersRepo {
         uint256 paidInDate,
         uint256 paidInAmount,
         uint8 state
-    ) external onlyBookkeeper {
+    ) external onlyBookeeper {
         // 判断是否需要添加新股东，若添加是否会超过法定人数上限
         _addMember(shareholder);
 
@@ -120,7 +120,7 @@ contract BookOfShares is IBookOfShares, MembersRepo {
         uint256 shareNumber,
         uint256 amount,
         uint256 paidInDate
-    ) external onlyBookkeeper {
+    ) external onlyBookeeper {
         (address shareholder, , , , , , , , , , ) = _getShare(shareNumber);
 
         // 向“股东”名下增加“实缴出资”金额
@@ -147,7 +147,7 @@ contract BookOfShares is IBookOfShares, MembersRepo {
         address to,
         uint256 closingDate,
         uint256 unitPrice
-    ) external onlyNormal(shareNumber) onlyBookkeeper {
+    ) external onlyNormal(shareNumber) onlyBookeeper {
         // 减少拟出让股票认缴和实缴金额
         _decreaseShareAmount(shareNumber, parValue, paidInAmount);
 
@@ -178,7 +178,7 @@ contract BookOfShares is IBookOfShares, MembersRepo {
         uint256 shareNumber,
         uint256 parValue,
         uint256 paidInAmount
-    ) external onlyBookkeeper {
+    ) external onlyBookeeper {
         // 减少特定“股票”项下的认缴和实缴金额
         _decreaseShareAmount(shareNumber, parValue, paidInAmount);
 
@@ -193,7 +193,7 @@ contract BookOfShares is IBookOfShares, MembersRepo {
         uint256 shareNumber,
         uint256 parValue,
         uint256 paidInAmount
-    ) private onlyNormal(shareNumber) onlyBookkeeper {
+    ) private onlyNormal(shareNumber) onlyBookeeper {
         (
             address shareholder,
             ,
@@ -233,7 +233,7 @@ contract BookOfShares is IBookOfShares, MembersRepo {
     /// @param state - 股票状态（0：正常，1：出质，2：查封，3：已设定信托，4：代持）
     function updateShareState(uint256 shareNumber, uint8 state)
         external
-        onlyBookkeeper
+        onlyBookeeper
     {
         _updateShareState(shareNumber, state);
     }
@@ -242,7 +242,7 @@ contract BookOfShares is IBookOfShares, MembersRepo {
     /// @param paidInDeadline - 实缴出资期限
     function updatePaidInDeadline(uint256 shareNumber, uint256 paidInDeadline)
         external
-        onlyBookkeeper
+        onlyBookeeper
     {
         _updatePaidInDeadline(shareNumber, paidInDeadline);
     }

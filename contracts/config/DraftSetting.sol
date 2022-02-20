@@ -7,15 +7,15 @@ pragma solidity ^0.4.24;
 import "./AdminSetting.sol";
 
 contract DraftSetting is AdminSetting {
-    address private _attorney;
-    // bool private _locked;
+    address internal _attorney;
 
     // ##################
     // ##   Event      ##
     // ##################
 
     event SetAttorney(address attorney);
-    event LockContents(address doc);
+
+    event LockContents();
 
     // ##################
     // ##   修饰器     ##
@@ -30,12 +30,12 @@ contract DraftSetting is AdminSetting {
     // ##   设置端口   ##
     // ##################
 
-    function lockContents() internal {
+    function _lockContents() internal {
         _attorney = address(0);
-        emit LockContents(this);
+        emit LockContents();
     }
 
-    function setAttorney(address attorney) external adminOrBookkeeper {
+    function setAttorney(address attorney) external adminOrBookeeper {
         _attorney = attorney;
         emit SetAttorney(attorney);
     }

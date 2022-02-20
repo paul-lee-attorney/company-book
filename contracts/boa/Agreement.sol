@@ -125,7 +125,7 @@ contract Agreement is BOSSetting, SigPage {
         );
 
         if (shareNumber != 0) {
-            require(getBOS().shareExist(shareNumber), "shareNumber not exist");
+            require(_bos.shareExist(shareNumber), "shareNumber not exist");
 
             (
                 address shareholder,
@@ -139,7 +139,7 @@ contract Agreement is BOSSetting, SigPage {
                 ,
                 uint256 paidInAmountOfShare,
 
-            ) = getBOS().getShare(shareNumber);
+            ) = _bos.getShare(shareNumber);
             require(shareholder == seller, "seller is not shareholder");
             require(parValueOfShare >= parValue, "parValue overflow");
             require(
@@ -149,7 +149,7 @@ contract Agreement is BOSSetting, SigPage {
 
             // addPartyToDoc(seller);
         } else {
-            require(class <= getBOS().getCounterOfClass(), "class overflow");
+            require(class <= _bos.getCounterOfClass(), "class overflow");
         }
 
         Deal storage deal = _deals[sn];
@@ -162,9 +162,7 @@ contract Agreement is BOSSetting, SigPage {
         deal.parValue = parValue;
         deal.paidInAmount = paidInAmount;
         deal.closingDate = closingDate == 0 ? now : closingDate;
-        deal.typeOfDeal = shareNumber == 0 ? 1 : getBOS().isMember(buyer)
-            ? 3
-            : 2;
+        deal.typeOfDeal = shareNumber == 0 ? 1 : _bos.isMember(buyer) ? 3 : 2;
 
         if (sn == _qtyOfDeals) _qtyOfDeals = _qtyOfDeals.add8(1);
 
@@ -222,7 +220,7 @@ contract Agreement is BOSSetting, SigPage {
 
                 // 增资交易
             } else if (!allMembersIn) {
-                address[] memory members = getBOS().getMemberList();
+                address[] memory members = _bos.getMemberList();
                 for (uint8 j = 0; j < members.length; j++)
                     addPartyToDoc(members[j]);
                 allMembersIn = true;
@@ -234,7 +232,7 @@ contract Agreement is BOSSetting, SigPage {
 
         // // 股转溢出判断
         // for (i = 0; i < _sharesToSell.length; i++) {
-        //     (, , uint256 parValueOfShare, , , , , , , , ) = getBOS().getShare(
+        //     (, , uint256 parValueOfShare, , , , , , , , ) = _bos.getShare(
         //         _sharesToSell[i]
         //     );
         //     if (parValueOfShare < _parToSplit[_sharesToSell[i]]) return false;
@@ -256,7 +254,7 @@ contract Agreement is BOSSetting, SigPage {
     )
         external
         onlyForSubmitted
-        onlyBookkeeper
+        onlyBookeeper
         beforeClosingStartpoint
         dealExist(sn)
     {
@@ -290,7 +288,7 @@ contract Agreement is BOSSetting, SigPage {
         external
         onlyForSubmitted
         onlyCleared(sn)
-        onlyBookkeeper
+        onlyBookeeper
         beforeClosingDeadline
     {
         Deal storage deal = _deals[sn];
@@ -305,7 +303,7 @@ contract Agreement is BOSSetting, SigPage {
         emit CloseDeal(sn, hashKey);
     }
 
-    // function closeIA() external onlyBookkeeper onlyForSubmitted {
+    // function closeIA() external onlyBookeeper onlyForSubmitted {
     //     bool flag = true;
 
     //     for (uint8 i = 0; i < _qtyOfDeals; i++) {

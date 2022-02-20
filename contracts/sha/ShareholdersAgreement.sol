@@ -111,7 +111,7 @@ contract ShareholdersAgreement is EnumsRepo, SigPage, CloneFactory {
     //##    写接口    ##
     //##################
 
-    function setTermsTemplate(address[18] templates) external onlyBookkeeper {
+    function setTermsTemplate(address[18] templates) external onlyBookeeper {
         for (uint8 i = 0; i < 18; i++) {
             _setTemplate(i, templates[i]);
         }
@@ -135,11 +135,11 @@ contract ShareholdersAgreement is EnumsRepo, SigPage, CloneFactory {
     //     emit RemoveTermFromFolder(typeOfDeal, title);
     // }
 
-    function setBOS(address bos) external onlyBookkeeper {
+    function setBOS(address bos) external onlyBookeeper {
         _bos = bos;
     }
 
-    function setBOM(address bom) external onlyBookkeeper {
+    function setBOM(address bom) external onlyBookeeper {
         _bom = bom;
     }
 
@@ -282,7 +282,7 @@ contract ShareholdersAgreement is EnumsRepo, SigPage, CloneFactory {
         uint8 title,
         address ia,
         uint8 snOfDeal
-    ) public onlyBookkeeper titleExist(title) returns (bool) {
+    ) public onlyBookeeper titleExist(title) returns (bool) {
         if (!termIsTriggered(title, ia, snOfDeal)) return false;
 
         return ITerm(_titleToBody[title]).isExempted(ia, snOfDeal);

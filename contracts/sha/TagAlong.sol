@@ -91,10 +91,13 @@ contract TagAlong is BOSSetting, BOMSetting, DraftSetting {
     function addMemberToGroup(uint8 groupID, address member)
         external
         onlyAttorney
-        // isMemberOrInvestor(member)
+    // isMemberOrInvestor(member)
     {
-        require(ISigPage(getBookkeeper()).isParty(member), "not Party to SHA");
-        require(groupID > 0 && groupID <= _qtyOfGroups.add8(1), "groupID overflow");
+        require(ISigPage(getBookeeper()).isParty(member), "not Party to SHA");
+        require(
+            groupID > 0 && groupID <= _qtyOfGroups.add8(1),
+            "groupID overflow"
+        );
         require(
             _groupNumOf[member] == groupID || _groupNumOf[member] == 0,
             "reinput member"
@@ -243,13 +246,13 @@ contract TagAlong is BOSSetting, BOMSetting, DraftSetting {
 
         for (; i <= _qtyOfGroups; i++) {
             for (uint8 j = 0; j < _membersOfGroup[i].length; j++) {
-                (, uint256 par, ) = getBOS().getMember(_membersOfGroup[i][j]);
+                (, uint256 par, ) = _bos.getMember(_membersOfGroup[i][j]);
                 parValue[i - 1].add(par);
             }
         }
 
         shareRatio = parValue[dragerID - 1].sub(parToSell).mul(10000).div(
-            getBOS().getRegCap()
+            _bos.getRegCap()
         );
 
         biggest = true;
@@ -294,7 +297,7 @@ contract TagAlong is BOSSetting, BOMSetting, DraftSetting {
         }
     }
 
-    function isTriggered(address ia) public view onlyBookkeeper returns (bool) {
+    function isTriggered(address ia) public view onlyBookeeper returns (bool) {
         IAgreement _ia = IAgreement(ia);
 
         uint8 qtyOfDeals = _ia.getQtyOfDeals();
@@ -303,7 +306,19 @@ contract TagAlong is BOSSetting, BOMSetting, DraftSetting {
         uint256 parToBuy;
 
         for (uint8 i = 0; i < qtyOfDeals; i++) {
-            (,,address seller, address buyer,,,,,uint8 typeOfDeal,,) = _ia.getDeal(i);
+            (
+                ,
+                ,
+                address seller,
+                address buyer,
+                ,
+                ,
+                ,
+                ,
+                uint8 typeOfDeal,
+                ,
+
+            ) = _ia.getDeal(i);
 
             parToSell = 0;
             parToBuy = 0;
@@ -313,9 +328,7 @@ contract TagAlong is BOSSetting, BOMSetting, DraftSetting {
                 _isDrager[_groupNumOf[seller]] &&
                 _groupNumOf[seller] != _groupNumOf[buyer]
             ) {
-                address[] memory members = _membersOfGroup[
-                    _groupNumOf[seller]
-                ];
+                address[] memory members = _membersOfGroup[_groupNumOf[seller]];
                 for (uint8 j = 0; j < members.length; j++) {
                     parToSell += _ia.getParToSell(members[j]);
                     parToBuy += _ia.getParToBuy(members[j]);
@@ -356,12 +369,12 @@ contract TagAlong is BOSSetting, BOMSetting, DraftSetting {
         return true;
     }
 
-    function isExempted(address ia) public view onlyBookkeeper returns (bool) {
-        require(getBOM().isPassed(ia), "决议没有通过");
+    function isExempted(address ia) public view onlyBookeeper returns (bool) {
+        require(_bom.isPassed(ia), "决议没有通过");
 
         if (!isTriggered(ia)) return true;
 
-        (address[] memory parties, ) = getBOM().getYea(ia);
+        (address[] memory parties, ) = _bom.getYea(ia);
         address[] storage consentParties;
         for (uint256 j = 0; j < parties.length; j++)
             consentParties.push(parties[j]);
@@ -369,7 +382,9 @@ contract TagAlong is BOSSetting, BOMSetting, DraftSetting {
         uint8 qtyOfDeals = IAgreement(ia).getQtyOfDeals();
 
         for (uint8 i = 0; i < qtyOfDeals; i++) {
-            (,,address seller, ,,,,,uint8 typeOfDeal, ,) = IAgreement(ia).getDeal(i);
+            (, , address seller, , , , , , uint8 typeOfDeal, , ) = IAgreement(
+                ia
+            ).getDeal(i);
 
             if (
                 typeOfDeal > 1 &&

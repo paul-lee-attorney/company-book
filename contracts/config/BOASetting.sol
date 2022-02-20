@@ -9,16 +9,16 @@ import "../interfaces/IBookOfDocuments.sol";
 import "../config/AdminSetting.sol";
 
 contract BOASetting is AdminSetting {
-    IBookOfDocuments private _boa;
+    IBookOfDocuments internal _boa;
 
     event SetBOA(address boa);
 
-    function setBOA(address boa) public onlyBookkeeper {
+    function setBOA(address boa) external onlyBookeeper {
         _boa = IBookOfDocuments(boa);
         emit SetBOA(boa);
     }
 
-    function getBOA() public view returns (IBookOfDocuments) {
-        return _boa;
-    }
+    // function getBOA() public view returns (IBookOfDocuments) {
+    //     return _boa;
+    // }
 }

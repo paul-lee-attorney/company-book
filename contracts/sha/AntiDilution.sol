@@ -132,7 +132,7 @@ contract AntiDilution is BOSSetting, BOMSetting, DraftSetting {
     {
         // require(_getBOS().isMember(obligor) || _isInvestor(obligor), "反稀释 义务人 应为股东或投资人");
 
-        ISigPage(getBookkeeper()).isParty(obligor);
+        ISigPage(getBookeeper()).isParty(obligor);
 
         (bool exist, ) = _benchmarks[class].obligors.firstIndexOf(obligor);
 
@@ -185,7 +185,7 @@ contract AntiDilution is BOSSetting, BOMSetting, DraftSetting {
     function isTriggered(address ia, uint8 snOfDeal)
         public
         view
-        onlyBookkeeper
+        onlyBookeeper
         returns (bool)
     {
         (, , , , uint256 unitPrice, , , , uint8 typeOfDeal, , ) = IAgreement(ia)
@@ -207,7 +207,7 @@ contract AntiDilution is BOSSetting, BOMSetting, DraftSetting {
         uint8 i = _qtyOfMarks;
 
         while (i > 0 && _benchmarks[_classRanked[i - 1]].price > price) {
-            address[] memory classMember = getBOS().getClassMembers(
+            address[] memory classMember = _bos.getClassMembers(
                 _classRanked[i - 1]
             );
 
@@ -233,12 +233,12 @@ contract AntiDilution is BOSSetting, BOMSetting, DraftSetting {
     function isExempted(address ia, uint8 snOfDeal)
         public
         view
-        onlyBookkeeper
+        onlyBookeeper
         returns (bool)
     {
         if (!isTriggered(ia, snOfDeal)) return true;
 
-        (address[] memory consentParties, ) = getBOM().getYea(ia);
+        (address[] memory consentParties, ) = _bom.getYea(ia);
 
         (, , , , uint256 unitPrice, , , , , , ) = IAgreement(ia).getDeal(
             snOfDeal

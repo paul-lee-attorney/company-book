@@ -11,37 +11,32 @@ contract AdminSetting is IAdminSetting {
 
     address private _backup;
 
-    address private _bookkeeper;
+    address private _bookeeper;
 
     // ##################
     // ##   修饰器     ##
     // ##################
 
-    modifier adminOrBookkeeper() {
+    modifier adminOrBookeeper() {
         require(
-            msg.sender == _bookkeeper || msg.sender == _admin,
-            "not bookkeeper or admin"
+            msg.sender == _bookeeper || msg.sender == _admin,
+            "NOT bookeeper or admin"
         );
         _;
     }
 
     modifier onlyAdmin() {
-        require(msg.sender == _admin, "not Admin");
-        _;
-    }
-
-    modifier originedFromAdmin() {
-        require(tx.origin == _admin, "not origined from Admin");
+        require(msg.sender == _admin, "NOT Admin");
         _;
     }
 
     modifier onlyBackup() {
-        require(msg.sender == _backup, "not backup admin");
+        require(msg.sender == _backup, "NOT backup admin");
         _;
     }
 
-    modifier onlyBookkeeper() {
-        require(msg.sender == _bookkeeper, "not bookkeeper");
+    modifier onlyBookeeper() {
+        require(msg.sender == _bookeeper, "NOT bookeeper");
         _;
     }
 
@@ -53,8 +48,8 @@ contract AdminSetting is IAdminSetting {
     modifier onlyStakeholders() {
         address sender = msg.sender;
         require(
-            sender == _admin || sender == _bookkeeper,
-            "not interested party"
+            sender == _admin || sender == _bookeeper,
+            "NOT interested party"
         );
         _;
     }
@@ -63,35 +58,35 @@ contract AdminSetting is IAdminSetting {
     // ##    写端口    ##
     // ##################
 
-    function init(address admin, address bookkeeper)
+    function init(address admin, address bookeeper)
         public
         onceOnly(_admin)
-        onceOnly(_bookkeeper)
+        onceOnly(_bookeeper)
     {
         _admin = admin;
-        _bookkeeper = bookkeeper;
-        emit Init(admin, bookkeeper);
+        _bookeeper = bookeeper;
+        emit Init(admin, bookeeper);
     }
 
-    function setBackup(address backup) public onlyAdmin {
+    function setBackup(address backup) external onlyAdmin {
         _backup = backup;
         emit SetBackup(backup);
     }
 
-    function takeoverAdmin() public onlyBackup {
+    function takeoverAdmin() external onlyBackup {
         _admin = msg.sender;
         emit TakeoverAdmin(_admin);
     }
 
-    function abandonAdmin() public onlyBookkeeper originedFromAdmin {
+    function abandonAdmin() external onlyBookeeper {
         _admin = address(0);
         _backup = address(0);
         emit AbandonAdmin();
     }
 
-    function setBookkeeper(address bookkeeper) public onlyBookkeeper {
-        _bookkeeper = bookkeeper;
-        emit SetBookkeeper(bookkeeper);
+    function setBookeeper(address bookeeper) external onlyBookeeper {
+        _bookeeper = bookeeper;
+        emit SetBookeeper(bookeeper);
     }
 
     // ##################
@@ -106,7 +101,7 @@ contract AdminSetting is IAdminSetting {
         return _backup;
     }
 
-    function getBookkeeper() public view returns (address) {
-        return _bookkeeper;
+    function getBookeeper() public view returns (address) {
+        return _bookeeper;
     }
 }

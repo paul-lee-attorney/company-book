@@ -10,20 +10,20 @@ import "../interfaces/IBookOfDocuments.sol";
 import "../config/AdminSetting.sol";
 
 contract BOHSetting is AdminSetting {
-    IBookOfDocuments private _boh;
+    IBookOfDocuments internal _boh;
 
     event SetBOH(address boh);
 
-    function setBOH(address boh) public onlyBookkeeper {
+    function setBOH(address boh) external onlyBookeeper {
         _boh = IBookOfDocuments(boh);
         emit SetBOH(boh);
     }
 
-    function getBOH() public view returns (IBookOfDocuments) {
-        return _boh;
-    }
+    // function getBOH() public view returns (IBookOfDocuments) {
+    //     return _boh;
+    // }
 
-    function getSHA() public view returns (IShareholdersAgreement) {
+    function getSHA() internal view returns (IShareholdersAgreement) {
         return IShareholdersAgreement(_boh.getTheOne());
     }
 }

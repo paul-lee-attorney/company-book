@@ -39,6 +39,10 @@ interface IShareholdersAgreement {
 
     function setTermsTemplate(address[18] templates) external;
 
+    function setBOS(address bos) external;
+
+    function setBOM(address bom) external;
+
     function removeTemplate(uint8 title) external;
 
     function createTerm(uint8 title) external returns (address body);

@@ -95,7 +95,7 @@ contract SigPage is DraftSetting {
             _isParty[sender] ||
                 sender == getAttorney() ||
                 sender == getAdmin() ||
-                sender == getBookkeeper(),
+                sender == getBookeeper(),
             "msg.sender not interested Party"
         );
         _;
@@ -105,7 +105,7 @@ contract SigPage is DraftSetting {
         require(_sigDate[msg.sender] == 0, "signed already");
         _;
     }
-    
+
     modifier onlyFutureTime(uint256 time) {
         require(time > now, "not future time");
         _;
@@ -115,7 +115,12 @@ contract SigPage is DraftSetting {
     //##    设置接口    ##
     //####################
 
-    function setSigDeadline(uint256 deadline) external onlyAttorney onlyForDraft onlyFutureTime(deadline){
+    function setSigDeadline(uint256 deadline)
+        external
+        onlyAttorney
+        onlyForDraft
+        onlyFutureTime(deadline)
+    {
         _sigDeadline = deadline;
         emit SetSigDeadline(deadline);
     }
@@ -147,7 +152,7 @@ contract SigPage is DraftSetting {
         onlyForDraft
     {
         _docState = 1;
-        lockContents();
+        _lockContents();
         emit DocStateRevised(_docState);
     }
 
@@ -159,7 +164,11 @@ contract SigPage is DraftSetting {
         }
     }
 
-    function removePartyFromDoc(address acct) internal onlyAttorney onlyForDraft {
+    function removePartyFromDoc(address acct)
+        internal
+        onlyAttorney
+        onlyForDraft
+    {
         if (_isParty[acct]) {
             delete _isParty[acct];
             _qtyOfParties--;
@@ -187,7 +196,7 @@ contract SigPage is DraftSetting {
 
     function submitDoc()
         external
-        onlyBookkeeper
+        onlyBookeeper
         onlyForSigned
         beforeClosingStartpoint
     {
@@ -195,7 +204,7 @@ contract SigPage is DraftSetting {
         emit DocStateRevised(_docState);
     }
 
-    // function closeDoc(bool flag) public onlyBookkeeper onlyForSubmitted {
+    // function closeDoc(bool flag) public onlyBookeeper onlyForSubmitted {
     //     if (flag) {
     //         _docState = 4;
     //         emit DocStateRevised(this, _docState);

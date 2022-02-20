@@ -10,7 +10,6 @@ import "../lib/SafeMath.sol";
 import "../lib/ArrayUtils.sol";
 // import "../interfaces/IBOSSetting.sol";
 import "../interfaces/IAdminSetting.sol";
-import "../interfaces/IDraftSetting.sol";
 
 import "../config/AdminSetting.sol";
 import "./CloneFactory.sol";
@@ -45,10 +44,10 @@ contract BookOfDocuments is CloneFactory, AdminSetting {
     constructor(
         string bookName,
         address admin,
-        address bookkeeper
+        address bookeeper
     ) public {
         _bookName = bookName;
-        init(admin, bookkeeper);
+        init(admin, bookeeper);
     }
 
     //##############
@@ -117,7 +116,7 @@ contract BookOfDocuments is CloneFactory, AdminSetting {
 
     function createDoc(uint8 docType)
         public
-        onlyBookkeeper
+        onlyBookeeper
         tempReady
         returns (address body)
     {
@@ -135,7 +134,7 @@ contract BookOfDocuments is CloneFactory, AdminSetting {
 
         _docs.push(sn);
 
-        // IAdminSetting(body).init(admin, bookkeeper)
+        // IAdminSetting(body).init(admin, bookeeper)
         // IBOSSetting(body).setBOS(_bos);
 
         emit CreateDoc(this, body, sn);
@@ -143,7 +142,7 @@ contract BookOfDocuments is CloneFactory, AdminSetting {
 
     function removeDoc(address body)
         public
-        onlyBookkeeper
+        onlyBookeeper
         onlyRegistered(body)
         onlyForPending(body)
     {
@@ -162,7 +161,7 @@ contract BookOfDocuments is CloneFactory, AdminSetting {
 
     function submitDoc(address body, bytes32 docHash)
         public
-        onlyBookkeeper
+        onlyBookeeper
         onlyRegistered(body)
         onlyForPending(body)
     {
@@ -177,7 +176,7 @@ contract BookOfDocuments is CloneFactory, AdminSetting {
 
     function setPointer(address body)
         public
-        onlyBookkeeper
+        onlyBookeeper
         onlyRegistered(body)
         onlyForSubmitted(body)
     {

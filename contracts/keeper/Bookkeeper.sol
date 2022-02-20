@@ -30,7 +30,7 @@ contract Bookkeeper is
 {
     address[18] private _termsTemplate;
 
-    constructor (address bookkeeper) public {
+    constructor(address bookkeeper) public {
         init(msg.sender, bookkeeper);
     }
 
@@ -70,6 +70,17 @@ contract Bookkeeper is
     modifier onlyPartyOf(address body) {
         require(ISigPage(body).isParty(msg.sender), "只有 当事方 可操作");
         _;
+    }
+
+    // ###############
+    // ##   Admin   ##
+    // ###############
+
+    function setKeeperOfBook(address book, address bookkeeper)
+        external
+        onlyBookkeeper
+    {
+        IAdminSetting(book).setBookkeeper(bookkeeper);
     }
 
     // #############

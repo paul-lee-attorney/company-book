@@ -119,11 +119,14 @@ contract Agreement is BOSSetting, SigPage {
         require(buyer != address(0), "buyer has zero address");
         require(parValue > 0, "parValue is Zero");
         require(paidInAmount <= parValue, "paidInAmount overflow");
-        require(closingDate == 0 || closingDate > now, "closingDate shall be future");
+        require(
+            closingDate == 0 || closingDate > now,
+            "closingDate shall be future"
+        );
 
         if (shareNumber != 0) {
-            require(getBOS().shareExist(shareNumber),"shareNumber not exist");
-            
+            require(getBOS().shareExist(shareNumber), "shareNumber not exist");
+
             (
                 address shareholder,
                 ,
@@ -139,8 +142,11 @@ contract Agreement is BOSSetting, SigPage {
             ) = getBOS().getShare(shareNumber);
             require(shareholder == seller, "seller is not shareholder");
             require(parValueOfShare >= parValue, "parValue overflow");
-            require(paidInAmountOfShare >= paidInAmount, "paidInAmount overflow");
-            
+            require(
+                paidInAmountOfShare >= paidInAmount,
+                "paidInAmount overflow"
+            );
+
             // addPartyToDoc(seller);
         } else {
             require(class <= getBOS().getCounterOfClass(), "class overflow");
@@ -161,7 +167,7 @@ contract Agreement is BOSSetting, SigPage {
             : 2;
 
         if (sn == _qtyOfDeals) _qtyOfDeals = _qtyOfDeals.add8(1);
-        
+
         // addPartyToDoc(buyer);
 
         emit SetDeal(
@@ -179,9 +185,8 @@ contract Agreement is BOSSetting, SigPage {
     }
 
     function delDeal(uint8 sn) external onlyAttorney dealExist(sn) {
-        
         // removePartyFromDoc(_deals[sn].buyer);
-        
+
         // if (_deals[sn].typeOfDeal > 1) removePartyFromDoc(_deals[sn].seller);
 
         delete _deals[sn];
@@ -242,7 +247,6 @@ contract Agreement is BOSSetting, SigPage {
         emit SetTypeOfIA(_typeOfIA);
 
         circulateDoc();
-
     }
 
     function clearDealCP(
@@ -268,7 +272,10 @@ contract Agreement is BOSSetting, SigPage {
             "closingDate can ONLY be extended"
         );
 
-        require(closingDate <= getClosingDeadline(), "closingDate later than deadline");
+        require(
+            closingDate <= getClosingDeadline(),
+            "closingDate later than deadline"
+        );
 
         require(deal.state == 0, "Deal not signed");
 
@@ -336,8 +343,10 @@ contract Agreement is BOSSetting, SigPage {
     function getParToSell(address acct)
         external
         view
-        // onlyConcernedEntity
-        returns (uint256 parValue)
+        returns (
+            // onlyConcernedEntity
+            uint256 parValue
+        )
     {
         parValue = _parToSell[acct];
     }
@@ -345,8 +354,10 @@ contract Agreement is BOSSetting, SigPage {
     function getParToBuy(address acct)
         external
         view
-        // onlyConcernedEntity
-        returns (uint256 parValue)
+        returns (
+            // onlyConcernedEntity
+            uint256 parValue
+        )
     {
         parValue = _parToBuy[acct];
     }

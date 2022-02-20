@@ -1,0 +1,37 @@
+// 创设公司基本股权结构
+const bos = await BookOfShares.deployed();
+const bookkeeper = await Bookkeeper.deployed();
+const boa = await BookOfDocuments.at("0xc6bf349a2C0Cb1f7529064063E2f0A480cF6891F");
+const boh = await BookOfDocuments.at("0x67e2C8ED50C3D4C5136ffcAd2b3a6f36213652C6");
+const bom = await BookOfMotions.deployed();
+
+bookkeeper.setKeeperOfBook(bos.address, accounts[1], {from: accounts[1]});
+
+// 设定股权结构：
+
+bos.issueShare(accounts[2], "0", "500000000", "1533686888", "1470614888", "10000", "1470614888", "10000", "1470614888", "500000000", "0", {from: accounts[1]});
+
+bos.issueShare(accounts[3], "0", "300000000", "1533686888", "1470614888", "10000", "1470614888", "10000", "1470614888", "300000000", "0", {from: accounts[1]});
+
+bos.issueShare(accounts[4], "0", "200000000", "1533686888", "1470614888", "10000", "1470614888", "10000", "1470614888", "200000000", "0", {from: accounts[1]});
+
+bos.issueShare(accounts[5], "0", "100000000", "1533686888", "1470614888", "10000", "1470614888", "10000", "1470614888", "100000000", "0", {from: accounts[1]});
+
+bos.issueShare(accounts[6], "0", "100000000", "1533686888", "1470614888", "10000", "1470614888", "10000", "1470614888", "100000000", "0", {from: accounts[1]});
+
+// 设定BOS的Bookkeeper
+bos.setBookkeeper(bookkeeper.address, {from: accounts[1]});
+
+// 创建IA : 对外转股(类型：2，accounts[2]=>accounts[7], 300000000)
+
+bookkeeper.createIA("2", {from: accounts[2]});
+
+const ia1 = await Agreement.at("0xC4E573B2156EE33eC577E8176647c74367b0496C");
+
+ia1.setAttorney(accounts[1], {from: accounts[2]});
+
+ia1.setDeal("0", "1", "0", accounts[2], accounts[7], "12000", "1000000", "1000000", "1645368706", {from: accounts[1]});
+
+ia1.setClosingStartpoint("1645365706", {from: accounts[1]});
+
+ia1.finalizeIA({from: accounts[1]});

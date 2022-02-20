@@ -8,7 +8,6 @@ pragma solidity ^0.4.24;
 import "../lib/SerialNumFactory.sol";
 import "../lib/SafeMath.sol";
 import "../lib/ArrayUtils.sol";
-
 // import "../interfaces/IBOSSetting.sol";
 import "../interfaces/IAdminSetting.sol";
 import "../interfaces/IDraftSetting.sol";

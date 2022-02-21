@@ -3,7 +3,6 @@
  * */
 
 pragma solidity ^0.4.24;
-// pragma experimental ABIEncoderV2;
 
 import "../config/BOSSetting.sol";
 import "../config/BOMSetting.sol";
@@ -171,16 +170,28 @@ contract LockUp is BOSSetting, BOMSetting, DraftSetting {
         if (locker.keyHolders.length > consentParties.length) {
             return false;
         } else {
-            address[] parties;
-            for (uint256 k = 0; k < consentParties.length; k++)
-                parties.push(consentParties[k]);
-
-            for (uint256 i = 0; i < locker.keyHolders.length; i++) {
-                (bool exist, ) = parties.firstIndexOf(locker.keyHolders[i]);
-                if (!exist) {
-                    return false;
+            bool flag;
+            for (uint256 j = 0; j < consentParties.length; j++) {
+                flag = false;
+                for (uint256 k = 0; k < locker.keyHolders.length; k++) {
+                    if (locker.keyHolders[k] == consentParties[j]) {
+                        flag = true;
+                        break;
+                    }
                 }
+                if (!flag) return false;
             }
+
+            // address[] storage parties;
+            // for (uint256 k = 0; k < consentParties.length; k++)
+            //     parties.push(consentParties[k]);
+
+            // for (uint256 i = 0; i < locker.keyHolders.length; i++) {
+            //     (bool exist, ) = parties.firstIndexOf(locker.keyHolders[i]);
+            //     if (!exist) {
+            //         return false;
+            //     }
+            // }
             return true;
         }
     }

@@ -246,11 +246,11 @@ contract ShareholdersAgreement is EnumsRepo, SigPage, CloneFactory {
         return _tempOfTitle[title];
     }
 
-    function getBOS() view onlyConcernedEntity returns (address) {
+    function getBOS() external view onlyConcernedEntity returns (address) {
         return _bos;
     }
 
-    function getBOM() view onlyConcernedEntity returns (address) {
+    function getBOM() external view onlyConcernedEntity returns (address) {
         return _bom;
     }
 
@@ -282,7 +282,7 @@ contract ShareholdersAgreement is EnumsRepo, SigPage, CloneFactory {
         uint8 title,
         address ia,
         uint8 snOfDeal
-    ) public onlyBookeeper titleExist(title) returns (bool) {
+    ) public view onlyBookeeper titleExist(title) returns (bool) {
         if (!termIsTriggered(title, ia, snOfDeal)) return false;
 
         return ITerm(_titleToBody[title]).isExempted(ia, snOfDeal);

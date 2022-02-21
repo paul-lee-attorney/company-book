@@ -27,47 +27,47 @@ interface ISigPage {
     //##    设置接口    ##
     //####################
 
-    function setSigDeadline(uint256 deadline) public;
+    function setSigDeadline(uint256 deadline) external;
 
-    function setClosingDeadline(uint256 deadline) public;
+    function setClosingDeadline(uint256 deadline) external;
 
-    function circulateDoc() public;
+    function circulateDoc() external;
 
-    function addPartyToDoc(address acct) public;
+    function addPartyToDoc(address acct) external;
 
-    function removePartyFromDoc(address acct) public;
+    function removePartyFromDoc(address acct) external;
 
-    function signDoc() public;
+    function signDoc() external;
 
-    function submitDoc() public;
+    function submitDoc() external;
 
-    function closeDoc(bool flag) public;
+    function closeDoc(bool flag) external;
 
-    function acceptDoc() public;
+    function acceptDoc() external;
 
     //####################
     //##    查询接口    ##
     //####################
 
-    function isEstablished() public returns (bool);
+    function isEstablished() external returns (bool);
 
-    function getDocState() public returns (uint8);
+    function getDocState() external returns (uint8);
 
-    function getSigDeadline() public returns (uint256);
+    function getSigDeadline() external returns (uint256);
 
-    function getClosingStartpoint() public returns (uint256);
+    function getClosingStartpoint() external returns (uint256);
 
-    function getClosingDeadline() public returns (uint256);
+    function getClosingDeadline() external returns (uint256);
 
-    function isParty(address acct) public returns (bool);
+    function isParty(address acct) external returns (bool);
 
-    function getQtyOfParties() public returns (uint8);
+    function getQtyOfParties() external returns (uint8);
 
-    function isSignedBy(address acct) public returns (bool);
+    function isSignedBy(address acct) external returns (bool);
 
-    function getSigDate(address acct) public returns (uint256);
+    function getSigDate(address acct) external returns (uint256);
 
-    function getSigners() public returns (address[]);
+    function getSigners() external returns (address[]);
 
-    function getQtyOfSigners() public returns (uint256);
+    function getQtyOfSigners() external returns (uint256);
 }

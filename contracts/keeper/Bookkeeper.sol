@@ -218,7 +218,7 @@ contract Bookeeper is
     function closeDeal(
         uint8 sn,
         address ia,
-        bytes32 hashKey
+        bytes hashKey
     ) external returns (bool flag) {
         //校验ia是否注册；
         require(_boa.isRegistered(ia), "协议  未注册");

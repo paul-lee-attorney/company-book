@@ -46,21 +46,24 @@ interface IBookOfMotions {
 
     function getYea(address ia)
         external
+        view
         returns (address[] membersOfYea, uint256 supportPar);
 
     function getNay(address ia)
         external
+        view
         returns (address[] membersOfNay, uint256 againstPar);
 
     function haveVoted(address ia, address acct) external returns (bool);
 
-    function getVotedPar(address ia) public returns (uint256);
+    function getVotedPar(address ia) external returns (uint256);
 
     function getVoteDate(address ia, address acct)
         external
+        view
         returns (uint256 date);
 
-    function isProposed(address ia) external returns (bool);
+    function isProposed(address ia) external view returns (bool);
 
-    function isPassed(address ia) external returns (bool);
+    function isPassed(address ia) external view returns (bool);
 }

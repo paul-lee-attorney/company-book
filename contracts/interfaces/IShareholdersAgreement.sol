@@ -64,29 +64,31 @@ interface IShareholdersAgreement {
 
     function getTemplate(uint8 title) external view returns (address);
 
-    function getBooks() external view returns (address[]);
+    function getBOS() external view returns (address);
+
+    function getBOM() external view returns (address);
 
     function termIsTriggered(
         uint8 title,
         address ia,
         uint8 snOfDeal
-    ) public view returns (bool);
+    ) external view returns (bool);
 
     function dealIsTriggered(
         address ia,
         uint8 snOfDeal,
         uint8 typeOfDeal
-    ) public view returns (bool flag, uint8[] triggers);
+    ) external view returns (bool flag, uint8[] triggers);
 
     function termIsExempted(
         uint8 title,
         address ia,
         uint8 snOfDeal
-    ) public returns (bool);
+    ) external returns (bool);
 
     function dealIsExempted(
         address ia,
         uint8 snOfDeal,
         uint8 typeOfDeal
-    ) public view returns (bool flag, uint8[] triggers);
+    ) external view returns (bool flag, uint8[] triggers);
 }

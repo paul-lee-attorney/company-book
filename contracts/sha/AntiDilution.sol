@@ -3,7 +3,6 @@
  * */
 
 pragma solidity ^0.4.24;
-// pragma experimental ABIEncoderV2;
 
 import "../config/BOSSetting.sol";
 import "../config/BOMSetting.sol";
@@ -220,14 +219,16 @@ contract AntiDilution is BOSSetting, BOMSetting, DraftSetting {
             if (classMember.length > consentParties.length) {
                 return false;
             } else {
-                address[] parties;
-                for (uint256 k = 0; k < consentParties.length; k++) {
-                    parties.push(consentParties[k]);
-                }
-
+                bool flag;
                 for (uint256 j = 0; j < classMember.length; j++) {
-                    (bool exist, ) = parties.firstIndexOf(classMember[j]);
-                    if (!exist) return false;
+                    flag = false;
+                    for (uint256 k = 0; k < consentParties.length; k++) {
+                        if (consentParties[k] == classMember[j]) {
+                            flag = true;
+                            break;
+                        }
+                    }
+                    if (!flag) return false;
                 }
             }
             if (i > 0) i--;

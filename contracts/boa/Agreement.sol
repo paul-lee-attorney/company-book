@@ -82,7 +82,7 @@ contract Agreement is BOSSetting, SigPage {
         uint256 closingDate
     );
 
-    event CloseDeal(uint8 indexed sn, bytes32 hashKey);
+    event CloseDeal(uint8 indexed sn, bytes hashKey);
 
     //##################
     //##   Modifier   ##
@@ -201,7 +201,7 @@ contract Agreement is BOSSetting, SigPage {
     {
         uint8 i = 0;
         bool allMembersIn;
-        uint8[3] signal;
+        uint8[3] storage signal;
 
         for (; i < _qtyOfDeals; i++) {
             Deal storage deal = _deals[i];
@@ -284,7 +284,7 @@ contract Agreement is BOSSetting, SigPage {
         emit ClearDealCP(sn, 1, hashLock, closingDate);
     }
 
-    function closeDeal(uint8 sn, bytes32 hashKey)
+    function closeDeal(uint8 sn, bytes hashKey)
         external
         onlyForSubmitted
         onlyCleared(sn)

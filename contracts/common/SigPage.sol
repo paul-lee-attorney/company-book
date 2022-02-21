@@ -225,40 +225,57 @@ contract SigPage is DraftSetting {
     //##    查询接口    ##
     //####################
 
-    function isEstablished() public onlyConcernedEntity returns (bool) {
+    function isEstablished() public view onlyConcernedEntity returns (bool) {
         return _docState == 2;
     }
 
-    function getDocState() public onlyConcernedEntity returns (uint8) {
+    function getDocState() public view onlyConcernedEntity returns (uint8) {
         return _docState;
     }
 
-    function getSigDeadline() public onlyConcernedEntity returns (uint256) {
+    function getSigDeadline()
+        public
+        view
+        onlyConcernedEntity
+        returns (uint256)
+    {
         return _sigDeadline;
     }
 
     function getClosingStartpoint()
         public
+        view
         onlyConcernedEntity
         returns (uint256)
     {
         return _closingStartpoint;
     }
 
-    function getClosingDeadline() public onlyConcernedEntity returns (uint256) {
+    function getClosingDeadline()
+        public
+        view
+        onlyConcernedEntity
+        returns (uint256)
+    {
         return _closingDeadline;
     }
 
-    function isParty(address acct) public onlyConcernedEntity returns (bool) {
+    function isParty(address acct)
+        public
+        view
+        onlyConcernedEntity
+        returns (bool)
+    {
         return _isParty[acct];
     }
 
-    function getQtyOfParties() public onlyConcernedEntity returns (uint8) {
+    function getQtyOfParties() public view onlyConcernedEntity returns (uint8) {
         return _qtyOfParties;
     }
 
     function isSignedBy(address acct)
         public
+        view
         onlyConcernedEntity
         returns (bool)
     {
@@ -267,17 +284,23 @@ contract SigPage is DraftSetting {
 
     function getSigDate(address acct)
         public
+        view
         onlyConcernedEntity
         returns (uint256)
     {
         return _sigDate[acct];
     }
 
-    function getSigners() public onlyConcernedEntity returns (address[]) {
+    function getSigners() public view onlyConcernedEntity returns (address[]) {
         return _signers;
     }
 
-    function getQtyOfSigners() public onlyConcernedEntity returns (uint256) {
+    function getQtyOfSigners()
+        public
+        view
+        onlyConcernedEntity
+        returns (uint256)
+    {
         return _signers.length;
     }
 }

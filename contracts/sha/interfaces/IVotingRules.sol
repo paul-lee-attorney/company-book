@@ -3,7 +3,6 @@
  * */
 
 pragma solidity ^0.4.24;
-// pragma experimental ABIEncoderV2;
 
 import "../../lib/ArrayUtils.sol";
 // import "../lib/ArrayUtils.sol";
@@ -42,12 +41,12 @@ interface IVotingRules {
     // ##  查询接口  ##
     // ################
 
-    function getVotingDays() public view returns (uint8);
+    function getVotingDays() external view returns (uint8);
 
-    function basedOnParValue() public view returns (bool);
+    function basedOnParValue() external view returns (bool);
 
     function getRule(uint8 typeOfIA)
-        public
+        external
         view
         returns (
             uint256 ratioHead,

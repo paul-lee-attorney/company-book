@@ -23,16 +23,19 @@ contract MembersRepo is SharesRepo {
 
     // 账号 => 股东 映射
     mapping(address => Member) private _members;
-    mapping(address => bool) private _isMemberAdd;
+
+    mapping(address => bool) public isMember;
 
     // 股东名册
-    address[] private _memberList;
+    address[] public membersList;
 
     uint8 private _maxQtyOfMembers;
 
     //##################
     //##    Event    ##
     //##################
+
+    event SetMaxQtyOfMembers(uint8 max);
 
     event AddMember(address indexed acct, uint256 qtyOfMembers);
     event RemoveMember(address indexed acct, uint256 qtyOfMembers);
@@ -55,12 +58,12 @@ contract MembersRepo is SharesRepo {
     //##################
 
     modifier onlyMember() {
-        require(_isMemberAdd[msg.sender], "NOT Member");
+        require(isMember[msg.sender], "NOT Member");
         _;
     }
 
     modifier beMember(address acct) {
-        require(_isMemberAdd[acct], "Acct is NOT Member");
+        require(isMember[acct], "Acct is NOT Member");
         _;
     }
 
@@ -72,19 +75,24 @@ contract MembersRepo is SharesRepo {
         _maxQtyOfMembers = max;
     }
 
+    function setMaxQtyOfMembers(uint8 max) external onlyAdmin {
+        _maxQtyOfMembers = max;
+        emit SetMaxQtyOfMembers(max);
+    }
+
     function _addMember(address acct) internal onlyBookeeper {
-        (bool exist, ) = _memberList.firstIndexOf(acct);
+        (bool exist, ) = membersList.firstIndexOf(acct);
 
         if (!exist) {
             require(
-                _memberList.length < _maxQtyOfMembers,
+                membersList.length < _maxQtyOfMembers,
                 "Qty of Members overflow"
             );
 
-            _memberList.push(acct);
-            _isMemberAdd[acct] = true;
+            membersList.push(acct);
+            isMember[acct] = true;
 
-            emit AddMember(acct, _memberList.length);
+            emit AddMember(acct, membersList.length);
         }
     }
 
@@ -129,10 +137,10 @@ contract MembersRepo is SharesRepo {
     ) internal onlyBookeeper {
         if (_members[acct].regCap == parValue) {
             delete _members[acct];
-            _memberList.removeByValue(acct);
-            _isMemberAdd[acct] = false;
+            membersList.removeByValue(acct);
+            isMember[acct] = false;
 
-            emit RemoveMember(acct, _memberList.length);
+            emit RemoveMember(acct, membersList.length);
         } else {
             _subAmountFromMember(acct, parValue, paidInAmount);
             _members[acct].sharesInHand.removeByValue(shareNumber);
@@ -145,10 +153,6 @@ contract MembersRepo is SharesRepo {
     //##   查询接口   ##
     //##################
 
-    function _isMember(address acct) internal view returns (bool) {
-        return _isMemberAdd[acct];
-    }
-
     function _getMember(address acct)
         internal
         view
@@ -159,17 +163,7 @@ contract MembersRepo is SharesRepo {
             uint256
         )
     {
-        // require(_isMemberAdd[acct], "Acct is NOT a Member");
         Member storage member = _members[acct];
         return (member.sharesInHand, member.regCap, member.paidInCap);
-    }
-
-    function _getMemberList() internal view returns (address[]) {
-        // require(_memberList.length > 0, "Qty of Members is Zero");
-        return _memberList;
-    }
-
-    function _getQtyOfMembers() internal view returns (uint256) {
-        return _memberList.length;
     }
 }

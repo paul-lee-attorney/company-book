@@ -49,13 +49,9 @@ interface IBookOfShares {
     // ##   查询接口   ##
     // ##################
 
-    function verifyRegNum(bytes32 regNumHash) external view returns (bool);
+    function regCap() external view returns (uint256);
 
-    function getCounterOfShare() external view returns (uint256);
-
-    function getCounterOfClass() external view returns (uint8);
-
-    function shareExist(uint256 shareNumber) external view returns (bool);
+    function paidInCap() external view returns (uint256);
 
     function getShare(uint256 shareNumber)
         external
@@ -74,13 +70,13 @@ interface IBookOfShares {
             uint8 state
         );
 
-    function getRegCap() external view returns (uint256);
+    function shareExist(uint256 shareNumber) external view returns (bool);
 
-    function getPaidInCap() external view returns (uint256);
+    function sharesList() external view returns (uint256[]);
 
-    function getShareNumberList() external view returns (uint256[]);
+    function membersOfClass(uint8 class) external view returns (address[]);
 
-    function getQtyOfShares() external view returns (uint256);
+    function sharesOfClass(uint8 class) external view returns (uint256[]);
 
     function isMember(address acct) external view returns (bool);
 
@@ -89,21 +85,15 @@ interface IBookOfShares {
         view
         returns (
             uint256[] sharesInHand,
-            uint256 regCap,
-            uint256 paidInCap
+            uint256 parValue,
+            uint256 paidInAmount
         );
 
-    function getMemberList() external view returns (address[] memberAcctList);
+    function membersList() external view returns (address[]);
 
-    function getQtyOfMembers() external view returns (uint256 qtyOfMembers);
+    function verifyRegNum(bytes32 regNumHash) external view returns (bool);
 
-    function getClassMembers(uint8 class)
-        external
-        view
-        returns (address[] classMembers);
+    function counterOfShares() external view returns (uint256);
 
-    function getClassShares(uint8 class)
-        external
-        view
-        returns (uint256[] classShares);
+    function counterOfClass() external view returns (uint8);
 }

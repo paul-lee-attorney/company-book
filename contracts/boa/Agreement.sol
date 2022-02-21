@@ -147,7 +147,7 @@ contract Agreement is BOSSetting, SigPage {
 
             // addPartyToDoc(seller);
         } else {
-            require(class <= _bos.getCounterOfClass(), "class overflow");
+            require(class <= _bos.counterOfClass(), "class overflow");
         }
 
         Deal storage deal = _deals[sn];
@@ -218,7 +218,7 @@ contract Agreement is BOSSetting, SigPage {
 
                 // 增资交易
             } else if (!allMembersIn) {
-                address[] memory members = _bos.getMemberList();
+                address[] memory members = _bos.membersList();
                 for (uint8 j = 0; j < members.length; j++)
                     addPartyToDoc(members[j]);
                 allMembersIn = true;

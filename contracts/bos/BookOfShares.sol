@@ -37,10 +37,10 @@ contract BookOfShares is IBookOfShares, MembersRepo {
     bytes32 private _regNumHash;
 
     //股权序列号计数器（2**16-1 应该足够计数，因此可考虑uint16）
-    uint256 private _counterOfShare;
+    uint256 public counterOfShares;
 
     //类别序列号计数器
-    uint8 private _counterOfClass;
+    uint8 public counterOfClass;
 
     /// @notice 初始化 超级管理员 账户地址，设定 公司股东人数上限， 设定 公司注册号哈希值
     /// @param regNumHash - 公司注册号哈希值
@@ -79,22 +79,21 @@ contract BookOfShares is IBookOfShares, MembersRepo {
         uint256 paidInDate,
         uint256 paidInAmount,
         uint8 state
-    ) external onlyBookeeper {
+    ) external onlyBookeeper notBiggerThan(class, counterOfClass) {
         // 判断是否需要添加新股东，若添加是否会超过法定人数上限
         _addMember(shareholder);
 
         // 股票编号计数器顺加“1”
-        _counterOfShare = _counterOfShare.add(1);
+        counterOfShares = counterOfShares.add(1);
 
-        require(class <= _counterOfClass, "class overflow");
-        if (class == _counterOfClass) _counterOfClass = _counterOfClass.add8(1);
+        if (class == counterOfClass) counterOfClass = counterOfClass.add8(1);
 
         // 向《股东名册》的“股东”名下添加新股票
-        _addShareToMember(shareholder, _counterOfShare, parValue, paidInAmount);
+        _addShareToMember(shareholder, counterOfShares, parValue, paidInAmount);
 
         // 在《股权簿》中添加新股票（签发新的《出资证明书》）
         _issueShare(
-            _counterOfShare,
+            counterOfShares,
             shareholder,
             class,
             parValue,
@@ -121,7 +120,7 @@ contract BookOfShares is IBookOfShares, MembersRepo {
         uint256 amount,
         uint256 paidInDate
     ) external onlyBookeeper {
-        (address shareholder, , , , , , , , , , ) = _getShare(shareNumber);
+        (address shareholder, , , , , , , , , , ) = getShare(shareNumber);
 
         // 向“股东”名下增加“实缴出资”金额
         _payInCapitalToMember(shareholder, amount);
@@ -154,15 +153,15 @@ contract BookOfShares is IBookOfShares, MembersRepo {
         // 判断是否需要新增股东，若需要判断是否超过法定人数上限
         _addMember(to);
 
-        _counterOfShare = _counterOfShare.add(1);
+        counterOfShares = counterOfShares.add(1);
 
         // 在“股东”名下增加新的股票
-        _addShareToMember(to, _counterOfShare, parValue, paidInAmount);
+        _addShareToMember(to, counterOfShares, parValue, paidInAmount);
 
         // 发行新股票
         _splitShare(
             shareNumber,
-            _counterOfShare,
+            counterOfShares,
             to,
             parValue,
             closingDate,
@@ -206,7 +205,7 @@ contract BookOfShares is IBookOfShares, MembersRepo {
             ,
             uint256 orgPaidInAmt,
 
-        ) = _getShare(shareNumber);
+        ) = getShare(shareNumber);
 
         require(parValue > 0, "parValue is Zero");
         require(parValue <= orgParValue, "parValue overflow");
@@ -263,60 +262,6 @@ contract BookOfShares is IBookOfShares, MembersRepo {
         return _regNumHash == regNumHash;
     }
 
-    /// @return 股票序列号计数器当前值
-    function getCounterOfShare() external view returns (uint256) {
-        return _counterOfShare;
-    }
-
-    /// @return 类别序列号计数器当前值
-    function getCounterOfClass() external view returns (uint8) {
-        return _counterOfClass;
-    }
-
-    function shareExist(uint256 shareNumber) external view returns (bool) {
-        return _shareExist(shareNumber);
-    }
-
-    function getShare(uint256 shareNumber)
-        external
-        view
-        returns (
-            address shareholder,
-            uint8 class,
-            uint256 parValue,
-            uint256 paidInDeadline,
-            uint256 issueDate,
-            uint256 issuePrice,
-            uint256 obtainedDate,
-            uint256 obtainedPrice,
-            uint256 paidInDate,
-            uint256 paidInAmount,
-            uint8 state
-        )
-    {
-        return _getShare(shareNumber);
-    }
-
-    function getRegCap() external view returns (uint256) {
-        return _getRegCap();
-    }
-
-    function getPaidInCap() external view returns (uint256) {
-        return _getPaidInCap();
-    }
-
-    function getShareNumberList() external view returns (uint256[]) {
-        return _getShareNumberList();
-    }
-
-    function getQtyOfShares() external view returns (uint256) {
-        return _getQtyOfShares();
-    }
-
-    function isMember(address acct) external view returns (bool) {
-        return _isMember(acct);
-    }
-
     function getMember(address acct)
         external
         view
@@ -327,29 +272,5 @@ contract BookOfShares is IBookOfShares, MembersRepo {
         )
     {
         return _getMember(acct);
-    }
-
-    function getMemberList() external view returns (address[] memberAcctList) {
-        return _getMemberList();
-    }
-
-    function getQtyOfMembers() external view returns (uint256 qtyOfMembers) {
-        return _getQtyOfMembers();
-    }
-
-    function getClassMembers(uint8 class)
-        external
-        view
-        returns (address[] classMembers)
-    {
-        return _getClassMembers(class);
-    }
-
-    function getClassShares(uint8 class)
-        external
-        view
-        returns (uint256[] classShares)
-    {
-        return _getClassShares(class);
     }
 }

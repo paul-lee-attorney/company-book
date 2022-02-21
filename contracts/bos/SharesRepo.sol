@@ -31,25 +31,25 @@ contract SharesRepo is AdminSetting {
     }
 
     //注册资本总额
-    uint256 private _regCap;
+    uint256 public regCap;
 
     //实缴出资总额
-    uint256 private _paidInCap;
+    uint256 public paidInCap;
 
     //shareNumber => Share
     mapping(uint256 => Share) private _shares;
 
     //shareNumber => exist?
-    mapping(uint256 => bool) private _isShareNum;
+    mapping(uint256 => bool) public shareExist;
 
     //股票编号数组
-    uint256[] private _shareList;
+    uint256[] public sharesList;
 
     //股份类别 => 股东地址
-    mapping(uint8 => address[]) private _membersOfClass;
+    mapping(uint8 => address[]) public membersOfClass;
 
     //股份类别 => 股份编号
-    mapping(uint8 => uint256[]) private _sharesOfClass;
+    mapping(uint8 => uint256[]) public sharesOfClass;
 
     //##################
     //##    Event     ##
@@ -112,12 +112,12 @@ contract SharesRepo is AdminSetting {
     }
 
     modifier shareNumberNotUsed(uint256 shareNumber) {
-        require(!_isShareNum[shareNumber], "shareNumber has been used");
+        require(!shareExist[shareNumber], "shareNumber has been used");
         _;
     }
 
     modifier onlyExistShare(uint256 shareNumber) {
-        require(_isShareNum[shareNumber], "shareNumber NOT exist");
+        require(shareExist[shareNumber], "shareNumber NOT exist");
         _;
     }
 
@@ -194,13 +194,13 @@ contract SharesRepo is AdminSetting {
         share.paidInAmount = paidInAmount > 0 ? paidInAmount : 0;
         share.state = state > 0 ? state : 0;
 
-        _isShareNum[shareNumber] = true;
-        _shareList.push(shareNumber);
+        shareExist[shareNumber] = true;
+        sharesList.push(shareNumber);
 
-        _membersOfClass[class].addValue(shareholder);
-        _sharesOfClass[class].push(shareNumber);
+        membersOfClass[class].addValue(shareholder);
+        sharesOfClass[class].push(shareNumber);
 
-        emit IssueShare(shareNumber, parValue, paidInAmount, _shareList.length);
+        emit IssueShare(shareNumber, parValue, paidInAmount, sharesList.length);
     }
 
     function _splitShare(
@@ -238,17 +238,17 @@ contract SharesRepo is AdminSetting {
         newShare.paidInAmount = paidInAmount;
         newShare.state = share.state;
 
-        _isShareNum[newShareNumber] = true;
-        _shareList.push(newShareNumber);
+        shareExist[newShareNumber] = true;
+        sharesList.push(newShareNumber);
 
-        _membersOfClass[share.class].addValue(newShareholder);
-        _sharesOfClass[share.class].push(newShareNumber);
+        membersOfClass[share.class].addValue(newShareholder);
+        sharesOfClass[share.class].push(newShareNumber);
 
         emit IssueShare(
             newShareNumber,
             parValue,
             paidInAmount,
-            _shareList.length
+            sharesList.length
         );
     }
 
@@ -256,24 +256,24 @@ contract SharesRepo is AdminSetting {
         uint8 class = _shares[shareNumber].class;
         address shareholder = _shares[shareNumber].shareholder;
 
-        _sharesOfClass[class].removeByValue(shareNumber);
+        sharesOfClass[class].removeByValue(shareNumber);
 
         bool flag;
 
-        for (uint8 i = 0; i < _sharesOfClass[class].length; i++) {
-            if (_shares[_sharesOfClass[class][i]].shareholder == shareholder) {
+        for (uint8 i = 0; i < sharesOfClass[class].length; i++) {
+            if (_shares[sharesOfClass[class][i]].shareholder == shareholder) {
                 flag = true;
                 break;
             }
         }
 
-        if (!flag) _membersOfClass[class].removeByValue(shareholder);
+        if (!flag) membersOfClass[class].removeByValue(shareholder);
 
         delete _shares[shareNumber];
-        _shareList.removeByValue(shareNumber);
-        _isShareNum[shareNumber] = false;
+        sharesList.removeByValue(shareNumber);
+        shareExist[shareNumber] = false;
 
-        emit DeregisterShare(shareNumber, _shareList.length);
+        emit DeregisterShare(shareNumber, sharesList.length);
     }
 
     function _payInCapital(
@@ -320,20 +320,20 @@ contract SharesRepo is AdminSetting {
         internal
         onlyBookeeper
     {
-        _regCap = _regCap.add(parValue);
-        _paidInCap = _paidInCap.add(paidInAmount);
+        regCap = regCap.add(parValue);
+        paidInCap = paidInCap.add(paidInAmount);
 
-        emit CapIncrease(parValue, _regCap, paidInAmount, _paidInCap);
+        emit CapIncrease(parValue, regCap, paidInAmount, paidInCap);
     }
 
     function _capDecrease(uint256 parValue, uint256 paidInAmount)
         internal
         onlyBookeeper
     {
-        _regCap -= parValue;
-        _paidInCap -= paidInAmount;
+        regCap -= parValue;
+        paidInCap -= paidInAmount;
 
-        emit CapDecrease(parValue, _regCap, paidInAmount, _paidInCap);
+        emit CapDecrease(parValue, regCap, paidInAmount, paidInCap);
     }
 
     function _updateShareState(uint256 shareNumber, uint8 state)
@@ -360,12 +360,8 @@ contract SharesRepo is AdminSetting {
     //##    读接口    ##
     //##################
 
-    function _shareExist(uint256 shareNumber) internal view returns (bool) {
-        return _isShareNum[shareNumber];
-    }
-
-    function _getShare(uint256 shareNumber)
-        internal
+    function getShare(uint256 shareNumber)
+        public
         view
         onlyExistShare(shareNumber)
         returns (
@@ -394,32 +390,5 @@ contract SharesRepo is AdminSetting {
         paidInDate = share.paidInDate;
         paidInAmount = share.paidInAmount;
         state = share.state;
-    }
-
-    function _getRegCap() internal view returns (uint256) {
-        return _regCap;
-    }
-
-    function _getPaidInCap() internal view returns (uint256) {
-        return _paidInCap;
-    }
-
-    function _getShareNumberList() internal view returns (uint256[]) {
-        // require(_shareList.length > 0, "发行股份数量为0");
-        return _shareList;
-    }
-
-    function _getQtyOfShares() internal view returns (uint256) {
-        return _shareList.length;
-    }
-
-    function _getClassMembers(uint8 class) internal view returns (address[]) {
-        // require(_shareList.length > 0, "发行股份数量为0");
-        return _membersOfClass[class];
-    }
-
-    function _getClassShares(uint8 class) internal view returns (uint256[]) {
-        // require(_shareList.length > 0, "发行股份数量为0");
-        return _sharesOfClass[class];
     }
 }

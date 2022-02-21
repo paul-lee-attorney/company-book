@@ -212,7 +212,7 @@ contract AntiDilution is BOSSetting, BOMSetting, DraftSetting {
         uint8 i = _qtyOfMarks;
 
         while (i > 0 && _benchmarks[_classRanked[i - 1]].price > price) {
-            address[] memory classMember = _bos.getClassMembers(
+            address[] memory classMember = _bos.membersOfClass(
                 _classRanked[i - 1]
             );
 

@@ -219,16 +219,14 @@ contract BookOfMotions is IBookOfMotions, EnumsRepo, BOSSetting, BOHSetting {
             votingType
         );
 
-        totalHead = _bos.getQtyOfMembers();
+        totalHead = _bos.membersList().length;
 
-        totalAmt = rules.basedOnParValue()
-            ? _bos.getRegCap()
-            : _bos.getPaidInCap();
+        totalAmt = rules.basedOnParValue() ? _bos.regCap() : _bos.paidInCap();
 
         if (impliedConsent) {
             motion.supportPar += (totalAmt - motion.votedPar);
 
-            address[] memory members = _bos.getMemberList();
+            address[] memory members = _bos.membersList();
             for (uint8 i = 0; i < members.length; i++) {
                 if (!motion.voted[members[i]])
                     motion.membersOfYea.push(members[i]);

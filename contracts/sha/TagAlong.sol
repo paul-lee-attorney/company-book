@@ -259,7 +259,7 @@ contract TagAlong is BOSSetting, BOMSetting, DraftSetting {
         }
 
         shareRatio = parValue[dragerID - 1].sub(parToSell).mul(10000).div(
-            _bos.getRegCap()
+            _bos.regCap()
         );
 
         biggest = true;

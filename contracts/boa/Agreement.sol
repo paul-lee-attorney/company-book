@@ -4,8 +4,6 @@
 
 pragma solidity ^0.4.24;
 
-// import "../interfaces/IAgreement.sol";
-
 import "../config/BOSSetting.sol";
 
 import "../lib/SafeMath.sol";
@@ -201,7 +199,7 @@ contract Agreement is BOSSetting, SigPage {
     {
         uint8 i = 0;
         bool allMembersIn;
-        uint8[3] storage signal;
+        uint8[3] memory signal;
 
         for (; i < _qtyOfDeals; i++) {
             Deal storage deal = _deals[i];

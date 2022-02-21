@@ -228,13 +228,13 @@ contract Bookeeper is
         (
             uint256 shareNumber,
             uint8 class,
-            address seller,
+            ,
             address buyer,
             uint256 unitPrice,
             uint256 parValue,
             uint256 paidInAmount,
             ,
-            uint8 typeOfDeal,
+            ,
             ,
 
         ) = IAgreement(ia).getDeal(sn);

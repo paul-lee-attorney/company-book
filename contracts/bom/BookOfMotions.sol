@@ -49,53 +49,59 @@ contract BookOfMotions is IBookOfMotions, EnumsRepo, BOSSetting, BOHSetting {
     modifier onlyAdminOf(address body) {
         require(
             IAdminSetting(body).getAdmin() == msg.sender,
-            "仅文件 管理员 可操作"
+            "NOT Admin of DOC"
         );
         _;
     }
 
     modifier notInternalST(address body) {
-        require(IAgreement(body).getTypeOfIA() != 3, "无需表决");
+        require(IAgreement(body).getTypeOfIA() != 3, "NOT need to vote");
         _;
     }
 
     modifier notProposed(address ia) {
-        require(!_proposed[ia], "投资协议 已提案");
+        require(!_proposed[ia], "IA has been proposed");
         _;
     }
 
     modifier onlyProposed(address ia) {
-        require(_proposed[ia], "投资协议 未提案");
+        require(_proposed[ia], "IA is NOT proposed");
         _;
     }
 
     modifier onlyOnVoting(address ia) {
-        require(_iaToMotion[ia].state == 1, "动议 已唱票");
+        require(_iaToMotion[ia].state == 1, "Motion already voted");
         _;
     }
 
     modifier beforeExpire(address ia) {
-        require(now <= _iaToMotion[ia].votingDeadline, "已过截止期");
+        require(
+            now <= _iaToMotion[ia].votingDeadline,
+            "missed voting deadline"
+        );
         _;
     }
 
     modifier afterExpire(address ia) {
-        require(now > _iaToMotion[ia].votingDeadline, "表决期间尚未届满");
+        require(
+            now > _iaToMotion[ia].votingDeadline,
+            "voting deadline NOT reached"
+        );
         _;
     }
 
     modifier onlyVotedTo(address ia) {
-        require(_iaToMotion[ia].voted[msg.sender], "没投过票");
+        require(_iaToMotion[ia].voted[msg.sender], "NOT voted for the IA");
         _;
     }
 
     modifier notVotedTo(address ia) {
-        require(!_iaToMotion[ia].voted[msg.sender], "已投过票");
+        require(!_iaToMotion[ia].voted[msg.sender], "HAVE voted for the IA");
         _;
     }
 
     modifier onlyPartyOfIA(address ia) {
-        require(ISigPage(ia).isParty(msg.sender), "只有当事方可操作");
+        require(ISigPage(ia).isParty(msg.sender), "NOT a Party to the IA");
         _;
     }
 

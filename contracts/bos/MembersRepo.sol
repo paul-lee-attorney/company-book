@@ -55,7 +55,12 @@ contract MembersRepo is SharesRepo {
     //##################
 
     modifier onlyMember() {
-        require(_isMemberAdd[msg.sender], "仅 股东 可操作");
+        require(_isMemberAdd[msg.sender], "NOT Member");
+        _;
+    }
+
+    modifier beMember(address acct) {
+        require(_isMemberAdd[acct], "Acct is NOT Member");
         _;
     }
 
@@ -71,7 +76,10 @@ contract MembersRepo is SharesRepo {
         (bool exist, ) = _memberList.firstIndexOf(acct);
 
         if (!exist) {
-            require(_memberList.length < _maxQtyOfMembers, "股东人数溢出");
+            require(
+                _memberList.length < _maxQtyOfMembers,
+                "Qty of Members overflow"
+            );
 
             _memberList.push(acct);
             _isMemberAdd[acct] = true;
@@ -144,19 +152,20 @@ contract MembersRepo is SharesRepo {
     function _getMember(address acct)
         internal
         view
+        beMember(acct)
         returns (
             uint256[],
             uint256,
             uint256
         )
     {
-        require(_isMemberAdd[acct], "目标股东不存在");
+        // require(_isMemberAdd[acct], "Acct is NOT a Member");
         Member storage member = _members[acct];
         return (member.sharesInHand, member.regCap, member.paidInCap);
     }
 
     function _getMemberList() internal view returns (address[]) {
-        require(_memberList.length > 0, "股东人数为0");
+        // require(_memberList.length > 0, "Qty of Members is Zero");
         return _memberList;
     }
 

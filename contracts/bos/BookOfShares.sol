@@ -86,7 +86,7 @@ contract BookOfShares is IBookOfShares, MembersRepo {
         // 股票编号计数器顺加“1”
         _counterOfShare = _counterOfShare.add(1);
 
-        require(class <= _counterOfClass, "股份类别超限");
+        require(class <= _counterOfClass, "class overflow");
         if (class == _counterOfClass) _counterOfClass = _counterOfClass.add8(1);
 
         // 向《股东名册》的“股东”名下添加新股票
@@ -147,7 +147,7 @@ contract BookOfShares is IBookOfShares, MembersRepo {
         address to,
         uint256 closingDate,
         uint256 unitPrice
-    ) external onlyNormal(shareNumber) onlyBookeeper {
+    ) external onlyNormalState(shareNumber) onlyBookeeper {
         // 减少拟出让股票认缴和实缴金额
         _decreaseShareAmount(shareNumber, parValue, paidInAmount);
 
@@ -193,7 +193,7 @@ contract BookOfShares is IBookOfShares, MembersRepo {
         uint256 shareNumber,
         uint256 parValue,
         uint256 paidInAmount
-    ) private onlyNormal(shareNumber) onlyBookeeper {
+    ) private onlyNormalState(shareNumber) onlyBookeeper {
         (
             address shareholder,
             ,
@@ -208,10 +208,8 @@ contract BookOfShares is IBookOfShares, MembersRepo {
 
         ) = _getShare(shareNumber);
 
-        require(
-            parValue > 0 && parValue <= orgParValue,
-            "拟转让 “认缴出资” 溢出或标的股权不存在"
-        );
+        require(parValue > 0, "parValue is Zero");
+        require(parValue <= orgParValue, "parValue overflow");
 
         // 若拟降低的面值金额等于股票面值，则删除相关股票
         if (parValue == orgParValue) {

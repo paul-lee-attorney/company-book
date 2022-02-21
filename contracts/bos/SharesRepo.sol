@@ -101,9 +101,51 @@ contract SharesRepo is AdminSetting {
     //##   Modifier   ##
     //##################
 
-    modifier onlyNormal(uint256 shareNumber) {
-        Share storage share = _shares[shareNumber];
-        require(share.state == 0, "股权 状态错误");
+    modifier onlyNormalState(uint256 shareNumber) {
+        require(_shares[shareNumber].state == 0, "state of Share ABNORMAL");
+        _;
+    }
+
+    modifier numberNotZero(uint256 number) {
+        require(number != 0, "number is Zero");
+        _;
+    }
+
+    modifier shareNumberNotUsed(uint256 shareNumber) {
+        require(!_isShareNum[shareNumber], "shareNumber has been used");
+        _;
+    }
+
+    modifier onlyExistShare(uint256 shareNumber) {
+        require(_isShareNum[shareNumber], "shareNumber NOT exist");
+        _;
+    }
+
+    modifier addressNotZero(address acct) {
+        require(acct != address(0), "acct address is Zero");
+        _;
+    }
+
+    modifier onlyPastTime(uint256 time) {
+        require(time <= now + 2 hours, "NOT past time");
+        _;
+    }
+
+    modifier notLaterThan(uint256 date1, uint256 date2) {
+        require(date1 <= date2, "date1 LATER than date2");
+        _;
+    }
+
+    modifier laterOrZero(uint256 date1, uint256 date2) {
+        require(
+            date2 == 0 || date1 <= date2,
+            "date2 EARLY than date1 but NOT Zero"
+        );
+        _;
+    }
+
+    modifier notBiggerThan(uint256 amount1, uint256 amount2) {
+        require(amount1 <= amount2, "amount1 BIGGER than amount2");
         _;
     }
 
@@ -124,27 +166,19 @@ contract SharesRepo is AdminSetting {
         uint256 paidInDate,
         uint256 paidInAmount,
         uint8 state
-    ) internal onlyBookeeper {
-        require(shareNumber != 0, "股票编号 不能为 0 ");
-        require(!_isShareNum[shareNumber], "股票编号 已经存在");
-
-        require(shareholder != address(0), "股东地址不能为 0 ");
-
-        require(issueDate <= now + 2 hours, "发行日不能晚于当前时间+2小时");
-        require(issueDate <= paidInDeadline, "出资截止日不能早于股权发行日");
-        require(
-            obtainedDate == 0 || issueDate <= obtainedDate,
-            "股权取得日不能早于发行日"
-        );
-
-        require(
-            paidInDate == 0 || issueDate <= paidInDate,
-            "实缴出资日不能早于股权发行日"
-        );
-        require(paidInDate <= paidInDeadline, "实缴出资日不能晚于出资截止日");
-
-        require(paidInAmount <= parValue, "实缴出资不能超过认缴出资");
-
+    )
+        internal
+        onlyBookeeper
+        numberNotZero(shareNumber)
+        shareNumberNotUsed(shareNumber)
+        addressNotZero(shareholder)
+        onlyPastTime(issueDate)
+        notLaterThan(issueDate, paidInDeadline)
+        notLaterThan(paidInDate, paidInDeadline)
+        laterOrZero(issueDate, obtainedDate)
+        laterOrZero(issueDate, paidInDate)
+        notBiggerThan(paidInAmount, parValue)
+    {
         Share storage share = _shares[shareNumber];
 
         share.shareNumber = shareNumber;
@@ -177,21 +211,17 @@ contract SharesRepo is AdminSetting {
         uint256 splitDate,
         uint256 transferPrice,
         uint256 paidInAmount
-    ) internal onlyBookeeper {
-        require(newShareNumber != 0, "新股票编号 不能为 0");
-        require(!_isShareNum[newShareNumber], "股票编号 已经存在");
-
-        require(newShareholder != address(0), "股东地址不能为 0 ");
-        require(splitDate <= now + 2 hours, "发行日不能晚于当前时间+2小时");
-
-        require(paidInAmount <= parValue, "实缴出资不能超过认缴出资");
-
+    )
+        internal
+        onlyBookeeper
+        numberNotZero(newShareNumber)
+        shareNumberNotUsed(newShareNumber)
+        addressNotZero(newShareholder)
+        onlyPastTime(splitDate)
+        laterOrZero(_shares[shareNumber].issueDate, splitDate)
+        notBiggerThan(paidInAmount, parValue)
+    {
         Share storage share = _shares[shareNumber];
-
-        require(
-            splitDate == 0 || share.issueDate <= splitDate,
-            "股权取得日不能早于发行日"
-        );
 
         Share storage newShare = _shares[newShareNumber];
 
@@ -250,22 +280,17 @@ contract SharesRepo is AdminSetting {
         uint256 shareNumber,
         uint256 amount,
         uint256 paidInDate
-    ) internal onlyBookeeper {
-        require(
-            paidInDate == 0 || paidInDate <= now + 2 hours,
-            "实缴日期不能晚于当前时间+2小时"
-        );
-
+    )
+        internal
+        onlyBookeeper
+        onlyPastTime(paidInDate)
+        notLaterThan(paidInDate, _shares[shareNumber].paidInDeadline)
+        notBiggerThan(
+            _shares[shareNumber].paidInAmount.add(amount),
+            _shares[shareNumber].parValue
+        )
+    {
         Share storage share = _shares[shareNumber];
-
-        require(
-            paidInDate == 0 || paidInDate <= share.paidInDeadline,
-            "实缴日期晚于截止日"
-        );
-        require(
-            share.paidInAmount.add(amount) <= share.parValue,
-            "实缴资金超出认缴总额"
-        );
 
         share.paidInAmount += amount; //溢出校验已通过
         share.paidInDate = paidInDate > 0 ? paidInDate : now;
@@ -277,13 +302,13 @@ contract SharesRepo is AdminSetting {
         uint256 shareNumber,
         uint256 parValue,
         uint256 paidInAmount
-    ) internal onlyBookeeper {
+    )
+        internal
+        onlyBookeeper
+        notBiggerThan(paidInAmount, parValue)
+        notBiggerThan(paidInAmount, _shares[shareNumber].paidInAmount)
+    {
         Share storage share = _shares[shareNumber];
-
-        require(
-            paidInAmount <= parValue && paidInAmount <= share.paidInAmount,
-            "拟转让 “实缴出资” 金额溢出"
-        );
 
         share.parValue -= parValue;
         share.paidInAmount -= paidInAmount;
@@ -314,9 +339,8 @@ contract SharesRepo is AdminSetting {
     function _updateShareState(uint256 shareNumber, uint8 state)
         internal
         onlyBookeeper
+        onlyExistShare(shareNumber)
     {
-        require(_isShareNum[shareNumber], "标的股权不存在");
-
         _shares[shareNumber].state = state;
 
         emit UpdateShareState(shareNumber, state);
@@ -325,9 +349,8 @@ contract SharesRepo is AdminSetting {
     function _updatePaidInDeadline(uint256 shareNumber, uint256 paidInDeadline)
         internal
         onlyBookeeper
+        onlyExistShare(shareNumber)
     {
-        require(_isShareNum[shareNumber], "标的股权不存在");
-
         _shares[shareNumber].paidInDeadline = paidInDeadline;
 
         emit UpdatePaidInDeadline(shareNumber, paidInDeadline);
@@ -344,6 +367,7 @@ contract SharesRepo is AdminSetting {
     function _getShare(uint256 shareNumber)
         internal
         view
+        onlyExistShare(shareNumber)
         returns (
             address shareholder,
             uint8 class,
@@ -358,8 +382,6 @@ contract SharesRepo is AdminSetting {
             uint8 state
         )
     {
-        require(_isShareNum[shareNumber], "目标股权不存在");
-
         Share storage share = _shares[shareNumber];
         shareholder = share.shareholder;
         class = share.class;
@@ -383,7 +405,7 @@ contract SharesRepo is AdminSetting {
     }
 
     function _getShareNumberList() internal view returns (uint256[]) {
-        require(_shareList.length > 0, "发行股份数量为0");
+        // require(_shareList.length > 0, "发行股份数量为0");
         return _shareList;
     }
 
@@ -392,12 +414,12 @@ contract SharesRepo is AdminSetting {
     }
 
     function _getClassMembers(uint8 class) internal view returns (address[]) {
-        require(_shareList.length > 0, "发行股份数量为0");
+        // require(_shareList.length > 0, "发行股份数量为0");
         return _membersOfClass[class];
     }
 
     function _getClassShares(uint8 class) internal view returns (uint256[]) {
-        require(_shareList.length > 0, "发行股份数量为0");
+        // require(_shareList.length > 0, "发行股份数量为0");
         return _sharesOfClass[class];
     }
 }

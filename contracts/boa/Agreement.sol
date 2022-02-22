@@ -129,13 +129,10 @@ contract Agreement is BOSSetting, SigPage {
                 address shareholder,
                 ,
                 uint256 parValueOfShare,
-                ,
-                ,
-                ,
-                ,
-                ,
-                ,
                 uint256 paidInAmountOfShare,
+                ,
+                ,
+                ,
 
             ) = _bos.getShare(shareNumber);
             require(shareholder == seller, "seller is not shareholder");

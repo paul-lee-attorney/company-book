@@ -4,7 +4,7 @@ const BOS = artifacts.require("BookOfShares");
 const BOA = artifacts.require("BookOfDocuments");
 const BOH = artifacts.require("BookOfDocuments");
 const BOM = artifacts.require("BookOfMotions");
-const Bookkeeper = artifacts.require("Bookkeeper");
+const Bookeeper = artifacts.require("Bookeeper");
 
 module.exports = async function (deployer, network, accounts) {
 
@@ -33,18 +33,18 @@ module.exports = async function (deployer, network, accounts) {
     await bom.setBOH(boh.address);
     await bom.setBOS(bos.address);
 
-    await deployer.deploy(Bookkeeper, accounts[0]);
-    let bookkeeper = await Bookkeeper.deployed();
+    await deployer.deploy(Bookeeper, accounts[0]);
+    let bookeeper = await Bookeeper.deployed();
 
-    await bookkeeper.setBOS(bos.address);
-    await bookkeeper.setBOA(boa.address);
-    await bookkeeper.setBOH(boh.address);
-    await bookkeeper.setBOM(bom.address);
+    await bookeeper.setBOS(bos.address);
+    await bookeeper.setBOA(boa.address);
+    await bookeeper.setBOH(boh.address);
+    await bookeeper.setBOM(bom.address);
 
-    await bos.setBookkeeper(bookkeeper.address);
-    await boa.setBookkeeper(bookkeeper.address);
-    await boh.setBookkeeper(bookkeeper.address);
-    await bom.setBookkeeper(bookkeeper.address);
+    await bos.setBookeeper(bookeeper.address);
+    await boa.setBookeeper(bookeeper.address);
+    await boh.setBookeeper(bookeeper.address);
+    await bom.setBookeeper(bookeeper.address);
 
-    await bookkeeper.setBookkeeper(accounts[1]);
+    await bookeeper.setBookeeper(accounts[1]);
 };

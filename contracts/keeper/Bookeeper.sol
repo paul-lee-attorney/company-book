@@ -75,7 +75,7 @@ contract Bookeeper is
         external
         onlyBookeeper
     {
-        IAdminSetting(book).setBookkeeper(bookeeper);
+        IAdminSetting(book).setBookeeper(bookeeper);
     }
 
     // #############
@@ -266,14 +266,10 @@ contract Bookeeper is
                 buyer,
                 class,
                 parValue,
+                paidInAmount,
                 closingDate, //paidInDeadline
                 closingDate, //issueDate
-                unitPrice, //issuePrice
-                closingDate, //obtainedDate
-                unitPrice, //obtainedPrice
-                paidInDate,
-                paidInAmount,
-                0 //state
+                unitPrice //issuePrice
             );
         }
 

@@ -80,12 +80,12 @@ contract SigPage is DraftSetting {
     }
 
     modifier onlyParty() {
-        require(_isParty[msg.sender], "msg.sender not Party");
+        require(_isParty[msg.sender], "msg.sender NOT Party");
         _;
     }
 
     modifier beParty(address acct) {
-        require(_isParty[acct], "acct not Party");
+        require(_isParty[acct], "acct NOT Party");
         _;
     }
 
@@ -96,7 +96,7 @@ contract SigPage is DraftSetting {
                 sender == getAttorney() ||
                 sender == getAdmin() ||
                 sender == getBookeeper(),
-            "msg.sender not interested Party"
+            "msg.sender NOT interested Party"
         );
         _;
     }

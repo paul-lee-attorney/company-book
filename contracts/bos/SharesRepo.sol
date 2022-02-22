@@ -20,36 +20,33 @@ contract SharesRepo is AdminSetting {
         address shareholder; //股东地址
         uint8 class; //股份类别（投资轮次）
         uint256 parValue; //票面金额（注册资本面值）
+        uint256 paidInAmount; //实缴金额
         uint256 paidInDeadline; //出资期限（时间戳）
         uint256 issueDate; //发行日期（时间戳）
-        uint256 issuePrice; //发行价格（最小单位为分）
-        uint256 obtainedDate; //取得日期（时间戳）
-        uint256 obtainedPrice; //获取价格
-        uint256 paidInDate; //实缴日期
-        uint256 paidInAmount; //实缴金额
+        uint256 unitPrice; //发行价格（最小单位为分）
         uint8 state; //股票状态
     }
 
     //注册资本总额
-    uint256 public regCap;
+    uint256 private _regCap;
 
     //实缴出资总额
-    uint256 public paidInCap;
+    uint256 private _paidInCap;
 
     //shareNumber => Share
     mapping(uint256 => Share) private _shares;
 
     //shareNumber => exist?
-    mapping(uint256 => bool) public shareExist;
+    mapping(uint256 => bool) private _shareExist;
 
     //股票编号数组
-    uint256[] public sharesList;
+    uint256[] private _sharesList;
 
     //股份类别 => 股东地址
-    mapping(uint8 => address[]) public membersOfClass;
+    mapping(uint8 => address[]) private _membersOfClass;
 
     //股份类别 => 股份编号
-    mapping(uint8 => uint256[]) public sharesOfClass;
+    mapping(uint8 => uint256[]) private _sharesOfClass;
 
     //##################
     //##    Event     ##
@@ -57,9 +54,11 @@ contract SharesRepo is AdminSetting {
 
     event IssueShare(
         uint256 indexed shareNumber,
+        address shareholder,
         uint256 parValue,
         uint256 paidInAmount,
-        uint256 qtyOfShares
+        uint256 issueDate,
+        uint256 unitPrice
     );
 
     event PayInCapital(
@@ -83,12 +82,12 @@ contract SharesRepo is AdminSetting {
 
     event CapDecrease(
         uint256 parValue,
-        uint256 regCap,
+        uint256 _regCap,
         uint256 paidInAmount,
         uint256 paidInCap
     );
 
-    event DeregisterShare(uint256 indexed shareNumber, uint256 qtyOfShares);
+    event DeregisterShare(uint256 indexed shareNumber);
 
     event UpdateShareState(uint256 indexed shareNumber, uint8 state);
 
@@ -106,46 +105,8 @@ contract SharesRepo is AdminSetting {
         _;
     }
 
-    modifier numberNotZero(uint256 number) {
-        require(number != 0, "number is Zero");
-        _;
-    }
-
-    modifier shareNumberNotUsed(uint256 shareNumber) {
-        require(!shareExist[shareNumber], "shareNumber has been used");
-        _;
-    }
-
     modifier onlyExistShare(uint256 shareNumber) {
-        require(shareExist[shareNumber], "shareNumber NOT exist");
-        _;
-    }
-
-    modifier addressNotZero(address acct) {
-        require(acct != address(0), "acct address is Zero");
-        _;
-    }
-
-    modifier onlyPastTime(uint256 time) {
-        require(time <= now + 2 hours, "NOT past time");
-        _;
-    }
-
-    modifier notLaterThan(uint256 date1, uint256 date2) {
-        require(date1 <= date2, "date1 LATER than date2");
-        _;
-    }
-
-    modifier laterOrZero(uint256 date1, uint256 date2) {
-        require(
-            date2 == 0 || date1 <= date2,
-            "date2 EARLY than date1 but NOT Zero"
-        );
-        _;
-    }
-
-    modifier notBiggerThan(uint256 amount1, uint256 amount2) {
-        require(amount1 <= amount2, "amount1 BIGGER than amount2");
+        require(_shareExist[shareNumber], "shareNumber NOT exist");
         _;
     }
 
@@ -158,49 +119,46 @@ contract SharesRepo is AdminSetting {
         address shareholder,
         uint8 class,
         uint256 parValue,
+        uint256 paidInAmount,
         uint256 paidInDeadline,
         uint256 issueDate,
-        uint256 issuePrice,
-        uint256 obtainedDate,
-        uint256 obtainedPrice,
-        uint256 paidInDate,
-        uint256 paidInAmount,
-        uint8 state
-    )
-        internal
-        onlyBookeeper
-        numberNotZero(shareNumber)
-        shareNumberNotUsed(shareNumber)
-        addressNotZero(shareholder)
-        onlyPastTime(issueDate)
-        notLaterThan(issueDate, paidInDeadline)
-        notLaterThan(paidInDate, paidInDeadline)
-        laterOrZero(issueDate, obtainedDate)
-        laterOrZero(issueDate, paidInDate)
-        notBiggerThan(paidInAmount, parValue)
-    {
+        uint256 unitPrice
+    ) internal onlyBookeeper {
+        require(shareNumber != 0, "shareNumber is ZERO");
+        require(!_shareExist[shareNumber], "shareNumber is USED");
+        require(shareholder != address(0), "shareholder address is ZERO");
+        require(issueDate <= now + 2 hours, "issueDate NOT a PAST time");
+        require(
+            issueDate <= paidInDeadline,
+            "issueDate LATER than paidInDeadline"
+        );
+        require(paidInAmount <= parValue, "paidInAmount BIGGER than parValue");
+
         Share storage share = _shares[shareNumber];
 
         share.shareNumber = shareNumber;
         share.shareholder = shareholder;
         share.class = class;
         share.parValue = parValue;
+        share.paidInAmount = paidInAmount > 0 ? paidInAmount : 0;
         share.paidInDeadline = paidInDeadline;
         share.issueDate = issueDate > 0 ? issueDate : now;
-        share.issuePrice = issuePrice > 0 ? issuePrice : 1;
-        share.obtainedDate = obtainedDate > 0 ? obtainedDate : issueDate;
-        share.obtainedPrice = obtainedPrice > 0 ? obtainedPrice : issuePrice;
-        share.paidInDate = paidInDate > 0 ? paidInDate : 0;
-        share.paidInAmount = paidInAmount > 0 ? paidInAmount : 0;
-        share.state = state > 0 ? state : 0;
+        share.unitPrice = unitPrice > 0 ? unitPrice : 1;
 
-        shareExist[shareNumber] = true;
-        sharesList.push(shareNumber);
+        _shareExist[shareNumber] = true;
+        _sharesList.push(shareNumber);
 
-        membersOfClass[class].addValue(shareholder);
-        sharesOfClass[class].push(shareNumber);
+        _membersOfClass[class].addValue(shareholder);
+        _sharesOfClass[class].push(shareNumber);
 
-        emit IssueShare(shareNumber, parValue, paidInAmount, sharesList.length);
+        emit IssueShare(
+            shareNumber,
+            shareholder,
+            parValue,
+            paidInAmount,
+            share.issueDate,
+            share.unitPrice
+        );
     }
 
     function _splitShare(
@@ -208,47 +166,45 @@ contract SharesRepo is AdminSetting {
         uint256 newShareNumber,
         address newShareholder,
         uint256 parValue,
+        uint256 paidInAmount,
         uint256 splitDate,
-        uint256 transferPrice,
-        uint256 paidInAmount
-    )
-        internal
-        onlyBookeeper
-        numberNotZero(newShareNumber)
-        shareNumberNotUsed(newShareNumber)
-        addressNotZero(newShareholder)
-        onlyPastTime(splitDate)
-        laterOrZero(_shares[shareNumber].issueDate, splitDate)
-        notBiggerThan(paidInAmount, parValue)
-    {
-        Share storage share = _shares[shareNumber];
+        uint256 transferPrice
+    ) internal onlyBookeeper {
+        require(newShareNumber != 0, "newShareNumber is ZERO");
+        require(!_shareExist[newShareNumber], "newShareNumber has been USED");
+        require(newShareholder != address(0), "newShareholder is ZERO");
+        require(splitDate <= now + 2 hours, "splitDate not a PAST time");
+        require(
+            splitDate == 0 || splitDate >= _shares[shareNumber].issueDate,
+            "splitDate EARLIER than issueDate"
+        );
+        require(paidInAmount <= parValue, "paidInAmount BIGGER than parValue");
 
+        Share storage share = _shares[shareNumber];
         Share storage newShare = _shares[newShareNumber];
 
         newShare.shareNumber = newShareNumber;
         newShare.shareholder = newShareholder;
         newShare.class = share.class;
         newShare.parValue = parValue;
-        newShare.paidInDeadline = share.paidInDeadline;
-        newShare.issueDate = share.issueDate;
-        newShare.issuePrice = share.issuePrice;
-        newShare.obtainedDate = splitDate > 0 ? splitDate : now;
-        newShare.obtainedPrice = transferPrice;
-        newShare.paidInDate = share.paidInDate;
         newShare.paidInAmount = paidInAmount;
-        newShare.state = share.state;
+        newShare.paidInDeadline = share.paidInDeadline;
+        newShare.issueDate = splitDate > 0 ? splitDate : now;
+        newShare.unitPrice = transferPrice;
 
-        shareExist[newShareNumber] = true;
-        sharesList.push(newShareNumber);
+        _shareExist[newShareNumber] = true;
+        _sharesList.push(newShareNumber);
 
-        membersOfClass[share.class].addValue(newShareholder);
-        sharesOfClass[share.class].push(newShareNumber);
+        _membersOfClass[share.class].addValue(newShareholder);
+        _sharesOfClass[share.class].push(newShareNumber);
 
         emit IssueShare(
             newShareNumber,
+            newShareholder,
             parValue,
             paidInAmount,
-            sharesList.length
+            newShare.issueDate,
+            transferPrice
         );
     }
 
@@ -256,59 +212,57 @@ contract SharesRepo is AdminSetting {
         uint8 class = _shares[shareNumber].class;
         address shareholder = _shares[shareNumber].shareholder;
 
-        sharesOfClass[class].removeByValue(shareNumber);
+        _sharesOfClass[class].removeByValue(shareNumber);
 
         bool flag;
 
-        for (uint8 i = 0; i < sharesOfClass[class].length; i++) {
-            if (_shares[sharesOfClass[class][i]].shareholder == shareholder) {
+        for (uint8 i = 0; i < _sharesOfClass[class].length; i++) {
+            if (_shares[_sharesOfClass[class][i]].shareholder == shareholder) {
                 flag = true;
                 break;
             }
         }
 
-        if (!flag) membersOfClass[class].removeByValue(shareholder);
+        if (!flag) _membersOfClass[class].removeByValue(shareholder);
 
         delete _shares[shareNumber];
-        sharesList.removeByValue(shareNumber);
-        shareExist[shareNumber] = false;
+        _sharesList.removeByValue(shareNumber);
+        _shareExist[shareNumber] = false;
 
-        emit DeregisterShare(shareNumber, sharesList.length);
+        emit DeregisterShare(shareNumber);
     }
 
     function _payInCapital(
         uint256 shareNumber,
         uint256 amount,
         uint256 paidInDate
-    )
-        internal
-        onlyBookeeper
-        onlyPastTime(paidInDate)
-        notLaterThan(paidInDate, _shares[shareNumber].paidInDeadline)
-        notBiggerThan(
-            _shares[shareNumber].paidInAmount.add(amount),
-            _shares[shareNumber].parValue
-        )
-    {
+    ) internal onlyBookeeper {
+        require(paidInDate <= now + 2 hours, "paidInDate NOT a PAST time");
+
         Share storage share = _shares[shareNumber];
 
-        share.paidInAmount += amount; //溢出校验已通过
-        share.paidInDate = paidInDate > 0 ? paidInDate : now;
+        require(paidInDate <= share.paidInDeadline);
+        require(
+            share.paidInAmount.add(amount) <= share.parValue,
+            "amount overflow"
+        );
 
-        emit PayInCapital(shareNumber, amount, share.paidInDate);
+        share.paidInAmount += amount; //溢出校验已通过
+        paidInDate = paidInDate > 0 ? paidInDate : now;
+
+        emit PayInCapital(shareNumber, amount, paidInDate);
     }
 
     function _subAmountFromShare(
         uint256 shareNumber,
         uint256 parValue,
         uint256 paidInAmount
-    )
-        internal
-        onlyBookeeper
-        notBiggerThan(paidInAmount, parValue)
-        notBiggerThan(paidInAmount, _shares[shareNumber].paidInAmount)
-    {
+    ) internal onlyBookeeper {
+        require(paidInAmount <= parValue, "paidInAmount BIGGER than parValue");
+
         Share storage share = _shares[shareNumber];
+
+        require(paidInAmount <= share.paidInAmount, "paidInAmount overflow");
 
         share.parValue -= parValue;
         share.paidInAmount -= paidInAmount;
@@ -320,20 +274,20 @@ contract SharesRepo is AdminSetting {
         internal
         onlyBookeeper
     {
-        regCap = regCap.add(parValue);
-        paidInCap = paidInCap.add(paidInAmount);
+        _regCap = _regCap.add(parValue);
+        _paidInCap = _paidInCap.add(paidInAmount);
 
-        emit CapIncrease(parValue, regCap, paidInAmount, paidInCap);
+        emit CapIncrease(parValue, _regCap, paidInAmount, _paidInCap);
     }
 
     function _capDecrease(uint256 parValue, uint256 paidInAmount)
         internal
         onlyBookeeper
     {
-        regCap -= parValue;
-        paidInCap -= paidInAmount;
+        _regCap -= parValue;
+        _paidInCap -= paidInAmount;
 
-        emit CapDecrease(parValue, regCap, paidInAmount, paidInCap);
+        emit CapDecrease(parValue, _regCap, paidInAmount, _paidInCap);
     }
 
     function _updateShareState(uint256 shareNumber, uint8 state)
@@ -360,6 +314,30 @@ contract SharesRepo is AdminSetting {
     //##    读接口    ##
     //##################
 
+    function regCap() public view returns (uint256) {
+        return _regCap;
+    }
+
+    function paidInCap() public view returns (uint256) {
+        return _paidInCap;
+    }
+
+    function shareExist(uint256 shareNumber) public view returns (bool) {
+        return _shareExist[shareNumber];
+    }
+
+    function sharesList() public view returns (uint256[]) {
+        return _sharesList;
+    }
+
+    function membersOfClass(uint8 class) public view returns (address[]) {
+        return _membersOfClass[class];
+    }
+
+    function sharesOfClass(uint8 class) public view returns (uint256[]) {
+        return _sharesOfClass[class];
+    }
+
     function getShare(uint256 shareNumber)
         public
         view
@@ -368,27 +346,22 @@ contract SharesRepo is AdminSetting {
             address shareholder,
             uint8 class,
             uint256 parValue,
+            uint256 paidInAmount,
             uint256 paidInDeadline,
             uint256 issueDate,
-            uint256 issuePrice,
-            uint256 obtainedDate,
-            uint256 obtainedPrice,
-            uint256 paidInDate,
-            uint256 paidInAmount,
+            uint256 unitPrice,
             uint8 state
         )
     {
         Share storage share = _shares[shareNumber];
+
         shareholder = share.shareholder;
         class = share.class;
         parValue = share.parValue;
+        paidInAmount = share.paidInAmount;
         paidInDeadline = share.paidInAmount;
         issueDate = share.issueDate;
-        issuePrice = share.issuePrice;
-        obtainedDate = share.obtainedDate;
-        obtainedPrice = share.obtainedPrice;
-        paidInDate = share.paidInDate;
-        paidInAmount = share.paidInAmount;
+        unitPrice = share.unitPrice;
         state = share.state;
     }
 }

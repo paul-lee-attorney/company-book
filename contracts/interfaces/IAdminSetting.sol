@@ -9,7 +9,7 @@ interface IAdminSetting {
     // ##   Event      ##
     // ##################
 
-    event Init(address indexed admin, address indexed book);
+    event Init(address indexed admin, address indexed bookeeper);
 
     event TakeoverAdmin(address indexed admin);
 
@@ -31,7 +31,7 @@ interface IAdminSetting {
 
     function abandonAdmin() external;
 
-    function setBookkeeper(address bookeeper) external;
+    function setBookeeper(address bookeeper) external;
 
     // ##################
     // ##   查询端口   ##

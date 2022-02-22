@@ -24,10 +24,10 @@ contract MembersRepo is SharesRepo {
     // 账号 => 股东 映射
     mapping(address => Member) private _members;
 
-    mapping(address => bool) public isMember;
+    mapping(address => bool) private _isMember;
 
     // 股东名册
-    address[] public membersList;
+    address[] private _membersList;
 
     uint8 private _maxQtyOfMembers;
 
@@ -58,12 +58,12 @@ contract MembersRepo is SharesRepo {
     //##################
 
     modifier onlyMember() {
-        require(isMember[msg.sender], "NOT Member");
+        require(_isMember[msg.sender], "NOT Member");
         _;
     }
 
     modifier beMember(address acct) {
-        require(isMember[acct], "Acct is NOT Member");
+        require(_isMember[acct], "Acct is NOT Member");
         _;
     }
 
@@ -81,18 +81,18 @@ contract MembersRepo is SharesRepo {
     }
 
     function _addMember(address acct) internal onlyBookeeper {
-        (bool exist, ) = membersList.firstIndexOf(acct);
+        (bool exist, ) = _membersList.firstIndexOf(acct);
 
         if (!exist) {
             require(
-                membersList.length < _maxQtyOfMembers,
+                _membersList.length < _maxQtyOfMembers,
                 "Qty of Members overflow"
             );
 
-            membersList.push(acct);
-            isMember[acct] = true;
+            _membersList.push(acct);
+            _isMember[acct] = true;
 
-            emit AddMember(acct, membersList.length);
+            emit AddMember(acct, _membersList.length);
         }
     }
 
@@ -137,10 +137,10 @@ contract MembersRepo is SharesRepo {
     ) internal onlyBookeeper {
         if (_members[acct].regCap == parValue) {
             delete _members[acct];
-            membersList.removeByValue(acct);
-            isMember[acct] = false;
+            _membersList.removeByValue(acct);
+            _isMember[acct] = false;
 
-            emit RemoveMember(acct, membersList.length);
+            emit RemoveMember(acct, _membersList.length);
         } else {
             _subAmountFromMember(acct, parValue, paidInAmount);
             _members[acct].sharesInHand.removeByValue(shareNumber);
@@ -153,17 +153,28 @@ contract MembersRepo is SharesRepo {
     //##   查询接口   ##
     //##################
 
-    function _getMember(address acct)
-        internal
+    function isMember(address acct) public view returns (bool) {
+        return _isMember[acct];
+    }
+
+    function membersList() external view returns (address[]) {
+        return _membersList;
+    }
+
+    function getMember(address acct)
+        public
         view
         beMember(acct)
         returns (
-            uint256[],
-            uint256,
-            uint256
+            uint256[] sharesInHand,
+            uint256 parValue,
+            uint256 paidInAmount
         )
     {
         Member storage member = _members[acct];
-        return (member.sharesInHand, member.regCap, member.paidInCap);
+
+        sharesInHand = member.sharesInHand;
+        parValue = member.regCap;
+        paidInAmount = member.paidInCap;
     }
 }

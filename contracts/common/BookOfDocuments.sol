@@ -7,8 +7,6 @@ pragma solidity ^0.4.24;
 import "../lib/SerialNumFactory.sol";
 import "../lib/SafeMath.sol";
 import "../lib/ArrayUtils.sol";
-// import "../interfaces/IBOSSetting.sol";
-import "../interfaces/IAdminSetting.sol";
 
 import "../config/AdminSetting.sol";
 import "./CloneFactory.sol";
@@ -18,7 +16,7 @@ contract BookOfDocuments is CloneFactory, AdminSetting {
     using SafeMath for uint256;
     using ArrayUtils for bytes32[];
 
-    string private _bookName;
+    string public bookName;
     address private _template;
 
     struct Doc {
@@ -41,61 +39,49 @@ contract BookOfDocuments is CloneFactory, AdminSetting {
     bytes32 private _pointer;
 
     constructor(
-        string bookName,
-        address admin,
-        address bookeeper
-    ) public {
-        _bookName = bookName;
-        init(admin, bookeeper);
+        string _bookName,
+        address _admin,
+        address _bookeeper
+    ) {
+        bookName = _bookName;
+        init(_admin, _bookeeper);
     }
 
     //##############
     //##  Event   ##
     //##############
 
-    event SetTemplate(address indexed self, address temp);
+    event SetTemplate(address temp);
 
-    event SetBookSetting(address indexed self, address book);
+    event CreateDoc(bytes32 indexed sn, address doc);
 
-    event ResetBookSetting();
+    event RemoveDoc(bytes32 indexed sn, address body);
 
-    event CreateDoc(
-        address indexed self,
-        address indexed doc,
-        bytes32 indexed sn
-    );
+    event SubmitDoc(bytes32 indexed sn, address body);
 
-    event RemoveDoc(address indexed self, bytes32 indexed sn, address body);
-
-    event SubmitDoc(address indexed self, bytes32 indexed sn, address body);
-
-    event SetPointer(
-        address indexed self,
-        bytes32 indexed pointer,
-        address body
-    );
+    event SetPointer(bytes32 indexed pointer, address body);
 
     //####################
     //##    modifier    ##
     //####################
 
     modifier tempReady() {
-        require(_template != address(0), "请先设定 模板合约");
+        require(_template != address(0), "template NOT set");
         _;
     }
 
     modifier onlyRegistered(address body) {
-        require(_registered[body], "文件 没有注册");
+        require(_registered[body], "doc NOT registered");
         _;
     }
 
     modifier onlyForPending(address body) {
-        require(_snToDoc[_bodyToSN[body]].state == 0, "文件已入册");
+        require(_snToDoc[_bodyToSN[body]].state == 0, "doc NOT pending");
         _;
     }
 
     modifier onlyForSubmitted(address body) {
-        require(_snToDoc[_bodyToSN[body]].state == 1, "文件未提交");
+        require(_snToDoc[_bodyToSN[body]].state == 1, "doc NOT submitted");
         _;
     }
 
@@ -103,25 +89,13 @@ contract BookOfDocuments is CloneFactory, AdminSetting {
     //##    写接口    ##
     //##################
 
-    function setTemplate(address body) public onlyAdmin {
+    function setTemplate(address body) external onlyAdmin {
         _template = body;
-        emit SetTemplate(this, body);
+        emit SetTemplate(body);
     }
 
-    // function setBookSetting(address book) public onlyAdmin {
-    //     _bos = book;
-    //     emit SetBookSetting(this, book);
-    // }
-
-    function createDoc(uint8 docType)
-        public
-        onlyBookeeper
-        tempReady
-        returns (address body)
-    {
-        // require(_bos > 0, "请先设置文件库");
-
-        body = createClone(_template);
+    function createDoc(uint8 docType) external onlyBookeeper tempReady {
+        address body = createClone(_template);
 
         bytes32 sn = body.createSN(docType);
 
@@ -133,14 +107,11 @@ contract BookOfDocuments is CloneFactory, AdminSetting {
 
         _docs.push(sn);
 
-        // IAdminSetting(body).init(admin, bookeeper)
-        // IBOSSetting(body).setBOS(_bos);
-
-        emit CreateDoc(this, body, sn);
+        emit CreateDoc(sn, body);
     }
 
     function removeDoc(address body)
-        public
+        external
         onlyBookeeper
         onlyRegistered(body)
         onlyForPending(body)
@@ -155,11 +126,11 @@ contract BookOfDocuments is CloneFactory, AdminSetting {
 
         _docs.removeByValue(sn);
 
-        emit RemoveDoc(this, sn, body);
+        emit RemoveDoc(sn, body);
     }
 
     function submitDoc(address body, bytes32 docHash)
-        public
+        external
         onlyBookeeper
         onlyRegistered(body)
         onlyForPending(body)
@@ -170,29 +141,25 @@ contract BookOfDocuments is CloneFactory, AdminSetting {
         doc.docHash = docHash;
         doc.state = 1;
 
-        emit SubmitDoc(this, sn, body);
+        emit SubmitDoc(sn, body);
     }
 
     function setPointer(address body)
-        public
+        external
         onlyBookeeper
         onlyRegistered(body)
         onlyForSubmitted(body)
     {
         _pointer = _bodyToSN[body];
-        emit SetPointer(this, _pointer, body);
+        emit SetPointer(_pointer, body);
     }
 
     //##################
     //##    读接口    ##
     //##################
 
-    function getBookName() public view onlyStakeholders returns (string) {
-        return _bookName;
-    }
-
     function getTemplate()
-        public
+        external
         view
         onlyStakeholders
         tempReady
@@ -201,18 +168,8 @@ contract BookOfDocuments is CloneFactory, AdminSetting {
         return _template;
     }
 
-    // function getBookSetting()
-    //     public
-    //     view
-    //     onlyStakeholders
-    //     tempReady
-    //     returns (address)
-    // {
-    //     return _bos;
-    // }
-
     function isRegistered(address body)
-        public
+        external
         view
         onlyStakeholders
         returns (bool)
@@ -221,7 +178,7 @@ contract BookOfDocuments is CloneFactory, AdminSetting {
     }
 
     function isSubmitted(address body)
-        public
+        external
         view
         onlyStakeholders
         onlyRegistered(body)
@@ -231,7 +188,7 @@ contract BookOfDocuments is CloneFactory, AdminSetting {
     }
 
     function getQtyOfDocuments()
-        public
+        external
         view
         onlyStakeholders
         returns (uint256)
@@ -239,16 +196,16 @@ contract BookOfDocuments is CloneFactory, AdminSetting {
         return _docs.length;
     }
 
-    function getDocs() public view onlyStakeholders returns (bytes32[]) {
+    function getDocs() external view onlyStakeholders returns (bytes32[]) {
         return _docs;
     }
 
     function getDoc(bytes32 sn)
-        public
+        external
         view
         onlyStakeholders
+        onlyRegistered(_snToDoc[sn].body)
         returns (
-            // onlyRegistered(_snToDoc[sn].body)
             address body,
             bytes32 docHash,
             uint8 state
@@ -260,7 +217,7 @@ contract BookOfDocuments is CloneFactory, AdminSetting {
     }
 
     function getSN(address body)
-        public
+        external
         view
         onlyStakeholders
         onlyRegistered(body)
@@ -269,11 +226,11 @@ contract BookOfDocuments is CloneFactory, AdminSetting {
         return _bodyToSN[body];
     }
 
-    function getPointer() public view onlyStakeholders returns (bytes32) {
+    function getPointer() external view onlyStakeholders returns (bytes32) {
         return _pointer;
     }
 
-    function getTheOne() public view onlyStakeholders returns (address) {
+    function getTheOne() external view onlyStakeholders returns (address) {
         return _snToDoc[_pointer].body;
     }
 }

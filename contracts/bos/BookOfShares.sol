@@ -37,10 +37,10 @@ contract BookOfShares is IBookOfShares, MembersRepo {
     bytes32 private _regNumHash;
 
     //股权序列号计数器（2**16-1 应该足够计数，因此可考虑uint16）
-    uint256 public counterOfShares;
+    uint256 private _counterOfShares;
 
     //类别序列号计数器
-    uint8 public counterOfClass;
+    uint8 private _counterOfClass;
 
     /// @notice 初始化 超级管理员 账户地址，设定 公司股东人数上限， 设定 公司注册号哈希值
     /// @param regNumHash - 公司注册号哈希值
@@ -57,54 +57,48 @@ contract BookOfShares is IBookOfShares, MembersRepo {
     /// @param shareholder - 股东账户地址
     /// @param class - 股份类别（天使轮、A轮、B轮...）
     /// @param parValue - 股份面值（认缴出资金额，单位为“分”）
+    /// @param paidInAmount - 实缴金额（实缴出资金额，单位为“分”）
     /// @param paidInDeadline - 出资期限（秒计时间戳）
     /// @param issueDate - 签发日期（秒计时间戳）
     /// @param issuePrice - 发行价格（用于判断“反稀释”等价格相关《股东协议》条款,
     /// 公链应用时，出于保密考虑可设置为“1”）
-    /// @param obtainedDate - 取得日期（秒计时间戳，受让取得时，与签发日期不同）
-    /// @param obtainedPrice - 取得价格（受让取得时，与发行价格不同，
-    //// 可用于计算“IRR”、回购收益率等目的，公链应用时，出于保密考虑可设置为“1”）
-    /// @param paidInDate - 实缴日期（秒计时间戳）
-    /// @param paidInAmount - 实缴金额（实缴出资金额，单位为“分”）
-    /// @param state - 股票状态（为质押、查封、信托等特殊安排预留状态变量）
     function issueShare(
         address shareholder,
         uint8 class,
         uint256 parValue,
+        uint256 paidInAmount,
         uint256 paidInDeadline,
         uint256 issueDate,
-        uint256 issuePrice,
-        uint256 obtainedDate,
-        uint256 obtainedPrice,
-        uint256 paidInDate,
-        uint256 paidInAmount,
-        uint8 state
-    ) external onlyBookeeper notBiggerThan(class, counterOfClass) {
+        uint256 issuePrice
+    ) external onlyBookeeper {
         // 判断是否需要添加新股东，若添加是否会超过法定人数上限
         _addMember(shareholder);
 
         // 股票编号计数器顺加“1”
-        counterOfShares = counterOfShares.add(1);
+        _counterOfShares = _counterOfShares.add(1);
 
-        if (class == counterOfClass) counterOfClass = counterOfClass.add8(1);
+        require(class <= _counterOfClass, "class overflow");
+
+        if (class == _counterOfClass) _counterOfClass = _counterOfClass.add8(1);
 
         // 向《股东名册》的“股东”名下添加新股票
-        _addShareToMember(shareholder, counterOfShares, parValue, paidInAmount);
+        _addShareToMember(
+            shareholder,
+            _counterOfShares,
+            parValue,
+            paidInAmount
+        );
 
         // 在《股权簿》中添加新股票（签发新的《出资证明书》）
         _issueShare(
-            counterOfShares,
+            _counterOfShares,
             shareholder,
             class,
             parValue,
+            paidInAmount,
             paidInDeadline,
             issueDate,
-            issuePrice,
-            obtainedDate,
-            obtainedPrice,
-            paidInDate,
-            paidInAmount,
-            state
+            issuePrice
         );
 
         // 增加“认缴出资”和“实缴出资”金额
@@ -120,7 +114,7 @@ contract BookOfShares is IBookOfShares, MembersRepo {
         uint256 amount,
         uint256 paidInDate
     ) external onlyBookeeper {
-        (address shareholder, , , , , , , , , , ) = getShare(shareNumber);
+        (address shareholder, , , , , , , ) = getShare(shareNumber);
 
         // 向“股东”名下增加“实缴出资”金额
         _payInCapitalToMember(shareholder, amount);
@@ -153,20 +147,20 @@ contract BookOfShares is IBookOfShares, MembersRepo {
         // 判断是否需要新增股东，若需要判断是否超过法定人数上限
         _addMember(to);
 
-        counterOfShares = counterOfShares.add(1);
+        _counterOfShares = _counterOfShares.add(1);
 
         // 在“股东”名下增加新的股票
-        _addShareToMember(to, counterOfShares, parValue, paidInAmount);
+        _addShareToMember(to, _counterOfShares, parValue, paidInAmount);
 
         // 发行新股票
         _splitShare(
             shareNumber,
-            counterOfShares,
+            _counterOfShares,
             to,
             parValue,
+            paidInAmount,
             closingDate,
-            unitPrice,
-            paidInAmount
+            unitPrice
         );
     }
 
@@ -197,13 +191,10 @@ contract BookOfShares is IBookOfShares, MembersRepo {
             address shareholder,
             ,
             uint256 orgParValue,
-            ,
-            ,
-            ,
-            ,
-            ,
-            ,
             uint256 orgPaidInAmt,
+            ,
+            ,
+            ,
 
         ) = getShare(shareNumber);
 
@@ -262,15 +253,11 @@ contract BookOfShares is IBookOfShares, MembersRepo {
         return _regNumHash == regNumHash;
     }
 
-    function getMember(address acct)
-        external
-        view
-        returns (
-            uint256[] sharesInHand,
-            uint256 regCap,
-            uint256 paidInCap
-        )
-    {
-        return _getMember(acct);
+    function counterOfShares() external view returns (uint256) {
+        return _counterOfShares;
+    }
+
+    function counterOfClass() external view returns (uint8) {
+        return _counterOfClass;
     }
 }

@@ -9,14 +9,10 @@ interface IBookOfShares {
         address shareholder,
         uint8 class,
         uint256 parValue,
+        uint256 paidInAmount,
         uint256 paidInDeadline,
         uint256 issueDate,
-        uint256 issuePrice,
-        uint256 obtainedDate,
-        uint256 obtainedPrice,
-        uint256 paidInDate,
-        uint256 paidInAmount,
-        uint8 state
+        uint256 unitPrice
     ) external;
 
     function payInCapital(
@@ -60,13 +56,10 @@ interface IBookOfShares {
             address shareholder,
             uint8 class,
             uint256 parValue,
+            uint256 paidInAmount,
             uint256 paidInDeadline,
             uint256 issueDate,
-            uint256 issuePrice,
-            uint256 obtainedDate,
-            uint256 obtainedPrice,
-            uint256 paidInDate,
-            uint256 paidInAmount,
+            uint256 unitPrice,
             uint8 state
         );
 

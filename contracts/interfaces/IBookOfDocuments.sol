@@ -35,8 +35,6 @@ interface IBookOfDocuments {
 
     function setTemplate(address body) external;
 
-    // function setBookSetting(address book) external;
-
     function createDoc(uint8 docType) external returns (address body);
 
     function removeDoc(address body) external;
@@ -51,7 +49,7 @@ interface IBookOfDocuments {
 
     function getTemplate() external view returns (address);
 
-    // function getBookSetting() external view returns (address);
+    function bookName() external view returns (string);
 
     function isRegistered(address body) external view returns (bool);
 

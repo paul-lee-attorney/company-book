@@ -1,30 +1,42 @@
 // 创设公司基本股权结构
 const bos = await BookOfShares.deployed();
-const bookkeeper = await Bookkeeper.deployed();
 const boa = await BookOfDocuments.at("0xc6bf349a2C0Cb1f7529064063E2f0A480cF6891F");
 const boh = await BookOfDocuments.at("0x67e2C8ED50C3D4C5136ffcAd2b3a6f36213652C6");
 const bom = await BookOfMotions.deployed();
+const bookeeper = await Bookeeper.deployed();
 
-bookkeeper.setKeeperOfBook(bos.address, accounts[1], {from: accounts[1]});
+bookeeper.setKeeperOfBook(bos.address, accounts[1], {from: accounts[1]});
 
 // 设定股权结构：
+bos.issueShare(accounts[2], "0", "500000000", "500000000", "1533686888", "1470614888", "10000", {from: accounts[1]});
+bos.issueShare(accounts[3], "0", "300000000", "300000000", "1533686888", "1470614888", "10000", {from: accounts[1]});
+bos.issueShare(accounts[4], "0", "200000000", "100000000", "1533686888", "1470614888", "10000", {from: accounts[1]});
 
-bos.issueShare(accounts[2], "0", "500000000", "1533686888", "1470614888", "10000", "1470614888", "10000", "1470614888", "500000000", "0", {from: accounts[1]});
+// 实缴出资：
+bos.payInCapital("3", "50000000", "0", {from: accounts[1]});
+bos.getShare("3");
 
-bos.issueShare(accounts[3], "0", "300000000", "1533686888", "1470614888", "10000", "1470614888", "10000", "1470614888", "300000000", "0", {from: accounts[1]});
+// 股权转让：
+bos.transferShare("3", "200000000", "200000000", accounts[5], "0", "10000", {from:accounts[1]});
+bos.payInCapital("3", "50000000", "0", {from: accounts[1]});
+bos.transferShare("3", "200000000", "200000000", accounts[5], "0", "10000", {from:accounts[1]});
 
-bos.issueShare(accounts[4], "0", "200000000", "1533686888", "1470614888", "10000", "1470614888", "10000", "1470614888", "200000000", "0", {from: accounts[1]});
+// 获取BOS的股东列表:
+bos.membersList();
+bos.sharesList();
+bos.shareExist("1");
+bos.shareExist("3");
+bos.shareExist("4");
 
-bos.issueShare(accounts[5], "0", "100000000", "1533686888", "1470614888", "10000", "1470614888", "10000", "1470614888", "100000000", "0", {from: accounts[1]});
-
-bos.issueShare(accounts[6], "0", "100000000", "1533686888", "1470614888", "10000", "1470614888", "10000", "1470614888", "100000000", "0", {from: accounts[1]});
+// 股权转让：
+bos.transferShare("4", "100000000", "100000000", accounts[4], "0", "10000", {from:accounts[1]});
 
 // 设定BOS的Bookkeeper
-bos.setBookkeeper(bookkeeper.address, {from: accounts[1]});
+bos.setBookeeper(bookeeper.address, {from: accounts[1]});
 
 // 创建IA : 对外转股(类型：2，accounts[2]=>accounts[7], 300000000)
 
-bookkeeper.createIA("2", {from: accounts[2]});
+bookeeper.createIA("2", {from: accounts[2]});
 
 const ia1 = await Agreement.at("0xC4E573B2156EE33eC577E8176647c74367b0496C");
 

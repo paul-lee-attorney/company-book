@@ -191,7 +191,7 @@ contract BookOfShares is IBookOfShares, MembersRepo {
             address shareholder,
             ,
             uint256 orgParValue,
-            uint256 orgPaidInAmt,
+            uint256 orgPaidInAmount,
             ,
             ,
             ,
@@ -200,6 +200,7 @@ contract BookOfShares is IBookOfShares, MembersRepo {
 
         require(parValue > 0, "parValue is Zero");
         require(parValue <= orgParValue, "parValue overflow");
+        require(paidInAmount <= orgPaidInAmount, "paidInAmount overflow");
 
         // 若拟降低的面值金额等于股票面值，则删除相关股票
         if (parValue == orgParValue) {
@@ -207,7 +208,7 @@ contract BookOfShares is IBookOfShares, MembersRepo {
                 shareholder,
                 shareNumber,
                 orgParValue,
-                orgPaidInAmt
+                orgPaidInAmount
             );
             _deregisterShare(shareNumber);
         } else {

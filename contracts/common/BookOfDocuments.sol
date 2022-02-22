@@ -42,7 +42,7 @@ contract BookOfDocuments is CloneFactory, AdminSetting {
         string _bookName,
         address _admin,
         address _bookeeper
-    ) {
+    ) public {
         bookName = _bookName;
         init(_admin, _bookeeper);
     }
@@ -94,8 +94,13 @@ contract BookOfDocuments is CloneFactory, AdminSetting {
         emit SetTemplate(body);
     }
 
-    function createDoc(uint8 docType) external onlyBookeeper tempReady {
-        address body = createClone(_template);
+    function createDoc(uint8 docType)
+        external
+        onlyBookeeper
+        tempReady
+        returns (address body)
+    {
+        body = createClone(_template);
 
         bytes32 sn = body.createSN(docType);
 

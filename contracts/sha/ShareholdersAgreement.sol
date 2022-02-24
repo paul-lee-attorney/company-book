@@ -172,8 +172,10 @@ contract ShareholdersAgreement is EnumsRepo, SigPage, CloneFactory {
         external
         onlyAttorney
         tempReadyFor(title)
-        onlyForDraft
-        returns (address body)
+        returns (
+            // onlyForDraft
+            address body
+        )
     {
         body = createClone(_tempOfTitle[title]);
         IAdminSetting(body).init(msg.sender, this);
@@ -191,7 +193,10 @@ contract ShareholdersAgreement is EnumsRepo, SigPage, CloneFactory {
         emit CreateTerm(title, body, msg.sender);
     }
 
-    function removeTerm(uint8 title) external onlyAttorney onlyForDraft {
+    function removeTerm(uint8 title)
+        external
+        onlyAttorney // onlyForDraft
+    {
         delete _bodyToTitle[_titleToBody[title]];
 
         delete _registered[_titleToBody[title]];
@@ -210,19 +215,14 @@ contract ShareholdersAgreement is EnumsRepo, SigPage, CloneFactory {
     function getTerm(uint8 title)
         external
         view
-        onlyConcernedEntity
+        //
         titleExist(title)
         returns (address body)
     {
         body = _titleToBody[title];
     }
 
-    function getTerms()
-        external
-        view
-        onlyConcernedEntity
-        returns (address[] terms)
-    {
+    function getTerms() external view returns (address[] terms) {
         terms = _terms;
     }
 
@@ -230,7 +230,7 @@ contract ShareholdersAgreement is EnumsRepo, SigPage, CloneFactory {
     //     external
     //     view
     //     typeAllowed(typeOfDeal)
-    //     onlyConcernedEntity
+    //
     //     returns (uint8[] titles)
     // {
     //     titles = _checkList[typeOfDeal];
@@ -239,18 +239,17 @@ contract ShareholdersAgreement is EnumsRepo, SigPage, CloneFactory {
     function getTemplate(uint8 title)
         external
         view
-        onlyConcernedEntity
         tempReadyFor(title)
         returns (address)
     {
         return _tempOfTitle[title];
     }
 
-    function getBOS() external view onlyConcernedEntity returns (address) {
+    function getBOS() external view returns (address) {
         return _bos;
     }
 
-    function getBOM() external view onlyConcernedEntity returns (address) {
+    function getBOM() external view returns (address) {
         return _bom;
     }
 
@@ -258,7 +257,7 @@ contract ShareholdersAgreement is EnumsRepo, SigPage, CloneFactory {
         uint8 title,
         address ia,
         uint8 snOfDeal
-    ) public view onlyConcernedEntity titleExist(title) returns (bool) {
+    ) public view titleExist(title) returns (bool) {
         return ITerm(_titleToBody[title]).isTriggered(ia, snOfDeal);
     }
 
@@ -266,7 +265,7 @@ contract ShareholdersAgreement is EnumsRepo, SigPage, CloneFactory {
     //     address ia,
     //     uint8 snOfDeal,
     //     uint8 typeOfDeal
-    // ) public view onlyConcernedEntity returns (bool flag, uint8[] triggers) {
+    // ) public view  returns (bool flag, uint8[] triggers) {
     //     uint8[] terms = _checkList[typeOfDeal];
     //     uint8[] _triggers;
     //     for (uint8 i = 0; i < terms.length; i++) {
@@ -292,7 +291,7 @@ contract ShareholdersAgreement is EnumsRepo, SigPage, CloneFactory {
     //     address ia,
     //     uint8 snOfDeal,
     //     uint8 typeOfDeal
-    // ) public view onlyConcernedEntity returns (bool flag, uint8[] triggers) {
+    // ) public view  returns (bool flag, uint8[] triggers) {
     //     uint8[] memory tempTriggers;
 
     //     (flag, tempTriggers) = dealIsTriggered(ia, snOfDeal, typeOfDeal);

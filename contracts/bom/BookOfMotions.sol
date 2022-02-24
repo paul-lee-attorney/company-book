@@ -55,7 +55,7 @@ contract BookOfMotions is IBookOfMotions, EnumsRepo, BOSSetting, BOHSetting {
     }
 
     modifier notInternalST(address body) {
-        require(IAgreement(body).getTypeOfIA() != 3, "NOT need to vote");
+        require(IAgreement(body).typeOfIA() != 3, "NOT need to vote");
         _;
     }
 
@@ -192,7 +192,7 @@ contract BookOfMotions is IBookOfMotions, EnumsRepo, BOSSetting, BOHSetting {
         view
         returns (uint8 votingType)
     {
-        uint8 typeOfIA = IAgreement(ia).getTypeOfIA();
+        uint8 typeOfIA = IAgreement(ia).typeOfIA();
 
         votingType = (typeOfIA == 2 || typeOfIA == 5) ? 2 : (typeOfIA == 3)
             ? 0

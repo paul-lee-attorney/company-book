@@ -1,9 +1,9 @@
 // 创设公司基本股权结构
-const bos = await BookOfShares.deployed();
-const boa = await BookOfDocuments.at("0xc6bf349a2C0Cb1f7529064063E2f0A480cF6891F");
-const boh = await BookOfDocuments.at("0x67e2C8ED50C3D4C5136ffcAd2b3a6f36213652C6");
-const bom = await BookOfMotions.deployed();
-const bookeeper = await Bookeeper.deployed();
+let bos = await BookOfShares.deployed();
+let boa = await BookOfDocuments.at("0xc6bf349a2C0Cb1f7529064063E2f0A480cF6891F");
+let boh = await BookOfDocuments.at("0x67e2C8ED50C3D4C5136ffcAd2b3a6f36213652C6");
+let bom = await BookOfMotions.deployed();
+let bookeeper = await Bookeeper.deployed();
 
 bookeeper.setKeeperOfBook(bos.address, accounts[1], {from: accounts[1]});
 
@@ -13,12 +13,10 @@ bos.issueShare(accounts[3], "0", "300000000", "300000000", "1533686888", "147061
 bos.issueShare(accounts[4], "0", "200000000", "100000000", "1533686888", "1470614888", "10000", {from: accounts[1]});
 
 // 实缴出资：
-bos.payInCapital("3", "50000000", "0", {from: accounts[1]});
+bos.payInCapital("3", "100000000", "0", {from: accounts[1]});
 bos.getShare("3");
 
 // 股权转让：
-bos.transferShare("3", "200000000", "200000000", accounts[5], "0", "10000", {from:accounts[1]});
-bos.payInCapital("3", "50000000", "0", {from: accounts[1]});
 bos.transferShare("3", "200000000", "200000000", accounts[5], "0", "10000", {from:accounts[1]});
 
 // 获取BOS的股东列表:
@@ -35,15 +33,60 @@ bos.transferShare("4", "100000000", "100000000", accounts[4], "0", "10000", {fro
 bos.setBookeeper(bookeeper.address, {from: accounts[1]});
 
 // 创建IA : 对外转股(类型：2，accounts[2]=>accounts[7], 300000000)
-
 bookeeper.createIA("2", {from: accounts[2]});
 
-const ia1 = await Agreement.at("0xC4E573B2156EE33eC577E8176647c74367b0496C");
-
+// 设定项目律师
+let ia1 = await Agreement.at("0xC4E573B2156EE33eC577E8176647c74367b0496C");
 ia1.setAttorney(accounts[1], {from: accounts[2]});
 
-ia1.setDeal("0", "1", "0", accounts[2], accounts[7], "12000", "1000000", "1000000", "1645368706", {from: accounts[1]});
+// 起草IA
+// 股转交易
+ia1.setDeal("0", "1", "0", accounts[2], accounts[7], "12000", "1000000", "1000000", "1646592606", {from: accounts[1]});
+// 设定交割截止日
+ia1.setClosingDeadline("1648592606", {from: accounts[1]});
 
-ia1.setClosingStartpoint("1645365706", {from: accounts[1]});
+ia1.setSigDeadline("1645987806", {from: accounts[1]});
+
+ia1.isParty(accounts[0], {from: accounts[1]});
+ia1.isParty(accounts[2], {from: accounts[1]});
 
 ia1.finalizeIA({from: accounts[1]});
+
+ia1.isParty(accounts[2], {from: accounts[2]});
+ia1.isParty(accounts[7], {from: accounts[2]});
+ia1.isParty(accounts[5], {from: accounts[2]});
+
+ia1.circulateDoc({from: accounts[2]});
+
+// 签订IA
+ia1.signDoc({from: accounts[2]});
+ia1.signDoc({from: accounts[7]});
+
+// 检查IA签署情况
+ia1.isEstablished({from: accounts[2]});
+ia1.docState({from: accounts[2]});
+
+ia1.qtyOfParties({from: accounts[2]});
+
+ia1.sigDate(accounts[7], {from: accounts[2]});
+
+ia1.sigDate(accounts[2], {from: accounts[2]});
+
+ia1.sigDate(accounts[1], {from: accounts[2]});
+
+ia1.qtyOfSigners({from: accounts[2]});
+
+// 提交IA至BOA
+bookeeper.submitIA(ia1.address, "0xe30fc9a884c0a898bd669f8aaa01b540b9111dfd70944bc9c08b66f6474c5077", {from: accounts[2]});
+
+// 创建SHA
+bookeeper.createSHA("2", {from: accounts[2]});
+
+let sha1 = await ShareholdersAgreement.at("0x82481b2056768Fc78a8F3b8A6914162c4e2Ba562");
+
+// 设定 Attorney
+sha1.getAdmin({from:accounts[1]});
+sha1.setAttorney(accounts[7], {from: accounts[2]});
+
+// 起草条款
+var LockUp=artifacts.require("LockUp");

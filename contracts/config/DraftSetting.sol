@@ -7,7 +7,7 @@ pragma solidity ^0.4.24;
 import "./AdminSetting.sol";
 
 contract DraftSetting is AdminSetting {
-    address internal _attorney;
+    address private _attorney;
 
     // ##################
     // ##   Event      ##

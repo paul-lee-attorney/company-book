@@ -307,7 +307,7 @@ contract TagAlong is BOSSetting, BOMSetting, DraftSetting {
     function isTriggered(address ia) public view onlyBookeeper returns (bool) {
         IAgreement _ia = IAgreement(ia);
 
-        uint8 qtyOfDeals = _ia.getQtyOfDeals();
+        uint8 qtyOfDeals = _ia.qtyOfDeals();
 
         uint256 parToSell;
         uint256 parToBuy;
@@ -386,7 +386,7 @@ contract TagAlong is BOSSetting, BOMSetting, DraftSetting {
         for (uint256 j = 0; j < parties.length; j++)
             consentParties.push(parties[j]);
 
-        uint8 qtyOfDeals = IAgreement(ia).getQtyOfDeals();
+        uint8 qtyOfDeals = IAgreement(ia).qtyOfDeals();
 
         for (uint8 i = 0; i < qtyOfDeals; i++) {
             (, , address seller, , , , , , uint8 typeOfDeal, , ) = IAgreement(

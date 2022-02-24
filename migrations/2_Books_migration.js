@@ -1,10 +1,13 @@
-const IA = artifacts.require("Agreement");
-const SHA = artifacts.require("ShareholdersAgreement");
-const BOS = artifacts.require("BookOfShares");
-const BOA = artifacts.require("BookOfDocuments");
-const BOH = artifacts.require("BookOfDocuments");
-const BOM = artifacts.require("BookOfMotions");
-const Bookeeper = artifacts.require("Bookeeper");
+var IA = artifacts.require("Agreement");
+var SHA = artifacts.require("ShareholdersAgreement");
+var BOS = artifacts.require("BookOfShares");
+var BOA = artifacts.require("BookOfDocuments");
+var BOH = artifacts.require("BookOfDocuments");
+var BOM = artifacts.require("BookOfMotions");
+var Bookeeper = artifacts.require("Bookeeper");
+
+var LockUp = artifacts.require("LockUp");
+var TagAlong = 
 
 module.exports = async function (deployer, network, accounts) {
 

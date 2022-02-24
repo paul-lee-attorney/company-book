@@ -51,23 +51,23 @@ interface ISigPage {
 
     function isEstablished() external returns (bool);
 
-    function getDocState() external returns (uint8);
+    function docState() external returns (uint8);
 
-    function getSigDeadline() external returns (uint256);
+    function sigDeadline() external returns (uint256);
 
-    function getClosingStartpoint() external returns (uint256);
+    function closingStartpoint() external returns (uint256);
 
-    function getClosingDeadline() external returns (uint256);
+    function closingDeadline() external returns (uint256);
 
     function isParty(address acct) external returns (bool);
 
-    function getQtyOfParties() external returns (uint8);
+    function qtyOfParties() external returns (uint8);
 
     function isSignedBy(address acct) external returns (bool);
 
-    function getSigDate(address acct) external returns (uint256);
+    function sigDate(address acct) external returns (uint256);
 
     function getSigners() external returns (address[]);
 
-    function getQtyOfSigners() external returns (uint256);
+    function qtyOfSigners() external returns (uint256);
 }

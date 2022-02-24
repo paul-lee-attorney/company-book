@@ -5,35 +5,29 @@
 pragma solidity ^0.4.24;
 
 import "../config/BOSSetting.sol";
+// import "../config/DraftSetting.sol";
 
 import "../lib/SafeMath.sol";
-
-// import "../lib/ArrayUtils.sol";
 
 import "../common/SigPage.sol";
 
 contract Agreement is BOSSetting, SigPage {
     using SafeMath for uint256;
     using SafeMath for uint8;
-    // using ArrayUtils for uint256[];
 
     struct Deal {
         uint256 shareNumber;
-        uint8 class;
         address seller;
         address buyer;
         uint256 unitPrice;
         uint256 parValue;
         uint256 paidInAmount;
         uint256 closingDate;
+        uint8 class;
         uint8 typeOfDeal; // 1-CI 2-ST(to 3rd) 3-ST(internal)
         uint8 state; // 0-pending 1-cleared 2-closed 3-terminated
         bytes32 hashLock;
     }
-
-    // uint256[] private _sharesToSell;
-    // // shareNumber => parValue
-    // mapping(uint256 => uint256) private _parToSplit;
 
     // party address => amount
     mapping(address => uint256) private _parToSell;
@@ -46,11 +40,6 @@ contract Agreement is BOSSetting, SigPage {
 
     // 1-CI 2-ST(to 3rd) 3-ST(internal) 4-(1&3) 5-(2&3) 6-(1&2&3) 7-(1&2)
     uint8 private _typeOfIA;
-
-    // uint256 private _closingDeadline;
-
-    // // 0-pending 1-finalized 2-signed 3-submitted 4-closed 5-terminated
-    // uint8 private _state;
 
     //##################
     //##    Event     ##
@@ -65,8 +54,7 @@ contract Agreement is BOSSetting, SigPage {
         uint256 unitPrice,
         uint256 parValue,
         uint256 paidInAmount,
-        uint256 closingDate,
-        uint8 typeOfDeal
+        uint256 closingDate
     );
 
     event DelDeal(uint8 indexed sn);
@@ -87,7 +75,6 @@ contract Agreement is BOSSetting, SigPage {
     //##################
 
     modifier onlyCleared(uint8 sn) {
-        require(sn < _qtyOfDeals);
         require(_deals[sn].state == 1);
         _;
     }
@@ -141,8 +128,6 @@ contract Agreement is BOSSetting, SigPage {
                 paidInAmountOfShare >= paidInAmount,
                 "paidInAmount overflow"
             );
-
-            // addPartyToDoc(seller);
         } else {
             require(class <= _bos.counterOfClass(), "class overflow");
         }
@@ -161,8 +146,6 @@ contract Agreement is BOSSetting, SigPage {
 
         if (sn == _qtyOfDeals) _qtyOfDeals = _qtyOfDeals.add8(1);
 
-        // addPartyToDoc(buyer);
-
         emit SetDeal(
             sn,
             shareNumber,
@@ -172,28 +155,18 @@ contract Agreement is BOSSetting, SigPage {
             unitPrice,
             parValue,
             paidInAmount,
-            closingDate,
-            deal.typeOfDeal
+            deal.closingDate
         );
     }
 
     function delDeal(uint8 sn) external onlyAttorney dealExist(sn) {
-        // removePartyFromDoc(_deals[sn].buyer);
-
-        // if (_deals[sn].typeOfDeal > 1) removePartyFromDoc(_deals[sn].seller);
-
         delete _deals[sn];
         _qtyOfDeals--;
 
         emit DelDeal(sn);
     }
 
-    function finalizeIA()
-        external
-        onlyAttorney
-        onlyForDraft
-        beforeClosingStartpoint
-    {
+    function finalizeIA() external onlyAttorney {
         uint8 i = 0;
         bool allMembersIn;
         uint8[3] memory signal;
@@ -206,10 +179,6 @@ contract Agreement is BOSSetting, SigPage {
 
             // 股转交易
             if (deal.typeOfDeal > 1) {
-                // _sharesToSell.addValue(deal.shareNumber);
-                // _parToSplit[deal.shareNumber] = _parToSplit[deal.shareNumber]
-                //     .add(deal.parValue);
-
                 addPartyToDoc(deal.seller);
                 _parToSell[deal.seller] += deal.parValue;
 
@@ -225,40 +194,19 @@ contract Agreement is BOSSetting, SigPage {
             _parToBuy[deal.buyer] = _parToBuy[deal.buyer].add(deal.parValue);
         }
 
-        // // 股转溢出判断
-        // for (i = 0; i < _sharesToSell.length; i++) {
-        //     (, , uint256 parValueOfShare, , , , , , , , ) = _bos.getShare(
-        //         _sharesToSell[i]
-        //     );
-        //     if (parValueOfShare < _parToSplit[_sharesToSell[i]]) return false;
-        // }
-
         // 协议类别计算
         uint8 sumOfSignal = signal[0] + signal[1] + signal[2];
         _typeOfIA = sumOfSignal == 3 ? signal[2] == 0 ? 7 : 3 : sumOfSignal;
 
         emit SetTypeOfIA(_typeOfIA);
-
-        circulateDoc();
     }
 
     function clearDealCP(
         uint8 sn,
         bytes32 hashLock,
         uint256 closingDate
-    )
-        external
-        onlyForSubmitted
-        onlyBookeeper
-        beforeClosingStartpoint
-        dealExist(sn)
-    {
+    ) external onlyBookeeper dealExist(sn) {
         Deal storage deal = _deals[sn];
-
-        // require(
-        //     deal.typeOfDeal == 1 || deal.seller == tx.origin,
-        //     "仅 卖方 或 合约创设人 有权操作"
-        // );
 
         require(
             closingDate == 0 || deal.closingDate <= closingDate,
@@ -266,7 +214,7 @@ contract Agreement is BOSSetting, SigPage {
         );
 
         require(
-            closingDate <= getClosingDeadline(),
+            closingDate <= closingDeadline(),
             "closingDate later than deadline"
         );
 
@@ -281,13 +229,10 @@ contract Agreement is BOSSetting, SigPage {
 
     function closeDeal(uint8 sn, bytes hashKey)
         external
-        onlyForSubmitted
         onlyCleared(sn)
         onlyBookeeper
-        beforeClosingDeadline
     {
         Deal storage deal = _deals[sn];
-        // require(deal.buyer == tx.origin, "仅 买方 可调用");
 
         require(deal.hashLock == keccak256(hashKey), "hashKey is wrong");
 
@@ -315,31 +260,11 @@ contract Agreement is BOSSetting, SigPage {
     //  ##       查询接口              ##
     //  #################################
 
-    // function getSharesToSell()
-    //     public
-    //     view
-    //     onlyConcernedEntity
-    //     returns (uint256[] shares)
-    // {
-    //     shares = _sharesToSell;
-    // }
-
-    // function getParToSplit(uint256 shareNumber)
-    //     public
-    //     view
-    //     onlyConcernedEntity
-    //     returns (uint256 parValue)
-    // {
-    //     parValue = _parToSplit[shareNumber];
-    // }
-
     function getParToSell(address acct)
         external
         view
-        returns (
-            // onlyConcernedEntity
-            uint256 parValue
-        )
+        // onlyConcernedEntity
+        returns (uint256 parValue)
     {
         parValue = _parToSell[acct];
     }
@@ -347,10 +272,8 @@ contract Agreement is BOSSetting, SigPage {
     function getParToBuy(address acct)
         external
         view
-        returns (
-            // onlyConcernedEntity
-            uint256 parValue
-        )
+        // onlyConcernedEntity
+        returns (uint256 parValue)
     {
         parValue = _parToBuy[acct];
     }
@@ -359,7 +282,7 @@ contract Agreement is BOSSetting, SigPage {
         external
         view
         dealExist(sn)
-        onlyConcernedEntity
+        // onlyConcernedEntity
         returns (
             uint256 shareNumber,
             uint8 class,
@@ -387,11 +310,11 @@ contract Agreement is BOSSetting, SigPage {
         hashLock = _deals[sn].hashLock;
     }
 
-    function getQtyOfDeals() external view onlyConcernedEntity returns (uint8) {
+    function qtyOfDeals() external view returns (uint8) {
         return _qtyOfDeals;
     }
 
-    function getTypeOfIA() external view onlyConcernedEntity returns (uint8) {
+    function typeOfIA() external view returns (uint8) {
         return _typeOfIA;
     }
 }

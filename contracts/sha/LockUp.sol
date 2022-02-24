@@ -145,7 +145,7 @@ contract LockUp is BOSSetting, BOMSetting, DraftSetting {
     {
         IAgreement _ia = IAgreement(ia);
 
-        uint8 qtyOfDeals = _ia.getQtyOfDeals();
+        uint8 qtyOfDeals = _ia.qtyOfDeals();
 
         for (uint8 i = 0; i < qtyOfDeals; i++) {
             (uint256 shareNumber, , , , , , , uint256 closingDate, , , ) = _ia

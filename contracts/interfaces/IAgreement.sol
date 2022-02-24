@@ -23,7 +23,7 @@ interface IAgreement {
 
     function delDeal(uint8 sn) external;
 
-    function finalizeIA() external returns (bool);
+    function finalizeIA() external;
 
     function clearDealCP(
         uint8 sn,
@@ -70,7 +70,7 @@ interface IAgreement {
             bytes32 hashLock
         );
 
-    function getQtyOfDeals() external view returns (uint8);
+    function qtyOfDeals() external view returns (uint8);
 
-    function getTypeOfIA() external view returns (uint8);
+    function typeOfIA() external view returns (uint8);
 }

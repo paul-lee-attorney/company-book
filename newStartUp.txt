@@ -4,6 +4,10 @@ let boa = await BookOfDocuments.at("0xc6bf349a2C0Cb1f7529064063E2f0A480cF6891F")
 let boh = await BookOfDocuments.at("0x67e2C8ED50C3D4C5136ffcAd2b3a6f36213652C6");
 let bom = await BookOfMotions.deployed();
 let bookeeper = await Bookeeper.deployed();
+let lockUp = await LockUp.deployed();
+let antiDilution = await AntiDilution.deployed();
+let tagAlong = await TagAlong.deployed();
+let votingRules = await VotingRules.deployed();
 
 bookeeper.setKeeperOfBook(bos.address, accounts[1], {from: accounts[1]});
 
@@ -42,6 +46,7 @@ ia1.setAttorney(accounts[1], {from: accounts[2]});
 // 起草IA
 // 股转交易
 ia1.setDeal("0", "1", "0", accounts[2], accounts[7], "12000", "1000000", "1000000", "1646592606", {from: accounts[1]});
+
 // 设定交割截止日
 ia1.setClosingDeadline("1648592606", {from: accounts[1]});
 
@@ -88,5 +93,72 @@ let sha1 = await ShareholdersAgreement.at("0x82481b2056768Fc78a8F3b8A6914162c4e2
 sha1.getAdmin({from:accounts[1]});
 sha1.setAttorney(accounts[7], {from: accounts[2]});
 
-// 起草条款
-var LockUp=artifacts.require("LockUp");
+// 起草SHA条款
+
+// LockUp
+sha1.createTerm("0", {from: accounts[7]});
+let lu1 = await LockUp.at("0xcf2dA5593fc7d85A67Fc6dF776329c7A91D19AeA");
+sha1.getTerm("0");
+
+lu1.setAttorney(accounts[7], {from: accounts[7]});
+lu1.setLocker("1", "1647354190", {from: accounts[7]});
+
+lu1.lockerExist("1", {from: accounts[7]});
+
+lu1.getLocker("1", {from: accounts[7]});
+
+lu1.addKeyholder("1", accounts[3], {from: accounts[7]});
+lu1.addKeyholder("1", accounts[4], {from: accounts[7]});
+lu1.addKeyholder("1", accounts[5], {from: accounts[7]});
+
+// VotingRules
+sha1.createTerm("14", {from: accounts[7]});
+
+let vr1 = await VotingRules.at("0x37B29Ae5612B1E892dE8b99f905bDb8d11E0F7f7");
+vr1.setAttorney(accounts[7], {from: accounts[7]});
+
+
+vr1.setRule("1", "0", "6667", "false", "false", "false", "5", {from: accounts[7]});
+vr1.setRule("2", "5001", "0", "false", "false", "true", "5", {from: accounts[7]});
+
+vr1.getVotingDays({from:accounts[7]});
+vr1.getRule("1",{from:accounts[7]});
+vr1.getRule("2",{from:accounts[7]});
+
+vr1.setCommonRules("7", "false", {from: accounts[7]});
+
+// 签署SHA
+
+sha1.getTerms({from: accounts[7]});
+sha1.getBOM({from: accounts[7]});
+sha1.getBOS({from: accounts[7]});
+
+sha1.getTemplate("0", {from: accounts[7]});
+sha1.getTemplate("14", {from: accounts[7]});
+
+sha1.setClosingDeadline("1648592606", {from: accounts[7]});
+sha1.setSigDeadline("1645987806", {from: accounts[7]});
+
+sha1.addPartyToDoc(accounts[2], {from: accounts[7]});
+sha1.addPartyToDoc(accounts[3], {from: accounts[7]});
+sha1.addPartyToDoc(accounts[4], {from: accounts[7]});
+sha1.addPartyToDoc(accounts[5], {from: accounts[7]});
+
+sha1.qtyOfParties({from: accounts[7]});
+
+sha1.circulateDoc({from: accounts[2]});
+
+sha1.signDoc({from: accounts[2]});
+sha1.signDoc({from: accounts[3]});
+sha1.signDoc({from: accounts[4]});
+sha1.signDoc({from: accounts[5]});
+
+sha1.signDoc({from: accounts[6]});
+
+sha1.isEstablished({from: accounts[3]});
+
+// 提交SHA
+bookeeper.submitSHA(sha1.address, "0x38301fb0b5fcf3aaa4b97c4771bb6c75546e313b4ce7057c51a8cc6a3ace9d7e", {from: accounts[2]});
+
+
+

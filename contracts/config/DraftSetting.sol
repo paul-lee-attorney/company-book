@@ -30,7 +30,7 @@ contract DraftSetting is AdminSetting {
     // ##   设置端口   ##
     // ##################
 
-    function _lockContents() internal {
+    function lockContents() public {
         _attorney = address(0);
         emit LockContents();
     }

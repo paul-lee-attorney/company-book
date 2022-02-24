@@ -173,7 +173,6 @@ contract ShareholdersAgreement is EnumsRepo, SigPage, CloneFactory {
         onlyAttorney
         tempReadyFor(title)
         returns (
-            // onlyForDraft
             address body
         )
     {

@@ -116,7 +116,6 @@ contract SigPage is DraftSetting {
         emit SetSigDeadline(deadline);
     }
 
-
     function setClosingDeadline(uint256 deadline)
         external
         onlyAttorney
@@ -143,13 +142,9 @@ contract SigPage is DraftSetting {
         }
     }
 
-    function circulateDoc()
-        external
-        onlyAdmin
-        onlyForDraft
-    {
+    function circulateDoc() external onlyAdmin onlyForDraft {
         _docState = 1;
-        _lockContents();
+        lockContents();
         emit DocStateRevised(_docState);
     }
 
@@ -208,7 +203,6 @@ contract SigPage is DraftSetting {
     function sigDeadline() external view onlyConcernedEntity returns (uint256) {
         return _sigDeadline;
     }
-
 
     function closingDeadline()
         public

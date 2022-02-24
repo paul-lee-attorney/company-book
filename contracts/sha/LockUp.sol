@@ -51,7 +51,7 @@ contract LockUp is BOSSetting, BOMSetting, DraftSetting {
     // ################
 
     modifier beLocked(uint256 shareNumber) {
-        require(_isLocked[shareNumber], "股权未被锁定");
+        require(_isLocked[shareNumber], "share NOT locked");
         _;
     }
 
@@ -85,11 +85,7 @@ contract LockUp is BOSSetting, BOMSetting, DraftSetting {
         external
         onlyAttorney
         beLocked(shareNumber)
-    // isMemberOrInvestor(keyholder)
     {
-        // require(_getBOS().isMember(keyholder) || _isInvestor(keyholder), "权利人 应为股东或者投资人");
-        ISigPage(getBookeeper()).isParty(keyholder);
-
         _lockers[shareNumber].keyHolders.addValue(keyholder);
 
         emit AddKeyholder(shareNumber, keyholder);
@@ -100,8 +96,6 @@ contract LockUp is BOSSetting, BOMSetting, DraftSetting {
         onlyAttorney
         beLocked(shareNumber)
     {
-        // require(_isLocked[shareNumber], "股权未被锁定");
-
         _lockers[shareNumber].keyHolders.removeByValue(keyholder);
 
         emit RemoveKeyholder(shareNumber, keyholder);

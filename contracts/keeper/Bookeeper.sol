@@ -45,25 +45,30 @@ contract Bookeeper is
     // ##################
 
     modifier beEstablished(address body) {
-        require(ISigPage(body).isEstablished(), "文件 尚未 成立");
+        require(ISigPage(body).isEstablished(), "Doc NOT Established");
+        _;
+    }
+
+    modifier beSubmitted(address body) {
+        require(ISigPage(body).docState() == 3, "Doc NOT submitted");
         _;
     }
 
     modifier notEstablished(address body) {
-        require(ISigPage(body).isEstablished(), "文件 尚未 成立");
+        require(!ISigPage(body).isEstablished(), "Doc ALREADY Established");
         _;
     }
 
     modifier onlyAdminOf(address body) {
         require(
             IAdminSetting(body).getAdmin() == msg.sender,
-            "只有 Admin 可操作"
+            "NOT Admin of Doc"
         );
         _;
     }
 
     modifier onlyPartyOf(address body) {
-        require(ISigPage(body).isParty(msg.sender), "只有 当事方 可操作");
+        require(ISigPage(body).isParty(msg.sender), "NOT Party of Doc");
         _;
     }
 
@@ -124,6 +129,14 @@ contract Bookeeper is
     {
         _boh.submitDoc(body, docHash);
         IAdminSetting(body).abandonAdmin();
+    }
+
+    function effectiveSHA(address body)
+        external
+        onlyPartyOf(body)
+        beSubmitted(body)
+    {
+        _boh.setPointer(body);
     }
 
     // ###################

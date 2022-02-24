@@ -47,7 +47,7 @@ contract VotingRules is BOSSetting, DraftSetting {
     // ################
 
     modifier typeAllowed(uint8 typeOfRule) {
-        require(typeOfRule > 0 && typeOfRule < 3, "类别编号超限");
+        require(typeOfRule < 3, "typeOfRule overflow");
         _;
     }
 

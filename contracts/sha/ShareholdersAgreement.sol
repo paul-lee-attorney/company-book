@@ -5,6 +5,7 @@
 pragma solidity ^0.4.24;
 
 import "../interfaces/IAdminSetting.sol";
+import "../interfaces/IDraftSetting.sol";
 import "../interfaces/IBOSSetting.sol";
 import "../interfaces/IBOMSetting.sol";
 
@@ -172,9 +173,7 @@ contract ShareholdersAgreement is EnumsRepo, SigPage, CloneFactory {
         external
         onlyAttorney
         tempReadyFor(title)
-        returns (
-            address body
-        )
+        returns (address body)
     {
         body = createClone(_tempOfTitle[title]);
         IAdminSetting(body).init(msg.sender, this);
@@ -207,6 +206,13 @@ contract ShareholdersAgreement is EnumsRepo, SigPage, CloneFactory {
         emit RemoveTerm(title);
     }
 
+    function finalizeSHA() external onlyAttorney {
+        for (uint256 i = 0; i < _terms.length; i++) {
+            IDraftSetting(_terms[i]).lockContents();
+            IAdminSetting(_terms[i]).abandonAdmin();
+        }
+    }
+
     //##################
     //##    读接口    ##
     //##################
@@ -214,7 +220,6 @@ contract ShareholdersAgreement is EnumsRepo, SigPage, CloneFactory {
     function getTerm(uint8 title)
         external
         view
-        //
         titleExist(title)
         returns (address body)
     {

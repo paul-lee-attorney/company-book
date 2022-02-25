@@ -49,6 +49,8 @@ interface IShareholdersAgreement {
 
     function removeTerm(uint8 title) external;
 
+    function finalizeSHA() external;
+
     //##################
     //##    读接口    ##
     //##################

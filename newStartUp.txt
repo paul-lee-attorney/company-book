@@ -1,13 +1,13 @@
 // 创设公司基本股权结构
-let bos = await BookOfShares.deployed();
-let boa = await BookOfDocuments.at("0xc6bf349a2C0Cb1f7529064063E2f0A480cF6891F");
-let boh = await BookOfDocuments.at("0x67e2C8ED50C3D4C5136ffcAd2b3a6f36213652C6");
-let bom = await BookOfMotions.deployed();
-let bookeeper = await Bookeeper.deployed();
-let lockUp = await LockUp.deployed();
-let antiDilution = await AntiDilution.deployed();
-let tagAlong = await TagAlong.deployed();
-let votingRules = await VotingRules.deployed();
+var bos = await BookOfShares.deployed();
+var boa = await BookOfDocuments.at("0xc6bf349a2C0Cb1f7529064063E2f0A480cF6891F");
+var boh = await BookOfDocuments.at("0x67e2C8ED50C3D4C5136ffcAd2b3a6f36213652C6");
+var bom = await BookOfMotions.deployed();
+var bookeeper = await Bookeeper.deployed();
+var lockUp = await LockUp.deployed();
+var antiDilution = await AntiDilution.deployed();
+var tagAlong = await TagAlong.deployed();
+var votingRules = await VotingRules.deployed();
 
 bookeeper.setKeeperOfBook(bos.address, accounts[1], {from: accounts[1]});
 
@@ -50,6 +50,7 @@ ia1.setDeal("0", "1", "0", accounts[2], accounts[7], "12000", "1000000", "100000
 // 设定交割截止日
 ia1.setClosingDeadline("1648592606", {from: accounts[1]});
 
+// 设定签约截止日
 ia1.setSigDeadline("1645987806", {from: accounts[1]});
 
 ia1.isParty(accounts[0], {from: accounts[1]});
@@ -61,6 +62,7 @@ ia1.isParty(accounts[2], {from: accounts[2]});
 ia1.isParty(accounts[7], {from: accounts[2]});
 ia1.isParty(accounts[5], {from: accounts[2]});
 
+// 分发IA，仅创建的股东有权分发
 ia1.circulateDoc({from: accounts[2]});
 
 // 签订IA
@@ -115,11 +117,11 @@ lu1.addKeyholder("1", accounts[5], {from: accounts[7]});
 sha1.createTerm("14", {from: accounts[7]});
 
 let vr1 = await VotingRules.at("0x37B29Ae5612B1E892dE8b99f905bDb8d11E0F7f7");
-vr1.setAttorney(accounts[7], {from: accounts[7]});
+await vr1.setAttorney(accounts[7], {from: accounts[7]});
 
 
-vr1.setRule("1", "0", "6667", "false", "false", "false", "5", {from: accounts[7]});
-vr1.setRule("2", "5001", "0", "false", "false", "true", "5", {from: accounts[7]});
+await vr1.setRule("1", "0", "6667", "false", "false", "false", "5", {from: accounts[7]});
+await vr1.setRule("2", "5001", "0", "false", "false", "true", "5", {from: accounts[7]});
 
 vr1.getVotingDays({from:accounts[7]});
 vr1.getRule("1",{from:accounts[7]});

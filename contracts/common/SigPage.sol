@@ -7,7 +7,7 @@ pragma solidity ^0.4.24;
 import "../config/DraftSetting.sol";
 
 contract SigPage is DraftSetting {
-    // 0-pending 1-finalized 2-signed 3-submitted 4-closed 5-terminated
+    // 0-pending 1-finalized 2-signed
     uint8 private _docState;
 
     uint256 private _sigDeadline;
@@ -24,7 +24,7 @@ contract SigPage is DraftSetting {
     //##     event      ##
     //####################
 
-    event DocStateRevised(uint8 state);
+    event UpdateStateOfDoc(uint8 state);
 
     event SetSigDeadline(uint256 deadline);
 
@@ -41,24 +41,24 @@ contract SigPage is DraftSetting {
     //####################
 
     modifier onlyForDraft() {
-        require(_docState == 0, "Doc not pending");
+        require(_docState == 0, "Doc NOT pending");
         _;
     }
 
     modifier onlyForFinalized() {
-        require(_docState == 1, "Doc not finalized");
+        require(_docState == 1, "Doc NOT finalized");
         _;
     }
 
-    modifier onlyForSigned() {
-        require(_docState == 2, "Doc not signed");
-        _;
-    }
+    // modifier onlyForSigned() {
+    //     require(_docState == 2, "Doc NOT signed");
+    //     _;
+    // }
 
-    modifier onlyForSubmitted() {
-        require(_docState == 3, "Doc not submitted");
-        _;
-    }
+    // modifier onlyForSigned() {
+    //     require(_docState == 3, "Doc NOT submitted");
+    //     _;
+    // }
 
     modifier beforeSigDeadline() {
         require(now < _sigDeadline, "later than SigDeadline");
@@ -93,12 +93,12 @@ contract SigPage is DraftSetting {
     }
 
     modifier notSigned() {
-        require(_sigDate[msg.sender] == 0, "signed already");
+        require(_sigDate[msg.sender] == 0, "SIGNED already");
         _;
     }
 
     modifier onlyFutureTime(uint256 time) {
-        require(time > now, "not future time");
+        require(time > now, "NOT FUTURE time");
         _;
     }
 
@@ -145,7 +145,7 @@ contract SigPage is DraftSetting {
     function circulateDoc() external onlyAdmin onlyForDraft {
         _docState = 1;
         lockContents();
-        emit DocStateRevised(_docState);
+        emit UpdateStateOfDoc(_docState);
     }
 
     function signDoc()
@@ -162,26 +162,31 @@ contract SigPage is DraftSetting {
 
         if (_qtyOfParties == uint8(_signers.length)) {
             _docState = 2;
-            emit DocStateRevised(_docState);
+            emit UpdateStateOfDoc(_docState);
         }
     }
 
-    function submitDoc() external onlyBookeeper onlyForSigned {
-        _docState = 3;
-        emit DocStateRevised(_docState);
-    }
+    // function submitDoc() external onlyBookeeper onlyForSigned {
+    //     _docState = 3;
+    //     emit UpdateStateOfDoc(_docState);
+    // }
 
-    // function closeDoc(bool flag) public onlyBookeeper onlyForSubmitted {
+    // function closeDoc(bool flag) public onlyBookeeper onlyForSigned {
     //     if (flag) {
     //         _docState = 4;
-    //         emit DocStateRevised(this, _docState);
+    //         emit UpdateStateOfDoc(this, _docState);
     //     } else if (now > _closingDeadline) {
     //         _docState = 5;
-    //         emit DocStateRevised(this, _docState);
+    //         emit UpdateStateOfDoc(this, _docState);
     //     }
     // }
 
-    function acceptDoc() external onlyParty notSigned onlyForSubmitted {
+    function updateStateOfDoc(uint8 state) external onlyBookeeper {
+        _docState = state;
+        emit UpdateStateOfDoc(_docState);
+    }
+
+    function acceptDoc() external onlyParty notSigned {
         address sender = msg.sender;
         _sigDate[sender] = now;
         _signers.push(sender);
@@ -216,8 +221,10 @@ contract SigPage is DraftSetting {
     function isParty(address acct)
         external
         view
-        onlyConcernedEntity
-        returns (bool)
+        returns (
+            // onlyConcernedEntity
+            bool
+        )
     {
         return _isParty[acct];
     }
@@ -226,7 +233,7 @@ contract SigPage is DraftSetting {
         return _qtyOfParties;
     }
 
-    function isSignedBy(address acct)
+    function signedBy(address acct)
         external
         view
         onlyConcernedEntity
@@ -244,12 +251,7 @@ contract SigPage is DraftSetting {
         return _sigDate[acct];
     }
 
-    function getSigners()
-        external
-        view
-        onlyConcernedEntity
-        returns (address[])
-    {
+    function signers() external view onlyConcernedEntity returns (address[]) {
         return _signers;
     }
 

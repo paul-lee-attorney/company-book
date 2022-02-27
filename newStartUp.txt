@@ -1,166 +1,327 @@
-// 创设公司基本股权结构
-var bos = await BookOfShares.deployed();
-var boa = await BookOfDocuments.at("0xc6bf349a2C0Cb1f7529064063E2f0A480cF6891F");
-var boh = await BookOfDocuments.at("0x67e2C8ED50C3D4C5136ffcAd2b3a6f36213652C6");
-var bom = await BookOfMotions.deployed();
-var bookeeper = await Bookeeper.deployed();
-var lockUp = await LockUp.deployed();
-var antiDilution = await AntiDilution.deployed();
-var tagAlong = await TagAlong.deployed();
-var votingRules = await VotingRules.deployed();
-
-bookeeper.setKeeperOfBook(bos.address, accounts[1], {from: accounts[1]});
-
-// 设定股权结构：
-bos.issueShare(accounts[2], "0", "500000000", "500000000", "1533686888", "1470614888", "10000", {from: accounts[1]});
-bos.issueShare(accounts[3], "0", "300000000", "300000000", "1533686888", "1470614888", "10000", {from: accounts[1]});
-bos.issueShare(accounts[4], "0", "200000000", "100000000", "1533686888", "1470614888", "10000", {from: accounts[1]});
-
-// 实缴出资：
-bos.payInCapital("3", "100000000", "0", {from: accounts[1]});
-bos.getShare("3");
-
-// 股权转让：
-bos.transferShare("3", "200000000", "200000000", accounts[5], "0", "10000", {from:accounts[1]});
-
-// 获取BOS的股东列表:
-bos.membersList();
-bos.sharesList();
-bos.shareExist("1");
-bos.shareExist("3");
-bos.shareExist("4");
-
-// 股权转让：
-bos.transferShare("4", "100000000", "100000000", accounts[4], "0", "10000", {from:accounts[1]});
-
-// 设定BOS的Bookkeeper
-bos.setBookeeper(bookeeper.address, {from: accounts[1]});
-
-// 创建IA : 对外转股(类型：2，accounts[2]=>accounts[7], 300000000)
-bookeeper.createIA("2", {from: accounts[2]});
-
-// 设定项目律师
-let ia1 = await Agreement.at("0xC4E573B2156EE33eC577E8176647c74367b0496C");
-ia1.setAttorney(accounts[1], {from: accounts[2]});
-
-// 起草IA
-// 股转交易
-ia1.setDeal("0", "1", "0", accounts[2], accounts[7], "12000", "1000000", "1000000", "1646592606", {from: accounts[1]});
-
-// 设定交割截止日
-ia1.setClosingDeadline("1648592606", {from: accounts[1]});
-
-// 设定签约截止日
-ia1.setSigDeadline("1645987806", {from: accounts[1]});
-
-ia1.isParty(accounts[0], {from: accounts[1]});
-ia1.isParty(accounts[2], {from: accounts[1]});
-
-ia1.finalizeIA({from: accounts[1]});
-
-ia1.isParty(accounts[2], {from: accounts[2]});
-ia1.isParty(accounts[7], {from: accounts[2]});
-ia1.isParty(accounts[5], {from: accounts[2]});
-
-// 分发IA，仅创建的股东有权分发
-ia1.circulateDoc({from: accounts[2]});
-
-// 签订IA
-ia1.signDoc({from: accounts[2]});
-ia1.signDoc({from: accounts[7]});
-
-// 检查IA签署情况
-ia1.isEstablished({from: accounts[2]});
-ia1.docState({from: accounts[2]});
-
-ia1.qtyOfParties({from: accounts[2]});
-
-ia1.sigDate(accounts[7], {from: accounts[2]});
-
-ia1.sigDate(accounts[2], {from: accounts[2]});
-
-ia1.sigDate(accounts[1], {from: accounts[2]});
-
-ia1.qtyOfSigners({from: accounts[2]});
-
-// 提交IA至BOA
-bookeeper.submitIA(ia1.address, "0xe30fc9a884c0a898bd669f8aaa01b540b9111dfd70944bc9c08b66f6474c5077", {from: accounts[2]});
-
-// 创建SHA
-bookeeper.createSHA("2", {from: accounts[2]});
-
-let sha1 = await ShareholdersAgreement.at("0x82481b2056768Fc78a8F3b8A6914162c4e2Ba562");
-
-// 设定 Attorney
-sha1.getAdmin({from:accounts[1]});
-sha1.setAttorney(accounts[7], {from: accounts[2]});
-
-// 起草SHA条款
-
-// LockUp
-sha1.createTerm("0", {from: accounts[7]});
-let lu1 = await LockUp.at("0xcf2dA5593fc7d85A67Fc6dF776329c7A91D19AeA");
-sha1.getTerm("0");
-
-lu1.setAttorney(accounts[7], {from: accounts[7]});
-lu1.setLocker("1", "1647354190", {from: accounts[7]});
-
-lu1.lockerExist("1", {from: accounts[7]});
-
-lu1.getLocker("1", {from: accounts[7]});
-
-lu1.addKeyholder("1", accounts[3], {from: accounts[7]});
-lu1.addKeyholder("1", accounts[4], {from: accounts[7]});
-lu1.addKeyholder("1", accounts[5], {from: accounts[7]});
-
-// VotingRules
-sha1.createTerm("14", {from: accounts[7]});
-
-let vr1 = await VotingRules.at("0x37B29Ae5612B1E892dE8b99f905bDb8d11E0F7f7");
-await vr1.setAttorney(accounts[7], {from: accounts[7]});
+const BookOfShares = artifacts.require("BookOfShares");
+const BookOfDocuments = artifacts.require("BookOfDocuments");
+const BookOfMotions = artifacts.require("BookOfMotions");
+const Bookeeper = artifacts.require("Bookeeper");
+const LockUp = artifacts.require("LockUp");
+const AntiDilution = artifacts.require("AntiDilution");
+const TagAlong = artifacts.require("TagAlong");
+const VotingRules = artifacts.require("VotingRules");
 
 
-await vr1.setRule("1", "0", "6667", "false", "false", "false", "5", {from: accounts[7]});
-await vr1.setRule("2", "5001", "0", "false", "false", "true", "5", {from: accounts[7]});
+module.exports = async function (callback) {
 
-vr1.getVotingDays({from:accounts[7]});
-vr1.getRule("1",{from:accounts[7]});
-vr1.getRule("2",{from:accounts[7]});
+    // 创设基本合约实例
+    var bos = await BookOfShares.deployed();
+    var boa = await BookOfDocuments.at("0xc6bf349a2C0Cb1f7529064063E2f0A480cF6891F");
+    var boh = await BookOfDocuments.at("0x67e2C8ED50C3D4C5136ffcAd2b3a6f36213652C6");
+    var bom = await BookOfMotions.deployed();
+    var bookeeper = await Bookeeper.deployed();
+    var lockUp = await LockUp.deployed();
+    var antiDilution = await AntiDilution.deployed();
+    var tagAlong = await TagAlong.deployed();
+    var votingRules = await VotingRules.deployed();
 
-vr1.setCommonRules("7", "false", {from: accounts[7]});
+    const accounts = await web3.eth.getAccounts();
 
-// 签署SHA
+    // 设定BOS的Bookkeeper为外部账户
+    await bookeeper.setKeeperOfBook(bos.address, accounts[1], {from: accounts[1]});
 
-sha1.getTerms({from: accounts[7]});
-sha1.getBOM({from: accounts[7]});
-sha1.getBOS({from: accounts[7]});
+    // 设定股权结构：
+    await bos.issueShare(accounts[2], "0", "500000000", "500000000", "1533686888", "1470614888", "10000", {from: accounts[1]});
+    await bos.issueShare(accounts[3], "0", "300000000", "300000000", "1533686888", "1470614888", "10000", {from: accounts[1]});
+    await bos.issueShare(accounts[4], "0", "200000000", "100000000", "1533686888", "1470614888", "10000", {from: accounts[1]});
 
-sha1.getTemplate("0", {from: accounts[7]});
-sha1.getTemplate("14", {from: accounts[7]});
+    // 实缴出资：
+    await bos.payInCapital("3", "100000000", "0", {from: accounts[1]});
+    await bos.getShare("3");
 
-sha1.setClosingDeadline("1648592606", {from: accounts[7]});
-sha1.setSigDeadline("1645987806", {from: accounts[7]});
+    // 股权转让：
+    await bos.transferShare("3", "200000000", "200000000", accounts[5], "0", "10000", {from: accounts[1]});
 
-sha1.addPartyToDoc(accounts[2], {from: accounts[7]});
-sha1.addPartyToDoc(accounts[3], {from: accounts[7]});
-sha1.addPartyToDoc(accounts[4], {from: accounts[7]});
-sha1.addPartyToDoc(accounts[5], {from: accounts[7]});
+    // 获取BOS的股东列表:
+    // bos.membersList();
+    // bos.sharesList();
+    // bos.shareExist("1");
+    // bos.shareExist("3");
+    // bos.shareExist("4");
 
-sha1.qtyOfParties({from: accounts[7]});
+    // 股权转让：
+    await bos.transferShare("4", "100000000", "100000000", accounts[4], "0", "10000", {from: accounts[1]});
 
-sha1.circulateDoc({from: accounts[2]});
+    // 设定BOS的Bookkeeper
+    await bos.setBookeeper(bookeeper.address, {from: accounts[1]});
 
-sha1.signDoc({from: accounts[2]});
-sha1.signDoc({from: accounts[3]});
-sha1.signDoc({from: accounts[4]});
-sha1.signDoc({from: accounts[5]});
+    // 创建IA : 对外转股(类型：2，accounts[2]=>accounts[7], 300000000)
+    await bookeeper.createIA("2", {from: accounts[2]});
 
-sha1.signDoc({from: accounts[6]});
+    // 设定项目律师
+    let ia1 = await Agreement.at("0xC4E573B2156EE33eC577E8176647c74367b0496C");
+    await ia1.setAttorney(accounts[1], {from: accounts[2]});
 
-sha1.isEstablished({from: accounts[3]});
+    // 起草IA
+    // 股转交易
+    await ia1.setDeal("0", "1", "0", accounts[2], accounts[7], "12000", "1000000", "1000000", "1646592606", {from: accounts[1]});
 
-// 提交SHA
-bookeeper.submitSHA(sha1.address, "0x38301fb0b5fcf3aaa4b97c4771bb6c75546e313b4ce7057c51a8cc6a3ace9d7e", {from: accounts[2]});
+    // 设定交割截止日
+    await ia1.setClosingDeadline("1648592606", {from: accounts[1]});
+
+    // 设定签约截止日
+    await ia1.setSigDeadline("1645987806", {
+        from: accounts[1]
+    });
+
+    await ia1.isParty(accounts[0], {
+        from: accounts[1]
+    });
+    await ia1.isParty(accounts[2], {
+        from: accounts[1]
+    });
+
+    // 定稿IA
+    await ia1.finalizeIA({
+        from: accounts[1]
+    });
+
+    await ia1.isParty(accounts[2], {
+        from: accounts[2]
+    });
+    await ia1.isParty(accounts[7], {
+        from: accounts[2]
+    });
+    await ia1.isParty(accounts[5], {
+        from: accounts[2]
+    });
+
+    // 分发IA，仅创建的股东有权分发
+    await ia1.circulateDoc({
+        from: accounts[2]
+    });
+
+    // 签订IA
+    await ia1.signDoc({
+        from: accounts[2]
+    });
+    await ia1.signDoc({
+        from: accounts[7]
+    });
+
+    // 检查IA签署情况
+    await ia1.isEstablished({
+        from: accounts[2]
+    });
+    // ia1.docState({
+    //     from: accounts[2]
+    // });
+
+    // ia1.qtyOfParties({
+    //     from: accounts[2]
+    // });
+
+    // ia1.sigDate(accounts[7], {
+    //     from: accounts[2]
+    // });
+
+    // ia1.sigDate(accounts[2], {
+    //     from: accounts[2]
+    // });
+
+    // ia1.sigDate(accounts[1], {
+    //     from: accounts[2]
+    // });
+
+    // ia1.qtyOfSigners({
+    //     from: accounts[2]
+    // });
+
+    // // 提交IA至BOA
+    // bookeeper.submitIA(ia1.address, "0xe30fc9a884c0a898bd669f8aaa01b540b9111dfd70944bc9c08b66f6474c5077", {
+    //     from: accounts[2]
+    // });
+
+    // // 创建SHA
+    // bookeeper.createSHA("2", {
+    //     from: accounts[2]
+    // });
+
+    // let sha1 = await ShareholdersAgreement.at("0x82481b2056768Fc78a8F3b8A6914162c4e2Ba562");
+
+    // // 设定 Attorney
+    // sha1.getAdmin({
+    //     from: accounts[1]
+    // });
+    // sha1.setAttorney(accounts[7], {
+    //     from: accounts[2]
+    // });
+
+    // // 确定SHA签署方
+    // await sha1.addPartyToDoc(accounts[2], {
+    //     from: accounts[7]
+    // });
+    // await sha1.addPartyToDoc(accounts[3], {
+    //     from: accounts[7]
+    // });
+    // await sha1.addPartyToDoc(accounts[4], {
+    //     from: accounts[7]
+    // });
+    // await sha1.addPartyToDoc(accounts[5], {
+    //     from: accounts[7]
+    // });
+
+    // sha1.qtyOfParties({
+    //     from: accounts[7]
+    // });
+
+    // // 设定签署和生效截止期
+    // await sha1.setClosingDeadline("1648592606", {
+    //     from: accounts[7]
+    // });
+    // await sha1.setSigDeadline("1645987806", {
+    //     from: accounts[7]
+    // });
 
 
+    // // 起草SHA条款
 
+    // // LockUp
+    // await sha1.createTerm("0", {
+    //     from: accounts[7]
+    // });
+    // let lu1 = await LockUp.at("0xcf2dA5593fc7d85A67Fc6dF776329c7A91D19AeA");
+    // sha1.getTerm("0");
+
+    // // 设定项目律师
+    // lu1.setAttorney(accounts[7], {
+    //     from: accounts[7]
+    // });
+
+    // // 起草条款
+    // lu1.setLocker("1", "1647354190", {
+    //     from: accounts[7]
+    // });
+
+    // lu1.lockerExist("1", {
+    //     from: accounts[7]
+    // });
+
+    // lu1.getLocker("1", {
+    //     from: accounts[7]
+    // });
+
+    // await lu1.addKeyholder("1", accounts[3], {
+    //     from: accounts[7]
+    // });
+    // await lu1.addKeyholder("1", accounts[4], {
+    //     from: accounts[7]
+    // });
+    // await lu1.addKeyholder("1", accounts[5], {
+    //     from: accounts[7]
+    // });
+
+    // // VotingRules
+    // sha1.createTerm("14", {
+    //     from: accounts[7]
+    // });
+
+    // let vr1 = await VotingRules.at("0x37B29Ae5612B1E892dE8b99f905bDb8d11E0F7f7");
+    // await vr1.setAttorney(accounts[7], {
+    //     from: accounts[7]
+    // });
+
+
+    // await vr1.setRule("1", "0", "6667", "false", "false", "false", "5", {
+    //     from: accounts[7]
+    // });
+    // await vr1.setRule("2", "5001", "0", "false", "false", "true", "5", {
+    //     from: accounts[7]
+    // });
+
+    // vr1.getVotingDays({
+    //     from: accounts[7]
+    // });
+    // vr1.getRule("1", {
+    //     from: accounts[7]
+    // });
+    // vr1.getRule("2", {
+    //     from: accounts[7]
+    // });
+
+    // vr1.setCommonRules("7", "false", {
+    //     from: accounts[7]
+    // });
+
+    // // 定稿SHA
+    // sha1.finalizeSHA({
+    //     from: accounts[7]
+    // });
+
+    // sha1.getTerms({
+    //     from: accounts[7]
+    // });
+    // sha1.getBOM({
+    //     from: accounts[7]
+    // });
+    // sha1.getBOS({
+    //     from: accounts[7]
+    // });
+
+    // sha1.getTemplate("0", {
+    //     from: accounts[7]
+    // });
+    // sha1.getTemplate("14", {
+    //     from: accounts[7]
+    // });
+
+    // // 分发SHA（创建股东）
+    // sha1.circulateDoc({
+    //     from: accounts[2]
+    // });
+
+    // // 签署SHA
+    // await sha1.signDoc({
+    //     from: accounts[2]
+    // });
+    // await sha1.signDoc({
+    //     from: accounts[3]
+    // });
+    // await sha1.signDoc({
+    //     from: accounts[4]
+    // });
+    // await sha1.signDoc({
+    //     from: accounts[5]
+    // });
+
+    // await sha1.signDoc({
+    //     from: accounts[6]
+    // });
+
+    // sha1.isEstablished({
+    //     from: accounts[3]
+    // });
+
+    // sha1.docState({
+    //     from: accounts[3]
+    // });
+
+    // // 提交SHA
+    // bookeeper.submitSHA(sha1.address, "0x38301fb0b5fcf3aaa4b97c4771bb6c75546e313b4ce7057c51a8cc6a3ace9d7e", {
+    //     from: accounts[2]
+    // });
+
+    // // 设定SHA为生效版本
+    // bookeeper.effectiveSHA(sha1.address, {
+    //     from: accounts[2]
+    // });
+
+    // sha1.isParty(accounts[2], {
+    //     from: accounts[2]
+    // });
+
+    // boh.getTheOne({
+    //     from: accounts[0]
+    // });
+
+    // sha1.address;
+
+
+    callback();
+}

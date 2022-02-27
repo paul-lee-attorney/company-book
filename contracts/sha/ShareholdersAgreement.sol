@@ -209,7 +209,7 @@ contract ShareholdersAgreement is EnumsRepo, SigPage, CloneFactory {
     function finalizeSHA() external onlyAttorney {
         for (uint256 i = 0; i < _terms.length; i++) {
             IDraftSetting(_terms[i]).lockContents();
-            IAdminSetting(_terms[i]).abandonAdmin();
+            // IAdminSetting(_terms[i]).abandonAdmin();
         }
     }
 

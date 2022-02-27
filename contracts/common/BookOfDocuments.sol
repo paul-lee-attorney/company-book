@@ -22,7 +22,7 @@ contract BookOfDocuments is CloneFactory, AdminSetting {
     struct Doc {
         address body;
         bytes32 docHash;
-        uint8 state; // 0-draft 1-submitted
+        uint8 state; // 0-draft 1-submitted 2-closed/effective 3-terminated/revoked
     }
 
     // sn => Doc
@@ -53,7 +53,7 @@ contract BookOfDocuments is CloneFactory, AdminSetting {
 
     event SetTemplate(address temp);
 
-    event CreateDoc(bytes32 indexed sn, address doc);
+    event CreateDoc(bytes32 indexed sn, address body);
 
     event RemoveDoc(bytes32 indexed sn, address body);
 
@@ -155,7 +155,10 @@ contract BookOfDocuments is CloneFactory, AdminSetting {
         onlyRegistered(body)
         onlyForSubmitted(body)
     {
+        if (_pointer != 0) _snToDoc[_pointer].state = 3;
+        // 设定SHA法律效力
         _pointer = _bodyToSN[body];
+        _snToDoc[_pointer].state = 2;
         emit SetPointer(_pointer, body);
     }
 
@@ -182,26 +185,15 @@ contract BookOfDocuments is CloneFactory, AdminSetting {
         return _registered[body];
     }
 
-    function isSubmitted(address body)
-        external
-        view
-        onlyStakeholders
-        onlyRegistered(body)
-        returns (bool)
-    {
+    function isSubmitted(address body) external view returns (bool) {
         return _snToDoc[_bodyToSN[body]].state == 1;
     }
 
-    function getQtyOfDocuments()
-        external
-        view
-        onlyStakeholders
-        returns (uint256)
-    {
+    function qtyOfDocuments() external view onlyStakeholders returns (uint256) {
         return _docs.length;
     }
 
-    function getDocs() external view onlyStakeholders returns (bytes32[]) {
+    function docs() external view onlyStakeholders returns (bytes32[]) {
         return _docs;
     }
 
@@ -231,11 +223,11 @@ contract BookOfDocuments is CloneFactory, AdminSetting {
         return _bodyToSN[body];
     }
 
-    function getPointer() external view onlyStakeholders returns (bytes32) {
+    function pointer() external view onlyStakeholders returns (bytes32) {
         return _pointer;
     }
 
-    function getTheOne() external view onlyStakeholders returns (address) {
+    function getTheOne() external view returns (address) {
         return _snToDoc[_pointer].body;
     }
 }

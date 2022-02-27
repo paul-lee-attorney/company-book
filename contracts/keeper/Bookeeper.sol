@@ -49,11 +49,6 @@ contract Bookeeper is
         _;
     }
 
-    modifier beSubmitted(address body) {
-        require(ISigPage(body).docState() == 3, "Doc NOT submitted");
-        _;
-    }
-
     modifier notEstablished(address body) {
         require(!ISigPage(body).isEstablished(), "Doc ALREADY Established");
         _;
@@ -128,15 +123,19 @@ contract Bookeeper is
         beEstablished(body)
     {
         _boh.submitDoc(body, docHash);
+        // ISigPage(body).submitDoc();
         IAdminSetting(body).abandonAdmin();
     }
 
-    function effectiveSHA(address body)
-        external
-        onlyPartyOf(body)
-        beSubmitted(body)
-    {
+    function effectiveSHA(address body) external onlyPartyOf(body) {
+        require(_boh.isSubmitted(body), "SHA not submitted yet");
+        // 将之前有效的SHA，撤销其效力
+        if (_boh.getTheOne() != address(0))
+            ISigPage(_boh.getTheOne()).updateStateOfDoc(5);
+
         _boh.setPointer(body);
+
+        ISigPage(body).updateStateOfDoc(4);
     }
 
     // ###################
@@ -168,6 +167,7 @@ contract Bookeeper is
         beEstablished(body)
     {
         _boa.submitDoc(body, docHash);
+        // ISigPage(body).submitDoc();
         IAdminSetting(body).abandonAdmin();
     }
 

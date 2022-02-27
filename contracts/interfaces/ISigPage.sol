@@ -39,9 +39,11 @@ interface ISigPage {
 
     function signDoc() external;
 
-    function submitDoc() external;
+    // function submitDoc() external;
 
     function closeDoc(bool flag) external;
+
+    function updateStateOfDoc(uint8 state) external;
 
     function acceptDoc() external;
 
@@ -63,11 +65,11 @@ interface ISigPage {
 
     function qtyOfParties() external returns (uint8);
 
-    function isSignedBy(address acct) external returns (bool);
+    function signedBy(address acct) external returns (bool);
 
     function sigDate(address acct) external returns (uint256);
 
-    function getSigners() external returns (address[]);
+    function signers() external returns (address[]);
 
     function qtyOfSigners() external returns (uint256);
 }

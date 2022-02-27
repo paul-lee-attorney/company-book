@@ -17,7 +17,7 @@ interface IDraftSetting {
     // ##   设置端口   ##
     // ##################
 
-    function lockContents() public;
+    function lockContents() external;
 
     function setAttorney(address attorney) external;
 
@@ -25,5 +25,5 @@ interface IDraftSetting {
     // ##   查询端口   ##
     // ##################
 
-    function getAttorney() public view returns (address);
+    function getAttorney() external view returns (address);
 }

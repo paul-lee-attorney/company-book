@@ -75,11 +75,6 @@ contract SigPage is DraftSetting {
         _;
     }
 
-    modifier beParty(address acct) {
-        require(_isParty[acct], "acct NOT Party");
-        _;
-    }
-
     modifier onlyConcernedEntity() {
         address sender = msg.sender;
         require(
@@ -87,7 +82,7 @@ contract SigPage is DraftSetting {
                 sender == getAttorney() ||
                 sender == getAdmin() ||
                 sender == getBookeeper(),
-            "NOT concerned Party"
+            "NOT concerned Entity"
         );
         _;
     }
@@ -212,8 +207,10 @@ contract SigPage is DraftSetting {
     function closingDeadline()
         public
         view
-        onlyConcernedEntity
-        returns (uint256)
+        returns (
+            // onlyConcernedEntity
+            uint256
+        )
     {
         return _closingDeadline;
     }

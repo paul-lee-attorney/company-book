@@ -131,7 +131,7 @@ contract LockUp is BOSSetting, BOMSetting, DraftSetting {
     // ##  Term接口  ##
     // ################
 
-    function isTriggered(address ia)
+    function isTriggered(address ia, uint8 sn)
         external
         view
         onlyBookeeper
@@ -139,15 +139,18 @@ contract LockUp is BOSSetting, BOMSetting, DraftSetting {
     {
         IAgreement _ia = IAgreement(ia);
 
-        uint8 qtyOfDeals = _ia.qtyOfDeals();
+        // uint8 qtyOfDeals = _ia.qtyOfDeals();
 
-        for (uint8 i = 0; i < qtyOfDeals; i++) {
-            (uint256 shareNumber, , , , , , , uint256 closingDate, , , ) = _ia
-                .getDeal(i);
+        // for (uint8 i = 0; i < qtyOfDeals; i++) {
+        (uint256 shareNumber, , , , , , , uint256 closingDate, , , ) = _ia
+            .getDeal(sn);
 
-            if (!_isLocked[shareNumber]) continue;
-            else if (_lockers[shareNumber].dueDate >= closingDate) return true;
-        }
+        // if (!_isLocked[shareNumber]) continue;
+
+        if (
+            _isLocked[shareNumber] &&
+            _lockers[shareNumber].dueDate >= closingDate
+        ) return true;
 
         return false;
     }
@@ -165,10 +168,10 @@ contract LockUp is BOSSetting, BOMSetting, DraftSetting {
             return false;
         } else {
             bool flag;
-            for (uint256 j = 0; j < consentParties.length; j++) {
+            for (uint256 j = 0; j < locker.keyHolders.length; j++) {
                 flag = false;
-                for (uint256 k = 0; k < locker.keyHolders.length; k++) {
-                    if (locker.keyHolders[k] == consentParties[j]) {
+                for (uint256 k = 0; k < consentParties.length; k++) {
+                    if (locker.keyHolders[j] == consentParties[k]) {
                         flag = true;
                         break;
                     }

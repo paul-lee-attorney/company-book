@@ -1,0 +1,9 @@
+migrate --reset
+
+exec ./scripts/setUpBOS.js
+
+exec ./scripts/setUpSHA.js
+
+exec ./scripts/setUpIA.js
+
+exec ./scripts/implimentIA.js

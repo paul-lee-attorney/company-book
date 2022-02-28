@@ -100,18 +100,17 @@ contract VotingRules is BOSSetting, DraftSetting {
     // ##  查询接口  ##
     // ################
 
-    function getVotingDays() public view onlyStakeholders returns (uint8) {
+    function getVotingDays() public view returns (uint8) {
         return _votingDays;
     }
 
-    function basedOnParValue() public view onlyStakeholders returns (bool) {
+    function basedOnParValue() public view returns (bool) {
         return _basedOnParValue;
     }
 
     function getRule(uint8 typeOfRule)
         public
         view
-        onlyStakeholders
         typeAllowed(typeOfRule)
         returns (
             uint256 ratioHead,

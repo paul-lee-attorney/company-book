@@ -54,14 +54,24 @@ module.exports = async function (callback) {
     await sha1.setClosingDeadline("1648592606", {
         from: accounts[7]
     });
-    await sha1.setSigDeadline("1645987806", {
+    await sha1.setSigDeadline("1647087806", {
         from: accounts[7]
     });
 
+    let closingDeadline = await sha1.closingDeadline({
+        from: accounts[7]
+    });
+    console.log("closingDeadline of SHA: ", closingDeadline);
 
-    // // 起草SHA条款
+    let sigDeadline = await sha1.sigDeadline({
+        from: accounts[7]
+    });
+    console.log("sigDeadline :", sigDeadline);
 
-    // // LockUp
+
+    // 起草SHA条款
+
+    // LockUp
 
     let templates = await sha1.getTemplate("0", {
         from: accounts[2]
@@ -143,6 +153,10 @@ module.exports = async function (callback) {
         from: accounts[7]
     });
     // console.log("ShareTransfer Rule: ", stRule);
+
+    // 设定 增资、股转 审查条款
+
+
 
     // 定稿SHA
     await sha1.finalizeSHA({

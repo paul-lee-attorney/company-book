@@ -82,13 +82,13 @@ contract BookOfMotions is IBookOfMotions, EnumsRepo, BOSSetting, BOHSetting {
         _;
     }
 
-    modifier afterExpire(address ia) {
-        require(
-            now > _iaToMotion[ia].votingDeadline,
-            "voting deadline NOT reached"
-        );
-        _;
-    }
+    // modifier afterExpire(address ia) {
+    //     require(
+    //         now > _iaToMotion[ia].votingDeadline,
+    //         "voting deadline NOT reached"
+    //     );
+    //     _;
+    // }
 
     modifier onlyVotedTo(address ia) {
         require(_iaToMotion[ia].voted[msg.sender], "NOT voted for the IA");
@@ -266,7 +266,7 @@ contract BookOfMotions is IBookOfMotions, EnumsRepo, BOSSetting, BOHSetting {
         external
         onlyPartyOfIA(ia)
         onlyOnVoting(ia)
-        afterExpire(ia)
+    // afterExpire(ia)
     {
         Motion storage motion = _iaToMotion[ia];
 
@@ -285,8 +285,10 @@ contract BookOfMotions is IBookOfMotions, EnumsRepo, BOSSetting, BOHSetting {
     function votedYea(address ia, address acct)
         public
         view
-        onlyStakeholders
-        returns (bool)
+        returns (
+            // onlyStakeholders
+            bool
+        )
     {
         return _iaToMotion[ia].sigOfYea[acct] > 0;
     }
@@ -294,8 +296,10 @@ contract BookOfMotions is IBookOfMotions, EnumsRepo, BOSSetting, BOHSetting {
     function votedNay(address ia, address acct)
         public
         view
-        onlyStakeholders
-        returns (bool)
+        returns (
+            // onlyStakeholders
+            bool
+        )
     {
         return _iaToMotion[ia].sigOfNay[acct] > 0;
     }
@@ -303,8 +307,11 @@ contract BookOfMotions is IBookOfMotions, EnumsRepo, BOSSetting, BOHSetting {
     function getYea(address ia)
         public
         view
-        onlyStakeholders
-        returns (address[] membersOfYea, uint256 supportPar)
+        returns (
+            // onlyStakeholders
+            address[] membersOfYea,
+            uint256 supportPar
+        )
     {
         membersOfYea = _iaToMotion[ia].membersOfYea;
         supportPar = _iaToMotion[ia].supportPar;
@@ -313,8 +320,11 @@ contract BookOfMotions is IBookOfMotions, EnumsRepo, BOSSetting, BOHSetting {
     function getNay(address ia)
         public
         view
-        onlyStakeholders
-        returns (address[] membersOfNay, uint256 againstPar)
+        returns (
+            // onlyStakeholders
+            address[] membersOfNay,
+            uint256 againstPar
+        )
     {
         membersOfNay = _iaToMotion[ia].membersOfNay;
         againstPar = _iaToMotion[ia].againstPar;
@@ -323,8 +333,10 @@ contract BookOfMotions is IBookOfMotions, EnumsRepo, BOSSetting, BOHSetting {
     function haveVoted(address ia, address acct)
         public
         view
-        onlyStakeholders
-        returns (bool)
+        returns (
+            // onlyStakeholders
+            bool
+        )
     {
         return _iaToMotion[ia].voted[acct];
     }
@@ -332,8 +344,10 @@ contract BookOfMotions is IBookOfMotions, EnumsRepo, BOSSetting, BOHSetting {
     function getVotedPar(address ia)
         public
         view
-        onlyStakeholders
-        returns (uint256)
+        returns (
+            // onlyStakeholders
+            uint256
+        )
     {
         return _iaToMotion[ia].votedPar;
     }
@@ -355,8 +369,10 @@ contract BookOfMotions is IBookOfMotions, EnumsRepo, BOSSetting, BOHSetting {
         external
         view
         onlyProposed(ia)
-        onlyStakeholders
-        returns (bool)
+        returns (
+            // onlyStakeholders
+            bool
+        )
     {
         return _proposed[ia];
     }
@@ -365,8 +381,10 @@ contract BookOfMotions is IBookOfMotions, EnumsRepo, BOSSetting, BOHSetting {
         external
         view
         onlyProposed(ia)
-        onlyStakeholders
-        returns (bool)
+        returns (
+            // onlyStakeholders
+            bool
+        )
     {
         return _iaToMotion[ia].state == 2;
     }

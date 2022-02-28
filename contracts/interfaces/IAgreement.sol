@@ -31,7 +31,7 @@ interface IAgreement {
         uint256 closingDate
     ) external;
 
-    function closeDeal(uint8 sn, bytes hashKey) external;
+    function closeDeal(uint8 sn, string hashKey) external;
 
     // function closeIA() external;
 

@@ -68,7 +68,7 @@ contract Agreement is BOSSetting, SigPage {
         uint256 closingDate
     );
 
-    event CloseDeal(uint8 indexed sn, bytes hashKey);
+    event CloseDeal(uint8 indexed sn, string hashKey);
 
     //##################
     //##   Modifier   ##
@@ -218,23 +218,23 @@ contract Agreement is BOSSetting, SigPage {
             "closingDate later than deadline"
         );
 
-        require(deal.state == 0, "Deal not signed");
+        require(deal.state == 0, "Deal state wrong");
 
         deal.state = 1;
         deal.hashLock = hashLock;
-        deal.closingDate = closingDate;
+        if (closingDate > 0) deal.closingDate = closingDate;
 
-        emit ClearDealCP(sn, 1, hashLock, closingDate);
+        emit ClearDealCP(sn, 1, hashLock, deal.closingDate);
     }
 
-    function closeDeal(uint8 sn, bytes hashKey)
+    function closeDeal(uint8 sn, string hashKey)
         external
         onlyCleared(sn)
         onlyBookeeper
     {
         Deal storage deal = _deals[sn];
 
-        require(deal.hashLock == keccak256(hashKey), "hashKey is wrong");
+        require(deal.hashLock == keccak256(bytes(hashKey)), "hashKey is wrong");
 
         require(now <= deal.closingDate, "missed closing date");
 
@@ -263,8 +263,10 @@ contract Agreement is BOSSetting, SigPage {
     function getParToSell(address acct)
         external
         view
-        // onlyConcernedEntity
-        returns (uint256 parValue)
+        returns (
+            // onlyConcernedEntity
+            uint256 parValue
+        )
     {
         parValue = _parToSell[acct];
     }
@@ -272,8 +274,10 @@ contract Agreement is BOSSetting, SigPage {
     function getParToBuy(address acct)
         external
         view
-        // onlyConcernedEntity
-        returns (uint256 parValue)
+        returns (
+            // onlyConcernedEntity
+            uint256 parValue
+        )
     {
         parValue = _parToBuy[acct];
     }
@@ -282,8 +286,8 @@ contract Agreement is BOSSetting, SigPage {
         external
         view
         dealExist(sn)
-        // onlyConcernedEntity
         returns (
+            // onlyConcernedEntity
             uint256 shareNumber,
             uint8 class,
             address seller,

@@ -192,7 +192,7 @@ contract Bookeeper is
         address ia,
         bytes32 hashLock,
         uint256 closingDate
-    ) external returns (bool flag, uint8[] triggers) {
+    ) external returns (bool flag) {
         //校验IA是否表决通过
         require(_bom.isPassed(ia), "动议表决 未通过");
 
@@ -216,11 +216,13 @@ contract Bookeeper is
         address sender = msg.sender;
         require(
             (typeOfDeal == 1 && sender == getBookeeper()) || sender == seller,
-            "无权操作"
+            "NOT seller or Bookeeper"
         );
 
         //SHA校验
-        (flag, triggers) = getSHA().dealIsExempted(ia, sn, typeOfDeal);
+        // (flag, triggers) = getSHA().dealIsExempted(ia, sn, typeOfDeal);
+        if (typeOfDeal == 2) flag = getSHA().termIsExempted(0, ia, sn);
+        else if (typeOfDeal == 1) flag = getSHA().termIsExempted(1, ia, sn);
 
         if (flag) {
             IAgreement(ia).clearDealCP(sn, hashLock, closingDate);
@@ -231,7 +233,7 @@ contract Bookeeper is
     function closeDeal(
         uint8 sn,
         address ia,
-        bytes hashKey
+        string hashKey
     ) external returns (bool flag) {
         //校验ia是否注册；
         require(_boa.isRegistered(ia), "协议  未注册");
@@ -259,7 +261,7 @@ contract Bookeeper is
         IAgreement(ia).closeDeal(sn, hashKey);
 
         uint256 closingDate = now;
-        uint256 paidInDate;
+        // uint256 paidInDate;
 
         //释放Share的质押标记(若需)，执行交易
         if (shareNumber > 0) {
@@ -273,8 +275,7 @@ contract Bookeeper is
                 unitPrice
             );
         } else {
-            if (paidInAmount > 0) paidInDate = closingDate;
-
+            // if (paidInAmount > 0) paidInDate = closingDate;
             _bos.issueShare(
                 buyer,
                 class,

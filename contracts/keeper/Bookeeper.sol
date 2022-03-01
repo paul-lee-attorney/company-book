@@ -17,7 +17,7 @@ import "../config/BOMSetting.sol";
 import "../interfaces/IAgreement.sol";
 import "../interfaces/ISigPage.sol";
 
-import "../sha/interfaces/IVotingRules.sol";
+import "../boh/interfaces/IVotingRules.sol";
 
 import "../common/EnumsRepo.sol";
 
@@ -29,6 +29,8 @@ contract Bookeeper is
     BOMSetting
 {
     address[18] private _termsTemplate;
+
+    // mapping(address => bool) _submittedTerms;
 
     constructor(address bookeeper) public {
         init(msg.sender, bookeeper);
@@ -122,7 +124,12 @@ contract Bookeeper is
         onlyAdminOf(body)
         beEstablished(body)
     {
-        _boh.submitDoc(body, docHash);
+        _boh.submitSHA(body, docHash);
+
+        // address[] memory terms = IShareholdersAgreement(body).getTerms();
+        // for (uint256 i = 0; i < terms.length; i++)
+        //     _submittedTerms[terms[i]] = true;
+
         // ISigPage(body).submitDoc();
         IAdminSetting(body).abandonAdmin();
     }

@@ -16,7 +16,7 @@ module.exports = async function (callback) {
     console.log(accounts);
 
     // 获取IA
-    let ia1 = await Agreement.at("0x082F6e8AE68b3f976487e8bD1017dD58d95e452a");
+    let ia1 = await Agreement.at("0xC4E573B2156EE33eC577E8176647c74367b0496C");
     console.log("IA address: ", ia1.address);
 
     // 卖方提交表决
@@ -42,6 +42,8 @@ module.exports = async function (callback) {
     await bom.supportMotion(ia1.address, {
         from: accounts[5]
     });
+
+    console.log("motion is voted");
 
     // 统计表决结果
     await bom.voteCounting(ia1.address, {

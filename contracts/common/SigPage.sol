@@ -14,7 +14,7 @@ contract SigPage is DraftSetting {
 
     uint256 private _closingDeadline;
 
-    mapping(address => bool) private _isParty;
+    mapping(address => bool) internal _isParty;
     uint8 private _qtyOfParties;
 
     mapping(address => uint256) private _sigDate;
@@ -75,6 +75,16 @@ contract SigPage is DraftSetting {
         _;
     }
 
+    modifier notSigned() {
+        require(_sigDate[msg.sender] == 0, "SIGNED already");
+        _;
+    }
+
+    modifier onlyFutureTime(uint256 time) {
+        require(time > now, "NOT FUTURE time");
+        _;
+    }
+
     modifier onlyConcernedEntity() {
         address sender = msg.sender;
         require(
@@ -84,16 +94,6 @@ contract SigPage is DraftSetting {
                 sender == getBookeeper(),
             "NOT concerned Entity"
         );
-        _;
-    }
-
-    modifier notSigned() {
-        require(_sigDate[msg.sender] == 0, "SIGNED already");
-        _;
-    }
-
-    modifier onlyFutureTime(uint256 time) {
-        require(time > now, "NOT FUTURE time");
         _;
     }
 
@@ -192,72 +192,43 @@ contract SigPage is DraftSetting {
     //##    查询接口    ##
     //####################
 
-    function isEstablished() external view onlyConcernedEntity returns (bool) {
+    function isEstablished() external view returns (bool) {
         return _docState == 2;
     }
 
-    function docState() external view onlyConcernedEntity returns (uint8) {
+    function docState() external view returns (uint8) {
         return _docState;
     }
 
-    function sigDeadline() external view onlyConcernedEntity returns (uint256) {
+    function sigDeadline() external view returns (uint256) {
         return _sigDeadline;
     }
 
-    function closingDeadline()
-        public
-        view
-        returns (
-            // onlyConcernedEntity
-            uint256
-        )
-    {
+    function closingDeadline() public view returns (uint256) {
         return _closingDeadline;
     }
 
-    function isParty(address acct)
-        external
-        view
-        returns (
-            // onlyConcernedEntity
-            bool
-        )
-    {
+    function isParty(address acct) external view returns (bool) {
         return _isParty[acct];
     }
 
-    function qtyOfParties() external view onlyConcernedEntity returns (uint8) {
+    function qtyOfParties() external view returns (uint8) {
         return _qtyOfParties;
     }
 
-    function signedBy(address acct)
-        external
-        view
-        onlyConcernedEntity
-        returns (bool)
-    {
+    function signedBy(address acct) external view returns (bool) {
         return _sigDate[acct] > 0;
     }
 
-    function sigDate(address acct)
-        external
-        view
-        onlyConcernedEntity
-        returns (uint256)
-    {
+    function sigDate(address acct) external view returns (uint256) {
         return _sigDate[acct];
     }
 
-    function signers() external view onlyConcernedEntity returns (address[]) {
+    function signers() external view returns (address[]) {
         return _signers;
     }
 
-    function qtyOfSigners()
-        external
-        view
-        onlyConcernedEntity
-        returns (uint256)
-    {
+    function qtyOfSigners() external view returns (uint256) {
         return _signers.length;
     }
 }

@@ -16,11 +16,12 @@ import "../lib/ArrayUtils.sol";
 import "../common/SigPage.sol";
 import "../common/EnumsRepo.sol";
 import "../common/CloneFactory.sol";
+import "../config/BOHSetting.sol";
 
 import "./interfaces/ITerm.sol";
 
 // IShareholdersAgreement,
-contract ShareholdersAgreement is EnumsRepo, SigPage, CloneFactory {
+contract ShareholdersAgreement is EnumsRepo, CloneFactory, BOHSetting, SigPage {
     using ArrayUtils for address[];
     using ArrayUtils for uint8[];
 
@@ -86,6 +87,19 @@ contract ShareholdersAgreement is EnumsRepo, SigPage, CloneFactory {
         require(
             _titleToBody[title] != address(0),
             "SHA does not have such title"
+        );
+        _;
+    }
+
+    modifier onlyConcernedEntity() {
+        address sender = msg.sender;
+        require(
+            _isParty[sender] ||
+                sender == address(_boh) ||
+                sender == getAttorney() ||
+                sender == getAdmin() ||
+                sender == getBookeeper(),
+            "NOT concerned Entity"
         );
         _;
     }
@@ -286,7 +300,7 @@ contract ShareholdersAgreement is EnumsRepo, SigPage, CloneFactory {
         uint8 title,
         address ia,
         uint8 snOfDeal
-    ) public view onlyBookeeper titleExist(title) returns (bool) {
+    ) public view titleExist(title) returns (bool) {
         if (!termIsTriggered(title, ia, snOfDeal)) return true;
 
         return ITerm(_titleToBody[title]).isExempted(ia, snOfDeal);

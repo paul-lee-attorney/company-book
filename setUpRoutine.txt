@@ -7,3 +7,10 @@ exec ./scripts/setUpSHA.js
 exec ./scripts/setUpIA.js
 
 exec ./scripts/implimentIA.js
+
+
+let bookeeper = await Bookeeper.deployed()
+
+let ia = await Agreement.at("0xC4E573B2156EE33eC577E8176647c74367b0496C")
+
+bookeeper.proposeMotion(ia.address, {from: accounts[2]})

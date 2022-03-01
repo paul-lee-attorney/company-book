@@ -5,17 +5,17 @@
 pragma solidity ^0.4.24;
 
 import "../interfaces/IShareholdersAgreement.sol";
-import "../interfaces/IBookOfDocuments.sol";
+import "../interfaces/IBookOfSHA.sol";
 
 import "../config/AdminSetting.sol";
 
 contract BOHSetting is AdminSetting {
-    IBookOfDocuments internal _boh;
+    IBookOfSHA internal _boh;
 
     event SetBOH(address boh);
 
     function setBOH(address boh) external onlyBookeeper {
-        _boh = IBookOfDocuments(boh);
+        _boh = IBookOfSHA(boh);
         emit SetBOH(boh);
     }
 

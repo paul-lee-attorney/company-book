@@ -99,10 +99,10 @@ contract Agreement is BOSSetting, SigPage {
         uint256 paidInAmount,
         uint256 closingDate
     ) external onlyAttorney {
-        require(sn <= _qtyOfDeals, "sn overflow");
+        require(sn <= _qtyOfDeals, "SN overflow");
 
-        require(buyer != address(0), "buyer has zero address");
-        require(parValue > 0, "parValue is Zero");
+        require(buyer != address(0), "buyer is ZERO address");
+        require(parValue > 0, "parValue is ZERO");
         require(paidInAmount <= parValue, "paidInAmount overflow");
         require(
             closingDate == 0 || closingDate > now,
@@ -263,10 +263,7 @@ contract Agreement is BOSSetting, SigPage {
     function getParToSell(address acct)
         external
         view
-        returns (
-            // onlyConcernedEntity
-            uint256 parValue
-        )
+        returns (uint256 parValue)
     {
         parValue = _parToSell[acct];
     }
@@ -274,10 +271,7 @@ contract Agreement is BOSSetting, SigPage {
     function getParToBuy(address acct)
         external
         view
-        returns (
-            // onlyConcernedEntity
-            uint256 parValue
-        )
+        returns (uint256 parValue)
     {
         parValue = _parToBuy[acct];
     }

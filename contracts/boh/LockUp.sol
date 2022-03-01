@@ -108,7 +108,6 @@ contract LockUp is BOSSetting, BOMSetting, DraftSetting {
     function lockerExist(uint256 shareNumber)
         public
         view
-        onlyStakeholders
         beShare(shareNumber)
         returns (bool)
     {
@@ -119,7 +118,6 @@ contract LockUp is BOSSetting, BOMSetting, DraftSetting {
     function getLocker(uint256 shareNumber)
         public
         view
-        onlyStakeholders
         beLocked(shareNumber)
         returns (uint256 dueDate, address[] keyHolders)
     {

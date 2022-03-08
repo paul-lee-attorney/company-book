@@ -6,14 +6,12 @@ pragma solidity ^0.4.24;
 
 import "../config/AdminSetting.sol";
 
-import "../interfaces/IBOSSetting.sol";
-// import "../interfaces/IBOMSetting.sol";
-
 import "../config/BOSSetting.sol";
 import "../config/BOHSetting.sol";
 import "../config/BOASetting.sol";
 import "../config/BOMSetting.sol";
 
+import "../interfaces/IBOSSetting.sol";
 import "../interfaces/IAgreement.sol";
 import "../interfaces/ISigPage.sol";
 
@@ -28,7 +26,18 @@ contract Bookeeper is
     BOHSetting,
     BOMSetting
 {
-    address[18] public termsTemplate;
+    address[15] public termsTemplate;
+
+    TermTitle[] private _termsForCapitalIncrease = [
+        TermTitle.ANTI_DILUTION,
+        TermTitle.PRE_EMPTIVE
+    ];
+
+    TermTitle[] private _termsForShareTransfer = [
+        TermTitle.LOCK_UP,
+        TermTitle.FIRST_REFUSAL,
+        TermTitle.TAG_ALONG
+    ];
 
     constructor(address bookeeper) public {
         init(msg.sender, bookeeper);
@@ -208,13 +217,26 @@ contract Bookeeper is
         );
 
         //SHA校验
-        // (flag, triggers) = getSHA().dealIsExempted(ia, sn, typeOfDeal);
-        if (typeOfDeal == 2) flag = getSHA().termIsExempted(0, ia, sn);
-        else if (typeOfDeal == 1) flag = getSHA().termIsExempted(1, ia, sn);
+        if (typeOfDeal > 1) flag = _checkFlag(_termsForShareTransfer, ia, sn);
+        else flag = _checkFlag(_termsForCapitalIncrease, ia, sn);
 
         if (flag) {
             IAgreement(ia).clearDealCP(sn, hashLock, closingDate);
             if (typeOfDeal > 1) _bos.updateShareState(shareNumber, 1);
+        }
+    }
+
+    function _checkFlag(
+        TermTitle[] terms,
+        address ia,
+        uint8 sn
+    ) private returns (bool flag) {
+        uint256 len = terms.length;
+        for (uint256 i = 0; i < len; i++) {
+            if (getSHA().hasTitle(uint8(terms[i]))) {
+                flag = getSHA().termIsExempted(uint8(terms[i]), ia, sn);
+                if (!flag) return;
+            }
         }
     }
 

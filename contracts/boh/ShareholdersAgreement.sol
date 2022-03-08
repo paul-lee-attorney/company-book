@@ -80,18 +80,18 @@ contract ShareholdersAgreement is EnumsRepo, CloneFactory, BOHSetting, SigPage {
     //##    写接口    ##
     //##################
 
-    function setTermsTemplate(address[18] templates) external onlyBookeeper {
-        for (uint8 i = 0; i < 18; i++) {
-            _setTemplate(i, templates[i]);
-        }
-    }
-
     function setBOS(address _bos) external onlyBookeeper {
         bos = _bos;
     }
 
     function setBOM(address _bom) external onlyBookeeper {
         bom = _bom;
+    }
+
+    function setTermsTemplate(address[15] templates) external onlyBookeeper {
+        for (uint8 i = 0; i < 15; i++) {
+            _setTemplate(i, templates[i]);
+        }
     }
 
     function _setTemplate(uint8 title, address tempAdd) private {
@@ -172,6 +172,10 @@ contract ShareholdersAgreement is EnumsRepo, CloneFactory, BOHSetting, SigPage {
         returns (address body)
     {
         body = _titleToBody[title];
+    }
+
+    function hasTitle(uint8 title) external view returns (bool) {
+        return _titleToBody[title] != address(0);
     }
 
     function termIsTriggered(

@@ -61,7 +61,7 @@ contract AntiDilution is BOSSetting, BOMSetting, DraftSetting {
     // ################
 
     function _insertPrice(uint8 class, uint256 price) private returns (uint8) {
-        require(price > 0, "标定 价格 应大于0");
+        require(price > 0, "ZERO price");
 
         classIsMarked[class] = true;
         _benchmarks[class].price = price;

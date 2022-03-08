@@ -16,7 +16,7 @@ module.exports = async function (callback) {
     console.log(accounts);
 
     // 获取IA
-    let ia1 = await Agreement.at("0xD8c1943703AF599Bb3f73d0c02de7eCAa6015722");
+    let ia1 = await Agreement.at("0xfFc07Fd8d1696295D08Eb30Ab315C421e2b7f2de");
     console.log("IA address: ", ia1.address);
 
     // 卖方提交表决

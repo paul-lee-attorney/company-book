@@ -9,7 +9,7 @@ interface IShareholdersAgreement {
     //##    写接口    ##
     //##################
 
-    function setTermsTemplate(address[18] templates) external;
+    function setTermsTemplate(address[15] templates) external;
 
     function setBOS(address bos) external;
 
@@ -26,6 +26,8 @@ interface IShareholdersAgreement {
     //##################
     //##    读接口    ##
     //##################
+
+    function hasTitle(uint8 title) external view returns (bool);
 
     function getTerm(uint8 title) external view returns (address body);
 

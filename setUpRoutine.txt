@@ -8,4 +8,5 @@ exec ./scripts/setUpIA.js
 
 exec ./scripts/implimentIA.js
 
+exec ./scripts/testRevokeDeal.js
 

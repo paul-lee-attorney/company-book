@@ -84,7 +84,9 @@ interface IBookOfShares {
 
     function membersList() external view returns (address[]);
 
-    function verifyRegNum(bytes32 regNumHash) external view returns (bool);
+    function maxQtyOfMembers() external view returns (uint8);
+
+    function verifyRegNum(string regNum) external view returns (bool);
 
     function counterOfShares() external view returns (uint256);
 

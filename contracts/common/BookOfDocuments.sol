@@ -18,7 +18,7 @@ contract BookOfDocuments is CloneFactory, BOSSetting {
     using ArrayUtils for bytes32[];
 
     string public bookName;
-    address private _template;
+    address public template;
 
     struct Doc {
         address body;
@@ -30,10 +30,10 @@ contract BookOfDocuments is CloneFactory, BOSSetting {
     mapping(bytes32 => Doc) internal _snToDoc;
 
     // body => sn
-    mapping(address => bytes32) internal _bodyToSN;
+    mapping(address => bytes32) public bodyToSN;
 
     // body => bool
-    mapping(address => bool) private _registered;
+    mapping(address => bool) public isRegistered;
 
     bytes32[] private _docs;
 
@@ -67,22 +67,22 @@ contract BookOfDocuments is CloneFactory, BOSSetting {
     //####################
 
     modifier tempReady() {
-        require(_template != address(0), "template NOT set");
+        require(template != address(0), "template NOT set");
         _;
     }
 
     modifier onlyRegistered(address body) {
-        require(_registered[body], "doc NOT registered");
+        require(isRegistered[body], "doc NOT registered");
         _;
     }
 
     modifier onlyForPending(address body) {
-        require(_snToDoc[_bodyToSN[body]].state == 0, "doc NOT pending");
+        require(_snToDoc[bodyToSN[body]].state == 0, "doc NOT pending");
         _;
     }
 
     modifier onlyForSubmitted(address body) {
-        require(_snToDoc[_bodyToSN[body]].state == 1, "doc NOT submitted");
+        require(_snToDoc[bodyToSN[body]].state == 1, "doc NOT submitted");
         _;
     }
 
@@ -91,7 +91,7 @@ contract BookOfDocuments is CloneFactory, BOSSetting {
     //##################
 
     function setTemplate(address body) external onlyAdmin {
-        _template = body;
+        template = body;
         emit SetTemplate(body);
     }
 
@@ -101,15 +101,15 @@ contract BookOfDocuments is CloneFactory, BOSSetting {
         tempReady
         returns (address body)
     {
-        body = createClone(_template);
+        body = createClone(template);
 
         bytes32 sn = body.createSN(docType);
 
         _snToDoc[sn].body = body;
 
-        _bodyToSN[body] = sn;
+        bodyToSN[body] = sn;
 
-        _registered[body] = true;
+        isRegistered[body] = true;
 
         _docs.push(sn);
 
@@ -122,13 +122,13 @@ contract BookOfDocuments is CloneFactory, BOSSetting {
         onlyRegistered(body)
         onlyForPending(body)
     {
-        bytes32 sn = _bodyToSN[body];
+        bytes32 sn = bodyToSN[body];
 
-        delete _snToDoc[_bodyToSN[body]];
+        delete _snToDoc[bodyToSN[body]];
 
-        delete _bodyToSN[body];
+        delete bodyToSN[body];
 
-        delete _registered[body];
+        delete isRegistered[body];
 
         _docs.removeByValue(sn);
 
@@ -141,7 +141,7 @@ contract BookOfDocuments is CloneFactory, BOSSetting {
         onlyRegistered(body)
         onlyForPending(body)
     {
-        bytes32 sn = _bodyToSN[body];
+        bytes32 sn = bodyToSN[body];
 
         Doc storage doc = _snToDoc[sn];
         doc.docHash = docHash;
@@ -155,15 +155,11 @@ contract BookOfDocuments is CloneFactory, BOSSetting {
     //##################
 
     function getTemplate() external view tempReady returns (address) {
-        return _template;
-    }
-
-    function isRegistered(address body) external view returns (bool) {
-        return _registered[body];
+        return template;
     }
 
     function isSubmitted(address body) external view returns (bool) {
-        return _snToDoc[_bodyToSN[body]].state == 1;
+        return _snToDoc[bodyToSN[body]].state == 1;
     }
 
     function qtyOfDocuments() external view returns (uint256) {
@@ -187,14 +183,5 @@ contract BookOfDocuments is CloneFactory, BOSSetting {
         body = _snToDoc[sn].body;
         docHash = _snToDoc[sn].docHash;
         state = _snToDoc[sn].state;
-    }
-
-    function getSN(address body)
-        external
-        view
-        onlyRegistered(body)
-        returns (bytes32)
-    {
-        return _bodyToSN[body];
     }
 }

@@ -33,25 +33,15 @@ interface IAgreement {
 
     function closeDeal(uint8 sn, string hashKey) external;
 
-    // function closeIA() external;
+    function revokeDeal(uint8 sn, string hashKey) external;
 
-    //  #################################
-    //  ##       查询接口              ##
-    //  #################################
+    //  ######################
+    //  ##     查询接口     ##
+    //  ######################
 
-    // function getSharesToSell() external view returns (uint256[] shares);
+    function parToSell(address acct) external view returns (uint256 parValue);
 
-    // function getParToSplit(uint256 shareNumber)
-    //     external
-    //     view
-    //     returns (uint256 parValue);
-
-    function getParToSell(address acct)
-        external
-        view
-        returns (uint256 parValue);
-
-    function getParToBuy(address acct) external view returns (uint256 parValue);
+    function parToBuy(address acct) external view returns (uint256 parValue);
 
     function getDeal(uint8 sn)
         external

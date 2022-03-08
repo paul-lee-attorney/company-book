@@ -24,29 +24,29 @@ contract SharesRepo is AdminSetting {
         uint256 paidInDeadline; //出资期限（时间戳）
         uint256 issueDate; //发行日期（时间戳）
         uint256 unitPrice; //发行价格（最小单位为分）
-        uint8 state; //股票状态
+        uint8 state; //股票状态 （0：正常，1：出质，2：查封，3：已设定信托，4：代持）
     }
 
     //注册资本总额
-    uint256 private _regCap;
+    uint256 public regCap;
 
     //实缴出资总额
-    uint256 private _paidInCap;
+    uint256 public paidInCap;
 
     //shareNumber => Share
     mapping(uint256 => Share) private _shares;
 
     //shareNumber => exist?
-    mapping(uint256 => bool) private _shareExist;
+    mapping(uint256 => bool) public shareExist;
 
     //股票编号数组
     uint256[] private _sharesList;
 
     //股份类别 => 股东地址
-    mapping(uint8 => address[]) private _membersOfClass;
+    mapping(uint8 => address[]) public membersOfClass;
 
     //股份类别 => 股份编号
-    mapping(uint8 => uint256[]) private _sharesOfClass;
+    mapping(uint8 => uint256[]) public sharesOfClass;
 
     //##################
     //##    Event     ##
@@ -82,7 +82,7 @@ contract SharesRepo is AdminSetting {
 
     event CapDecrease(
         uint256 parValue,
-        uint256 _regCap,
+        uint256 regCap,
         uint256 paidInAmount,
         uint256 paidInCap
     );
@@ -101,12 +101,12 @@ contract SharesRepo is AdminSetting {
     //##################
 
     modifier onlyNormalState(uint256 shareNumber) {
-        require(_shares[shareNumber].state == 0, "state of Share ABNORMAL");
+        require(_shares[shareNumber].state == 0, "Share state NOT normal");
         _;
     }
 
     modifier onlyExistShare(uint256 shareNumber) {
-        require(_shareExist[shareNumber], "shareNumber NOT exist");
+        require(shareExist[shareNumber], "shareNumber NOT exist");
         _;
     }
 
@@ -125,7 +125,7 @@ contract SharesRepo is AdminSetting {
         uint256 unitPrice
     ) internal onlyBookeeper {
         require(shareNumber != 0, "shareNumber is ZERO");
-        require(!_shareExist[shareNumber], "shareNumber is USED");
+        require(!shareExist[shareNumber], "shareNumber is USED");
         require(shareholder != address(0), "shareholder address is ZERO");
         require(issueDate <= now + 2 hours, "issueDate NOT a PAST time");
         require(
@@ -145,11 +145,11 @@ contract SharesRepo is AdminSetting {
         share.issueDate = issueDate > 0 ? issueDate : now;
         share.unitPrice = unitPrice > 0 ? unitPrice : 1;
 
-        _shareExist[shareNumber] = true;
+        shareExist[shareNumber] = true;
         _sharesList.push(shareNumber);
 
-        _membersOfClass[class].addValue(shareholder);
-        _sharesOfClass[class].push(shareNumber);
+        membersOfClass[class].addValue(shareholder);
+        sharesOfClass[class].push(shareNumber);
 
         emit IssueShare(
             shareNumber,
@@ -171,7 +171,7 @@ contract SharesRepo is AdminSetting {
         uint256 transferPrice
     ) internal onlyBookeeper {
         require(newShareNumber != 0, "newShareNumber is ZERO");
-        require(!_shareExist[newShareNumber], "newShareNumber has been USED");
+        require(!shareExist[newShareNumber], "newShareNumber has been USED");
         require(newShareholder != address(0), "newShareholder is ZERO");
         require(splitDate <= now + 2 hours, "splitDate not a PAST time");
         require(
@@ -192,11 +192,11 @@ contract SharesRepo is AdminSetting {
         newShare.issueDate = splitDate > 0 ? splitDate : now;
         newShare.unitPrice = transferPrice;
 
-        _shareExist[newShareNumber] = true;
+        shareExist[newShareNumber] = true;
         _sharesList.push(newShareNumber);
 
-        _membersOfClass[share.class].addValue(newShareholder);
-        _sharesOfClass[share.class].push(newShareNumber);
+        membersOfClass[share.class].addValue(newShareholder);
+        sharesOfClass[share.class].push(newShareNumber);
 
         emit IssueShare(
             newShareNumber,
@@ -212,22 +212,22 @@ contract SharesRepo is AdminSetting {
         uint8 class = _shares[shareNumber].class;
         address shareholder = _shares[shareNumber].shareholder;
 
-        _sharesOfClass[class].removeByValue(shareNumber);
+        sharesOfClass[class].removeByValue(shareNumber);
 
         bool flag;
 
-        for (uint8 i = 0; i < _sharesOfClass[class].length; i++) {
-            if (_shares[_sharesOfClass[class][i]].shareholder == shareholder) {
+        for (uint8 i = 0; i < sharesOfClass[class].length; i++) {
+            if (_shares[sharesOfClass[class][i]].shareholder == shareholder) {
                 flag = true;
                 break;
             }
         }
 
-        if (!flag) _membersOfClass[class].removeByValue(shareholder);
+        if (!flag) membersOfClass[class].removeByValue(shareholder);
 
         delete _shares[shareNumber];
         _sharesList.removeByValue(shareNumber);
-        _shareExist[shareNumber] = false;
+        shareExist[shareNumber] = false;
 
         emit DeregisterShare(shareNumber);
     }
@@ -274,20 +274,20 @@ contract SharesRepo is AdminSetting {
         internal
         onlyBookeeper
     {
-        _regCap = _regCap.add(parValue);
-        _paidInCap = _paidInCap.add(paidInAmount);
+        regCap = regCap.add(parValue);
+        paidInCap = paidInCap.add(paidInAmount);
 
-        emit CapIncrease(parValue, _regCap, paidInAmount, _paidInCap);
+        emit CapIncrease(parValue, regCap, paidInAmount, paidInCap);
     }
 
     function _capDecrease(uint256 parValue, uint256 paidInAmount)
         internal
         onlyBookeeper
     {
-        _regCap -= parValue;
-        _paidInCap -= paidInAmount;
+        regCap -= parValue;
+        paidInCap -= paidInAmount;
 
-        emit CapDecrease(parValue, _regCap, paidInAmount, _paidInCap);
+        emit CapDecrease(parValue, regCap, paidInAmount, paidInCap);
     }
 
     function _updateShareState(uint256 shareNumber, uint8 state)
@@ -314,28 +314,8 @@ contract SharesRepo is AdminSetting {
     //##    读接口    ##
     //##################
 
-    function regCap() public view returns (uint256) {
-        return _regCap;
-    }
-
-    function paidInCap() public view returns (uint256) {
-        return _paidInCap;
-    }
-
-    function shareExist(uint256 shareNumber) public view returns (bool) {
-        return _shareExist[shareNumber];
-    }
-
-    function sharesList() public view returns (uint256[]) {
+    function sharesList() external view returns (uint256[]) {
         return _sharesList;
-    }
-
-    function membersOfClass(uint8 class) public view returns (address[]) {
-        return _membersOfClass[class];
-    }
-
-    function sharesOfClass(uint8 class) public view returns (uint256[]) {
-        return _sharesOfClass[class];
     }
 
     function getShare(uint256 shareNumber)

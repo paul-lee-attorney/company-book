@@ -23,7 +23,7 @@ interface IBookOfSHA {
     //##    读接口    ##
     //##################
 
-    function getTemplate() external view returns (address);
+    function template() external view returns (address);
 
     function bookName() external view returns (string);
 
@@ -46,7 +46,7 @@ interface IBookOfSHA {
             uint8 state
         );
 
-    function getSN(address body) external view returns (bytes32);
+    function bodyToSN(address body) external view returns (bytes32);
 
     function pointer() external view returns (bytes32);
 

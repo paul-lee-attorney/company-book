@@ -4,7 +4,6 @@
 
 pragma solidity ^0.4.24;
 
-import "../interfaces/IBookOfShares.sol";
 import "../lib/SafeMath.sol";
 import "./MembersRepo.sol";
 
@@ -29,7 +28,7 @@ import "./MembersRepo.sol";
 /// 因此，本系统即便在公链环境下使用，也并不会给公司、股东带来泄密、数据安全受损的问题。
 /// 出于后续开发考虑，本系统预留了各类“交易价格”属性，此类信息不建议在公链或许可链等环境下直接以明文披露，
 /// 否则将给相关的利害关系方，造成不可估量的经济损失及负面影响。
-contract BookOfShares is IBookOfShares, MembersRepo {
+contract BookOfShares is MembersRepo {
     using SafeMath for uint256;
     using SafeMath for uint8;
 
@@ -37,10 +36,10 @@ contract BookOfShares is IBookOfShares, MembersRepo {
     bytes32 private _regNumHash;
 
     //股权序列号计数器（2**16-1 应该足够计数，因此可考虑uint16）
-    uint256 private _counterOfShares;
+    uint256 public counterOfShares;
 
     //类别序列号计数器
-    uint8 private _counterOfClass;
+    uint8 public counterOfClass;
 
     /// @notice 初始化 超级管理员 账户地址，设定 公司股东人数上限， 设定 公司注册号哈希值
     /// @param regNumHash - 公司注册号哈希值
@@ -75,23 +74,18 @@ contract BookOfShares is IBookOfShares, MembersRepo {
         _addMember(shareholder);
 
         // 股票编号计数器顺加“1”
-        _counterOfShares = _counterOfShares.add(1);
+        counterOfShares = counterOfShares.add(1);
 
-        require(class <= _counterOfClass, "class overflow");
+        require(class <= counterOfClass, "class overflow");
 
-        if (class == _counterOfClass) _counterOfClass = _counterOfClass.add8(1);
+        if (class == counterOfClass) counterOfClass = counterOfClass.add8(1);
 
         // 向《股东名册》的“股东”名下添加新股票
-        _addShareToMember(
-            shareholder,
-            _counterOfShares,
-            parValue,
-            paidInAmount
-        );
+        _addShareToMember(shareholder, counterOfShares, parValue, paidInAmount);
 
         // 在《股权簿》中添加新股票（签发新的《出资证明书》）
         _issueShare(
-            _counterOfShares,
+            counterOfShares,
             shareholder,
             class,
             parValue,
@@ -147,15 +141,15 @@ contract BookOfShares is IBookOfShares, MembersRepo {
         // 判断是否需要新增股东，若需要判断是否超过法定人数上限
         _addMember(to);
 
-        _counterOfShares = _counterOfShares.add(1);
+        counterOfShares = counterOfShares.add(1);
 
         // 在“股东”名下增加新的股票
-        _addShareToMember(to, _counterOfShares, parValue, paidInAmount);
+        _addShareToMember(to, counterOfShares, parValue, paidInAmount);
 
         // 发行新股票
         _splitShare(
             shareNumber,
-            _counterOfShares,
+            counterOfShares,
             to,
             parValue,
             paidInAmount,
@@ -243,22 +237,14 @@ contract BookOfShares is IBookOfShares, MembersRepo {
     /// @notice 输入 公司注册号哈希值 验证与 regNumHash 一致性，
     /// 从而确认《股权簿》的公司主体身份
     /// @dev 仅 股东 有权操作
-    /// @param regNumHash - 公司注册号哈希值
+    /// @param regNum - 公司注册号
     /// @return true - 认证通过 ; false - 认证失败
-    function verifyRegNum(bytes32 regNumHash)
+    function verifyRegNum(string regNum)
         external
         view
         onlyMember
         returns (bool)
     {
-        return _regNumHash == regNumHash;
-    }
-
-    function counterOfShares() external view returns (uint256) {
-        return _counterOfShares;
-    }
-
-    function counterOfClass() external view returns (uint8) {
-        return _counterOfClass;
+        return _regNumHash == keccak256(bytes(regNum));
     }
 }

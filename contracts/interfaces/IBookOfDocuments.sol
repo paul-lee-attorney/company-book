@@ -47,7 +47,7 @@ interface IBookOfDocuments {
     //##    读接口    ##
     //##################
 
-    function getTemplate() external view returns (address);
+    function template() external view returns (address);
 
     function bookName() external view returns (string);
 
@@ -55,9 +55,9 @@ interface IBookOfDocuments {
 
     function isSubmitted(address body) external view returns (bool);
 
-    function getQtyOfDocuments() external view returns (uint256);
+    function qtyOfDocuments() external view returns (uint256);
 
-    function getDocs() external view returns (bytes32[]);
+    function docs() external view returns (bytes32[]);
 
     function getDoc(bytes32 sn)
         external
@@ -68,9 +68,5 @@ interface IBookOfDocuments {
             uint8 state
         );
 
-    function getSN(address body) external view returns (bytes32);
-
-    function getPointer() external view returns (bytes32);
-
-    function getTheOne() external view returns (address);
+    function bodyToSN(address body) external view returns (bytes32);
 }

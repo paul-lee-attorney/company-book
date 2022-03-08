@@ -10,7 +10,7 @@ import "../common/BookOfTerms.sol";
 import "../interfaces/IShareholdersAgreement.sol";
 
 contract BookOfSHA is BookOfTerms, BookOfDocuments {
-    bytes32 private _pointer;
+    bytes32 public pointer;
 
     constructor(
         string _bookName,
@@ -31,7 +31,7 @@ contract BookOfSHA is BookOfTerms, BookOfDocuments {
     function submitSHA(address body, bytes32 docHash) external onlyBookeeper {
         submitDoc(body, docHash);
 
-        address[] memory terms = IShareholdersAgreement(body).getTerms();
+        address[] memory terms = IShareholdersAgreement(body).terms();
 
         for (uint256 i = 0; i < terms.length; i++) {
             _addTermToRegistry(terms[i]);
@@ -44,22 +44,18 @@ contract BookOfSHA is BookOfTerms, BookOfDocuments {
         onlyRegistered(body)
         onlyForSubmitted(body)
     {
-        if (_pointer != 0) _snToDoc[_pointer].state = 3;
+        if (pointer != 0) _snToDoc[pointer].state = 3;
         // 设定SHA法律效力
-        _pointer = _bodyToSN[body];
-        _snToDoc[_pointer].state = 2;
-        emit SetPointer(_pointer, body);
+        pointer = bodyToSN[body];
+        _snToDoc[pointer].state = 2;
+        emit SetPointer(pointer, body);
     }
 
     //##################
     //##    读接口    ##
     //##################
 
-    function pointer() external view returns (bytes32) {
-        return _pointer;
-    }
-
     function getTheOne() external view returns (address) {
-        return _snToDoc[_pointer].body;
+        return _snToDoc[pointer].body;
     }
 }

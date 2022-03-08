@@ -11,8 +11,6 @@ import "../config/DraftSetting.sol";
 import "../lib/ArrayUtils.sol";
 import "../lib/SafeMath.sol";
 
-// import "../boa/Agreement.sol";
-
 import "../interfaces/IAgreement.sol";
 import "../interfaces/ISigPage.sol";
 
@@ -30,12 +28,12 @@ contract AntiDilution is BOSSetting, BOMSetting, DraftSetting {
     mapping(uint8 => Benchmark) private _benchmarks;
 
     // class => bool
-    mapping(uint8 => bool) private _isMarked;
+    mapping(uint8 => bool) public classIsMarked;
 
     // rank => class
     mapping(uint8 => uint8) private _classRanked;
 
-    uint8 private _qtyOfMarks;
+    uint8 public qtyOfMarks;
 
     // ################
     // ##   Event    ##
@@ -54,7 +52,7 @@ contract AntiDilution is BOSSetting, BOMSetting, DraftSetting {
     // #################
 
     modifier onlyMarked(uint8 class) {
-        require(_isMarked[class], "股价基准 不存在");
+        require(classIsMarked[class], "股价基准 不存在");
         _;
     }
 
@@ -65,14 +63,14 @@ contract AntiDilution is BOSSetting, BOMSetting, DraftSetting {
     function _insertPrice(uint8 class, uint256 price) private returns (uint8) {
         require(price > 0, "标定 价格 应大于0");
 
-        _isMarked[class] = true;
+        classIsMarked[class] = true;
         _benchmarks[class].price = price;
-        _qtyOfMarks = _qtyOfMarks.add8(1);
+        qtyOfMarks = qtyOfMarks.add8(1);
 
-        _classRanked[_qtyOfMarks - 1] = class;
-        _benchmarks[class].rank = _qtyOfMarks - 1;
+        _classRanked[qtyOfMarks - 1] = class;
+        _benchmarks[class].rank = qtyOfMarks - 1;
 
-        for (uint8 i = _qtyOfMarks - 1; i > 0; i--) {
+        for (uint8 i = qtyOfMarks - 1; i > 0; i--) {
             if (
                 _benchmarks[_classRanked[i - 1]].price >
                 _benchmarks[_classRanked[i]].price
@@ -99,19 +97,19 @@ contract AntiDilution is BOSSetting, BOMSetting, DraftSetting {
     function _removePrice(uint8 class) private {
         uint8 rank = _benchmarks[class].rank;
 
-        while (rank < _qtyOfMarks - 1) {
+        while (rank < qtyOfMarks - 1) {
             _benchmarks[_classRanked[rank + 1]].rank = rank;
             _classRanked[rank] = _classRanked[rank + 1];
             rank++;
         }
 
         delete _benchmarks[class];
-        delete _classRanked[_qtyOfMarks - 1];
-        _qtyOfMarks--;
+        delete _classRanked[qtyOfMarks - 1];
+        qtyOfMarks--;
     }
 
     function setBenchmark(uint8 class, uint256 price) external onlyAttorney {
-        if (_isMarked[class]) _removePrice(class);
+        if (classIsMarked[class]) _removePrice(class);
 
         uint8 rank = _insertPrice(class, price);
 
@@ -158,15 +156,6 @@ contract AntiDilution is BOSSetting, BOMSetting, DraftSetting {
     // ##  查询接口  ##
     // ################
 
-    function benchmarkExist(uint8 class)
-        external
-        view
-        onlyStakeholders
-        returns (bool)
-    {
-        return _isMarked[class];
-    }
-
     function getBenchmark(uint8 class)
         external
         view
@@ -197,7 +186,7 @@ contract AntiDilution is BOSSetting, BOMSetting, DraftSetting {
             .getDeal(snOfDeal);
 
         if (typeOfDeal > 1) return false;
-        if (unitPrice < _benchmarks[_classRanked[_qtyOfMarks - 1]].price)
+        if (unitPrice < _benchmarks[_classRanked[qtyOfMarks - 1]].price)
             return true;
         else return false;
     }
@@ -209,7 +198,7 @@ contract AntiDilution is BOSSetting, BOMSetting, DraftSetting {
     {
         require(consentParties.length > 0, "豁免方人数应大于“0”");
 
-        uint8 i = _qtyOfMarks;
+        uint8 i = qtyOfMarks;
 
         while (i > 0 && _benchmarks[_classRanked[i - 1]].price > price) {
             address[] memory classMember = _bos.membersOfClass(

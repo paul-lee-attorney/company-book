@@ -73,7 +73,7 @@ module.exports = async function (callback) {
 
     // LockUp
 
-    let templates = await sha1.getTemplate("0", {
+    let templates = await sha1.tempOfTitle("0", {
         from: accounts[2]
     });
 

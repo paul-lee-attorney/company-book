@@ -28,9 +28,7 @@ contract Bookeeper is
     BOHSetting,
     BOMSetting
 {
-    address[18] private _termsTemplate;
-
-    // mapping(address => bool) _submittedTerms;
+    address[18] public termsTemplate;
 
     constructor(address bookeeper) public {
         init(msg.sender, bookeeper);
@@ -85,17 +83,8 @@ contract Bookeeper is
     // #############
 
     function addTermTemplate(uint8 title, address add) external onlyAdmin {
-        _termsTemplate[title] = add;
+        termsTemplate[title] = add;
         emit AddTemplate(title, add);
-    }
-
-    function getTermTemplate(uint8 title)
-        external
-        view
-        onlyStakeholders
-        returns (address)
-    {
-        return _termsTemplate[title];
     }
 
     function createSHA(uint8 docType)
@@ -106,7 +95,7 @@ contract Bookeeper is
         body = _boh.createDoc(docType);
 
         IAdminSetting(body).init(msg.sender, this);
-        IShareholdersAgreement(body).setTermsTemplate(_termsTemplate);
+        IShareholdersAgreement(body).setTermsTemplate(termsTemplate);
         IShareholdersAgreement(body).setBOS(address(_bos));
         IShareholdersAgreement(body).setBOM(address(_bom));
     }
@@ -126,11 +115,6 @@ contract Bookeeper is
     {
         _boh.submitSHA(body, docHash);
 
-        // address[] memory terms = IShareholdersAgreement(body).getTerms();
-        // for (uint256 i = 0; i < terms.length; i++)
-        //     _submittedTerms[terms[i]] = true;
-
-        // ISigPage(body).submitDoc();
         IAdminSetting(body).abandonAdmin();
     }
 
@@ -200,10 +184,7 @@ contract Bookeeper is
         bytes32 hashLock,
         uint256 closingDate
     ) external returns (bool flag) {
-        //校验IA是否表决通过
-        require(_bom.isPassed(ia), "动议表决 未通过");
-
-        // Agreement.Deal memory deal = IAgreement(ia).getDeal(sn);
+        require(_bom.isPassed(ia), "Motion NOT passed");
 
         (
             uint256 shareNumber,
@@ -233,7 +214,7 @@ contract Bookeeper is
 
         if (flag) {
             IAgreement(ia).clearDealCP(sn, hashLock, closingDate);
-            if (typeOfDeal > 1) _bos.updateShareState(shareNumber, 2);
+            if (typeOfDeal > 1) _bos.updateShareState(shareNumber, 1);
         }
     }
 
@@ -282,7 +263,6 @@ contract Bookeeper is
                 unitPrice
             );
         } else {
-            // if (paidInAmount > 0) paidInDate = closingDate;
             _bos.issueShare(
                 buyer,
                 class,
@@ -295,5 +275,37 @@ contract Bookeeper is
         }
 
         flag = true;
+    }
+
+    function revokeDeal(
+        uint8 sn,
+        address ia,
+        string hashKey
+    ) external {
+        require(_boa.isRegistered(ia), "IA NOT registered");
+
+        (
+            uint256 shareNumber,
+            ,
+            address seller,
+            ,
+            ,
+            ,
+            ,
+            ,
+            uint8 typeOfDeal,
+            ,
+
+        ) = IAgreement(ia).getDeal(sn);
+
+        address sender = msg.sender;
+        require(
+            (typeOfDeal == 1 && sender == getBookeeper()) || sender == seller,
+            "NOT seller or bookeeper"
+        );
+
+        IAgreement(ia).revokeDeal(sn, hashKey);
+
+        if (typeOfDeal > 1) _bos.updateShareState(shareNumber, 0);
     }
 }

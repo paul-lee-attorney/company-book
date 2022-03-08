@@ -5,7 +5,6 @@
 pragma solidity ^0.4.24;
 
 import "../config/BOSSetting.sol";
-// import "../config/DraftSetting.sol";
 
 import "../lib/SafeMath.sol";
 
@@ -25,21 +24,22 @@ contract Agreement is BOSSetting, SigPage {
         uint256 closingDate;
         uint8 class;
         uint8 typeOfDeal; // 1-CI 2-ST(to 3rd) 3-ST(internal)
-        uint8 state; // 0-pending 1-cleared 2-closed 3-terminated
+        uint8 state; // 0-pending 1-cleared 2-closed 3-revoked
         bytes32 hashLock;
     }
 
     // party address => amount
-    mapping(address => uint256) private _parToSell;
+    mapping(address => uint256) public parToSell;
     // party address => amount
-    mapping(address => uint256) private _parToBuy;
+    mapping(address => uint256) public parToBuy;
 
     // sn => Deal
     mapping(uint8 => Deal) private _deals;
-    uint8 private _qtyOfDeals;
+
+    uint8 public qtyOfDeals;
 
     // 1-CI 2-ST(to 3rd) 3-ST(internal) 4-(1&3) 5-(2&3) 6-(1&2&3) 7-(1&2)
-    uint8 private _typeOfIA;
+    uint8 public typeOfIA;
 
     //##################
     //##    Event     ##
@@ -59,7 +59,7 @@ contract Agreement is BOSSetting, SigPage {
 
     event DelDeal(uint8 indexed sn);
 
-    event SetTypeOfIA(uint8 typeOfIA);
+    event SetTypeOfIA(uint8 _typeOfIA);
 
     event ClearDealCP(
         uint8 indexed sn,
@@ -69,6 +69,8 @@ contract Agreement is BOSSetting, SigPage {
     );
 
     event CloseDeal(uint8 indexed sn, string hashKey);
+
+    event RevokeDeal(uint8 indexed sn, string hashKey);
 
     //##################
     //##   Modifier   ##
@@ -80,7 +82,7 @@ contract Agreement is BOSSetting, SigPage {
     }
 
     modifier dealExist(uint8 sn) {
-        require(sn < _qtyOfDeals);
+        require(sn < qtyOfDeals);
         _;
     }
 
@@ -99,7 +101,7 @@ contract Agreement is BOSSetting, SigPage {
         uint256 paidInAmount,
         uint256 closingDate
     ) external onlyAttorney {
-        require(sn <= _qtyOfDeals, "SN overflow");
+        require(sn <= qtyOfDeals, "SN overflow");
 
         require(buyer != address(0), "buyer is ZERO address");
         require(parValue > 0, "parValue is ZERO");
@@ -144,7 +146,7 @@ contract Agreement is BOSSetting, SigPage {
         deal.closingDate = closingDate == 0 ? now : closingDate;
         deal.typeOfDeal = shareNumber == 0 ? 1 : _bos.isMember(buyer) ? 3 : 2;
 
-        if (sn == _qtyOfDeals) _qtyOfDeals = _qtyOfDeals.add8(1);
+        if (sn == qtyOfDeals) qtyOfDeals = qtyOfDeals.add8(1);
 
         emit SetDeal(
             sn,
@@ -161,7 +163,7 @@ contract Agreement is BOSSetting, SigPage {
 
     function delDeal(uint8 sn) external onlyAttorney dealExist(sn) {
         delete _deals[sn];
-        _qtyOfDeals--;
+        qtyOfDeals--;
 
         emit DelDeal(sn);
     }
@@ -171,7 +173,7 @@ contract Agreement is BOSSetting, SigPage {
         bool allMembersIn;
         uint8[3] memory signal;
 
-        for (; i < _qtyOfDeals; i++) {
+        for (; i < qtyOfDeals; i++) {
             Deal storage deal = _deals[i];
 
             // 交易类别统计
@@ -180,7 +182,7 @@ contract Agreement is BOSSetting, SigPage {
             // 股转交易
             if (deal.typeOfDeal > 1) {
                 addPartyToDoc(deal.seller);
-                _parToSell[deal.seller] += deal.parValue;
+                parToSell[deal.seller] += deal.parValue;
 
                 // 增资交易
             } else if (!allMembersIn) {
@@ -191,14 +193,14 @@ contract Agreement is BOSSetting, SigPage {
             }
 
             addPartyToDoc(deal.buyer);
-            _parToBuy[deal.buyer] = _parToBuy[deal.buyer].add(deal.parValue);
+            parToBuy[deal.buyer] = parToBuy[deal.buyer].add(deal.parValue);
         }
 
         // 协议类别计算
         uint8 sumOfSignal = signal[0] + signal[1] + signal[2];
-        _typeOfIA = sumOfSignal == 3 ? signal[2] == 0 ? 7 : 3 : sumOfSignal;
+        typeOfIA = sumOfSignal == 3 ? signal[2] == 0 ? 7 : 3 : sumOfSignal;
 
-        emit SetTypeOfIA(_typeOfIA);
+        emit SetTypeOfIA(typeOfIA);
     }
 
     function clearDealCP(
@@ -209,13 +211,13 @@ contract Agreement is BOSSetting, SigPage {
         Deal storage deal = _deals[sn];
 
         require(
-            closingDate == 0 || deal.closingDate <= closingDate,
-            "closingDate can ONLY be extended"
+            closingDate == 0 || now < closingDate,
+            "closingDate shall be FUTURE time"
         );
 
         require(
-            closingDate <= closingDeadline(),
-            "closingDate later than deadline"
+            closingDate <= closingDeadline,
+            "closingDate LATER than deadline"
         );
 
         require(deal.state == 0, "Deal state wrong");
@@ -234,54 +236,46 @@ contract Agreement is BOSSetting, SigPage {
     {
         Deal storage deal = _deals[sn];
 
-        require(deal.hashLock == keccak256(bytes(hashKey)), "hashKey is wrong");
+        require(
+            deal.hashLock == keccak256(bytes(hashKey)),
+            "hashKey NOT correct"
+        );
 
-        require(now <= deal.closingDate, "missed closing date");
+        require(now <= deal.closingDate, "MISSED closing date");
 
         deal.state = 2;
 
         emit CloseDeal(sn, hashKey);
     }
 
-    // function closeIA() external onlyBookeeper onlyForSubmitted {
-    //     bool flag = true;
+    function revokeDeal(uint8 sn, string hashKey)
+        external
+        onlyCleared(sn)
+        onlyBookeeper
+    {
+        Deal storage deal = _deals[sn];
 
-    //     for (uint8 i = 0; i < _qtyOfDeals; i++) {
-    //         if (_deals[i].state != 2) {
-    //             flag = false;
-    //             break;
-    //         }
-    //     }
+        require(deal.closingDate > now, "NOT reached closing date");
 
-    //     closeDoc(flag);
-    // }
+        require(
+            deal.hashLock == keccak256(bytes(hashKey)),
+            "hashKey NOT correct"
+        );
+
+        deal.state = 3;
+
+        emit RevokeDeal(sn, hashKey);
+    }
 
     //  #################################
     //  ##       查询接口              ##
     //  #################################
-
-    function getParToSell(address acct)
-        external
-        view
-        returns (uint256 parValue)
-    {
-        parValue = _parToSell[acct];
-    }
-
-    function getParToBuy(address acct)
-        external
-        view
-        returns (uint256 parValue)
-    {
-        parValue = _parToBuy[acct];
-    }
 
     function getDeal(uint8 sn)
         external
         view
         dealExist(sn)
         returns (
-            // onlyConcernedEntity
             uint256 shareNumber,
             uint8 class,
             address seller,
@@ -306,13 +300,5 @@ contract Agreement is BOSSetting, SigPage {
         typeOfDeal = _deals[sn].typeOfDeal;
         state = _deals[sn].state;
         hashLock = _deals[sn].hashLock;
-    }
-
-    function qtyOfDeals() external view returns (uint8) {
-        return _qtyOfDeals;
-    }
-
-    function typeOfIA() external view returns (uint8) {
-        return _typeOfIA;
     }
 }

@@ -24,12 +24,12 @@ contract MembersRepo is SharesRepo {
     // 账号 => 股东 映射
     mapping(address => Member) private _members;
 
-    mapping(address => bool) private _isMember;
+    mapping(address => bool) public isMember;
 
     // 股东名册
     address[] private _membersList;
 
-    uint8 private _maxQtyOfMembers;
+    uint8 public maxQtyOfMembers;
 
     //##################
     //##    Event    ##
@@ -58,12 +58,12 @@ contract MembersRepo is SharesRepo {
     //##################
 
     modifier onlyMember() {
-        require(_isMember[msg.sender], "NOT Member");
+        require(isMember[msg.sender], "NOT Member");
         _;
     }
 
     modifier beMember(address acct) {
-        require(_isMember[acct], "Acct is NOT Member");
+        require(isMember[acct], "Acct is NOT Member");
         _;
     }
 
@@ -72,11 +72,11 @@ contract MembersRepo is SharesRepo {
     //##################
 
     constructor(uint8 max) public {
-        _maxQtyOfMembers = max;
+        maxQtyOfMembers = max;
     }
 
     function setMaxQtyOfMembers(uint8 max) external onlyAdmin {
-        _maxQtyOfMembers = max;
+        maxQtyOfMembers = max;
         emit SetMaxQtyOfMembers(max);
     }
 
@@ -85,12 +85,12 @@ contract MembersRepo is SharesRepo {
 
         if (!exist) {
             require(
-                _membersList.length < _maxQtyOfMembers,
+                _membersList.length < maxQtyOfMembers,
                 "Qty of Members overflow"
             );
 
             _membersList.push(acct);
-            _isMember[acct] = true;
+            isMember[acct] = true;
 
             emit AddMember(acct, _membersList.length);
         }
@@ -138,7 +138,7 @@ contract MembersRepo is SharesRepo {
         if (_members[acct].regCap == parValue) {
             delete _members[acct];
             _membersList.removeByValue(acct);
-            _isMember[acct] = false;
+            isMember[acct] = false;
 
             emit RemoveMember(acct, _membersList.length);
         } else {
@@ -152,10 +152,6 @@ contract MembersRepo is SharesRepo {
     //##################
     //##   查询接口   ##
     //##################
-
-    function isMember(address acct) public view returns (bool) {
-        return _isMember[acct];
-    }
 
     function membersList() external view returns (address[]) {
         return _membersList;

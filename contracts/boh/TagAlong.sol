@@ -337,8 +337,8 @@ contract TagAlong is BOSSetting, BOMSetting, DraftSetting {
             ) {
                 address[] memory members = _membersOfGroup[_groupNumOf[seller]];
                 for (uint8 j = 0; j < members.length; j++) {
-                    parToSell += _ia.getParToSell(members[j]);
-                    parToBuy += _ia.getParToBuy(members[j]);
+                    parToSell += _ia.parToSell(members[j]);
+                    parToBuy += _ia.parToBuy(members[j]);
                 }
             }
 

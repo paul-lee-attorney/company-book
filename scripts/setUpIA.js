@@ -49,7 +49,7 @@ module.exports = async function (callback) {
     await ia1.setClosingDeadline("1648592606", {
         from: accounts[7]
     });
-    await ia1.setSigDeadline("1646722800", {
+    await ia1.setSigDeadline("1647002800", {
         from: accounts[7]
     });
 
@@ -101,13 +101,6 @@ module.exports = async function (callback) {
     });
 
     console.log("IA submitted");
-
-    // // 设定SHA为生效版本
-    // await bookeeper.effectiveSHA(ia1.address, {
-    //     from: accounts[2]
-    // });
-
-    // console.log("the One:", ia1.address);
 
     callback();
 }

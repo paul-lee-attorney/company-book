@@ -8,16 +8,16 @@ import "../config/DraftSetting.sol";
 
 contract SigPage is DraftSetting {
     // 0-pending 1-finalized 2-signed
-    uint8 private _docState;
+    uint8 public docState;
 
-    uint256 private _sigDeadline;
+    uint256 public sigDeadline;
 
-    uint256 private _closingDeadline;
+    uint256 public closingDeadline;
 
-    mapping(address => bool) internal _isParty;
-    uint8 private _qtyOfParties;
+    mapping(address => bool) public isParty;
+    uint8 public qtyOfParties;
 
-    mapping(address => uint256) private _sigDate;
+    mapping(address => uint256) public sigDate;
     address[] private _signers;
 
     //####################
@@ -41,59 +41,22 @@ contract SigPage is DraftSetting {
     //####################
 
     modifier onlyForDraft() {
-        require(_docState == 0, "Doc NOT pending");
-        _;
-    }
-
-    modifier onlyForFinalized() {
-        require(_docState == 1, "Doc NOT finalized");
-        _;
-    }
-
-    // modifier onlyForSigned() {
-    //     require(_docState == 2, "Doc NOT signed");
-    //     _;
-    // }
-
-    // modifier onlyForSigned() {
-    //     require(_docState == 3, "Doc NOT submitted");
-    //     _;
-    // }
-
-    modifier beforeSigDeadline() {
-        require(now < _sigDeadline, "later than SigDeadline");
-        _;
-    }
-
-    modifier beforeClosingDeadline() {
-        require(now < _closingDeadline, "later than closingDeadline");
+        require(docState == 0, "Doc NOT pending");
         _;
     }
 
     modifier onlyParty() {
-        require(_isParty[msg.sender], "msg.sender NOT Party");
+        require(isParty[msg.sender], "msg.sender NOT Party");
         _;
     }
 
     modifier notSigned() {
-        require(_sigDate[msg.sender] == 0, "SIGNED already");
+        require(sigDate[msg.sender] == 0, "SIGNED already");
         _;
     }
 
     modifier onlyFutureTime(uint256 time) {
         require(time > now, "NOT FUTURE time");
-        _;
-    }
-
-    modifier onlyConcernedEntity() {
-        address sender = msg.sender;
-        require(
-            _isParty[sender] ||
-                sender == getAttorney() ||
-                sender == getAdmin() ||
-                sender == getBookeeper(),
-            "NOT concerned Entity"
-        );
         _;
     }
 
@@ -107,7 +70,7 @@ contract SigPage is DraftSetting {
         onlyFutureTime(deadline)
         onlyForDraft
     {
-        _sigDeadline = deadline;
+        sigDeadline = deadline;
         emit SetSigDeadline(deadline);
     }
 
@@ -117,73 +80,54 @@ contract SigPage is DraftSetting {
         onlyFutureTime(deadline)
         onlyForDraft
     {
-        _closingDeadline = deadline;
+        closingDeadline = deadline;
         emit SetClosingDeadline(deadline);
     }
 
     function addPartyToDoc(address acct) public onlyAttorney {
-        if (!_isParty[acct]) {
-            _isParty[acct] = true;
-            _qtyOfParties++;
+        if (!isParty[acct]) {
+            isParty[acct] = true;
+            qtyOfParties++;
             emit AddParty(acct);
         }
     }
 
     function removePartyFromDoc(address acct) external onlyAttorney {
-        if (_isParty[acct]) {
-            delete _isParty[acct];
-            _qtyOfParties--;
+        if (isParty[acct]) {
+            delete isParty[acct];
+            qtyOfParties--;
             emit RemoveParty(acct);
         }
     }
 
     function circulateDoc() external onlyAdmin onlyForDraft {
-        _docState = 1;
+        docState = 1;
         lockContents();
-        emit UpdateStateOfDoc(_docState);
+        emit UpdateStateOfDoc(docState);
     }
 
-    function signDoc()
-        external
-        onlyParty
-        notSigned
-        beforeSigDeadline
-        onlyForFinalized
-    {
+    function signDoc() external onlyParty notSigned {
+        require(docState == 1, "Doc NOT finalized");
+        require(now < sigDeadline, "later than SigDeadline");
         address sender = msg.sender;
-        _sigDate[sender] = now;
+        sigDate[sender] = now;
         _signers.push(sender);
         emit SignDoc(sender);
 
-        if (_qtyOfParties == uint8(_signers.length)) {
-            _docState = 2;
-            emit UpdateStateOfDoc(_docState);
+        if (qtyOfParties == uint8(_signers.length)) {
+            docState = 2;
+            emit UpdateStateOfDoc(docState);
         }
     }
 
-    // function submitDoc() external onlyBookeeper onlyForSigned {
-    //     _docState = 3;
-    //     emit UpdateStateOfDoc(_docState);
-    // }
-
-    // function closeDoc(bool flag) public onlyBookeeper onlyForSigned {
-    //     if (flag) {
-    //         _docState = 4;
-    //         emit UpdateStateOfDoc(this, _docState);
-    //     } else if (now > _closingDeadline) {
-    //         _docState = 5;
-    //         emit UpdateStateOfDoc(this, _docState);
-    //     }
-    // }
-
     function updateStateOfDoc(uint8 state) external onlyBookeeper {
-        _docState = state;
-        emit UpdateStateOfDoc(_docState);
+        docState = state;
+        emit UpdateStateOfDoc(docState);
     }
 
     function acceptDoc() external onlyParty notSigned {
         address sender = msg.sender;
-        _sigDate[sender] = now;
+        sigDate[sender] = now;
         _signers.push(sender);
         emit SignDoc(sender);
     }
@@ -192,43 +136,15 @@ contract SigPage is DraftSetting {
     //##    查询接口    ##
     //####################
 
-    function isEstablished() external view returns (bool) {
-        return _docState == 2;
-    }
-
-    function docState() external view returns (uint8) {
-        return _docState;
-    }
-
-    function sigDeadline() external view returns (uint256) {
-        return _sigDeadline;
-    }
-
-    function closingDeadline() public view returns (uint256) {
-        return _closingDeadline;
-    }
-
-    function isParty(address acct) external view returns (bool) {
-        return _isParty[acct];
-    }
-
-    function qtyOfParties() external view returns (uint8) {
-        return _qtyOfParties;
-    }
-
-    function signedBy(address acct) external view returns (bool) {
-        return _sigDate[acct] > 0;
-    }
-
-    function sigDate(address acct) external view returns (uint256) {
-        return _sigDate[acct];
-    }
-
     function signers() external view returns (address[]) {
         return _signers;
     }
 
-    function qtyOfSigners() external view returns (uint256) {
-        return _signers.length;
+    function isEstablished() external view returns (bool) {
+        return docState == 2;
+    }
+
+    function signedBy(address acct) external view returns (bool) {
+        return sigDate[acct] > 0;
     }
 }

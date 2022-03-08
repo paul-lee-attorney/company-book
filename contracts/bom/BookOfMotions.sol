@@ -7,7 +7,7 @@ pragma solidity ^0.4.24;
 import "../config/BOSSetting.sol";
 import "../config/BOHSetting.sol";
 
-import "../interfaces/IBookOfMotions.sol";
+// import "../interfaces/IBookOfMotions.sol";
 import "../interfaces/ISigPage.sol";
 import "../interfaces/IAgreement.sol";
 
@@ -15,7 +15,7 @@ import "../common/EnumsRepo.sol";
 
 import "../boh/interfaces/IVotingRules.sol";
 
-contract BookOfMotions is IBookOfMotions, EnumsRepo, BOSSetting, BOHSetting {
+contract BookOfMotions is EnumsRepo, BOSSetting, BOHSetting {
     struct Motion {
         address ia;
         uint256 votingDeadline;
@@ -34,13 +34,30 @@ contract BookOfMotions is IBookOfMotions, EnumsRepo, BOSSetting, BOHSetting {
     mapping(address => Motion) private _iaToMotion;
 
     // ia => bool
-    mapping(address => bool) private _proposed;
-
-    uint256 private _qtyOfMotions;
+    mapping(address => bool) public isProposed;
 
     constructor(address bookeeper) public {
         init(msg.sender, bookeeper);
     }
+
+    //##############
+    //##  Event   ##
+    //##############
+
+    event ProposeMotion(
+        address indexed ia,
+        uint256 votingDeadline,
+        address proposedBy
+    );
+
+    event Vote(
+        address indexed ia,
+        address voter,
+        bool support,
+        uint256 voteAmt
+    );
+
+    event VoteCounting(address indexed ia, uint8 docType, uint8 result);
 
     //####################
     //##    modifier    ##
@@ -60,12 +77,12 @@ contract BookOfMotions is IBookOfMotions, EnumsRepo, BOSSetting, BOHSetting {
     }
 
     modifier notProposed(address ia) {
-        require(!_proposed[ia], "IA has been proposed");
+        require(!isProposed[ia], "IA has been isProposed");
         _;
     }
 
     modifier onlyProposed(address ia) {
-        require(_proposed[ia], "IA is NOT proposed");
+        require(isProposed[ia], "IA is NOT isProposed");
         _;
     }
 
@@ -82,14 +99,6 @@ contract BookOfMotions is IBookOfMotions, EnumsRepo, BOSSetting, BOHSetting {
         _;
     }
 
-    // modifier afterExpire(address ia) {
-    //     require(
-    //         now > _iaToMotion[ia].votingDeadline,
-    //         "voting deadline NOT reached"
-    //     );
-    //     _;
-    // }
-
     modifier onlyVotedTo(address ia) {
         require(_iaToMotion[ia].voted[msg.sender], "NOT voted for the IA");
         _;
@@ -102,18 +111,6 @@ contract BookOfMotions is IBookOfMotions, EnumsRepo, BOSSetting, BOHSetting {
 
     modifier onlyPartyOfIA(address ia) {
         require(ISigPage(ia).isParty(msg.sender), "NOT a Party to the IA");
-        _;
-    }
-
-    modifier onlyAllowed() {
-        address sender = msg.sender;
-        require(
-            _bos.isMember(sender) ||
-                _boh.isRegisteredTerm(sender) ||
-                sender == getAdmin() ||
-                sender == getBookeeper(),
-            "NOT concerned Entity"
-        );
         _;
     }
 
@@ -133,7 +130,7 @@ contract BookOfMotions is IBookOfMotions, EnumsRepo, BOSSetting, BOHSetting {
         motion.votingDeadline = now + uint256(votingDays) * 86400;
         motion.state = 1;
 
-        _proposed[ia] = true;
+        isProposed[ia] = true;
 
         emit ProposeMotion(ia, motion.votingDeadline, msg.sender);
     }
@@ -338,15 +335,6 @@ contract BookOfMotions is IBookOfMotions, EnumsRepo, BOSSetting, BOHSetting {
         date = motion.sigOfYea[acct] > 0
             ? motion.sigOfYea[acct]
             : motion.sigOfNay[acct];
-    }
-
-    function isProposed(address ia)
-        external
-        view
-        onlyProposed(ia)
-        returns (bool)
-    {
-        return _proposed[ia];
     }
 
     function isPassed(address ia)

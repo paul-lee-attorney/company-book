@@ -9,8 +9,6 @@ import "../interfaces/IDraftSetting.sol";
 import "../interfaces/IBOSSetting.sol";
 import "../interfaces/IBOMSetting.sol";
 
-// import "../interfaces/IShareholdersAgreement.sol";
-
 import "../lib/ArrayUtils.sol";
 
 import "../common/SigPage.sol";
@@ -20,22 +18,15 @@ import "../config/BOHSetting.sol";
 
 import "./interfaces/ITerm.sol";
 
-// IShareholdersAgreement,
 contract ShareholdersAgreement is EnumsRepo, CloneFactory, BOHSetting, SigPage {
     using ArrayUtils for address[];
     using ArrayUtils for uint8[];
 
-    // //Terms applicable for: 1-CapitalIncrease 2-ShareTransfer
-    // uint8[][] private _checkList;
-
-    address private _bos;
-    address private _bom;
+    address public bos;
+    address public bom;
 
     // title => template address
-    mapping(uint8 => address) private _tempOfTitle;
-
-    // title => bool
-    mapping(uint8 => bool) private _tempReadyFor;
+    mapping(uint8 => address) public tempOfTitle;
 
     // title => body
     mapping(uint8 => address) private _titleToBody;
@@ -44,10 +35,9 @@ contract ShareholdersAgreement is EnumsRepo, CloneFactory, BOHSetting, SigPage {
     mapping(address => uint8) private _bodyToTitle;
 
     // body => bool
-    mapping(address => bool) private _registered;
-    address[] private _terms;
+    mapping(address => bool) public registered;
 
-    // uint256 private _signingDays;
+    address[] private _terms;
 
     //##############
     //##  Event   ##
@@ -73,16 +63,6 @@ contract ShareholdersAgreement is EnumsRepo, CloneFactory, BOHSetting, SigPage {
     //##    modifier    ##
     //####################
 
-    modifier termExist(uint8 title) {
-        require(_titleToBody[title] > address(0), "Term not exist");
-        _;
-    }
-
-    modifier tempReadyFor(uint8 title) {
-        require(_tempReadyFor[title], "Template not ready");
-        _;
-    }
-
     modifier titleExist(uint8 title) {
         require(
             _titleToBody[title] != address(0),
@@ -91,36 +71,10 @@ contract ShareholdersAgreement is EnumsRepo, CloneFactory, BOHSetting, SigPage {
         _;
     }
 
-    modifier onlyConcernedEntity() {
-        address sender = msg.sender;
-        require(
-            _isParty[sender] ||
-                sender == address(_boh) ||
-                sender == getAttorney() ||
-                sender == getAdmin() ||
-                sender == getBookeeper(),
-            "NOT concerned Entity"
-        );
+    modifier tempReadyFor(uint8 title) {
+        require(tempOfTitle[title] != address(0), "Template NOT ready");
         _;
     }
-
-    // modifier onlyRegistered(address body) {
-    //     require(_registered[body], "条款 没有注册");
-    //     _;
-    // }
-
-    // modifier typeAllowed(uint8 typeOfDeal) {
-    //     require(typeOfDeal > 0 && typeOfDeal < 3, "类别编号超限");
-    //     _;
-    // }
-
-    // modifier onlyAdminOf(address body) {
-    //     require(
-    //         IAdminSetting(body).getAdmin() == msg.sender,
-    //         "仅文件 管理员 有权删除"
-    //     );
-    //     _;
-    // }
 
     //##################
     //##    写接口    ##
@@ -132,30 +86,12 @@ contract ShareholdersAgreement is EnumsRepo, CloneFactory, BOHSetting, SigPage {
         }
     }
 
-    // function addTermToFolder(uint8 typeOfDeal, uint8 title)
-    //     external
-    //     onlyAdmin
-    //     typeAllowed(typeOfDeal)
-    // {
-    //     _checkList[typeOfDeal].addValue(title);
-    //     emit AddTermToFolder(typeOfDeal, title);
-    // }
-
-    // function removeTermFromFolder(uint8 typeOfDeal, uint8 title)
-    //     external
-    //     onlyAdmin
-    //     typeAllowed(typeOfDeal)
-    // {
-    //     _checkList[typeOfDeal].removeByValue(title);
-    //     emit RemoveTermFromFolder(typeOfDeal, title);
-    // }
-
-    function setBOS(address bos) external onlyBookeeper {
-        _bos = bos;
+    function setBOS(address _bos) external onlyBookeeper {
+        bos = _bos;
     }
 
-    function setBOM(address bom) external onlyBookeeper {
-        _bom = bom;
+    function setBOM(address _bom) external onlyBookeeper {
+        bom = _bom;
     }
 
     function _setTemplate(uint8 title, address tempAdd) private {
@@ -165,8 +101,7 @@ contract ShareholdersAgreement is EnumsRepo, CloneFactory, BOHSetting, SigPage {
             title == uint8(TermTitle.TAG_ALONG) ||
             title == uint8(TermTitle.VOTING_RULES)
         ) {
-            _tempOfTitle[title] = tempAdd;
-            _tempReadyFor[title] = true;
+            tempOfTitle[title] = tempAdd;
 
             emit SetTemplate(title, tempAdd);
         }
@@ -177,8 +112,7 @@ contract ShareholdersAgreement is EnumsRepo, CloneFactory, BOHSetting, SigPage {
         onlyAdmin
         tempReadyFor(title)
     {
-        _tempOfTitle[title] = address(0);
-        _tempReadyFor[title] = false;
+        tempOfTitle[title] = address(0);
 
         emit RemoveTemplate(title);
     }
@@ -189,29 +123,26 @@ contract ShareholdersAgreement is EnumsRepo, CloneFactory, BOHSetting, SigPage {
         tempReadyFor(title)
         returns (address body)
     {
-        body = createClone(_tempOfTitle[title]);
+        body = createClone(tempOfTitle[title]);
         IAdminSetting(body).init(msg.sender, this);
-        IBOSSetting(body).setBOS(_bos);
+        IBOSSetting(body).setBOS(bos);
 
         if (title != uint8(TermTitle.VOTING_RULES))
-            IBOMSetting(body).setBOM(_bom);
+            IBOMSetting(body).setBOM(bom);
 
         _titleToBody[title] = body;
         _bodyToTitle[body] = title;
 
-        _registered[body] = true;
+        registered[body] = true;
         _terms.push(body);
 
         emit CreateTerm(title, body, msg.sender);
     }
 
-    function removeTerm(uint8 title)
-        external
-        onlyAttorney // onlyForDraft
-    {
+    function removeTerm(uint8 title) external onlyAttorney {
         delete _bodyToTitle[_titleToBody[title]];
 
-        delete _registered[_titleToBody[title]];
+        delete registered[_titleToBody[title]];
 
         _terms.removeByValue(_titleToBody[title]);
 
@@ -223,13 +154,16 @@ contract ShareholdersAgreement is EnumsRepo, CloneFactory, BOHSetting, SigPage {
     function finalizeSHA() external onlyAttorney {
         for (uint256 i = 0; i < _terms.length; i++) {
             IDraftSetting(_terms[i]).lockContents();
-            // IAdminSetting(_terms[i]).abandonAdmin();
         }
     }
 
     //##################
     //##    读接口    ##
     //##################
+
+    function terms() external view returns (address[]) {
+        return _terms;
+    }
 
     function getTerm(uint8 title)
         external
@@ -240,38 +174,6 @@ contract ShareholdersAgreement is EnumsRepo, CloneFactory, BOHSetting, SigPage {
         body = _titleToBody[title];
     }
 
-    function getTerms() external view returns (address[] terms) {
-        terms = _terms;
-    }
-
-    // function getCheckList(uint8 typeOfDeal)
-    //     external
-    //     view
-    //     returns (
-    //         // typeAllowed(typeOfDeal)
-    //         uint8[] titles
-    //     )
-    // {
-    //     titles = _checkList[typeOfDeal];
-    // }
-
-    function getTemplate(uint8 title)
-        external
-        view
-        tempReadyFor(title)
-        returns (address)
-    {
-        return _tempOfTitle[title];
-    }
-
-    function getBOS() external view returns (address) {
-        return _bos;
-    }
-
-    function getBOM() external view returns (address) {
-        return _bom;
-    }
-
     function termIsTriggered(
         uint8 title,
         address ia,
@@ -280,55 +182,13 @@ contract ShareholdersAgreement is EnumsRepo, CloneFactory, BOHSetting, SigPage {
         return ITerm(_titleToBody[title]).isTriggered(ia, snOfDeal);
     }
 
-    // function dealIsTriggered(
-    //     address ia,
-    //     uint8 snOfDeal,
-    //     uint8 typeOfDeal
-    // ) public view returns (bool flag, uint8[] triggers) {
-    //     uint8[] terms = _checkList[typeOfDeal];
-    //     uint8[] _triggers;
-    //     for (uint8 i = 0; i < terms.length; i++) {
-    //         if (termIsTriggered(uint8(terms[i]), ia, snOfDeal)) {
-    //             flag = true;
-    //             _triggers.push(terms[i]);
-    //         }
-    //     }
-    //     triggers = _triggers;
-    // }
-
     function termIsExempted(
         uint8 title,
         address ia,
         uint8 snOfDeal
-    ) public view titleExist(title) returns (bool) {
+    ) external view titleExist(title) returns (bool) {
         if (!termIsTriggered(title, ia, snOfDeal)) return true;
 
         return ITerm(_titleToBody[title]).isExempted(ia, snOfDeal);
     }
-
-    // function dealIsExempted(
-    //     address ia,
-    //     uint8 snOfDeal,
-    //     uint8 typeOfDeal
-    // ) public view returns (bool flag, uint8[] triggers) {
-    //     uint8[] memory tempTriggers;
-
-    //     (flag, tempTriggers) = dealIsTriggered(ia, snOfDeal, typeOfDeal);
-
-    //     if (!flag) {
-    //         flag = true;
-    //         return;
-    //     }
-
-    //     uint8[] _triggers;
-
-    //     for (uint8 i = 0; i < tempTriggers.length; i++) {
-    //         if (!termIsExempted(tempTriggers[i], ia, snOfDeal)) {
-    //             flag = false;
-    //             _triggers.push(tempTriggers[i]);
-    //         }
-    //     }
-
-    //     if (!flag) triggers = _triggers;
-    // }
 }

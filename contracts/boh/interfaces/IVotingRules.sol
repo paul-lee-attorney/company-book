@@ -41,7 +41,7 @@ interface IVotingRules {
     // ##  查询接口  ##
     // ################
 
-    function getVotingDays() external view returns (uint8);
+    function votingDays() external view returns (uint8);
 
     function basedOnParValue() external view returns (bool);
 

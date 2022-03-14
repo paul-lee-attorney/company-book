@@ -221,12 +221,11 @@ contract BookOfMotions is EnumsRepo, BOSSetting, BOHSetting {
             getSHA().getTerm(uint8(TermTitle.VOTING_RULES))
         );
 
-        bool onlyVoted;
+        bool onlyAttendance;
         bool impliedConsent;
 
-        (ratioHead, ratioAmount, onlyVoted, impliedConsent, , ) = rules.getRule(
-            votingType
-        );
+        (ratioHead, ratioAmount, onlyAttendance, impliedConsent, ) = rules
+            .getRule(votingType);
 
         totalHead = _bos.membersList().length;
 
@@ -242,7 +241,7 @@ contract BookOfMotions is EnumsRepo, BOSSetting, BOHSetting {
             }
         }
 
-        if (onlyVoted) {
+        if (onlyAttendance) {
             totalHead = motion.membersOfYea.length + motion.membersOfNay.length;
             totalAmt = motion.votedPar;
         }
@@ -291,16 +290,16 @@ contract BookOfMotions is EnumsRepo, BOSSetting, BOHSetting {
     //##    读接口    ##
     //##################
 
-    function votedYea(address ia, address acct) public view returns (bool) {
+    function votedYea(address ia, address acct) external view returns (bool) {
         return _iaToMotion[ia].sigOfYea[acct] > 0;
     }
 
-    function votedNay(address ia, address acct) public view returns (bool) {
+    function votedNay(address ia, address acct) external view returns (bool) {
         return _iaToMotion[ia].sigOfNay[acct] > 0;
     }
 
     function getYea(address ia)
-        public
+        external
         view
         returns (address[] membersOfYea, uint256 supportPar)
     {
@@ -309,7 +308,7 @@ contract BookOfMotions is EnumsRepo, BOSSetting, BOHSetting {
     }
 
     function getNay(address ia)
-        public
+        external
         view
         returns (address[] membersOfNay, uint256 againstPar)
     {
@@ -317,11 +316,11 @@ contract BookOfMotions is EnumsRepo, BOSSetting, BOHSetting {
         againstPar = _iaToMotion[ia].againstPar;
     }
 
-    function haveVoted(address ia, address acct) public view returns (bool) {
+    function haveVoted(address ia, address acct) external view returns (bool) {
         return _iaToMotion[ia].voted[acct];
     }
 
-    function getVotedPar(address ia) public view returns (uint256) {
+    function getVotedPar(address ia) external view returns (uint256) {
         return _iaToMotion[ia].votedPar;
     }
 
@@ -344,5 +343,14 @@ contract BookOfMotions is EnumsRepo, BOSSetting, BOHSetting {
         returns (bool)
     {
         return _iaToMotion[ia].state == 2;
+    }
+
+    function isRejected(address ia)
+        external
+        view
+        onlyProposed(ia)
+        returns (bool)
+    {
+        return _iaToMotion[ia].state == 3;
     }
 }

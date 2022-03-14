@@ -66,4 +66,6 @@ interface IBookOfMotions {
     function isProposed(address ia) external view returns (bool);
 
     function isPassed(address ia) external view returns (bool);
+
+    function isRejected(address ia) external view returns (bool);
 }

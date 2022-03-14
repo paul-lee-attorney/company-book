@@ -142,11 +142,7 @@ contract Bookeeper is
     // ##   Agreement   ##
     // ###################
 
-    function createIA(uint8 docType)
-        external
-        onlyMember
-        returns (address body)
-    {
+    function createIA(uint8 docType) public onlyMember returns (address body) {
         body = _boa.createDoc(docType);
 
         IAdminSetting(body).init(msg.sender, this);
@@ -176,9 +172,14 @@ contract Bookeeper is
     // ################
 
     function proposeMotion(address ia) external onlyPartyOf(ia) {
+        require(
+            _boa.isRegistered(ia),
+            "Investment Agreement is NOT registered"
+        );
+
         uint8 votingDays = IVotingRules(
             getSHA().getTerm(uint8(TermTitle.VOTING_RULES))
-        ).getVotingDays();
+        ).votingDays();
 
         _bom.proposeMotion(ia, votingDays);
     }

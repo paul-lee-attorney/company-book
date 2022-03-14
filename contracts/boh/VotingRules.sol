@@ -7,24 +7,33 @@ pragma solidity ^0.4.24;
 import "../config/BOSSetting.sol";
 import "../config/DraftSetting.sol";
 
-// import "./interfaces/IVotingRules.sol";
-
 contract VotingRules is BOSSetting, DraftSetting {
     struct Rule {
         uint256 ratioHead;
         uint256 ratioAmount;
-        bool onlyVoted;
+        bool onlyAttendance;
         bool impliedConsent;
         bool againstShallBuy;
-        uint8 reconsiderDays;
     }
 
-    bool private _basedOnParValue; //false-on PaidIn; true- ParValue
+    bool public basedOnParValue; //default: false - based on PaidInAmount; true- ParValue
 
-    uint8 private _votingDays;
+    uint8 public votingDays; //default: 30 natrual days
 
     // typeOfRule => Rule : 0-ST(internal) 1-CI 2-ST(to 3rd Party)
     mapping(uint8 => Rule) private _rules;
+
+    constructor() {
+        votingDays = 30; // default 30 days as per Company Law Act
+
+        // default for Capital Increase
+        _rules[1].ratioAmount = 6666;
+
+        // default for Share Transfer
+        _rules[2].ratioAmount = 5000;
+        _rules[2].impliedConsent = true;
+        _rules[2].againstShallBuy = true;
+    }
 
     // ################
     // ##   Event    ##
@@ -34,10 +43,9 @@ contract VotingRules is BOSSetting, DraftSetting {
         uint8 typeOfRule,
         uint256 ratioHead,
         uint256 ratioAmount,
-        bool onlyVoted,
+        bool onlyAttendance,
         bool impliedConsent,
-        bool againstShallBuy,
-        uint8 reconsiderDays
+        bool againstShallBuy
     );
 
     event SetCommonRules(uint8 votingDays, bool basedOnParValue);
@@ -59,54 +67,43 @@ contract VotingRules is BOSSetting, DraftSetting {
         uint8 typeOfRule,
         uint256 ratioHead,
         uint256 ratioAmount,
-        bool onlyVoted,
+        bool onlyAttendance,
         bool impliedConsent,
-        bool againstShallBuy,
-        uint8 reconsiderDays
+        bool againstShallBuy
     ) external onlyAttorney typeAllowed(typeOfRule) {
         Rule storage rule = _rules[typeOfRule];
 
         rule.ratioHead = ratioHead;
         rule.ratioAmount = ratioAmount;
-        rule.onlyVoted = onlyVoted;
+        rule.onlyAttendance = onlyAttendance;
         rule.impliedConsent = impliedConsent;
         rule.againstShallBuy = againstShallBuy;
-        rule.reconsiderDays = reconsiderDays;
 
         emit SetRule(
             typeOfRule,
             ratioHead,
             ratioAmount,
-            onlyVoted,
+            onlyAttendance,
             impliedConsent,
-            againstShallBuy,
-            reconsiderDays
+            againstShallBuy
         );
     }
 
-    function setCommonRules(uint8 votingDays, bool basedOnParValue)
+    function setCommonRules(uint8 _votingDays, bool _basedOnParValue)
         external
         onlyAttorney
     {
-        require(votingDays > 0, "不应小于零");
+        require(_votingDays > 0, "不应小于零");
 
-        _votingDays = votingDays;
-        _basedOnParValue = basedOnParValue;
+        votingDays = _votingDays;
+        basedOnParValue = _basedOnParValue;
 
-        emit SetCommonRules(votingDays, basedOnParValue);
+        emit SetCommonRules(_votingDays, _basedOnParValue);
     }
 
     // ################
     // ##  查询接口  ##
     // ################
-
-    function getVotingDays() public view returns (uint8) {
-        return _votingDays;
-    }
-
-    function basedOnParValue() public view returns (bool) {
-        return _basedOnParValue;
-    }
 
     function getRule(uint8 typeOfRule)
         public
@@ -115,17 +112,15 @@ contract VotingRules is BOSSetting, DraftSetting {
         returns (
             uint256 ratioHead,
             uint256 ratioAmount,
-            bool onlyVoted,
+            bool onlyAttendance,
             bool impliedConsent,
-            bool againstShallBuy,
-            uint8 reconsiderDays
+            bool againstShallBuy
         )
     {
         ratioHead = _rules[typeOfRule].ratioHead;
         ratioAmount = _rules[typeOfRule].ratioAmount;
-        onlyVoted = _rules[typeOfRule].onlyVoted;
+        onlyAttendance = _rules[typeOfRule].onlyAttendance;
         impliedConsent = _rules[typeOfRule].impliedConsent;
         againstShallBuy = _rules[typeOfRule].againstShallBuy;
-        reconsiderDays = _rules[typeOfRule].reconsiderDays;
     }
 }

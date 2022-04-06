@@ -31,6 +31,10 @@ library DealSNParser {
         return bytes32(0);
     }
 
+    function shortOfSeller(bytes32 sn) internal pure returns (bytes6 short) {
+        short = bytes6(sn << 24);
+    }
+
     function seller(bytes32 sn, bytes32[] memory sharesList)
         internal
         pure

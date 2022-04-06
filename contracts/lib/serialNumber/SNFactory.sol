@@ -18,20 +18,7 @@ library SNFactory {
         uint8 len
     ) internal pure returns (bytes output) {
         for (uint8 i = 0; i < len; i++)
-            sn[i + pointer] = bytes1(uint8(input >> ((len - 1 - i) * 8)));
-        output = sn;
-    }
-
-    function bytes32ToSN(
-        bytes sn,
-        uint8 pointer,
-        bytes32 input,
-        uint8 inputStartPoint,
-        uint8 len
-    ) internal pure returns (bytes output) {
-        for (uint8 i = 0; i < len; i++)
-            sn[pointer + i] = input[inputStartPoint + i];
-
+            sn[i + pointer] = bytes1(uint8(input >> ((len-1-i) * 8)));
         output = sn;
     }
 
@@ -76,4 +63,18 @@ library SNFactory {
 
         output = sn;
     }
+
+    function bytes32ToSN(
+        bytes sn,
+        uint8 pointer,
+        bytes32 input,
+        uint8 inputStartPoint,
+        uint8 len
+    ) internal pure returns (bytes output) {
+        for (uint8 i = 0; i < len; i++)
+            sn[pointer + i] = input[inputStartPoint + i];
+
+        output = sn;
+    }
+
 }

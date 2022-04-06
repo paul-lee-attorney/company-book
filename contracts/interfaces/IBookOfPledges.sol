@@ -4,12 +4,6 @@
 
 pragma solidity ^0.4.24;
 
-import "../lib/SafeMath.sol";
-import "../lib/serialNumber/SNFactory.sol";
-import "../lib/serialNumber/ShareSNParser.sol";
-
-import "../config/BOSSetting.sol";
-
 interface IBookOfPledges {
     function isPledge(bytes32 sn) external view returns (bool);
 

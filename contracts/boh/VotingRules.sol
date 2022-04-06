@@ -7,46 +7,45 @@ pragma solidity ^0.4.24;
 import "../config/BOSSetting.sol";
 import "../config/DraftSetting.sol";
 
-contract VotingRules is BOSSetting, DraftSetting {
-    struct Rule {
-        uint256 ratioHead;
-        uint256 ratioAmount;
-        bool onlyAttendance;
-        bool impliedConsent;
-        bool againstShallBuy;
-    }
+import "../lib/serialNumber/SNFactory.sol";
+
+contract VotingRules_ is BOSSetting, DraftSetting {
+    using SNFactory for bytes;
 
     bool public basedOnParValue; //default: false - based on PaidInAmount; true- ParValue
 
     uint8 public votingDays; //default: 30 natrual days
 
+    // struct snInfo {
+    //     uint256 ratioHead;
+    //     uint256 ratioAmount;
+    //     bool onlyAttendance;
+    //     bool impliedConsent;
+    //     bool againstShallBuy;
+    // }
+
     // typeOfRule => Rule : 0-ST(internal) 1-CI 2-ST(to 3rd Party)
-    mapping(uint8 => Rule) private _rules;
+    bytes32[3] public rules;
 
     constructor() {
         votingDays = 30; // default 30 days as per Company Law Act
 
-        // default for Capital Increase
-        _rules[1].ratioAmount = 6666;
+        // default for Capital Increase : (10进制) 0000 6666 00 00 00
+        rules[
+            1
+        ] = 0x00424200000000000000000000000000000000000000000000000000000000;
 
-        // default for Share Transfer
-        _rules[2].ratioAmount = 5000;
-        _rules[2].impliedConsent = true;
-        _rules[2].againstShallBuy = true;
+        // default for Share Transfer : (10进制) 0000 5000 00 01 01
+        rules[
+            2
+        ] = 0x00320000010100000000000000000000000000000000000000000000000000;
     }
 
     // ################
     // ##   Event    ##
     // ################
 
-    event SetRule(
-        uint8 typeOfRule,
-        uint256 ratioHead,
-        uint256 ratioAmount,
-        bool onlyAttendance,
-        bool impliedConsent,
-        bool againstShallBuy
-    );
+    event SetRule(uint8 typeOfRule, bytes32 sn);
 
     event SetCommonRules(uint8 votingDays, bool basedOnParValue);
 
@@ -63,6 +62,24 @@ contract VotingRules is BOSSetting, DraftSetting {
     // ##   写接口   ##
     // ################
 
+    function _createRule(
+        uint256 ratioHead,
+        uint256 ratioAmount,
+        bool onlyAttendance,
+        bool impliedConsent,
+        bool againstShallBuy
+    ) private returns (bytes32 sn) {
+        bytes memory _sn = new bytes(32);
+
+        _sn = _sn.intToSN(0, ratioHead, 2);
+        _sn = _sn.intToSN(2, ratioAmount, 2);
+        _sn[4] = bytes1(onlyAttendance);
+        _sn[5] = bytes1(impliedConsent);
+        _sn[6] = bytes1(againstShallBuy);
+
+        sn = _sn.bytesToBytes32();
+    }
+
     function setRule(
         uint8 typeOfRule,
         uint256 ratioHead,
@@ -71,22 +88,17 @@ contract VotingRules is BOSSetting, DraftSetting {
         bool impliedConsent,
         bool againstShallBuy
     ) external onlyAttorney typeAllowed(typeOfRule) {
-        Rule storage rule = _rules[typeOfRule];
-
-        rule.ratioHead = ratioHead;
-        rule.ratioAmount = ratioAmount;
-        rule.onlyAttendance = onlyAttendance;
-        rule.impliedConsent = impliedConsent;
-        rule.againstShallBuy = againstShallBuy;
-
-        emit SetRule(
-            typeOfRule,
+        bytes32 rule = _createRule(
             ratioHead,
             ratioAmount,
             onlyAttendance,
             impliedConsent,
             againstShallBuy
         );
+
+        rules[typeOfRule] = rule;
+
+        emit SetRule(typeOfRule, rule);
     }
 
     function setCommonRules(uint8 _votingDays, bool _basedOnParValue)
@@ -99,28 +111,5 @@ contract VotingRules is BOSSetting, DraftSetting {
         basedOnParValue = _basedOnParValue;
 
         emit SetCommonRules(_votingDays, _basedOnParValue);
-    }
-
-    // ################
-    // ##  查询接口  ##
-    // ################
-
-    function getRule(uint8 typeOfRule)
-        public
-        view
-        typeAllowed(typeOfRule)
-        returns (
-            uint256 ratioHead,
-            uint256 ratioAmount,
-            bool onlyAttendance,
-            bool impliedConsent,
-            bool againstShallBuy
-        )
-    {
-        ratioHead = _rules[typeOfRule].ratioHead;
-        ratioAmount = _rules[typeOfRule].ratioAmount;
-        onlyAttendance = _rules[typeOfRule].onlyAttendance;
-        impliedConsent = _rules[typeOfRule].impliedConsent;
-        againstShallBuy = _rules[typeOfRule].againstShallBuy;
     }
 }

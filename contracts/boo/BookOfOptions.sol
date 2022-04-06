@@ -53,7 +53,7 @@ contract BookOfOptions is BOSSetting {
 
     mapping(bytes32 => bool) public isOption;
 
-    bytes32[] public snList;
+    bytes32[] private _snList;
 
     uint16 public counterOfOpts;
 
@@ -148,7 +148,7 @@ contract BookOfOptions is BOSSetting {
         opt.state = 1;
 
         isOption[sn] = true;
-        sn.insertToQue(snList);
+        sn.insertToQue(_snList);
 
         emit CreateOpt(sn, rightholder, parValue);
     }
@@ -173,7 +173,7 @@ contract BookOfOptions is BOSSetting {
         opt.state = 3;
 
         isOption[sn] = true;
-        sn.insertToQue(snList);
+        sn.insertToQue(_snList);
 
         emit CreateOpt(sn, shareNumber.shareholder(), parValue);
 
@@ -233,7 +233,7 @@ contract BookOfOptions is BOSSetting {
     }
 
     function getSNList() external view returns (bytes32[] list) {
-        list = snList;
+        list = _snList;
     }
 
     // ################

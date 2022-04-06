@@ -17,8 +17,4 @@ contract BOMSetting is AdminSetting {
         _bom = IBookOfMotions(bom);
         emit SetBOM(bom);
     }
-
-    // function getBOM() public view returns (IBookOfMotions) {
-    //     return _bom;
-    // }
 }

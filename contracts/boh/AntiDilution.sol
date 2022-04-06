@@ -10,30 +10,26 @@ import "../config/DraftSetting.sol";
 
 import "../lib/ArrayUtils.sol";
 import "../lib/SafeMath.sol";
+import "../lib/serialNumber/SNFactory.sol";
 
 import "../interfaces/IAgreement.sol";
 import "../interfaces/ISigPage.sol";
 
 contract AntiDilution is BOSSetting, BOMSetting, DraftSetting {
+    using SNFactory for bytes;
     using ArrayUtils for address[];
-    using SafeMath for uint8;
+    using ArrayUtils for bytes32[];
 
-    struct Benchmark {
-        uint8 rank;
-        uint256 price;
-        address[] obligors;
-    }
-
-    // class => Benchmark
-    mapping(uint8 => Benchmark) private _benchmarks;
+    // benchmark => obligors
+    mapping(bytes32 => address[]) public obligors;
 
     // class => bool
-    mapping(uint8 => bool) public classIsMarked;
+    mapping(uint8 => bool) public isMarked;
 
-    // rank => class
-    mapping(uint8 => uint8) private _classRanked;
+    // class => benchmark
+    mapping(uint8 => bytes32) public classToMark;
 
-    uint8 public qtyOfMarks;
+    bytes32[] public benchmarks;
 
     // ################
     // ##   Event    ##
@@ -52,7 +48,7 @@ contract AntiDilution is BOSSetting, BOMSetting, DraftSetting {
     // #################
 
     modifier onlyMarked(uint8 class) {
-        require(classIsMarked[class], "股价基准 不存在");
+        require(isMarked[class], "股价基准 不存在");
         _;
     }
 
@@ -60,64 +56,48 @@ contract AntiDilution is BOSSetting, BOMSetting, DraftSetting {
     // ##   写接口   ##
     // ################
 
-    function _insertPrice(uint8 class, uint256 price) private returns (uint8) {
-        require(price > 0, "ZERO price");
+    function _createSN(uint8 class, uint256 price)
+        private
+        pure
+        returns (bytes32 sn)
+    {
+        bytes _sn = new bytes(32);
+        _sn = _sn.intToSN(0, price, 31);
+        _sn[31] = bytes1(class);
 
-        classIsMarked[class] = true;
-        _benchmarks[class].price = price;
-        qtyOfMarks = qtyOfMarks.add8(1);
-
-        _classRanked[qtyOfMarks - 1] = class;
-        _benchmarks[class].rank = qtyOfMarks - 1;
-
-        for (uint8 i = qtyOfMarks - 1; i > 0; i--) {
-            if (
-                _benchmarks[_classRanked[i - 1]].price >
-                _benchmarks[_classRanked[i]].price
-            ) {
-                uint256 t = _benchmarks[_classRanked[i]].price;
-                _benchmarks[_classRanked[i]].price = _benchmarks[
-                    _classRanked[i - 1]
-                ].price;
-                _benchmarks[_classRanked[i - 1]].price = t;
-
-                _benchmarks[_classRanked[i]].rank = i - 1;
-                _benchmarks[_classRanked[i - 1]].rank = i;
-
-                uint8 k = _classRanked[i];
-                _classRanked[i] = _classRanked[i - 1];
-                _classRanked[i - 1] = k;
-            } else {
-                return i;
-            }
-        }
-        return 0;
-    }
-
-    function _removePrice(uint8 class) private {
-        uint8 rank = _benchmarks[class].rank;
-
-        while (rank < qtyOfMarks - 1) {
-            _benchmarks[_classRanked[rank + 1]].rank = rank;
-            _classRanked[rank] = _classRanked[rank + 1];
-            rank++;
-        }
-
-        delete _benchmarks[class];
-        delete _classRanked[qtyOfMarks - 1];
-        qtyOfMarks--;
+        sn = _sn.bytesToBytes32();
     }
 
     function setBenchmark(uint8 class, uint256 price) external onlyAttorney {
-        if (classIsMarked[class]) _removePrice(class);
+        bytes32 sn = _createSN(class, price);
 
-        uint8 rank = _insertPrice(class, price);
+        isMarked[class] = true;
 
-        emit SetBenchmark(class, price, rank);
+        classToMark[class] = sn;
+
+        uint256 len = benchmarks.length;
+        benchmarks.push(sn);
+
+        for (uint256 i = 0; i < len; i++) {
+            if (benchmarks[len - 1 - i] > benchmarks[len - i])
+                (benchmarks[len - 1 - i], benchmarks[len - i]) = (
+                    benchmarks[len - i],
+                    benchmarks[len - 1 - i]
+                );
+            else break;
+        }
+
+        emit SetBenchmark(class, price);
     }
 
     function delBenchmark(uint8 class) external onlyAttorney onlyMarked(class) {
-        _removePrice(class);
+        bytes32 mark = classToMark[class];
+
+        delete obligors[mark];
+        delete isMarked[class];
+        delete classToMark[class];
+
+        benchmarks.removeByValue(mark);
 
         emit DelBenchmark(class);
     }
@@ -127,14 +107,12 @@ contract AntiDilution is BOSSetting, BOMSetting, DraftSetting {
         onlyAttorney
         onlyMarked(class)
     {
-        // require(_getBOS().isMember(obligor) || _isInvestor(obligor), "反稀释 义务人 应为股东或投资人");
-
         ISigPage(getBookeeper()).isParty(obligor);
 
-        (bool exist, ) = _benchmarks[class].obligors.firstIndexOf(obligor);
+        (bool exist, ) = obligors[classToMark[class]].firstIndexOf(obligor);
 
         if (!exist) {
-            _benchmarks[class].obligors.push(obligor);
+            obligors[classToMark[class]].push(obligor);
             emit AddObligor(class, obligor);
         }
     }
@@ -144,10 +122,10 @@ contract AntiDilution is BOSSetting, BOMSetting, DraftSetting {
         onlyAttorney
         onlyMarked(class)
     {
-        (bool exist, ) = _benchmarks[class].obligors.firstIndexOf(obligor);
+        (bool exist, ) = obligors[classToMark[class]].firstIndexOf(obligor);
 
         if (exist) {
-            _benchmarks[class].obligors.removeByValue(obligor);
+            obligors[classToMark[class]].removeByValue(obligor);
             emit RemoveObligor(class, obligor);
         }
     }
@@ -156,37 +134,30 @@ contract AntiDilution is BOSSetting, BOMSetting, DraftSetting {
     // ##  查询接口  ##
     // ################
 
-    function getBenchmark(uint8 class)
+    function getBenchmarks()
         external
         view
         onlyStakeholders
-        onlyMarked(class)
-        returns (
-            uint8 rank,
-            uint256 price,
-            address[] obligors
-        )
+        returns (bytes32[] marks)
     {
-        rank = _benchmarks[class].rank;
-        price = _benchmarks[class].price;
-        obligors = _benchmarks[class].obligors;
+        return marks = benchmarks;
     }
 
     // ################
     // ##  Term接口  ##
     // ################
 
-    function isTriggered(address ia, uint8 snOfDeal)
+    function isTriggered(address ia, bytes32 sn)
         public
         view
         onlyBookeeper
         returns (bool)
     {
-        (, , , , uint256 unitPrice, , , , uint8 typeOfDeal, , ) = IAgreement(ia)
-            .getDeal(snOfDeal);
+        (uint256 unitPrice, , , , , ) = IAgreement(ia).getDeal(sn);
+        uint8 typeOfDeal = uint8(sn[3]);
 
         if (typeOfDeal > 1) return false;
-        if (unitPrice < _benchmarks[_classRanked[qtyOfMarks - 1]].price)
+        if (unitPrice < uint256(bytes31(benchmarks[benchmarks.length - 1])))
             return true;
         else return false;
     }
@@ -198,11 +169,11 @@ contract AntiDilution is BOSSetting, BOMSetting, DraftSetting {
     {
         require(consentParties.length > 0, "豁免方人数应大于“0”");
 
-        uint8 i = qtyOfMarks;
+        uint8 i = benchmarks.length;
 
-        while (i > 0 && _benchmarks[_classRanked[i - 1]].price > price) {
+        while (i > 0 && uint256(bytes31(benchmarks[i - 1])) > price) {
             address[] memory classMember = _bos.membersOfClass(
-                _classRanked[i - 1]
+                uint8(benchmarks[i - 1][31])
             );
 
             if (classMember.length > consentParties.length) {
@@ -226,19 +197,17 @@ contract AntiDilution is BOSSetting, BOMSetting, DraftSetting {
         return true;
     }
 
-    function isExempted(address ia, uint8 snOfDeal)
+    function isExempted(address ia, bytes32 sn)
         public
         view
         onlyBookeeper
         returns (bool)
     {
-        if (!isTriggered(ia, snOfDeal)) return true;
+        if (!isTriggered(ia, sn)) return true;
 
         (address[] memory consentParties, ) = _bom.getYea(ia);
 
-        (, , , , uint256 unitPrice, , , , , , ) = IAgreement(ia).getDeal(
-            snOfDeal
-        );
+        (uint256 unitPrice, , , , , ) = IAgreement(ia).getDeal(sn);
 
         return _isExempted(unitPrice, consentParties);
     }

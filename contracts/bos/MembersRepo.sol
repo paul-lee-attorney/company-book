@@ -4,25 +4,14 @@
 
 pragma solidity ^0.4.24;
 
-import "../lib/SafeMath.sol";
 import "../lib/ArrayUtils.sol";
+import "../lib/serialNumber/ShareSNParser.sol";
 
 import "./SharesRepo.sol";
 
 contract MembersRepo is SharesRepo {
-    using SafeMath for uint256;
-    using ArrayUtils for uint256[];
     using ArrayUtils for address[];
-
-    // 股东
-    struct Member {
-        uint256[] sharesInHand; //持有的股票编号
-        uint256 regCap; //注册资本
-        uint256 paidInCap; //实缴资本
-    }
-
-    // 账号 => 股东 映射
-    mapping(address => Member) private _members;
+    using ShareSNParser for bytes32;
 
     mapping(address => bool) public isMember;
 
@@ -36,25 +25,11 @@ contract MembersRepo is SharesRepo {
     //##################
 
     event SetMaxQtyOfMembers(uint8 max);
-
     event AddMember(address indexed acct, uint256 qtyOfMembers);
     event RemoveMember(address indexed acct, uint256 qtyOfMembers);
 
-    event AddShareToMember(uint256 indexed shareNumber, address indexed acct);
-    event RemoveShareFromMember(
-        uint256 indexed shareNumber,
-        address indexed acct
-    );
-
-    event PayInCapitalToMember(address indexed acct, uint256 amount);
-    event SubAmountFromMember(
-        address indexed acct,
-        uint256 parValue,
-        uint256 paidInAmount
-    );
-
     //##################
-    //##    修饰器    ##
+    //##    修饰器    ##s
     //##################
 
     modifier onlyMember() {
@@ -80,7 +55,7 @@ contract MembersRepo is SharesRepo {
         emit SetMaxQtyOfMembers(max);
     }
 
-    function _addMember(address acct) internal onlyBookeeper {
+    function _addMember(address acct) internal {
         (bool exist, ) = _membersList.firstIndexOf(acct);
 
         if (!exist) {
@@ -96,57 +71,25 @@ contract MembersRepo is SharesRepo {
         }
     }
 
-    function _addShareToMember(
-        address acct,
-        uint256 shareNumber,
-        uint256 parValue,
-        uint256 paidInAmount
-    ) internal onlyBookeeper {
-        _members[acct].sharesInHand.push(shareNumber);
-        _members[acct].regCap = _members[acct].regCap.add(parValue);
-        _members[acct].paidInCap = _members[acct].paidInCap.add(paidInAmount);
+    function _removeMember(address acct) internal {
+        _membersList.removeByValue(acct);
+        isMember[acct] = false;
 
-        emit AddShareToMember(shareNumber, acct);
+        emit RemoveMember(acct, _membersList.length);
     }
 
-    function _payInCapitalToMember(address acct, uint256 amount)
-        internal
-        onlyBookeeper
-    {
-        _members[acct].paidInCap += amount;
+    function _updateMembersList(address acct) internal {
+        uint256 len = snList.length;
+        bool flag;
 
-        emit PayInCapitalToMember(acct, amount);
-    }
-
-    function _subAmountFromMember(
-        address acct,
-        uint256 parValue,
-        uint256 paidInAmount
-    ) internal onlyBookeeper {
-        _members[acct].regCap -= parValue;
-        _members[acct].paidInCap -= paidInAmount;
-
-        emit SubAmountFromMember(acct, parValue, paidInAmount);
-    }
-
-    function _removeShareFromMember(
-        address acct,
-        uint256 shareNumber,
-        uint256 parValue,
-        uint256 paidInAmount
-    ) internal onlyBookeeper {
-        if (_members[acct].regCap == parValue) {
-            delete _members[acct];
-            _membersList.removeByValue(acct);
-            isMember[acct] = false;
-
-            emit RemoveMember(acct, _membersList.length);
-        } else {
-            _subAmountFromMember(acct, parValue, paidInAmount);
-            _members[acct].sharesInHand.removeByValue(shareNumber);
-
-            emit RemoveShareFromMember(shareNumber, acct);
+        for (uint256 i = 0; i < len; i++) {
+            if (acct == snList[i].shareholder()) {
+                flag = true;
+                break;
+            }
         }
+
+        if (!flag) _removeMember(acct);
     }
 
     //##################
@@ -164,13 +107,21 @@ contract MembersRepo is SharesRepo {
         returns (
             uint256[] sharesInHand,
             uint256 parValue,
-            uint256 paidInAmount
+            uint256 paidPar
         )
     {
-        Member storage member = _members[acct];
+        bytes32[] storage sharesList;
+        uint256 len = snList.length;
 
-        sharesInHand = member.sharesInHand;
-        parValue = member.regCap;
-        paidInAmount = member.paidInCap;
+        for (uint256 i = 0; i < len; i++) {
+            if (snList[i].shareholder() == acct) {
+                sharesList.push(snList[i]);
+                (uint256 par, uint256 paid, , , ) = getShare(snList[i]);
+                parValue += par;
+                paidPar += paid;
+            }
+        }
+
+        sharesInHand = sharesList;
     }
 }

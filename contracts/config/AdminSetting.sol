@@ -54,6 +54,14 @@ contract AdminSetting is IAdminSetting {
         _;
     }
 
+    modifier currentDate(uint256 date) {
+        require(
+            date >= now - 2 hours && date <= now + 2 hours,
+            "NOT a current date"
+        );
+        _;
+    }
+
     // ##################
     // ##    写端口    ##
     // ##################

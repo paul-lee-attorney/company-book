@@ -10,6 +10,12 @@ import "../config/BOSSetting.sol";
 import "../config/BOHSetting.sol";
 import "../config/BOASetting.sol";
 import "../config/BOMSetting.sol";
+import "../config/BOPSetting.sol";
+
+import "../lib/SafeMath.sol";
+import "../lib/serialNumber/ShareSNParser.sol";
+import "../lib/serialNumber/PledgeSNParser.sol";
+import "../lib/serialNumber/DealSNParser.sol";
 
 import "../interfaces/IBOSSetting.sol";
 import "../interfaces/IAgreement.sol";
@@ -24,8 +30,14 @@ contract Bookeeper is
     BOSSetting,
     BOASetting,
     BOHSetting,
-    BOMSetting
+    BOMSetting,
+    BOPSetting
 {
+    using SafeMath for uint256;
+    using ShareSNParser for bytes32;
+    using PledgeSNParser for bytes32;
+    using DealSNParser for bytes32;
+
     address[15] public termsTemplate;
 
     TermTitle[] private _termsForCapitalIncrease = [
@@ -138,11 +150,109 @@ contract Bookeeper is
         ISigPage(body).updateStateOfDoc(4);
     }
 
+    // ##################
+    // ##    Option    ##
+    // ##################
+
+    function execOption(bytes32 sn, bytes32 hashLock) external {
+        (, address rightholder, , , , , ) = _boo.getOption(sn);
+
+        require(msg.sender == rightholder, "NOT rightholder");
+
+        require(
+            _boo.getStateOfOption(sn) == 1,
+            "option's state is NOT correct"
+        );
+
+        (uint256 triggerDate, uint8 exerciseDays, , ) = _boo.getDatesOfOption(
+            sn
+        );
+
+        if (now > triggerDate + uint256(exerciseDays) * 86400)
+            _boo.setState(sn, 3); // option expired
+        else if (now >= triggerDate) _boo.setState(sn, 2);
+
+        _boo.execOption(sn, hashLock);
+    }
+
+    function closeOption(bytes32 sn, bytes32 hashKey) external {
+        (, , address obligor, , , , ) = _boo.getOption(sn);
+
+        require(msg.sender == obligor, "NOT obligor of the Option");
+
+        (, , uint256 exerciseDate, uint8 closingDays) = _boo.getDatesOfOption(
+            sn
+        );
+        require(
+            now <= exerciseDate + uint256(closingDays) * 86400,
+            "LATER than closingDeadline"
+        );
+
+        _boo.closeOption(sn, hashKey);
+    }
+
+    // ################
+    // ##   Pledge   ##
+    // ################
+
+    function createPledge(
+        uint32 createDate,
+        bytes32 shareNumber,
+        uint256 pledgedPar,
+        address creditor,
+        uint256 guaranteedAmt
+    ) external {
+        require(shareNumber.shareholder() == msg.sender, "NOT shareholder");
+
+        _bos.decreaseCleanPar(shareNumber, pledgedPar);
+
+        _bop.createPledge(
+            createDate,
+            shareNumber,
+            pledgedPar,
+            creditor,
+            guaranteedAmt
+        );
+    }
+
+    function updatePledge(
+        bytes32 sn,
+        uint256 pledgedPar,
+        uint256 guaranteedAmt
+    ) external {
+        require(pledgedPar > 0, "ZERO pledgedPar");
+
+        (bytes32 shareNumber, uint256 orgPledgedPar, , ) = _bop.getPledge(sn);
+
+        if (pledgedPar < orgPledgedPar) {
+            require(msg.sender == sn.creditor(), "NOT creditor");
+            _bos.increaseCleanPar(shareNumber, orgPledgedPar - pledgedPar);
+        } else if (pledgedPar > orgPledgedPar) {
+            require(msg.sender == shareNumber.shareholder(), "NOT shareholder");
+            _bos.decreaseCleanPar(shareNumber, pledgedPar - orgPledgedPar);
+        }
+
+        _bop.updatePledge(sn, pledgedPar, guaranteedAmt);
+    }
+
+    function delPledge(bytes32 sn) external {
+        require(msg.sender == sn.creditor(), "NOT creditor");
+
+        (bytes32 shareNumber, uint256 pledgedPar, , ) = _bop.getPledge(sn);
+        _bos.increaseCleanPar(shareNumber, parValue);
+
+        _bop.delPledge(sn);
+    }
+
     // ###################
     // ##   Agreement   ##
     // ###################
 
-    function createIA(uint8 docType) public onlyMember returns (address body) {
+    function createIA(uint8 docType)
+        external
+        onlyMember
+        returns (address body)
+    {
         body = _boa.createDoc(docType);
 
         IAdminSetting(body).init(msg.sender, this);
@@ -171,17 +281,85 @@ contract Bookeeper is
     // ##   Motion   ##
     // ################
 
-    function proposeMotion(address ia) external onlyPartyOf(ia) {
+    function proposeMotion(address ia, uint256 proposeDate)
+        external
+        onlyPartyOf(ia)
+        currentDate(proposeDate)
+    {
         require(
             _boa.isRegistered(ia),
             "Investment Agreement is NOT registered"
         );
 
+        require(_boa.typeOfIA() != 3, "NOT need to vote");
+
         uint8 votingDays = IVotingRules(
             getSHA().getTerm(uint8(TermTitle.VOTING_RULES))
         ).votingDays();
 
-        _bom.proposeMotion(ia, votingDays);
+        _bom.proposeMotion(ia, proposeDate + uint256(votingDays) * 86400);
+    }
+
+    function voteCounting(address ia) external onlyPartyOfIA(ia) {
+        require(_bom.isProposed(ia), "NOT proposed");
+        require(_bom.getState(ia) == 1, "NOT in voting");
+        require(now > _bom.getVotingDeadline(ia), "voting NOT end");
+
+        uint8 typeOfIA = IAgreement(ia).typeOfIA();
+        uint8 votingType = (typeOfIA == 2 || typeOfIA == 5)
+            ? 2
+            : (typeOfIA == 3)
+            ? 0
+            : 1;
+
+        require(votingType > 0, "NOT need to vote");
+
+        _bom.voteCounting(ia, votingType);
+    }
+
+    function replaceRejectedDeal(
+        address ia,
+        bytes32 sn,
+        uint256 exerciseDate
+    ) external currentDate(exerciseDate) {
+        require(IAgreement(ia).isDeal(sn), "deal NOT exist");
+        require(_bom.getState(ia) == 4, "agianst NO need to buy");
+
+        (, , , uint256 closingDate, ) = IAgreement(ia).getDeal(sn);
+        require(exerciseDate < closingDate, "MISSED closing date");
+
+        require(
+            exerciseDate < _bom.getVotingDeadline(ia) + 7 days,
+            "MISSED execute deadline"
+        );
+
+        require(sn.typeOfDeal() == 2, "NOT a 3rd party ST Deal");
+        require(
+            msg.sender == sn.seller(_bos.snList()),
+            "NOT Seller of the Deal"
+        );
+
+        _splitDeal(ia, sn);
+    }
+
+    function _splitDeal(address ia, bytes32 sn) private {
+        (, uint256 parValue, uint256 paidPar, , , ) = IAgreement(ia).getDeal(
+            sn
+        );
+
+        (address[] memory buyers, uint256 againstPar) = _bom.getNay(ia);
+
+        uint256 len = buyers.length;
+
+        for (uint256 i = 0; i < len; i++) {
+            (, , uint256 voteAmt) = _bom.getVote(ia, buyers[i]);
+            IAgreement(ia).splitDeal(
+                sn,
+                buyers[i],
+                parValue.mul(voteAmt).mul(10000) / againstPar / 10000,
+                paidPar.mul(voteAmt).mul(10000) / againstPar / 10000
+            );
+        }
     }
 
     // ##############

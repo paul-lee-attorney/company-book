@@ -29,29 +29,29 @@ contract LockUp is BOSSetting, BOMSetting, DraftSetting {
     uint256 constant REMOTE_FUTURE = 9710553600;
 
     // shareNumber => Locker
-    mapping(uint256 => Locker) private _lockers;
+    mapping(bytes32 => Locker) private _lockers;
 
     // shareNumber => bool
-    mapping(uint256 => bool) private _isLocked;
+    mapping(bytes32 => bool) public isLocked;
 
     // ################
     // ##   Event   ##
     // ################
 
-    event SetLocker(uint256 indexed shareNumber, uint256 dueDate);
+    event SetLocker(bytes32 indexed shareNumber, uint256 dueDate);
 
-    event AddKeyholder(uint256 indexed shareNumber, address keyholder);
+    event AddKeyholder(bytes32 indexed shareNumber, address keyholder);
 
-    event RemoveKeyholder(uint256 indexed shareNumber, address keyholder);
+    event RemoveKeyholder(bytes32 indexed shareNumber, address keyholder);
 
-    event DelLocker(uint256 indexed shareNumber);
+    event DelLocker(bytes32 indexed shareNumber);
 
     // ################
     // ##  Modifier  ##
     // ################
 
-    modifier beLocked(uint256 shareNumber) {
-        require(_isLocked[shareNumber], "share NOT locked");
+    modifier beLocked(bytes32 shareNumber) {
+        require(isLocked[shareNumber], "share NOT locked");
         _;
     }
 
@@ -59,7 +59,7 @@ contract LockUp is BOSSetting, BOMSetting, DraftSetting {
     // ##   写接口   ##
     // ################
 
-    function setLocker(uint256 shareNumber, uint256 dueDate)
+    function setLocker(bytes32 shareNumber, uint256 dueDate)
         external
         onlyAttorney
         beShare(shareNumber)
@@ -70,7 +70,7 @@ contract LockUp is BOSSetting, BOMSetting, DraftSetting {
         emit SetLocker(shareNumber, _lockers[shareNumber].dueDate);
     }
 
-    function delLocker(uint256 shareNumber)
+    function delLocker(bytes32 shareNumber)
         external
         onlyAttorney
         beLocked(shareNumber)
@@ -81,41 +81,41 @@ contract LockUp is BOSSetting, BOMSetting, DraftSetting {
         emit DelLocker(shareNumber);
     }
 
-    function addKeyholder(uint256 shareNumber, address keyholder)
+    function addKeyholder(bytes32 shareNumber, address keyholder)
         external
         onlyAttorney
         beLocked(shareNumber)
     {
-        _lockers[shareNumber].keyHolders.addValue(keyholder);
+        (bool exist, ) = _lockers[shareNumber].keyHolders.firstIndexOf(
+            keyholder
+        );
 
-        emit AddKeyholder(shareNumber, keyholder);
+        if (!exist) {
+            _lockers[shareNumber].keyHolders.push(keyholder);
+            emit AddKeyholder(shareNumber, keyholder);
+        }
     }
 
-    function removeKeyholder(uint256 shareNumber, address keyholder)
+    function removeKeyholder(bytes32 shareNumber, address keyholder)
         external
         onlyAttorney
         beLocked(shareNumber)
     {
-        _lockers[shareNumber].keyHolders.removeByValue(keyholder);
+        (bool exist, ) = _lockers[shareNumber].keyHolders.firstIndexOf(
+            keyholder
+        );
 
-        emit RemoveKeyholder(shareNumber, keyholder);
+        if (exist) {
+            _lockers[shareNumber].keyholders.removeByValue(keyholder);
+            emit RemoveKeyholder(shareNumber, keyholder);
+        }
     }
 
     // ################
     // ##  查询接口  ##
     // ################
 
-    function lockerExist(uint256 shareNumber)
-        public
-        view
-        beShare(shareNumber)
-        returns (bool)
-    {
-        // require(_getBOS().shareExist(shareNumber), "股权编号 错误");
-        return _isLocked[shareNumber];
-    }
-
-    function getLocker(uint256 shareNumber)
+    function getLocker(bytes32 shareNumber)
         public
         view
         beLocked(shareNumber)
@@ -129,36 +129,33 @@ contract LockUp is BOSSetting, BOMSetting, DraftSetting {
     // ##  Term接口  ##
     // ################
 
-    function isTriggered(address ia, uint8 sn)
+    function isTriggered(address ia, bytes32 sn)
         external
         view
         onlyBookeeper
         returns (bool)
     {
-        IAgreement _ia = IAgreement(ia);
+        (, , , uint256 closingDate, , ) = IAgreement(ia).getDeal(sn);
 
-        // uint8 qtyOfDeals = _ia.qtyOfDeals();
-
-        // for (uint8 i = 0; i < qtyOfDeals; i++) {
-        (uint256 shareNumber, , , , , , , uint256 closingDate, , , ) = _ia
-            .getDeal(sn);
-
-        // if (!_isLocked[shareNumber]) continue;
+        (uint8 typeOfDeal, bytes32 shareNumber, , , ) = IAgreement(ia).parseSN(
+            sn
+        );
 
         if (
-            _isLocked[shareNumber] &&
+            typeOfDeal > 1 &&
+            isLocked[shareNumber] &&
             _lockers[shareNumber].dueDate >= closingDate
         ) return true;
 
         return false;
     }
 
-    function _isExempted(uint256 shareNumber, address[] consentParties)
+    function _isExempted(bytes32 shareNumber, address[] consentParties)
         private
         view
         returns (bool)
     {
-        if (!_isLocked[shareNumber]) return true;
+        if (!isLocked[shareNumber]) return true;
 
         Locker storage locker = _lockers[shareNumber];
 
@@ -177,21 +174,11 @@ contract LockUp is BOSSetting, BOMSetting, DraftSetting {
                 if (!flag) return false;
             }
 
-            // address[] storage parties;
-            // for (uint256 k = 0; k < consentParties.length; k++)
-            //     parties.push(consentParties[k]);
-
-            // for (uint256 i = 0; i < locker.keyHolders.length; i++) {
-            //     (bool exist, ) = parties.firstIndexOf(locker.keyHolders[i]);
-            //     if (!exist) {
-            //         return false;
-            //     }
-            // }
             return true;
         }
     }
 
-    function isExempted(address ia, uint8 snOfDeal)
+    function isExempted(address ia, bytes32 sn)
         external
         view
         onlyBookeeper
@@ -199,14 +186,8 @@ contract LockUp is BOSSetting, BOMSetting, DraftSetting {
     {
         (address[] memory consentParties, ) = _bom.getYea(ia);
 
-        (uint256 shareNumber, , , , , , , , uint8 typeOfDeal, , ) = IAgreement(
-            ia
-        ).getDeal(snOfDeal);
+        (, bytes32 shareNumber, , , ) = IAgreement(ia).parseSN(sn);
 
-        require(typeOfDeal == 2 || typeOfDeal == 3, "Not a ShareTransfer Deal");
-
-        if (!_isExempted(shareNumber, consentParties)) return false;
-
-        return true;
+        return _isExempted(shareNumber, consentParties);
     }
 }

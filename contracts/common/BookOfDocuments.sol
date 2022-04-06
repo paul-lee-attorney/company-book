@@ -1,10 +1,11 @@
 /*
- * Copyright 2021 LI LI of JINGTIAN & GONGCHENG.
+ * Copyright 2021-2022 LI LI of JINGTIAN & GONGCHENG.
+ * All Rights Reserved.
  * */
 
 pragma solidity ^0.4.24;
 
-import "../lib/SerialNumFactory.sol";
+import "../lib/serialNumber/SNFactory.sol";
 import "../lib/SafeMath.sol";
 import "../lib/ArrayUtils.sol";
 
@@ -13,7 +14,7 @@ import "../config/BOSSetting.sol";
 import "./CloneFactory.sol";
 
 contract BookOfDocuments is CloneFactory, BOSSetting {
-    using SerialNumFactory for address;
+    using SNFactory for bytes;
     using SafeMath for uint256;
     using ArrayUtils for bytes32[];
 
@@ -90,6 +91,29 @@ contract BookOfDocuments is CloneFactory, BOSSetting {
     //##    写接口    ##
     //##################
 
+    function createSN(address body, uint8 docType)
+        internal
+        pure
+        returns (bytes32 sn)
+    {
+        // sn : 条款对象 序列号
+        bytes memory _sn = new bytes(32);
+
+        // 第 0 字节：docType - 文件内部分类(0-255)
+        _sn[0] = bytes1(docType);
+
+        // 第 1-4 字节: 创建时间戳（秒）
+        _sn = _sn.intToSN(1, now, 4);
+
+        // 第 5-24 字节：创建者地址
+        _sn = _sn.addrToSN(5, msg.sender, 20);
+
+        // 第 25-31 字节：文件合约地址（后56位）
+        _sn = _sn.addrToSN(25, body, 7);
+
+        sn = _sn.bytesToBytes32();
+    }
+
     function setTemplate(address body) external onlyAdmin {
         template = body;
         emit SetTemplate(body);
@@ -103,7 +127,7 @@ contract BookOfDocuments is CloneFactory, BOSSetting {
     {
         body = createClone(template);
 
-        bytes32 sn = body.createSN(docType);
+        bytes32 sn = createSN(body, docType);
 
         _snToDoc[sn].body = body;
 

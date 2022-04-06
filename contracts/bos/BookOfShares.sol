@@ -1,10 +1,9 @@
 /*
- * Copyright 2021 LI LI of JINGTIAN & GONGCHENG.
+ * Copyright 2021-2022 LI LI of JINGTIAN & GONGCHENG.
  * */
 
 pragma solidity ^0.4.24;
 
-import "../lib/SafeMath.sol";
 import "./MembersRepo.sol";
 
 /// @author 李力@北京市竞天公诚律师事务所
@@ -29,17 +28,10 @@ import "./MembersRepo.sol";
 /// 出于后续开发考虑，本系统预留了各类“交易价格”属性，此类信息不建议在公链或许可链等环境下直接以明文披露，
 /// 否则将给相关的利害关系方，造成不可估量的经济损失及负面影响。
 contract BookOfShares is MembersRepo {
-    using SafeMath for uint256;
-    using SafeMath for uint8;
+    using ShareSNParser for bytes32;
 
     //公司注册号哈希值（统一社会信用号码的“加盐”哈希值）
     bytes32 private _regNumHash;
-
-    //股权序列号计数器（2**16-1 应该足够计数，因此可考虑uint16）
-    uint256 public counterOfShares;
-
-    //类别序列号计数器
-    uint8 public counterOfClass;
 
     /// @notice 初始化 超级管理员 账户地址，设定 公司股东人数上限， 设定 公司注册号哈希值
     /// @param regNumHash - 公司注册号哈希值
@@ -56,7 +48,7 @@ contract BookOfShares is MembersRepo {
     /// @param shareholder - 股东账户地址
     /// @param class - 股份类别（天使轮、A轮、B轮...）
     /// @param parValue - 股份面值（认缴出资金额，单位为“分”）
-    /// @param paidInAmount - 实缴金额（实缴出资金额，单位为“分”）
+    /// @param paidPar - 实缴金额（实缴出资金额，单位为“分”）
     /// @param paidInDeadline - 出资期限（秒计时间戳）
     /// @param issueDate - 签发日期（秒计时间戳）
     /// @param issuePrice - 发行价格（用于判断“反稀释”等价格相关《股东协议》条款,
@@ -65,38 +57,44 @@ contract BookOfShares is MembersRepo {
         address shareholder,
         uint8 class,
         uint256 parValue,
-        uint256 paidInAmount,
+        uint256 paidPar,
         uint256 paidInDeadline,
-        uint256 issueDate,
+        uint32 issueDate,
         uint256 issuePrice
     ) external onlyBookeeper {
+        require(shareholder != address(0), "shareholder address is ZERO");
+        require(issueDate > 0, "ZERO issueDate");
+        require(issueDate <= now + 2 hours, "issueDate NOT a PAST time");
+        require(
+            issueDate <= paidInDeadline,
+            "issueDate LATER than paidInDeadline"
+        );
+
+        require(paidPar <= parValue, "paidPar BIGGER than parValue");
+
         // 判断是否需要添加新股东，若添加是否会超过法定人数上限
         _addMember(shareholder);
 
-        // 股票编号计数器顺加“1”
-        counterOfShares = counterOfShares.add(1);
+        counterOfShares++;
 
-        require(class <= counterOfClass, "class overflow");
+        require(class <= counterOfClasses, "class OVER FLOW");
+        if (class == counterOfClasses) counterOfClasses++;
 
-        if (class == counterOfClass) counterOfClass = counterOfClass.add8(1);
+        if (issuePrice == 0) issuePrice = 100;
 
-        // 向《股东名册》的“股东”名下添加新股票
-        _addShareToMember(shareholder, counterOfShares, parValue, paidInAmount);
-
-        // 在《股权簿》中添加新股票（签发新的《出资证明书》）
-        _issueShare(
-            counterOfShares,
-            shareholder,
+        bytes32 shareNumber = _createShareNumber(
             class,
-            parValue,
-            paidInAmount,
-            paidInDeadline,
+            counterOfShares,
             issueDate,
-            issuePrice
+            shareholder,
+            0
         );
 
+        // 在《股权簿》中添加新股票（签发新的《出资证明书》）
+        _issueShare(shareNumber, parValue, paidPar, paidInDeadline, issuePrice);
+
         // 增加“认缴出资”和“实缴出资”金额
-        _capIncrease(parValue, paidInAmount);
+        _capIncrease(parValue, paidPar);
     }
 
     /// @notice 在已经发行的股票项下，实缴出资
@@ -104,15 +102,10 @@ contract BookOfShares is MembersRepo {
     /// @param amount - 实缴出资金额（单位“分”）
     /// @param paidInDate - 实缴出资日期（妙计时间戳）
     function payInCapital(
-        uint256 shareNumber,
+        bytes32 shareNumber,
         uint256 amount,
         uint256 paidInDate
     ) external onlyBookeeper {
-        (address shareholder, , , , , , , ) = getShare(shareNumber);
-
-        // 向“股东”名下增加“实缴出资”金额
-        _payInCapitalToMember(shareholder, amount);
-
         // 增加“股票”项下实缴出资金额
         _payInCapital(shareNumber, amount, paidInDate);
 
@@ -123,111 +116,89 @@ contract BookOfShares is MembersRepo {
     /// @notice 先减少原股票金额（金额降低至“0”则删除），再发行新股票
     /// @param shareNumber - 股票编号
     /// @param parValue - 股票面值（认缴出资金额）
-    /// @param paidInAmount - 转让的实缴金额（实缴出资金额）
+    /// @param paidPar - 转让的实缴金额（实缴出资金额）
     /// @param to - 受让方账户地址
     /// @param closingDate - 交割日（秒计时间戳）
     /// @param unitPrice - 转让价格（可用于判断“优先权”等条款，公链应用可设定为“1”）
     function transferShare(
-        uint256 shareNumber,
+        bytes32 shareNumber,
         uint256 parValue,
-        uint256 paidInAmount,
+        uint256 paidPar,
         address to,
-        uint256 closingDate,
+        uint32 closingDate,
         uint256 unitPrice
-    ) external onlyNormalState(shareNumber) onlyBookeeper {
-        // 减少拟出让股票认缴和实缴金额
-        _decreaseShareAmount(shareNumber, parValue, paidInAmount);
+    ) external onlyBookeeper {
+        require(to != address(0), "shareholder address is ZERO");
+        require(closingDate <= now + 2 hours, "closingDate NOT a PAST time");
+        require(
+            closingDate > shareNumber.issueDate(),
+            "closingDate EARLIER than issueDate"
+        );
 
         // 判断是否需要新增股东，若需要判断是否超过法定人数上限
         _addMember(to);
 
-        counterOfShares = counterOfShares.add(1);
+        _decreaseShareAmount(shareNumber, parValue, paidPar);
 
-        // 在“股东”名下增加新的股票
-        _addShareToMember(to, counterOfShares, parValue, paidInAmount);
+        counterOfShares++;
 
-        // 发行新股票
-        _splitShare(
-            shareNumber,
+        // 在“新股东”名下增加新的股票
+        bytes32 shareNumber_1 = _createShareNumber(
+            shareNumber.class(),
             counterOfShares,
-            to,
-            parValue,
-            paidInAmount,
             closingDate,
+            to,
+            bytes5(shareNumber << 8)
+        );
+
+        _issueShare(
+            shareNumber_1,
+            parValue,
+            paidPar,
+            share.paidInDeadline,
             unitPrice
         );
     }
 
     /// @param shareNumber 拟减资的股票编号
     /// @param parValue 拟减少的认缴出资金额（单位“分”）
-    /// @param paidInAmount 拟减少的实缴出资金额（单位“分”）
+    /// @param paidPar 拟减少的实缴出资金额（单位“分”）
     function decreaseCapital(
-        uint256 shareNumber,
+        bytes32 shareNumber,
         uint256 parValue,
-        uint256 paidInAmount
+        uint256 paidPar
     ) external onlyBookeeper {
         // 减少特定“股票”项下的认缴和实缴金额
-        _decreaseShareAmount(shareNumber, parValue, paidInAmount);
+        _decreaseShareAmount(shareNumber, parValue, paidPar);
 
         // 减少公司“注册资本”和“实缴出资”总额
-        _capDecrease(parValue, paidInAmount);
+        _capDecrease(parValue, paidPar);
     }
 
     /// @param shareNumber 拟减资的股票编号
     /// @param parValue 拟减少的认缴出资金额（单位“分”）
-    /// @param paidInAmount 拟减少的实缴出资金额（单位“分”）
+    /// @param paidPar 拟减少的实缴出资金额（单位“分”）
     function _decreaseShareAmount(
-        uint256 shareNumber,
+        bytes32 shareNumber,
         uint256 parValue,
-        uint256 paidInAmount
-    ) private onlyNormalState(shareNumber) onlyBookeeper {
-        (
-            address shareholder,
-            ,
-            uint256 orgParValue,
-            uint256 orgPaidInAmount,
-            ,
-            ,
-            ,
+        uint256 paidPar
+    ) private {
+        Share storage share = _shares[shareNumber];
 
-        ) = getShare(shareNumber);
-
-        require(parValue > 0, "parValue is Zero");
-        require(parValue <= orgParValue, "parValue overflow");
-        require(paidInAmount <= orgPaidInAmount, "paidInAmount overflow");
+        require(parValue > 0, "parValue is ZERO");
+        require(share.parValue >= parValue, "parValue OVERFLOW");
+        require(share.cleanPar >= paidPar, "cleanPar OVERFLOW");
+        require(share.state < 4, "FREEZED share");
+        require(paidPar <= parValue, "paidPar BIGGER than parValue");
 
         // 若拟降低的面值金额等于股票面值，则删除相关股票
-        if (parValue == orgParValue) {
-            _removeShareFromMember(
-                shareholder,
-                shareNumber,
-                orgParValue,
-                orgPaidInAmount
-            );
+        if (parValue == share.parValue) {
             _deregisterShare(shareNumber);
+            _updateMembersList(shareNumber.shareholder());
         } else {
             // 仅调低认缴和实缴金额，保留原股票
-            _subAmountFromMember(shareholder, parValue, paidInAmount);
-            _subAmountFromShare(shareNumber, parValue, paidInAmount);
+            _subAmountFromShare(shareNumber, parValue, paidPar);
         }
-    }
-
-    /// @param shareNumber - 股票编号
-    /// @param state - 股票状态（0：正常，1：出质，2：查封，3：已设定信托，4：代持）
-    function updateShareState(uint256 shareNumber, uint8 state)
-        external
-        onlyBookeeper
-    {
-        _updateShareState(shareNumber, state);
-    }
-
-    /// @param shareNumber - 股票编号
-    /// @param paidInDeadline - 实缴出资期限
-    function updatePaidInDeadline(uint256 shareNumber, uint256 paidInDeadline)
-        external
-        onlyBookeeper
-    {
-        _updatePaidInDeadline(shareNumber, paidInDeadline);
     }
 
     // ##################
@@ -246,5 +217,38 @@ contract BookOfShares is MembersRepo {
         returns (bool)
     {
         return _regNumHash == keccak256(bytes(regNum));
+    }
+
+    function membersOfClass(uint8 class)
+        external
+        view
+        returns (address[] output)
+    {
+        require(class < counterOfClasses, "class over flow");
+
+        uint256 len = snList.length;
+        address[] storage members;
+
+        for (uint256 i = 0; i < len; i++)
+            if (snList[i].class() == class)
+                members.push(snList[i].shareholder());
+
+        output = members;
+    }
+
+    function sharesOfClass(uint8 class)
+        external
+        view
+        returns (bytes32[] output)
+    {
+        require(class < counterOfClasses, "class over flow");
+
+        uint256 len = snList.length;
+        bytes32[] storage list;
+
+        for (uint256 i = 0; i < len; i++)
+            if (snList[i].class() == class) list.push(snList[i]);
+
+        output = list;
     }
 }

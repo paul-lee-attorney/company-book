@@ -40,6 +40,8 @@ interface IBookOfMotions {
     //##    读接口    ##
     //##################
 
+    function getState(address ia) external view returns (uint8);
+
     function votedYea(address ia, address acct) external returns (bool);
 
     function votedNay(address ia, address acct) external returns (bool);
@@ -54,14 +56,18 @@ interface IBookOfMotions {
         view
         returns (address[] membersOfNay, uint256 againstPar);
 
-    function haveVoted(address ia, address acct) external returns (bool);
+    function getSumOfVoteAmt(address ia) external view returns (uint256);
 
-    function getVotedPar(address ia) external returns (uint256);
+    function haveVoted(address ia, address acct) external view returns (bool);
 
-    function getVoteDate(address ia, address acct)
+    function getVote(address ia, address acct)
         external
         view
-        returns (uint256 date);
+        returns (
+            bool attitude,
+            uint256 date,
+            uint256 amount
+        );
 
     function isProposed(address ia) external view returns (bool);
 

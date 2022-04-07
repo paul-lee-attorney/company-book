@@ -4,33 +4,21 @@
 
 pragma solidity ^0.4.24;
 
-// import "../config/BOSSetting.sol";
-// import "../config/BOMSetting.sol";
 import "../config/DraftSetting.sol";
-
 import "../lib/ArrayUtils.sol";
-import "../lib/SafeMath.sol";
-
-import "../interfaces/IAgreement.sol";
-
-import "../interfaces/ISigPage.sol";
-
-// import "../interfaces/IMotion.sol";
 
 contract Groups is DraftSetting {
     using ArrayUtils for address[];
-    // using SafeMath for uint256;
-    using SafeMath for uint8;
 
     // acct => group : 1 - 创始团队 ; 2... - 其他一致行动人集团或独立股东
-    mapping(address => uint8) public groupNumOf;
+    mapping(address => uint8) public groupNumberOf;
 
     // group => accts
     mapping(uint8 => address[]) public membersOfGroup;
 
     uint8 public counterOfGroups;
 
-    uint8[] private _groupsList;
+    uint8[] internal _groupsList;
 
     // ################
     // ##   Event    ##
@@ -59,17 +47,13 @@ contract Groups is DraftSetting {
         external
         onlyAttorney
     {
-        // require(ISigPage(getBookeeper()).isParty(member), "not Party to SHA");
+        require(group > 0 && group <= counterOfGroups + 1, "group overflow");
         require(
-            group > 0 && group <= counterOfGroups.add8(1),
-            "group overflow"
-        );
-        require(
-            groupNumOf[member] == group || groupNumOf[member] == 0,
-            "member ALREADY GROUPED"
+            groupNumberOf[member] == group || groupNumberOf[member] == 0,
+            "ALREADY GROUPED"
         );
 
-        groupNumOf[member] = group;
+        groupNumberOf[member] = group;
         membersOfGroup[group].addValue(member);
 
         if (group > counterOfGroups) {
@@ -85,11 +69,11 @@ contract Groups is DraftSetting {
         onlyAttorney
     {
         require(
-            group > 0 && groupNumOf[member] == group,
+            group > 0 && groupNumberOf[member] == group,
             "INCORRECT group number"
         );
 
-        delete groupNumOf[member];
+        delete groupNumberOf[member];
         membersOfGroup[group].removeByValue(member);
 
         if (membersOfGroup[group].length == 0) _delGroup(group);
@@ -97,7 +81,7 @@ contract Groups is DraftSetting {
         emit RemoveMemberFromGroup(group, member);
     }
 
-    function _delGroup(uint8 group) private onlyAttorney groupIdTest(group) {
+    function _delGroup(uint8 group) private groupIdTest(group) {
         delete membersOfGroup[group];
 
         groupsList.removeByValue(group);

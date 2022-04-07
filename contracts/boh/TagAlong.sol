@@ -12,23 +12,16 @@ import "../lib/ArrayUtils.sol";
 import "../lib/SafeMath.sol";
 
 import "../interfaces/IAgreement.sol";
-
 import "../interfaces/ISigPage.sol";
+
+import "./Groups.sol";
 
 // import "../interfaces/IMotion.sol";
 
-contract TagAlong is BOSSetting, BOMSetting, DraftSetting {
+contract TagAlong is BOSSetting, BOMSetting, Groups {
     using ArrayUtils for address[];
     using SafeMath for uint256;
     using SafeMath for uint8;
-
-    // acct => groupID : 1 - 创始团队 ; 2... - 其他一致行动人集团或独立股东
-    mapping(address => uint8) private _groupNumOf;
-
-    // groupID => accts
-    mapping(uint8 => address[]) private _membersOfGroup;
-
-    uint8 private _qtyOfGroups;
 
     struct Tag {
         // address of follower;
@@ -44,17 +37,11 @@ contract TagAlong is BOSSetting, BOMSetting, DraftSetting {
     // dragerGroupID => Tag
     mapping(uint8 => Tag) private _tags;
     // dragerGroupID => bool
-    mapping(uint8 => bool) private _isDrager;
+    mapping(uint8 => bool) public isDrager;
 
     // ################
     // ##   Event    ##
     // ################
-
-    event AddMemberToGroup(uint8 indexed groupID, address member);
-
-    event RemoveMemberFromGroup(uint8 indexed groupID, address member);
-
-    event DelGroup(uint8 indexed groupID);
 
     event SetTag(
         uint8 indexed dragerID,
@@ -74,70 +61,18 @@ contract TagAlong is BOSSetting, BOMSetting, DraftSetting {
     // ################
 
     modifier groupIdTest(uint8 groupID) {
-        require(groupID > 0 && groupID <= _qtyOfGroups, "组编号 超限");
+        require(groupID > 0 && groupID <= _groupsList, "group overflow");
         _;
     }
 
     modifier beDrager(uint8 dragerID) {
-        require(_isDrager[dragerID], "Tag编号 错误");
+        require(isDrager[dragerID], "WRONG drager ID");
         _;
     }
 
     // ################
     // ##   写接口   ##
     // ################
-
-    function addMemberToGroup(uint8 groupID, address member)
-        external
-        onlyAttorney
-    // isMemberOrInvestor(member)
-    {
-        require(ISigPage(getBookeeper()).isParty(member), "not Party to SHA");
-        require(
-            groupID > 0 && groupID <= _qtyOfGroups.add8(1),
-            "groupID overflow"
-        );
-        require(
-            _groupNumOf[member] == groupID || _groupNumOf[member] == 0,
-            "reinput member"
-        );
-
-        _groupNumOf[member] = groupID;
-        _membersOfGroup[groupID].addValue(member);
-
-        if (groupID > _qtyOfGroups) _qtyOfGroups = groupID;
-
-        emit AddMemberToGroup(groupID, member);
-    }
-
-    function removeMemberFromGroup(uint8 groupID, address member)
-        external
-        onlyAttorney
-    {
-        require(groupID > 0 && _groupNumOf[member] == groupID, "组编号 错误");
-
-        delete _groupNumOf[member];
-        _membersOfGroup[groupID].removeByValue(member);
-
-        if (_membersOfGroup[groupID].length == 0) delGroup(groupID);
-
-        emit RemoveMemberFromGroup(groupID, member);
-    }
-
-    function delGroup(uint8 groupID) public onlyAttorney groupIdTest(groupID) {
-        for (uint8 i = groupID; i < _qtyOfGroups; i++) {
-            for (uint8 j = 0; j < _membersOfGroup[i + 1].length; j++) {
-                _groupNumOf[_membersOfGroup[i + 1][j]] = i;
-            }
-
-            _membersOfGroup[i] = _membersOfGroup[i + 1];
-        }
-
-        delete _membersOfGroup[_qtyOfGroups];
-        _qtyOfGroups--;
-
-        emit DelGroup(groupID);
-    }
 
     function setTag(
         uint8 dragerID,
@@ -146,10 +81,10 @@ contract TagAlong is BOSSetting, BOMSetting, DraftSetting {
         bool proRata
     ) external onlyAttorney groupIdTest(dragerID) {
         require(triggerType < 4, "触发类别错误");
-        require((threshold < 5000) && (threshold > 0), "实质性影响比例不正确");
+        require(threshold < 5000 && threshold > 0, "实质性影响比例不正确");
 
         Tag storage tag = _tags[dragerID];
-        _isDrager[dragerID] = true;
+        isDrager[dragerID] = true;
 
         tag.triggerType = triggerType;
         tag.threshold = threshold;
@@ -180,7 +115,7 @@ contract TagAlong is BOSSetting, BOMSetting, DraftSetting {
 
     function delTag(uint8 dragerID) external onlyAttorney beDrager(dragerID) {
         delete _tags[dragerID];
-        _isDrager[dragerID] = false;
+        delete isDrager[dragerID];
 
         emit DelTag(dragerID);
     }
@@ -189,42 +124,20 @@ contract TagAlong is BOSSetting, BOMSetting, DraftSetting {
     // ##  查询接口  ##
     // ################
 
-    function getQtyOfGroups() external view onlyStakeholders returns (uint8) {
-        return _qtyOfGroups;
-    }
-
-    function getGroupNumOf(address seller)
-        external
-        view
-        onlyStakeholders
-        returns (uint8)
-    {
-        return _groupNumOf[seller];
-    }
-
-    function getMembersOfGroup(uint8 groupID)
-        external
-        view
-        onlyStakeholders
-        returns (address[])
-    {
-        return _membersOfGroup[groupID];
-    }
-
     function tagExist(address seller)
         external
         view
         onlyStakeholders
         returns (bool)
     {
-        return _isDrager[_groupNumOf[seller]];
+        return isDrager[groupNumberOf[seller]];
     }
 
     function getTag(address seller)
         external
         view
         onlyStakeholders
-        beDrager(_groupNumOf[seller])
+        beDrager(groupNumberOf[seller])
         returns (
             address[] followers,
             uint8 triggerType,
@@ -232,11 +145,10 @@ contract TagAlong is BOSSetting, BOMSetting, DraftSetting {
             bool proRata
         )
     {
-        // require (_isDrager[_groupNumOf[seller]], "跟随安排 不存在!");
-        followers = _tags[_groupNumOf[seller]].followers;
-        triggerType = _tags[_groupNumOf[seller]].triggerType;
-        threshold = _tags[_groupNumOf[seller]].threshold;
-        proRata = _tags[_groupNumOf[seller]].proRata;
+        followers = _tags[groupNumberOf[seller]].followers;
+        triggerType = _tags[groupNumberOf[seller]].triggerType;
+        threshold = _tags[groupNumberOf[seller]].threshold;
+        proRata = _tags[groupNumberOf[seller]].proRata;
     }
 
     // ################
@@ -248,17 +160,20 @@ contract TagAlong is BOSSetting, BOMSetting, DraftSetting {
         view
         returns (bool biggest, uint256 shareRatio)
     {
-        uint256[] memory parValue = new uint256[](_qtyOfGroups);
-        uint8 i = 1;
+        uint8 len = _groupsList.length;
+        uint256[] memory parValue = new uint256[](len);
+        uint8 i = 0;
 
-        for (; i <= _qtyOfGroups; i++) {
-            for (uint8 j = 0; j < _membersOfGroup[i].length; j++) {
-                (, uint256 par, ) = _bos.getMember(_membersOfGroup[i][j]);
-                parValue[i - 1].add(par);
+        for (; i < len; i++) {
+            for (uint8 j = 0; j < membersOfGroup[_groupsList[i]].length; j++) {
+                (, uint256 par, ) = _bos.getMember(
+                    membersOfGroup[_groupsList[i]][j]
+                );
+                parValue[i].add(par);
             }
         }
 
-        shareRatio = parValue[dragerID - 1].sub(parToSell).mul(10000).div(
+        shareRatio = parValue[dragerID].sub(parToSell).mul(10000).div(
             _bos.regCap()
         );
 
@@ -268,9 +183,9 @@ contract TagAlong is BOSSetting, BOMSetting, DraftSetting {
             return (biggest, shareRatio);
         }
 
-        i = 1;
-        while (biggest && i < _qtyOfGroups) {
-            if (parValue[i] > parValue[dragerID - 1]) {
+        i = 0;
+        while (biggest && i < _groupsList.length) {
+            if (parValue[i] > parValue[dragerID]) {
                 biggest = false;
             }
 
@@ -284,9 +199,9 @@ contract TagAlong is BOSSetting, BOMSetting, DraftSetting {
         view
         returns (bool)
     {
-        uint8 dragerID = _groupNumOf[seller];
+        uint8 dragerID = groupNumberOf[seller];
 
-        if (!_isDrager[dragerID]) return false;
+        if (!isDrager[dragerID]) return false;
 
         (bool biggest, uint256 shareRatio) = _getDragerPosition(
             dragerID,
@@ -305,45 +220,37 @@ contract TagAlong is BOSSetting, BOMSetting, DraftSetting {
     }
 
     function isTriggered(address ia) public view onlyBookeeper returns (bool) {
-        IAgreement _ia = IAgreement(ia);
+        bytes32[] memory dealsList = IAgreement(ia).dealsList();
 
-        uint8 qtyOfDeals = _ia.qtyOfDeals();
+        uint8 len = dealsList.length;
 
         uint256 parToSell;
         uint256 parToBuy;
 
-        for (uint8 i = 0; i < qtyOfDeals; i++) {
-            (
-                ,
-                ,
-                address seller,
-                address buyer,
-                ,
-                ,
-                ,
-                ,
-                uint8 typeOfDeal,
-                ,
-
-            ) = _ia.getDeal(i);
+        for (uint8 i = 0; i < len; i++) {
+            (uint8 typeOfDeal, , , address seller, address buyer) = IAgreement(
+                ia
+            ).parseSN(dealsList[i]);
 
             parToSell = 0;
             parToBuy = 0;
 
             if (
                 typeOfDeal > 1 &&
-                _isDrager[_groupNumOf[seller]] &&
-                _groupNumOf[seller] != _groupNumOf[buyer]
+                isDrager[groupNumberOf[seller]] &&
+                groupNumberOf[seller] != groupNumberOf[buyer]
             ) {
-                address[] memory members = _membersOfGroup[_groupNumOf[seller]];
+                address[] memory members = membersOfGroup[
+                    groupNumberOf[seller]
+                ];
                 for (uint8 j = 0; j < members.length; j++) {
-                    parToSell += _ia.parToSell(members[j]);
-                    parToBuy += _ia.parToBuy(members[j]);
+                    parToSell += IAgreement(ia).parToSell(members[j]);
+                    parToBuy += IAgreement(ia).parToBuy(members[j]);
                 }
             }
 
             if (parToSell > parToBuy) {
-                if (_tags[_groupNumOf[seller]].triggerType == 0) {
+                if (_tags[groupNumberOf[seller]].triggerType == 0) {
                     return true;
                 }
                 parToSell -= parToBuy;
@@ -360,9 +267,9 @@ contract TagAlong is BOSSetting, BOMSetting, DraftSetting {
     {
         require(consentParties.length > 0, "consentParties is zero");
 
-        uint8 dragerID = _groupNumOf[seller];
+        uint8 dragerID = groupNumberOf[seller];
 
-        if (!_isDrager[dragerID]) return true;
+        if (!isDrager[dragerID]) return true;
 
         Tag storage tag = _tags[dragerID];
 
@@ -386,16 +293,16 @@ contract TagAlong is BOSSetting, BOMSetting, DraftSetting {
         for (uint256 j = 0; j < parties.length; j++)
             consentParties.push(parties[j]);
 
-        uint8 qtyOfDeals = IAgreement(ia).qtyOfDeals();
+        bytes32[] memory dealsList = IAgreement(ia).dealsList();
 
-        for (uint8 i = 0; i < qtyOfDeals; i++) {
-            (, , address seller, , , , , , uint8 typeOfDeal, , ) = IAgreement(
-                ia
-            ).getDeal(i);
+        for (uint8 i = 0; i < dealsList.length; i++) {
+            (uint8 typeOfDeal, , , address seller, ) = IAgreement(ia).parseSN(
+                dealsList[i]
+            );
 
             if (
                 typeOfDeal > 1 &&
-                _isDrager[_groupNumOf[seller]] &&
+                isDrager[groupNumberOf[seller]] &&
                 !_isExempted(seller, consentParties)
             ) return false;
         }

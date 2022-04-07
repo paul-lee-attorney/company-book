@@ -7,7 +7,7 @@ pragma solidity ^0.4.24;
 import "../interfaces/IShareholdersAgreement.sol";
 import "../interfaces/IBookOfSHA.sol";
 
-import "../config/AdminSetting.sol";
+import "../common/config/AdminSetting.sol";
 
 contract BOHSetting is AdminSetting {
     IBookOfSHA internal _boh;

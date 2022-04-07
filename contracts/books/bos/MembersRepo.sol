@@ -4,8 +4,8 @@
 
 pragma solidity ^0.4.24;
 
-import "../lib/ArrayUtils.sol";
-import "../lib/serialNumber/ShareSNParser.sol";
+import "../common/lib/ArrayUtils.sol";
+import "../common/lib/serialNumber/ShareSNParser.sol";
 
 import "./SharesRepo.sol";
 

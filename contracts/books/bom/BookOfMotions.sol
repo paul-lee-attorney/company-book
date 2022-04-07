@@ -4,17 +4,17 @@
 
 pragma solidity ^0.4.24;
 
-import "../config/BOSSetting.sol";
-import "../config/BOHSetting.sol";
+import "../common/config/BOSSetting.sol";
+import "../common/config/BOHSetting.sol";
 
-import "../lib/ArrayUtils.sol";
-import "../lib/serialNumber/VotingRuleParser.sol";
+import "../common/lib/ArrayUtils.sol";
+import "../common/lib/serialNumber/VotingRuleParser.sol";
 
 // import "../interfaces/IBookOfMotions.sol";
 import "../interfaces/ISigPage.sol";
 import "../interfaces/IAgreement.sol";
 
-import "../common/EnumsRepo.sol";
+import "../common/component/EnumsRepo.sol";
 
 import "../boh/interfaces/IVotingRules.sol";
 

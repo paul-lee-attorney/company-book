@@ -4,12 +4,12 @@
 
 pragma solidity ^0.4.24;
 
-import "../lib/SafeMath.sol";
-import "../lib/ArrayUtils.sol";
-import "../lib/serialNumber/SNFactory.sol";
-import "../lib/serialNumber/ShareSNParser.sol";
+import "../common/lib/SafeMath.sol";
+import "../common/lib/ArrayUtils.sol";
+import "../common/lib/serialNumber/SNFactory.sol";
+import "../common/lib/serialNumber/ShareSNParser.sol";
 
-import "../config/AdminSetting.sol";
+import "../common/config/AdminSetting.sol";
 
 contract SharesRepo is AdminSetting {
     using SNFactory for bytes;

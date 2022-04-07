@@ -4,8 +4,8 @@
 
 pragma solidity ^0.4.24;
 
-import "../config/DraftSetting.sol";
-import "../lib/ArrayUtils.sol";
+import "../common/config/DraftSetting.sol";
+import "../common/lib/ArrayUtils.sol";
 
 contract Groups is DraftSetting {
     using ArrayUtils for address[];

@@ -4,14 +4,14 @@
 
 pragma solidity ^0.4.24;
 
-import "../config/BOSSetting.sol";
+import "../common/config/BOSSetting.sol";
 
-import "../lib/SafeMath.sol";
-import "../lib/ArrayUtils.sol";
-import "../lib/serialNumber/SNFactory.sol";
-import "../lib/DealSNParser.sol";
+import "../common/lib/SafeMath.sol";
+import "../common/lib/ArrayUtils.sol";
+import "../common/lib/serialNumber/SNFactory.sol";
+import "../common/lib/DealSNParser.sol";
 
-import "../common/SigPage.sol";
+import "../common/component/SigPage.sol";
 
 contract Agreement is BOSSetting, SigPage {
     using SafeMath for uint256;

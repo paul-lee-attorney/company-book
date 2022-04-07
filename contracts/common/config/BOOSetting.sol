@@ -6,7 +6,7 @@ pragma solidity ^0.4.24;
 
 import "../interfaces/IBookOfOptions.sol";
 
-import "../config/AdminSetting.sol";
+import "../common/config/AdminSetting.sol";
 
 contract BOOSetting is AdminSetting {
     IBookOfOptions internal _boo;

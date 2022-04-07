@@ -4,8 +4,8 @@
 
 pragma solidity ^0.4.24;
 
-import "../common/BookOfDocuments.sol";
-import "../common/BookOfTerms.sol";
+import "../common/component/BookOfDocuments.sol";
+import "../common/component/BookOfTerms.sol";
 
 import "../interfaces/IShareholdersAgreement.sol";
 

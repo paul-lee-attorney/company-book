@@ -4,11 +4,11 @@
 
 pragma solidity ^0.4.24;
 
-import "../lib/SafeMath.sol";
-import "../lib/serialNumber/SNFactory.sol";
-import "../lib/serialNumber/ShareSNParser.sol";
+import "../common/lib/SafeMath.sol";
+import "../common/lib/serialNumber/SNFactory.sol";
+import "../common/lib/serialNumber/ShareSNParser.sol";
 
-import "../config/BOSSetting.sol";
+import "../common/config/BOSSetting.sol";
 
 contract BookOfPledges is BOSSetting {
     using SafeMath for uint8;

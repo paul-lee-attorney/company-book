@@ -4,10 +4,10 @@
 
 pragma solidity ^0.4.24;
 
-import "../config/BOSSetting.sol";
-import "../config/DraftSetting.sol";
+import "../common/config/BOSSetting.sol";
+import "../common/config/DraftSetting.sol";
 
-import "../lib/serialNumber/SNFactory.sol";
+import "../common/lib/serialNumber/SNFactory.sol";
 
 contract VotingRules_ is BOSSetting, DraftSetting {
     using SNFactory for bytes;

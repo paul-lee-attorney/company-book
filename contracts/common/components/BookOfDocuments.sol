@@ -5,11 +5,11 @@
 
 pragma solidity ^0.4.24;
 
-import "../lib/serialNumber/SNFactory.sol";
-import "../lib/SafeMath.sol";
-import "../lib/ArrayUtils.sol";
+import "../common/lib/serialNumber/SNFactory.sol";
+import "../common/lib/SafeMath.sol";
+import "../common/lib/ArrayUtils.sol";
 
-import "../config/BOSSetting.sol";
+import "../common/config/BOSSetting.sol";
 
 import "./CloneFactory.sol";
 

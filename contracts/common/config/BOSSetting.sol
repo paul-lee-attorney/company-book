@@ -6,7 +6,7 @@ pragma solidity ^0.4.24;
 
 import "../interfaces/IBookOfShares.sol";
 
-import "../config/AdminSetting.sol";
+import "../common/config/AdminSetting.sol";
 
 contract BOSSetting is AdminSetting {
     IBookOfShares internal _bos;

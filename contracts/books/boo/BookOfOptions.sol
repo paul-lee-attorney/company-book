@@ -4,14 +4,14 @@
 
 pragma solidity ^0.4.24;
 
-import "../config/BOSSetting.sol";
-// import "../config/BOMSetting.sol";
-import "../config/BOASetting.sol";
-import "../config/AdminSetting.sol";
+import "../common/config/BOSSetting.sol";
+// import "../common/config/BOMSetting.sol";
+import "../common/config/BOASetting.sol";
+import "../common/config/AdminSetting.sol";
 
-import "../lib/ArrayUtils.sol";
-import "../lib/serialNumber/SNFactory.sol";
-import "../lib/ShareSNParser.sol";
+import "../common/lib/ArrayUtils.sol";
+import "../common/lib/serialNumber/SNFactory.sol";
+import "../common/lib/ShareSNParser.sol";
 
 // import "../interfaces/IAgreement.sol";
 // import "../interfaces/ISigPage.sol";

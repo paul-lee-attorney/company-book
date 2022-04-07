@@ -4,18 +4,18 @@
 
 pragma solidity ^0.4.24;
 
-import "../config/AdminSetting.sol";
+import "../common/config/AdminSetting.sol";
 
-import "../config/BOSSetting.sol";
-import "../config/BOHSetting.sol";
-import "../config/BOASetting.sol";
-import "../config/BOMSetting.sol";
-import "../config/BOPSetting.sol";
+import "../common/config/BOSSetting.sol";
+import "../common/config/BOHSetting.sol";
+import "../common/config/BOASetting.sol";
+import "../common/config/BOMSetting.sol";
+import "../common/config/BOPSetting.sol";
 
-import "../lib/SafeMath.sol";
-import "../lib/serialNumber/ShareSNParser.sol";
-import "../lib/serialNumber/PledgeSNParser.sol";
-import "../lib/serialNumber/DealSNParser.sol";
+import "../common/lib/SafeMath.sol";
+import "../common/lib/serialNumber/ShareSNParser.sol";
+import "../common/lib/serialNumber/PledgeSNParser.sol";
+import "../common/lib/serialNumber/DealSNParser.sol";
 
 import "../interfaces/IBOSSetting.sol";
 import "../interfaces/IAgreement.sol";
@@ -23,7 +23,7 @@ import "../interfaces/ISigPage.sol";
 
 import "../boh/interfaces/IVotingRules.sol";
 
-import "../common/EnumsRepo.sol";
+import "../common/component/EnumsRepo.sol";
 
 contract Bookeeper is
     EnumsRepo,

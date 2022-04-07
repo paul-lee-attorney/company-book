@@ -4,7 +4,7 @@
 
 pragma solidity ^0.4.24;
 
-import "../config/DraftSetting.sol";
+import "../common/config/DraftSetting.sol";
 
 contract SigPage is DraftSetting {
     // 0-pending 1-finalized 2-signed

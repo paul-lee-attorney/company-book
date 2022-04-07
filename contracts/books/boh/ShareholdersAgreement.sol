@@ -9,12 +9,12 @@ import "../interfaces/IDraftSetting.sol";
 import "../interfaces/IBOSSetting.sol";
 import "../interfaces/IBOMSetting.sol";
 
-import "../lib/ArrayUtils.sol";
+import "../common/lib/ArrayUtils.sol";
 
-import "../common/SigPage.sol";
-import "../common/EnumsRepo.sol";
-import "../common/CloneFactory.sol";
-import "../config/BOHSetting.sol";
+import "../common/component/SigPage.sol";
+import "../common/component/EnumsRepo.sol";
+import "../common/component/CloneFactory.sol";
+import "../common/config/BOHSetting.sol";
 
 import "./interfaces/ITerm.sol";
 

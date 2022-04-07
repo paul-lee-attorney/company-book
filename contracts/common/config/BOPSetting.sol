@@ -6,7 +6,7 @@ pragma solidity ^0.4.24;
 
 import "../interfaces/IBookOfPledges.sol";
 
-import "../config/AdminSetting.sol";
+import "../common/config/AdminSetting.sol";
 
 contract BOPSetting is AdminSetting {
     IBookOfPledges internal _bop;

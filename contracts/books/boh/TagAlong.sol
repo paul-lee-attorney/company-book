@@ -4,12 +4,12 @@
 
 pragma solidity ^0.4.24;
 
-import "../config/BOSSetting.sol";
-import "../config/BOMSetting.sol";
-import "../config/DraftSetting.sol";
+import "../common/config/BOSSetting.sol";
+import "../common/config/BOMSetting.sol";
+import "../common/config/DraftSetting.sol";
 
-import "../lib/ArrayUtils.sol";
-import "../lib/SafeMath.sol";
+import "../common/lib/ArrayUtils.sol";
+import "../common/lib/SafeMath.sol";
 
 import "../interfaces/IAgreement.sol";
 import "../interfaces/ISigPage.sol";

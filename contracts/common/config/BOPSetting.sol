@@ -4,7 +4,7 @@
 
 pragma solidity ^0.4.24;
 
-import "../interfaces/IBookOfPledges.sol";
+import "../common/interfaces/IBookOfPledges.sol";
 
 import "../common/config/AdminSetting.sol";
 

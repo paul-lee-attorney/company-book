@@ -17,9 +17,9 @@ import "../common/lib/serialNumber/ShareSNParser.sol";
 import "../common/lib/serialNumber/PledgeSNParser.sol";
 import "../common/lib/serialNumber/DealSNParser.sol";
 
-import "../interfaces/IBOSSetting.sol";
-import "../interfaces/IAgreement.sol";
-import "../interfaces/ISigPage.sol";
+import "../common/interfaces/IBOSSetting.sol";
+import "../common/interfaces/IAgreement.sol";
+import "../common/interfaces/ISigPage.sol";
 
 import "../boh/interfaces/IVotingRules.sol";
 

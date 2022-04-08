@@ -7,7 +7,7 @@ pragma solidity ^0.4.24;
 import "../common/component/BookOfDocuments.sol";
 import "../common/component/BookOfTerms.sol";
 
-import "../interfaces/IShareholdersAgreement.sol";
+import "../common/interfaces/IShareholdersAgreement.sol";
 
 contract BookOfSHA is BookOfTerms, BookOfDocuments {
     bytes32 public pointer;

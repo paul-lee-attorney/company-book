@@ -4,7 +4,7 @@
 
 pragma solidity ^0.4.24;
 
-import "../interfaces/IAdminSetting.sol";
+import "../common/interfaces/IAdminSetting.sol";
 
 contract AdminSetting is IAdminSetting {
     address private _admin;

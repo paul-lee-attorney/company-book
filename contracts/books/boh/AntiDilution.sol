@@ -12,8 +12,8 @@ import "../common/lib/ArrayUtils.sol";
 import "../common/lib/SafeMath.sol";
 import "../common/lib/serialNumber/SNFactory.sol";
 
-import "../interfaces/IAgreement.sol";
-import "../interfaces/ISigPage.sol";
+import "../common/interfaces/IAgreement.sol";
+import "../common/interfaces/ISigPage.sol";
 
 contract AntiDilution is BOSSetting, BOMSetting, DraftSetting {
     using SNFactory for bytes;

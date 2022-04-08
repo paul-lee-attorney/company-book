@@ -10,10 +10,10 @@ import "../common/config/DraftSetting.sol";
 
 import "../common/lib/ArrayUtils.sol";
 
-import "../interfaces/IAgreement.sol";
-import "../interfaces/ISigPage.sol";
+import "../common/interfaces/IAgreement.sol";
+import "../common/interfaces/ISigPage.sol";
 
-// import "../interfaces/IMotion.sol";
+// import "../common/interfaces/IMotion.sol";
 
 contract LockUp is BOSSetting, BOMSetting, DraftSetting {
     using ArrayUtils for uint256[];

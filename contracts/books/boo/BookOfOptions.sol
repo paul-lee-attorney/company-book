@@ -13,8 +13,8 @@ import "../common/lib/ArrayUtils.sol";
 import "../common/lib/serialNumber/SNFactory.sol";
 import "../common/lib/ShareSNParser.sol";
 
-// import "../interfaces/IAgreement.sol";
-// import "../interfaces/ISigPage.sol";
+// import "../common/interfaces/IAgreement.sol";
+// import "../common/interfaces/ISigPage.sol";
 
 contract BookOfOptions is BOSSetting {
     // using ArrayUtils for address[];

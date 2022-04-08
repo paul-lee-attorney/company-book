@@ -4,7 +4,7 @@
 
 pragma solidity ^0.4.24;
 
-import "../interfaces/IBookOfOptions.sol";
+import "../common/interfaces/IBookOfOptions.sol";
 
 import "../common/config/AdminSetting.sol";
 

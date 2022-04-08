@@ -10,9 +10,9 @@ import "../common/config/BOHSetting.sol";
 import "../common/lib/ArrayUtils.sol";
 import "../common/lib/serialNumber/VotingRuleParser.sol";
 
-// import "../interfaces/IBookOfMotions.sol";
-import "../interfaces/ISigPage.sol";
-import "../interfaces/IAgreement.sol";
+// import "../common/interfaces/IBookOfMotions.sol";
+import "../common/interfaces/ISigPage.sol";
+import "../common/interfaces/IAgreement.sol";
 
 import "../common/component/EnumsRepo.sol";
 

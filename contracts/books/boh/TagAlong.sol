@@ -11,12 +11,12 @@ import "../common/config/DraftSetting.sol";
 import "../common/lib/ArrayUtils.sol";
 import "../common/lib/SafeMath.sol";
 
-import "../interfaces/IAgreement.sol";
-import "../interfaces/ISigPage.sol";
+import "../common/interfaces/IAgreement.sol";
+import "../common/interfaces/ISigPage.sol";
 
 import "./Groups.sol";
 
-// import "../interfaces/IMotion.sol";
+// import "../common/interfaces/IMotion.sol";
 
 contract TagAlong is BOSSetting, BOMSetting, Groups {
     using ArrayUtils for address[];

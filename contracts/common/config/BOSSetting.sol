@@ -4,7 +4,7 @@
 
 pragma solidity ^0.4.24;
 
-import "../interfaces/IBookOfShares.sol";
+import "../common/interfaces/IBookOfShares.sol";
 
 import "../common/config/AdminSetting.sol";
 

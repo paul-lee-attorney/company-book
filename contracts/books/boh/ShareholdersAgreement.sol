@@ -4,10 +4,10 @@
 
 pragma solidity ^0.4.24;
 
-import "../interfaces/IAdminSetting.sol";
-import "../interfaces/IDraftSetting.sol";
-import "../interfaces/IBOSSetting.sol";
-import "../interfaces/IBOMSetting.sol";
+import "../common/interfaces/IAdminSetting.sol";
+import "../common/interfaces/IDraftSetting.sol";
+import "../common/interfaces/IBOSSetting.sol";
+import "../common/interfaces/IBOMSetting.sol";
 
 import "../common/lib/ArrayUtils.sol";
 

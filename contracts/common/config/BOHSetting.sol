@@ -4,8 +4,8 @@
 
 pragma solidity ^0.4.24;
 
-import "../interfaces/IShareholdersAgreement.sol";
-import "../interfaces/IBookOfSHA.sol";
+import "../common/interfaces/IShareholdersAgreement.sol";
+import "../common/interfaces/IBookOfSHA.sol";
 
 import "../common/config/AdminSetting.sol";
 

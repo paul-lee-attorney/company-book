@@ -14,11 +14,11 @@ library SNFactory {
     function intToSN(
         bytes sn,
         uint8 pointer,
-        uint256 input,
+        uint input,
         uint8 len
     ) internal pure returns (bytes output) {
         for (uint8 i = 0; i < len; i++)
-            sn[i + pointer] = bytes1(uint8(input >> ((len-1-i) * 8)));
+            sn[i + pointer] = bytes1(uint8(input >> ((len - 1 - i) * 8)));
         output = sn;
     }
 
@@ -49,7 +49,7 @@ library SNFactory {
         address acct
     ) internal pure returns (bytes output) {
         for (uint8 i = 0; i < 20; i++)
-            sn[i + pointer] = bytes1(acct << (i * 8));
+            sn[i + pointer] = bytes1(bytes20(acct) << (i * 8));
 
         output = sn;
     }
@@ -57,10 +57,19 @@ library SNFactory {
     function shortToSN(
         bytes sn,
         uint8 pointer,
-        bytes6 input,
+        bytes6 input
     ) internal pure returns (bytes output) {
         for (uint8 i = 0; i < 6; i++) sn[pointer + i] = input[i];
 
+        output = sn;
+    }
+
+    function boolToSN(
+        bytes sn,
+        uint8 pointer,
+        bool input
+    ) internal pure returns (bytes output) {
+        sn[pointer] = input ? bytes1(1) : bytes1(0);
         output = sn;
     }
 
@@ -76,5 +85,4 @@ library SNFactory {
 
         output = sn;
     }
-
 }

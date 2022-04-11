@@ -20,13 +20,13 @@ library LibArrayForAddressUtils {
     function firstIndexOf(address[] storage array, address key)
         internal
         view
-        returns (bool, uint256)
+        returns (bool, uint)
     {
         if (array.length == 0) {
             return (false, 0);
         }
 
-        for (uint256 i = 0; i < array.length; i++) {
+        for (uint i = 0; i < array.length; i++) {
             if (array[i] == key) {
                 return (true, i);
             }
@@ -37,13 +37,13 @@ library LibArrayForAddressUtils {
     function firstIndexOfM(address[] array, address key)
         internal
         pure
-        returns (bool, uint256)
+        returns (bool, uint)
     {
         if (array.length == 0) {
             return (false, 0);
         }
 
-        for (uint256 i = 0; i < array.length; i++) {
+        for (uint i = 0; i < array.length; i++) {
             if (array[i] == key) {
                 return (true, i);
             }
@@ -59,7 +59,7 @@ library LibArrayForAddressUtils {
     //     if (a.length != b.length) {
     //         return false;
     //     }
-    //     for (uint256 i = 0; i < a.length; i++) {
+    //     for (uint i = 0; i < a.length; i++) {
     //         if (a[i] != b[i]) {
     //             return false;
     //         }
@@ -75,7 +75,7 @@ library LibArrayForAddressUtils {
     //     if (a.length != b.length) {
     //         return false;
     //     }
-    //     for (uint256 i = 0; i < a.length; i++) {
+    //     for (uint i = 0; i < a.length; i++) {
     //         if (a[i] != b[i]) {
     //             return false;
     //         }
@@ -83,7 +83,7 @@ library LibArrayForAddressUtils {
     //     return true;
     // }
 
-    function removeByIndex(address[] storage array, uint256 index) internal {
+    function removeByIndex(address[] storage array, uint index) internal {
         require(index < array.length, "ArrayForAddress: index out of bounds");
 
         while (index < array.length - 1) {
@@ -94,7 +94,7 @@ library LibArrayForAddressUtils {
     }
 
     function removeByValue(address[] storage array, address value) internal {
-        uint256 index;
+        uint index;
         bool isIn;
         (isIn, index) = firstIndexOf(array, value);
         if (isIn) {
@@ -103,7 +103,7 @@ library LibArrayForAddressUtils {
     }
 
     function addValue(address[] storage array, address value) internal {
-        uint256 index;
+        uint index;
         bool isIn;
         (isIn, index) = firstIndexOf(array, value);
         if (!isIn) {

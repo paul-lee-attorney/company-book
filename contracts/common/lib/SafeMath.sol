@@ -23,31 +23,31 @@ library SafeMath {
         return c;
     }
 
-    function add(uint256 a, uint256 b) internal pure returns (uint256) {
-        uint256 c = a + b;
+    function add(uint a, uint b) internal pure returns (uint) {
+        uint c = a + b;
         require(c >= a, "SafeMath: addition overflow");
         return c;
     }
 
-    function sub(uint256 a, uint256 b) internal pure returns (uint256) {
+    function sub(uint a, uint b) internal pure returns (uint) {
         require(b <= a, "SafeMathForUint256: subtraction overflow");
-        uint256 c = a - b;
+        uint c = a - b;
         return c;
     }
 
-    function mul(uint256 a, uint256 b) internal pure returns (uint256) {
+    function mul(uint a, uint b) internal pure returns (uint) {
         if (a == 0 || b == 0) {
             return 0;
         }
 
-        uint256 c = a * b;
+        uint c = a * b;
         require(c / a == b, "SafeMathForUint256: multiplication overflow");
         return c;
     }
 
-    function div(uint256 a, uint256 b) internal pure returns (uint256) {
+    function div(uint a, uint b) internal pure returns (uint) {
         require(b > 0, "SafeMathForUint256: division by zero");
-        uint256 c = a / b;
+        uint c = a / b;
         return c;
     }
 }

@@ -4,20 +4,20 @@
 
 pragma solidity ^0.4.24;
 
-import "../common/config/DraftSetting.sol";
+import "../config/DraftSetting.sol";
 
 contract SigPage is DraftSetting {
     // 0-pending 1-finalized 2-signed
     uint8 public docState;
 
-    uint256 public sigDeadline;
+    uint public sigDeadline;
 
-    uint256 public closingDeadline;
+    uint public closingDeadline;
 
     mapping(address => bool) public isParty;
     uint8 public qtyOfParties;
 
-    mapping(address => uint256) public sigDate;
+    mapping(address => uint) public sigDate;
     address[] private _signers;
 
     //####################
@@ -26,9 +26,9 @@ contract SigPage is DraftSetting {
 
     event UpdateStateOfDoc(uint8 state);
 
-    event SetSigDeadline(uint256 deadline);
+    event SetSigDeadline(uint deadline);
 
-    event SetClosingDeadline(uint256 deadline);
+    event SetClosingDeadline(uint deadline);
 
     event AddParty(address acct);
 
@@ -55,7 +55,7 @@ contract SigPage is DraftSetting {
         _;
     }
 
-    modifier onlyFutureTime(uint256 time) {
+    modifier onlyFutureTime(uint time) {
         require(time > now, "NOT FUTURE time");
         _;
     }
@@ -64,7 +64,7 @@ contract SigPage is DraftSetting {
     //##    设置接口    ##
     //####################
 
-    function setSigDeadline(uint256 deadline)
+    function setSigDeadline(uint deadline)
         external
         onlyAttorney
         onlyFutureTime(deadline)
@@ -74,7 +74,7 @@ contract SigPage is DraftSetting {
         emit SetSigDeadline(deadline);
     }
 
-    function setClosingDeadline(uint256 deadline)
+    function setClosingDeadline(uint deadline)
         external
         onlyAttorney
         onlyFutureTime(deadline)

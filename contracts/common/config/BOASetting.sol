@@ -4,9 +4,9 @@
 
 pragma solidity ^0.4.24;
 
-import "../common/interfaces/IBookOfDocuments.sol";
+import "../interfaces/IBookOfDocuments.sol";
 
-import "../common/config/AdminSetting.sol";
+import "../config/AdminSetting.sol";
 
 contract BOASetting is AdminSetting {
     IBookOfDocuments internal _boa;

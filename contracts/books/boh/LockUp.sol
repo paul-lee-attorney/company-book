@@ -4,29 +4,29 @@
 
 pragma solidity ^0.4.24;
 
-import "../common/config/BOSSetting.sol";
-import "../common/config/BOMSetting.sol";
-import "../common/config/DraftSetting.sol";
+import "../../common/config/BOSSetting.sol";
+import "../../common/config/BOMSetting.sol";
+import "../../common/config/DraftSetting.sol";
 
-import "../common/lib/ArrayUtils.sol";
+import "../../common/lib/ArrayUtils.sol";
 
-import "../common/interfaces/IAgreement.sol";
-import "../common/interfaces/ISigPage.sol";
+import "../../common/interfaces/IAgreement.sol";
+import "../../common/interfaces/ISigPage.sol";
 
-// import "../common/interfaces/IMotion.sol";
+// import "../../common/interfaces/IMotion.sol";
 
 contract LockUp is BOSSetting, BOMSetting, DraftSetting {
-    using ArrayUtils for uint256[];
+    using ArrayUtils for uint[];
     using ArrayUtils for address[];
 
     // 股票锁定柜
     struct Locker {
-        uint256 dueDate;
+        uint dueDate;
         address[] keyHolders;
     }
 
     // 基准日条件未成就时，按“2277-09-19”设定到期日
-    uint256 constant REMOTE_FUTURE = 9710553600;
+    uint constant REMOTE_FUTURE = 9710553600;
 
     // shareNumber => Locker
     mapping(bytes32 => Locker) private _lockers;
@@ -38,7 +38,7 @@ contract LockUp is BOSSetting, BOMSetting, DraftSetting {
     // ##   Event   ##
     // ################
 
-    event SetLocker(bytes32 indexed shareNumber, uint256 dueDate);
+    event SetLocker(bytes32 indexed shareNumber, uint dueDate);
 
     event AddKeyholder(bytes32 indexed shareNumber, address keyholder);
 
@@ -59,13 +59,13 @@ contract LockUp is BOSSetting, BOMSetting, DraftSetting {
     // ##   写接口   ##
     // ################
 
-    function setLocker(bytes32 shareNumber, uint256 dueDate)
+    function setLocker(bytes32 shareNumber, uint dueDate)
         external
         onlyAttorney
-        beShare(shareNumber)
+        shareExist(shareNumber)
     {
         _lockers[shareNumber].dueDate = dueDate == 0 ? REMOTE_FUTURE : dueDate;
-        _isLocked[shareNumber] = true;
+        isLocked[shareNumber] = true;
 
         emit SetLocker(shareNumber, _lockers[shareNumber].dueDate);
     }
@@ -76,7 +76,7 @@ contract LockUp is BOSSetting, BOMSetting, DraftSetting {
         beLocked(shareNumber)
     {
         delete _lockers[shareNumber];
-        _isLocked[shareNumber] = false;
+        isLocked[shareNumber] = false;
 
         emit DelLocker(shareNumber);
     }
@@ -106,7 +106,7 @@ contract LockUp is BOSSetting, BOMSetting, DraftSetting {
         );
 
         if (exist) {
-            _lockers[shareNumber].keyholders.removeByValue(keyholder);
+            _lockers[shareNumber].keyHolders.removeByValue(keyholder);
             emit RemoveKeyholder(shareNumber, keyholder);
         }
     }
@@ -119,7 +119,7 @@ contract LockUp is BOSSetting, BOMSetting, DraftSetting {
         public
         view
         beLocked(shareNumber)
-        returns (uint256 dueDate, address[] keyHolders)
+        returns (uint dueDate, address[] keyHolders)
     {
         dueDate = _lockers[shareNumber].dueDate;
         keyHolders = _lockers[shareNumber].keyHolders;
@@ -135,7 +135,7 @@ contract LockUp is BOSSetting, BOMSetting, DraftSetting {
         onlyBookeeper
         returns (bool)
     {
-        (, , , uint256 closingDate, , ) = IAgreement(ia).getDeal(sn);
+        (, , , uint closingDate, , ) = IAgreement(ia).getDeal(sn);
 
         (uint8 typeOfDeal, bytes32 shareNumber, , , ) = IAgreement(ia).parseSN(
             sn
@@ -163,9 +163,9 @@ contract LockUp is BOSSetting, BOMSetting, DraftSetting {
             return false;
         } else {
             bool flag;
-            for (uint256 j = 0; j < locker.keyHolders.length; j++) {
+            for (uint j = 0; j < locker.keyHolders.length; j++) {
                 flag = false;
-                for (uint256 k = 0; k < consentParties.length; k++) {
+                for (uint k = 0; k < consentParties.length; k++) {
                     if (locker.keyHolders[j] == consentParties[k]) {
                         flag = true;
                         break;

@@ -28,17 +28,19 @@ interface IBookOfMotions {
     //##    写接口    ##
     //##################
 
-    function proposeMotion(address ia, uint8 votingDays) external;
+    function proposeMotion(address ia, uint256 votingDeadline) external;
 
     function supportMotion(address ia) external;
 
     function againstMotion(address ia) external;
 
-    function voteCounting(address ia) external;
+    function voteCounting(address ia, uint8 votingType) external;
 
     //##################
     //##    读接口    ##
     //##################
+
+    function getVotingDeadline(address ia) external view returns (uint256);
 
     function getState(address ia) external view returns (uint8);
 

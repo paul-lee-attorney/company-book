@@ -11,19 +11,21 @@ import "../common/config/BOHSetting.sol";
 import "../common/config/BOASetting.sol";
 import "../common/config/BOMSetting.sol";
 import "../common/config/BOPSetting.sol";
+import "../common/config/BOOSetting.sol";
 
 import "../common/lib/SafeMath.sol";
 import "../common/lib/serialNumber/ShareSNParser.sol";
 import "../common/lib/serialNumber/PledgeSNParser.sol";
 import "../common/lib/serialNumber/DealSNParser.sol";
+import "../common/lib/serialNumber/OptionSNParser.sol";
 
 import "../common/interfaces/IBOSSetting.sol";
 import "../common/interfaces/IAgreement.sol";
 import "../common/interfaces/ISigPage.sol";
 
-import "../boh/interfaces/IVotingRules.sol";
+import "../books/boh/interfaces/IVotingRules.sol";
 
-import "../common/component/EnumsRepo.sol";
+import "../common/components/EnumsRepo.sol";
 
 contract Bookeeper is
     EnumsRepo,
@@ -31,12 +33,14 @@ contract Bookeeper is
     BOASetting,
     BOHSetting,
     BOMSetting,
-    BOPSetting
+    BOPSetting,
+    BOOSetting
 {
     using SafeMath for uint256;
     using ShareSNParser for bytes32;
     using PledgeSNParser for bytes32;
     using DealSNParser for bytes32;
+    using OptionSNParser for bytes32;
 
     address[15] public termsTemplate;
 
@@ -154,39 +158,32 @@ contract Bookeeper is
     // ##    Option    ##
     // ##################
 
-    function execOption(bytes32 sn, bytes32 hashLock) external {
-        (, address rightholder, , , , , ) = _boo.getOption(sn);
+    function execOption(
+        bytes32 sn,
+        uint256 exerciseDate,
+        bytes32 hashLock
+    ) external {
+        (address rightholder, , , , ) = _boo.getOption(sn);
 
         require(msg.sender == rightholder, "NOT rightholder");
 
-        require(
-            _boo.getStateOfOption(sn) == 1,
-            "option's state is NOT correct"
-        );
+        require(_boo.stateOfOption(sn) == 1, "option's state is NOT correct");
 
-        (uint256 triggerDate, uint8 exerciseDays, , ) = _boo.getDatesOfOption(
-            sn
-        );
+        uint256 triggerDate = sn.triggerDateOfOpt();
+        uint8 exerciseDays = sn.exerciseDaysOfOpt();
 
         if (now > triggerDate + uint256(exerciseDays) * 86400)
             _boo.setState(sn, 3); // option expired
         else if (now >= triggerDate) _boo.setState(sn, 2);
 
-        _boo.execOption(sn, hashLock);
+        _boo.execOption(sn, exerciseDate, hashLock);
     }
 
     function closeOption(bytes32 sn, bytes32 hashKey) external {
-        (, , address obligor, , , , ) = _boo.getOption(sn);
+        require(msg.sender == sn.obligorOfOpt(), "NOT obligor of the Option");
 
-        require(msg.sender == obligor, "NOT obligor of the Option");
-
-        (, , uint256 exerciseDate, uint8 closingDays) = _boo.getDatesOfOption(
-            sn
-        );
-        require(
-            now <= exerciseDate + uint256(closingDays) * 86400,
-            "LATER than closingDeadline"
-        );
+        (, uint256 closingDate, , , ) = _boo.getOption(sn);
+        require(now <= closingDate, "LATER than closingDeadline");
 
         _boo.closeOption(sn, hashKey);
     }
@@ -239,7 +236,7 @@ contract Bookeeper is
         require(msg.sender == sn.creditor(), "NOT creditor");
 
         (bytes32 shareNumber, uint256 pledgedPar, , ) = _bop.getPledge(sn);
-        _bos.increaseCleanPar(shareNumber, parValue);
+        _bos.increaseCleanPar(shareNumber, pledgedPar);
 
         _bop.delPledge(sn);
     }
@@ -291,7 +288,7 @@ contract Bookeeper is
             "Investment Agreement is NOT registered"
         );
 
-        require(_boa.typeOfIA() != 3, "NOT need to vote");
+        require(IAgreement(ia).typeOfIA() != 3, "NOT need to vote");
 
         uint8 votingDays = IVotingRules(
             getSHA().getTerm(uint8(TermTitle.VOTING_RULES))
@@ -300,7 +297,7 @@ contract Bookeeper is
         _bom.proposeMotion(ia, proposeDate + uint256(votingDays) * 86400);
     }
 
-    function voteCounting(address ia) external onlyPartyOfIA(ia) {
+    function voteCounting(address ia) external onlyPartyOf(ia) {
         require(_bom.isProposed(ia), "NOT proposed");
         require(_bom.getState(ia) == 1, "NOT in voting");
         require(now > _bom.getVotingDeadline(ia), "voting NOT end");
@@ -325,7 +322,7 @@ contract Bookeeper is
         require(IAgreement(ia).isDeal(sn), "deal NOT exist");
         require(_bom.getState(ia) == 4, "agianst NO need to buy");
 
-        (, , , uint256 closingDate, ) = IAgreement(ia).getDeal(sn);
+        (, , , uint256 closingDate, , ) = IAgreement(ia).getDeal(sn);
         require(exerciseDate < closingDate, "MISSED closing date");
 
         require(
@@ -349,9 +346,9 @@ contract Bookeeper is
 
         (address[] memory buyers, uint256 againstPar) = _bom.getNay(ia);
 
-        uint256 len = buyers.length;
+        // uint256 len = buyers.length;
 
-        for (uint256 i = 0; i < len; i++) {
+        for (uint256 i = 0; i < buyers.length; i++) {
             (, , uint256 voteAmt) = _bom.getVote(ia, buyers[i]);
             IAgreement(ia).splitDeal(
                 sn,
@@ -367,7 +364,7 @@ contract Bookeeper is
     // ##############
 
     function pushToCoffer(
-        uint8 sn,
+        bytes32 sn,
         address ia,
         bytes32 hashLock,
         uint256 closingDate
@@ -375,18 +372,12 @@ contract Bookeeper is
         require(_bom.isPassed(ia), "Motion NOT passed");
 
         (
-            uint256 shareNumber,
+            uint8 typeOfDeal,
+            bytes32 shareNumber,
             ,
             address seller,
-            ,
-            ,
-            ,
-            ,
-            ,
-            uint8 typeOfDeal,
-            ,
 
-        ) = IAgreement(ia).getDeal(sn);
+        ) = IAgreement(ia).parseSN(sn);
 
         //交易发起人为卖方或簿记管理人(Bookeeper);
         address sender = msg.sender;
@@ -408,7 +399,7 @@ contract Bookeeper is
     function _checkFlag(
         TermTitle[] terms,
         address ia,
-        uint8 sn
+        bytes32 sn
     ) private returns (bool flag) {
         uint256 len = terms.length;
         for (uint256 i = 0; i < len; i++) {
@@ -420,7 +411,7 @@ contract Bookeeper is
     }
 
     function closeDeal(
-        uint8 sn,
+        bytes32 sn,
         address ia,
         string hashKey
     ) external returns (bool flag) {
@@ -429,15 +420,14 @@ contract Bookeeper is
 
         //获取Deal
         // Agreement.Deal memory deal = IAgreement(ia).getDeal(sn);
+
+        (, bytes32 shareNumber, uint8 class, , address buyer) = IAgreement(ia)
+            .parseSN(sn);
+
         (
-            uint256 shareNumber,
-            uint8 class,
-            ,
-            address buyer,
             uint256 unitPrice,
             uint256 parValue,
-            uint256 paidInAmount,
-            ,
+            uint256 paidPar,
             ,
             ,
 
@@ -450,7 +440,7 @@ contract Bookeeper is
         IAgreement(ia).closeDeal(sn, hashKey);
 
         uint256 closingDate = now;
-        // uint256 paidInDate;
+        // uint paidInDate;
 
         //释放Share的质押标记(若需)，执行交易
         if (shareNumber > 0) {
@@ -458,7 +448,7 @@ contract Bookeeper is
             _bos.transferShare(
                 shareNumber,
                 parValue,
-                paidInAmount,
+                paidPar,
                 buyer,
                 closingDate,
                 unitPrice
@@ -468,7 +458,7 @@ contract Bookeeper is
                 buyer,
                 class,
                 parValue,
-                paidInAmount,
+                paidPar,
                 closingDate, //paidInDeadline
                 closingDate, //issueDate
                 unitPrice //issuePrice
@@ -479,25 +469,19 @@ contract Bookeeper is
     }
 
     function revokeDeal(
-        uint8 sn,
+        bytes32 sn,
         address ia,
         string hashKey
     ) external {
         require(_boa.isRegistered(ia), "IA NOT registered");
 
         (
-            uint256 shareNumber,
+            uint8 typeOfDeal,
+            bytes32 shareNumber,
             ,
             address seller,
-            ,
-            ,
-            ,
-            ,
-            ,
-            uint8 typeOfDeal,
-            ,
 
-        ) = IAgreement(ia).getDeal(sn);
+        ) = IAgreement(ia).parseSN(sn);
 
         address sender = msg.sender;
         require(

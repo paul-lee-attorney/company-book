@@ -4,10 +4,10 @@
 
 pragma solidity ^0.4.24;
 
-import "../common/component/BookOfDocuments.sol";
-import "../common/component/BookOfTerms.sol";
+import "../../common/components/BookOfDocuments.sol";
+import "../../common/components/BookOfTerms.sol";
 
-import "../common/interfaces/IShareholdersAgreement.sol";
+import "../../common/interfaces/IShareholdersAgreement.sol";
 
 contract BookOfSHA is BookOfTerms, BookOfDocuments {
     bytes32 public pointer;
@@ -33,7 +33,7 @@ contract BookOfSHA is BookOfTerms, BookOfDocuments {
 
         address[] memory terms = IShareholdersAgreement(body).terms();
 
-        for (uint256 i = 0; i < terms.length; i++) {
+        for (uint i = 0; i < terms.length; i++) {
             _addTermToRegistry(terms[i]);
         }
     }

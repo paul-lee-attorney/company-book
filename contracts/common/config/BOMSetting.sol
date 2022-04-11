@@ -4,9 +4,9 @@
 
 pragma solidity ^0.4.24;
 
-import "../common/interfaces/IBookOfMotions.sol";
+import "../interfaces/IBookOfMotions.sol";
 
-import "../common/config/AdminSetting.sol";
+import "../config/AdminSetting.sol";
 
 contract BOMSetting is AdminSetting {
     IBookOfMotions internal _bom;

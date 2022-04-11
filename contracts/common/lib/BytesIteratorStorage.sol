@@ -67,13 +67,13 @@ contract BytesIteratorStorage {
     /**
     @notice Reads the list of Bytes and returns the length of the list
     @param _list The source list
-    @return {"count": "`uint256` The lenght of the list"}
+    @return {"count": "`uint` The lenght of the list"}
 
   */
     function read_total_bytesarray(DoublyLinkedList.Bytes storage _list)
         internal
         constant
-        returns (uint256 _count)
+        returns (uint _count)
     {
         _count = _list.total();
     }

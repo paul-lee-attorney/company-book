@@ -4,7 +4,7 @@
 
 pragma solidity ^0.4.24;
 
-import "../common/interfaces/IAdminSetting.sol";
+import "../interfaces/IAdminSetting.sol";
 
 contract AdminSetting is IAdminSetting {
     address private _admin;
@@ -54,7 +54,7 @@ contract AdminSetting is IAdminSetting {
         _;
     }
 
-    modifier currentDate(uint256 date) {
+    modifier currentDate(uint date) {
         require(
             date >= now - 2 hours && date <= now + 2 hours,
             "NOT a current date"

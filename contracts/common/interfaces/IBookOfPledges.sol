@@ -43,7 +43,7 @@ interface IBookOfPledges {
         returns (bytes32[]);
 
     function parseSN(bytes32 sn)
-        public
+        external
         pure
         returns (
             bytes6 short,
@@ -52,7 +52,7 @@ interface IBookOfPledges {
             address creditor
         );
 
-    function getPledge(sn)
+    function getPledge(bytes32 sn)
         external
         view
         returns (

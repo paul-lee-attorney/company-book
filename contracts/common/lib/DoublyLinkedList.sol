@@ -3,16 +3,16 @@ pragma solidity ^0.4.24;
 library DoublyLinkedList {
     struct Item {
         bytes32 item;
-        uint256 previous_index;
-        uint256 next_index;
+        uint previous_index;
+        uint next_index;
     }
 
     struct Data {
-        uint256 first_index;
-        uint256 last_index;
-        uint256 count;
-        mapping(bytes32 => uint256) item_index;
-        mapping(uint256 => bool) valid_indexes;
+        uint first_index;
+        uint last_index;
+        uint count;
+        mapping(bytes32 => uint) item_index;
+        mapping(uint => bool) valid_indexes;
         Item[] collection;
     }
 
@@ -40,14 +40,14 @@ library DoublyLinkedList {
         Data data;
     }
 
-    uint256 constant NONE = uint256(0);
+    uint constant NONE = uint(0);
     bytes32 constant EMPTY_BYTES = bytes32(0x0);
     address constant NULL_ADDRESS = address(0x0);
 
     function find(Data storage self, bytes32 _item)
         public
         constant
-        returns (uint256 _item_index)
+        returns (uint _item_index)
     {
         if ((self.item_index[_item] == NONE) && (self.count == NONE)) {
             _item_index = NONE;
@@ -56,7 +56,7 @@ library DoublyLinkedList {
         }
     }
 
-    function get(Data storage self, uint256 _item_index)
+    function get(Data storage self, uint _item_index)
         public
         constant
         returns (bytes32 _item)
@@ -76,7 +76,7 @@ library DoublyLinkedList {
             // rejects addition of empty values
             _success = false;
         } else {
-            uint256 _index = uint256(
+            uint _index = uint(
                 self.collection.push(
                     Item({
                         item: _data,
@@ -103,7 +103,7 @@ library DoublyLinkedList {
         }
     }
 
-    function remove(Data storage self, uint256 _index)
+    function remove(Data storage self, uint _index)
         internal
         returns (bool _success)
     {
@@ -136,7 +136,7 @@ library DoublyLinkedList {
         internal
         returns (bool _success)
     {
-        uint256 _item_index = find(self, _item);
+        uint _item_index = find(self, _item);
         if (_item_index != NONE) {
             require(remove(self, _item_index));
             _success = true;
@@ -149,7 +149,7 @@ library DoublyLinkedList {
     function total(Data storage self)
         public
         constant
-        returns (uint256 _total_count)
+        returns (uint _total_count)
     {
         _total_count = self.count;
     }
@@ -157,7 +157,7 @@ library DoublyLinkedList {
     function start(Data storage self)
         public
         constant
-        returns (uint256 _item_index)
+        returns (uint _item_index)
     {
         _item_index = self.first_index;
         return _item_index;
@@ -168,7 +168,7 @@ library DoublyLinkedList {
         constant
         returns (bytes32 _item)
     {
-        uint256 _item_index = start(self);
+        uint _item_index = start(self);
         if (_item_index != NONE) {
             _item = get(self, _item_index);
         } else {
@@ -179,7 +179,7 @@ library DoublyLinkedList {
     function end(Data storage self)
         public
         constant
-        returns (uint256 _item_index)
+        returns (uint _item_index)
     {
         _item_index = self.last_index;
         return _item_index;
@@ -190,7 +190,7 @@ library DoublyLinkedList {
         constant
         returns (bytes32 _item)
     {
-        uint256 _item_index = end(self);
+        uint _item_index = end(self);
         if (_item_index != NONE) {
             _item = get(self, _item_index);
         } else {
@@ -198,7 +198,7 @@ library DoublyLinkedList {
         }
     }
 
-    function valid(Data storage self, uint256 _item_index)
+    function valid(Data storage self, uint _item_index)
         public
         constant
         returns (bool _yes)
@@ -212,14 +212,14 @@ library DoublyLinkedList {
         constant
         returns (bool _yes)
     {
-        uint256 _item_index = self.item_index[_item];
+        uint _item_index = self.item_index[_item];
         _yes = self.valid_indexes[_item_index];
     }
 
-    function previous(Data storage self, uint256 _current_index)
+    function previous(Data storage self, uint _current_index)
         public
         constant
-        returns (uint256 _previous_index)
+        returns (uint _previous_index)
     {
         if (self.valid_indexes[_current_index] == true) {
             _previous_index = self
@@ -235,19 +235,19 @@ library DoublyLinkedList {
         constant
         returns (bytes32 _previous_item)
     {
-        uint256 _current_index = find(self, _current_item);
+        uint _current_index = find(self, _current_item);
         if (_current_index != NONE) {
-            uint256 _previous_index = previous(self, _current_index);
+            uint _previous_index = previous(self, _current_index);
             _previous_item = get(self, _previous_index);
         } else {
             _previous_item = EMPTY_BYTES;
         }
     }
 
-    function next(Data storage self, uint256 _current_index)
+    function next(Data storage self, uint _current_index)
         public
         constant
-        returns (uint256 _next_index)
+        returns (uint _next_index)
     {
         if (self.valid_indexes[_current_index] == true) {
             _next_index = self.collection[_current_index - 1].next_index;
@@ -261,46 +261,46 @@ library DoublyLinkedList {
         constant
         returns (bytes32 _next_item)
     {
-        uint256 _current_index = find(self, _current_item);
+        uint _current_index = find(self, _current_item);
         if (_current_index != NONE) {
-            uint256 _next_index = next(self, _current_index);
+            uint _next_index = next(self, _current_index);
             _next_item = get(self, _next_index);
         } else {
             _next_item = EMPTY_BYTES;
         }
     }
 
-    function find(Uint storage self, uint256 _item)
+    function find(Uint storage self, uint _item)
         public
         constant
-        returns (uint256 _item_index)
+        returns (uint _item_index)
     {
         _item_index = find(self.data, bytes32(_item));
     }
 
-    function get(Uint storage self, uint256 _item_index)
+    function get(Uint storage self, uint _item_index)
         public
         constant
-        returns (uint256 _item)
+        returns (uint _item)
     {
-        _item = uint256(get(self.data, _item_index));
+        _item = uint(get(self.data, _item_index));
     }
 
-    function append(Uint storage self, uint256 _data)
+    function append(Uint storage self, uint _data)
         public
         returns (bool _success)
     {
         _success = append(self.data, bytes32(_data));
     }
 
-    function remove(Uint storage self, uint256 _index)
+    function remove(Uint storage self, uint _index)
         internal
         returns (bool _success)
     {
         _success = remove(self.data, _index);
     }
 
-    function remove_item(Uint storage self, uint256 _item)
+    function remove_item(Uint storage self, uint _item)
         public
         returns (bool _success)
     {
@@ -310,36 +310,36 @@ library DoublyLinkedList {
     function total(Uint storage self)
         public
         constant
-        returns (uint256 _total_count)
+        returns (uint _total_count)
     {
         _total_count = total(self.data);
     }
 
-    function start(Uint storage self) public constant returns (uint256 _index) {
+    function start(Uint storage self) public constant returns (uint _index) {
         _index = start(self.data);
     }
 
     function start_item(Uint storage self)
         public
         constant
-        returns (uint256 _start_item)
+        returns (uint _start_item)
     {
-        _start_item = uint256(start_item(self.data));
+        _start_item = uint(start_item(self.data));
     }
 
-    function end(Uint storage self) public constant returns (uint256 _index) {
+    function end(Uint storage self) public constant returns (uint _index) {
         _index = end(self.data);
     }
 
     function end_item(Uint storage self)
         public
         constant
-        returns (uint256 _end_item)
+        returns (uint _end_item)
     {
-        _end_item = uint256(end_item(self.data));
+        _end_item = uint(end_item(self.data));
     }
 
-    function valid(Uint storage self, uint256 _item_index)
+    function valid(Uint storage self, uint _item_index)
         public
         constant
         returns (bool _yes)
@@ -347,7 +347,7 @@ library DoublyLinkedList {
         _yes = valid(self.data, _item_index);
     }
 
-    function valid_item(Uint storage self, uint256 _item)
+    function valid_item(Uint storage self, uint _item)
         public
         constant
         returns (bool _yes)
@@ -355,49 +355,49 @@ library DoublyLinkedList {
         _yes = valid_item(self.data, bytes32(_item));
     }
 
-    function previous(Uint storage self, uint256 _current_index)
+    function previous(Uint storage self, uint _current_index)
         public
         constant
-        returns (uint256 _previous_index)
+        returns (uint _previous_index)
     {
         _previous_index = previous(self.data, _current_index);
     }
 
-    function previous_item(Uint storage self, uint256 _current_item)
+    function previous_item(Uint storage self, uint _current_item)
         public
         constant
-        returns (uint256 _previous_item)
+        returns (uint _previous_item)
     {
-        _previous_item = uint256(
+        _previous_item = uint(
             previous_item(self.data, bytes32(_current_item))
         );
     }
 
-    function next(Uint storage self, uint256 _current_index)
+    function next(Uint storage self, uint _current_index)
         public
         constant
-        returns (uint256 _next_index)
+        returns (uint _next_index)
     {
         _next_index = next(self.data, _current_index);
     }
 
-    function next_item(Uint storage self, uint256 _current_item)
+    function next_item(Uint storage self, uint _current_item)
         public
         constant
-        returns (uint256 _next_item)
+        returns (uint _next_item)
     {
-        _next_item = uint256(next_item(self.data, bytes32(_current_item)));
+        _next_item = uint(next_item(self.data, bytes32(_current_item)));
     }
 
     function find(Address storage self, address _item)
         public
         constant
-        returns (uint256 _item_index)
+        returns (uint _item_index)
     {
         _item_index = find(self.data, bytes32(_item));
     }
 
-    function get(Address storage self, uint256 _item_index)
+    function get(Address storage self, uint _item_index)
         public
         constant
         returns (address _item)
@@ -408,23 +408,23 @@ library DoublyLinkedList {
     function find(
         IndexedUint storage self,
         bytes32 _collection_index,
-        uint256 _item
-    ) public constant returns (uint256 _item_index) {
+        uint _item
+    ) public constant returns (uint _item_index) {
         _item_index = find(self.data[_collection_index], bytes32(_item));
     }
 
     function get(
         IndexedUint storage self,
         bytes32 _collection_index,
-        uint256 _item_index
-    ) public constant returns (uint256 _item) {
-        _item = uint256(get(self.data[_collection_index], _item_index));
+        uint _item_index
+    ) public constant returns (uint _item) {
+        _item = uint(get(self.data[_collection_index], _item_index));
     }
 
     function append(
         IndexedUint storage self,
         bytes32 _collection_index,
-        uint256 _data
+        uint _data
     ) public returns (bool _success) {
         _success = append(self.data[_collection_index], bytes32(_data));
     }
@@ -432,7 +432,7 @@ library DoublyLinkedList {
     function remove(
         IndexedUint storage self,
         bytes32 _collection_index,
-        uint256 _index
+        uint _index
     ) internal returns (bool _success) {
         _success = remove(self.data[_collection_index], _index);
     }
@@ -440,7 +440,7 @@ library DoublyLinkedList {
     function remove_item(
         IndexedUint storage self,
         bytes32 _collection_index,
-        uint256 _item
+        uint _item
     ) public returns (bool _success) {
         _success = remove_item(self.data[_collection_index], bytes32(_item));
     }
@@ -448,7 +448,7 @@ library DoublyLinkedList {
     function total(IndexedUint storage self, bytes32 _collection_index)
         public
         constant
-        returns (uint256 _total_count)
+        returns (uint _total_count)
     {
         _total_count = total(self.data[_collection_index]);
     }
@@ -456,7 +456,7 @@ library DoublyLinkedList {
     function start(IndexedUint storage self, bytes32 _collection_index)
         public
         constant
-        returns (uint256 _index)
+        returns (uint _index)
     {
         _index = start(self.data[_collection_index]);
     }
@@ -464,15 +464,15 @@ library DoublyLinkedList {
     function start_item(IndexedUint storage self, bytes32 _collection_index)
         public
         constant
-        returns (uint256 _start_item)
+        returns (uint _start_item)
     {
-        _start_item = uint256(start_item(self.data[_collection_index]));
+        _start_item = uint(start_item(self.data[_collection_index]));
     }
 
     function end(IndexedUint storage self, bytes32 _collection_index)
         public
         constant
-        returns (uint256 _index)
+        returns (uint _index)
     {
         _index = end(self.data[_collection_index]);
     }
@@ -480,15 +480,15 @@ library DoublyLinkedList {
     function end_item(IndexedUint storage self, bytes32 _collection_index)
         public
         constant
-        returns (uint256 _end_item)
+        returns (uint _end_item)
     {
-        _end_item = uint256(end_item(self.data[_collection_index]));
+        _end_item = uint(end_item(self.data[_collection_index]));
     }
 
     function valid(
         IndexedUint storage self,
         bytes32 _collection_index,
-        uint256 _item_index
+        uint _item_index
     ) public constant returns (bool _yes) {
         _yes = valid(self.data[_collection_index], _item_index);
     }
@@ -496,7 +496,7 @@ library DoublyLinkedList {
     function valid_item(
         IndexedUint storage self,
         bytes32 _collection_index,
-        uint256 _item
+        uint _item
     ) public constant returns (bool _yes) {
         _yes = valid_item(self.data[_collection_index], bytes32(_item));
     }
@@ -504,8 +504,8 @@ library DoublyLinkedList {
     function previous(
         IndexedUint storage self,
         bytes32 _collection_index,
-        uint256 _current_index
-    ) public constant returns (uint256 _previous_index) {
+        uint _current_index
+    ) public constant returns (uint _previous_index) {
         _previous_index = previous(
             self.data[_collection_index],
             _current_index
@@ -515,9 +515,9 @@ library DoublyLinkedList {
     function previous_item(
         IndexedUint storage self,
         bytes32 _collection_index,
-        uint256 _current_item
-    ) public constant returns (uint256 _previous_item) {
-        _previous_item = uint256(
+        uint _current_item
+    ) public constant returns (uint _previous_item) {
+        _previous_item = uint(
             previous_item(self.data[_collection_index], bytes32(_current_item))
         );
     }
@@ -525,17 +525,17 @@ library DoublyLinkedList {
     function next(
         IndexedUint storage self,
         bytes32 _collection_index,
-        uint256 _current_index
-    ) public constant returns (uint256 _next_index) {
+        uint _current_index
+    ) public constant returns (uint _next_index) {
         _next_index = next(self.data[_collection_index], _current_index);
     }
 
     function next_item(
         IndexedUint storage self,
         bytes32 _collection_index,
-        uint256 _current_item
-    ) public constant returns (uint256 _next_item) {
-        _next_item = uint256(
+        uint _current_item
+    ) public constant returns (uint _next_item) {
+        _next_item = uint(
             next_item(self.data[_collection_index], bytes32(_current_item))
         );
     }
@@ -547,7 +547,7 @@ library DoublyLinkedList {
         _success = append(self.data, bytes32(_data));
     }
 
-    function remove(Address storage self, uint256 _index)
+    function remove(Address storage self, uint _index)
         internal
         returns (bool _success)
     {
@@ -564,7 +564,7 @@ library DoublyLinkedList {
     function total(Address storage self)
         public
         constant
-        returns (uint256 _total_count)
+        returns (uint _total_count)
     {
         _total_count = total(self.data);
     }
@@ -572,7 +572,7 @@ library DoublyLinkedList {
     function start(Address storage self)
         public
         constant
-        returns (uint256 _index)
+        returns (uint _index)
     {
         _index = start(self.data);
     }
@@ -588,7 +588,7 @@ library DoublyLinkedList {
     function end(Address storage self)
         public
         constant
-        returns (uint256 _index)
+        returns (uint _index)
     {
         _index = end(self.data);
     }
@@ -601,7 +601,7 @@ library DoublyLinkedList {
         _end_item = address(end_item(self.data));
     }
 
-    function valid(Address storage self, uint256 _item_index)
+    function valid(Address storage self, uint _item_index)
         public
         constant
         returns (bool _yes)
@@ -617,10 +617,10 @@ library DoublyLinkedList {
         _yes = valid_item(self.data, bytes32(_item));
     }
 
-    function previous(Address storage self, uint256 _current_index)
+    function previous(Address storage self, uint _current_index)
         public
         constant
-        returns (uint256 _previous_index)
+        returns (uint _previous_index)
     {
         _previous_index = previous(self.data, _current_index);
     }
@@ -635,10 +635,10 @@ library DoublyLinkedList {
         );
     }
 
-    function next(Address storage self, uint256 _current_index)
+    function next(Address storage self, uint _current_index)
         public
         constant
-        returns (uint256 _next_index)
+        returns (uint _next_index)
     {
         _next_index = next(self.data, _current_index);
     }
@@ -662,7 +662,7 @@ library DoublyLinkedList {
     function remove(
         IndexedAddress storage self,
         bytes32 _collection_index,
-        uint256 _index
+        uint _index
     ) internal returns (bool _success) {
         _success = remove(self.data[_collection_index], _index);
     }
@@ -678,7 +678,7 @@ library DoublyLinkedList {
     function total(IndexedAddress storage self, bytes32 _collection_index)
         public
         constant
-        returns (uint256 _total_count)
+        returns (uint _total_count)
     {
         _total_count = total(self.data[_collection_index]);
     }
@@ -686,7 +686,7 @@ library DoublyLinkedList {
     function start(IndexedAddress storage self, bytes32 _collection_index)
         public
         constant
-        returns (uint256 _index)
+        returns (uint _index)
     {
         _index = start(self.data[_collection_index]);
     }
@@ -702,7 +702,7 @@ library DoublyLinkedList {
     function end(IndexedAddress storage self, bytes32 _collection_index)
         public
         constant
-        returns (uint256 _index)
+        returns (uint _index)
     {
         _index = end(self.data[_collection_index]);
     }
@@ -718,7 +718,7 @@ library DoublyLinkedList {
     function valid(
         IndexedAddress storage self,
         bytes32 _collection_index,
-        uint256 _item_index
+        uint _item_index
     ) public constant returns (bool _yes) {
         _yes = valid(self.data[_collection_index], _item_index);
     }
@@ -734,8 +734,8 @@ library DoublyLinkedList {
     function previous(
         IndexedAddress storage self,
         bytes32 _collection_index,
-        uint256 _current_index
-    ) public constant returns (uint256 _previous_index) {
+        uint _current_index
+    ) public constant returns (uint _previous_index) {
         _previous_index = previous(
             self.data[_collection_index],
             _current_index
@@ -755,8 +755,8 @@ library DoublyLinkedList {
     function next(
         IndexedAddress storage self,
         bytes32 _collection_index,
-        uint256 _current_index
-    ) public constant returns (uint256 _next_index) {
+        uint _current_index
+    ) public constant returns (uint _next_index) {
         _next_index = next(self.data[_collection_index], _current_index);
     }
 
@@ -773,12 +773,12 @@ library DoublyLinkedList {
     function find(Bytes storage self, bytes32 _item)
         public
         constant
-        returns (uint256 _item_index)
+        returns (uint _item_index)
     {
         _item_index = find(self.data, _item);
     }
 
-    function get(Bytes storage self, uint256 _item_index)
+    function get(Bytes storage self, uint _item_index)
         public
         constant
         returns (bytes32 _item)
@@ -793,7 +793,7 @@ library DoublyLinkedList {
         _success = append(self.data, _data);
     }
 
-    function remove(Bytes storage self, uint256 _index)
+    function remove(Bytes storage self, uint _index)
         internal
         returns (bool _success)
     {
@@ -810,7 +810,7 @@ library DoublyLinkedList {
     function total(Bytes storage self)
         public
         constant
-        returns (uint256 _total_count)
+        returns (uint _total_count)
     {
         _total_count = total(self.data);
     }
@@ -818,7 +818,7 @@ library DoublyLinkedList {
     function start(Bytes storage self)
         public
         constant
-        returns (uint256 _index)
+        returns (uint _index)
     {
         _index = start(self.data);
     }
@@ -831,7 +831,7 @@ library DoublyLinkedList {
         _start_item = start_item(self.data);
     }
 
-    function end(Bytes storage self) public constant returns (uint256 _index) {
+    function end(Bytes storage self) public constant returns (uint _index) {
         _index = end(self.data);
     }
 
@@ -843,7 +843,7 @@ library DoublyLinkedList {
         _end_item = end_item(self.data);
     }
 
-    function valid(Bytes storage self, uint256 _item_index)
+    function valid(Bytes storage self, uint _item_index)
         public
         constant
         returns (bool _yes)
@@ -859,10 +859,10 @@ library DoublyLinkedList {
         _yes = valid_item(self.data, _item);
     }
 
-    function previous(Bytes storage self, uint256 _current_index)
+    function previous(Bytes storage self, uint _current_index)
         public
         constant
-        returns (uint256 _previous_index)
+        returns (uint _previous_index)
     {
         _previous_index = previous(self.data, _current_index);
     }
@@ -875,10 +875,10 @@ library DoublyLinkedList {
         _previous_item = previous_item(self.data, _current_item);
     }
 
-    function next(Bytes storage self, uint256 _current_index)
+    function next(Bytes storage self, uint _current_index)
         public
         constant
-        returns (uint256 _next_index)
+        returns (uint _next_index)
     {
         _next_index = next(self.data, _current_index);
     }
@@ -902,7 +902,7 @@ library DoublyLinkedList {
     function remove(
         IndexedBytes storage self,
         bytes32 _collection_index,
-        uint256 _index
+        uint _index
     ) internal returns (bool _success) {
         _success = remove(self.data[_collection_index], _index);
     }
@@ -918,7 +918,7 @@ library DoublyLinkedList {
     function total(IndexedBytes storage self, bytes32 _collection_index)
         public
         constant
-        returns (uint256 _total_count)
+        returns (uint _total_count)
     {
         _total_count = total(self.data[_collection_index]);
     }
@@ -926,7 +926,7 @@ library DoublyLinkedList {
     function start(IndexedBytes storage self, bytes32 _collection_index)
         public
         constant
-        returns (uint256 _index)
+        returns (uint _index)
     {
         _index = start(self.data[_collection_index]);
     }
@@ -942,7 +942,7 @@ library DoublyLinkedList {
     function end(IndexedBytes storage self, bytes32 _collection_index)
         public
         constant
-        returns (uint256 _index)
+        returns (uint _index)
     {
         _index = end(self.data[_collection_index]);
     }
@@ -958,7 +958,7 @@ library DoublyLinkedList {
     function valid(
         IndexedBytes storage self,
         bytes32 _collection_index,
-        uint256 _item_index
+        uint _item_index
     ) public constant returns (bool _yes) {
         _yes = valid(self.data[_collection_index], _item_index);
     }
@@ -974,8 +974,8 @@ library DoublyLinkedList {
     function previous(
         IndexedBytes storage self,
         bytes32 _collection_index,
-        uint256 _current_index
-    ) public constant returns (uint256 _previous_index) {
+        uint _current_index
+    ) public constant returns (uint _previous_index) {
         _previous_index = previous(
             self.data[_collection_index],
             _current_index
@@ -995,8 +995,8 @@ library DoublyLinkedList {
     function next(
         IndexedBytes storage self,
         bytes32 _collection_index,
-        uint256 _current_index
-    ) public constant returns (uint256 _next_index) {
+        uint _current_index
+    ) public constant returns (uint _next_index) {
         _next_index = next(self.data[_collection_index], _current_index);
     }
 

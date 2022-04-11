@@ -17,16 +17,16 @@
 pragma solidity ^0.4.24;
 
 library ArrayUtils {
-    function firstIndexOf(uint256[] storage array, uint256 key)
+    function firstIndexOf(uint[] storage array, uint key)
         internal
         view
-        returns (bool, uint256)
+        returns (bool, uint)
     {
         if (array.length == 0) {
             return (false, 0);
         }
 
-        for (uint256 i = 0; i < array.length; i++) {
+        for (uint i = 0; i < array.length; i++) {
             if (array[i] == key) {
                 return (true, i);
             }
@@ -37,13 +37,13 @@ library ArrayUtils {
     function firstIndexOf(uint8[] storage array, uint8 key)
         internal
         view
-        returns (bool, uint256)
+        returns (bool, uint)
     {
         if (array.length == 0) {
             return (false, 0);
         }
 
-        for (uint256 i = 0; i < array.length; i++) {
+        for (uint i = 0; i < array.length; i++) {
             if (array[i] == key) {
                 return (true, i);
             }
@@ -54,30 +54,47 @@ library ArrayUtils {
     function firstIndexOf(address[] storage array, address key)
         internal
         view
-        returns (bool, uint256)
+        returns (bool, uint)
     {
         if (array.length == 0) {
             return (false, 0);
         }
 
-        for (uint256 i = 0; i < array.length; i++) {
+        for (uint i = 0; i < array.length; i++) {
             if (array[i] == key) {
                 return (true, i);
             }
         }
         return (false, 0);
     }
+
+    // function firstIndexOf(address[] memory array, address key)
+    //     internal
+    //     pure
+    //     returns (bool, uint)
+    // {
+    //     if (array.length == 0) {
+    //         return (false, 0);
+    //     }
+
+    //     for (uint i = 0; i < array.length; i++) {
+    //         if (array[i] == key) {
+    //             return (true, i);
+    //         }
+    //     }
+    //     return (false, 0);
+    // }
 
     function firstIndexOf(bytes32[] storage array, bytes32 key)
         internal
         view
-        returns (bool, uint256)
+        returns (bool, uint)
     {
         if (array.length == 0) {
             return (false, 0);
         }
 
-        for (uint256 i = 0; i < array.length; i++) {
+        for (uint i = 0; i < array.length; i++) {
             if (array[i] == key) {
                 return (true, i);
             }
@@ -85,7 +102,7 @@ library ArrayUtils {
         return (false, 0);
     }
 
-    function removeByIndex(uint256[] storage array, uint256 index) internal {
+    function removeByIndex(uint[] storage array, uint index) internal {
         require(index < array.length, "ArrayForUint256: index out of bounds");
 
         while (index < array.length - 1) {
@@ -95,7 +112,7 @@ library ArrayUtils {
         array.length--;
     }
 
-    function removeByIndex(uint8[] storage array, uint256 index) internal {
+    function removeByIndex(uint8[] storage array, uint index) internal {
         require(index < array.length, "ArrayForUint8: index out of bounds");
 
         while (index < array.length - 1) {
@@ -105,7 +122,7 @@ library ArrayUtils {
         array.length--;
     }
 
-    function removeByIndex(address[] storage array, uint256 index) internal {
+    function removeByIndex(address[] storage array, uint index) internal {
         require(index < array.length, "ArrayForaddress: index out of bounds");
 
         while (index < array.length - 1) {
@@ -115,7 +132,7 @@ library ArrayUtils {
         array.length--;
     }
 
-    function removeByIndex(bytes32[] storage array, uint256 index) internal {
+    function removeByIndex(bytes32[] storage array, uint index) internal {
         require(index < array.length, "ArrayForbytes32: index out of bounds");
 
         while (index < array.length - 1) {
@@ -125,8 +142,8 @@ library ArrayUtils {
         array.length--;
     }
 
-    function removeByValue(uint256[] storage array, uint256 value) internal {
-        uint256 index;
+    function removeByValue(uint[] storage array, uint value) internal {
+        uint index;
         bool isIn;
         (isIn, index) = firstIndexOf(array, value);
         if (isIn) {
@@ -135,7 +152,7 @@ library ArrayUtils {
     }
 
     function removeByValue(uint8[] storage array, uint8 value) internal {
-        uint256 index;
+        uint index;
         bool isIn;
         (isIn, index) = firstIndexOf(array, value);
         if (isIn) {
@@ -144,7 +161,7 @@ library ArrayUtils {
     }
 
     function removeByValue(address[] storage array, address value) internal {
-        uint256 index;
+        uint index;
         bool isIn;
         (isIn, index) = firstIndexOf(array, value);
         if (isIn) {
@@ -153,7 +170,7 @@ library ArrayUtils {
     }
 
     function removeByValue(bytes32[] storage array, bytes32 value) internal {
-        uint256 index;
+        uint index;
         bool isIn;
         (isIn, index) = firstIndexOf(array, value);
         if (isIn) {
@@ -161,8 +178,8 @@ library ArrayUtils {
         }
     }
 
-    function addValue(uint256[] storage array, uint256 value) internal {
-        uint256 index;
+    function addValue(uint[] storage array, uint value) internal {
+        uint index;
         bool isIn;
         (isIn, index) = firstIndexOf(array, value);
         if (!isIn) {
@@ -171,7 +188,7 @@ library ArrayUtils {
     }
 
     function addValue(uint8[] storage array, uint8 value) internal {
-        uint256 index;
+        uint index;
         bool isIn;
         (isIn, index) = firstIndexOf(array, value);
         if (!isIn) {
@@ -180,7 +197,7 @@ library ArrayUtils {
     }
 
     function addValue(address[] storage array, address value) internal {
-        uint256 index;
+        uint index;
         bool isIn;
         (isIn, index) = firstIndexOf(array, value);
         if (!isIn) {
@@ -189,7 +206,7 @@ library ArrayUtils {
     }
 
     function addValue(bytes32[] storage array, bytes32 value) internal {
-        uint256 index;
+        uint index;
         bool isIn;
         (isIn, index) = firstIndexOf(array, value);
         if (!isIn) {

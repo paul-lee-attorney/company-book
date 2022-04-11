@@ -4,41 +4,39 @@
 
 pragma solidity ^0.4.24;
 
-import "../common/config/BOSSetting.sol";
-import "../common/config/DraftSetting.sol";
+import "../../common/config/BOSSetting.sol";
+import "../../common/config/DraftSetting.sol";
 
-import "../common/lib/serialNumber/SNFactory.sol";
+import "../../common/lib/serialNumber/SNFactory.sol";
 
 contract VotingRules_ is BOSSetting, DraftSetting {
     using SNFactory for bytes;
 
-    bool public basedOnParValue; //default: false - based on PaidInAmount; true- ParValue
-
-    uint8 public votingDays; //default: 30 natrual days
-
     // struct snInfo {
-    //     uint256 ratioHead;
-    //     uint256 ratioAmount;
+    //     uint ratioHead;
+    //     uint ratioAmount;
     //     bool onlyAttendance;
     //     bool impliedConsent;
     //     bool againstShallBuy;
+    //     bool basedOnParValue; //default: false - based on PaidInAmount; true- ParValue
+    //     uint8 votingDays; //default: 30 natrual days
     // }
 
     // typeOfRule => Rule : 0-ST(internal) 1-CI 2-ST(to 3rd Party)
     bytes32[3] public rules;
 
     constructor() {
-        votingDays = 30; // default 30 days as per Company Law Act
+        // votingDays = 30; // default 30 days as per Company Law Act
 
-        // default for Capital Increase : (10进制) 0000 6666 00 00 00
+        // default for Capital Increase : (10进制) 0000 6666 00 00 00 00 30
         rules[
             1
-        ] = 0x00424200000000000000000000000000000000000000000000000000000000;
+        ] = 0x004242000000001e0000000000000000000000000000000000000000000000;
 
-        // default for Share Transfer : (10进制) 0000 5000 00 01 01
+        // default for Share Transfer : (10进制) 0000 5000 00 01 01 00 30
         rules[
             2
-        ] = 0x00320000010100000000000000000000000000000000000000000000000000;
+        ] = 0x003200000101001e0000000000000000000000000000000000000000000000;
     }
 
     // ################
@@ -47,7 +45,7 @@ contract VotingRules_ is BOSSetting, DraftSetting {
 
     event SetRule(uint8 typeOfRule, bytes32 sn);
 
-    event SetCommonRules(uint8 votingDays, bool basedOnParValue);
+    // event SetCommonRules(uint8 votingDays, bool basedOnParValue);
 
     // ################
     // ##  Modifier  ##
@@ -63,53 +61,51 @@ contract VotingRules_ is BOSSetting, DraftSetting {
     // ################
 
     function _createRule(
-        uint256 ratioHead,
-        uint256 ratioAmount,
+        uint ratioHead,
+        uint ratioAmount,
         bool onlyAttendance,
         bool impliedConsent,
-        bool againstShallBuy
+        bool againstShallBuy,
+        bool basedOnParValue,
+        uint8 votingDays
     ) private returns (bytes32 sn) {
         bytes memory _sn = new bytes(32);
 
         _sn = _sn.intToSN(0, ratioHead, 2);
         _sn = _sn.intToSN(2, ratioAmount, 2);
-        _sn[4] = bytes1(onlyAttendance);
-        _sn[5] = bytes1(impliedConsent);
-        _sn[6] = bytes1(againstShallBuy);
+        _sn = _sn.boolToSN(4, onlyAttendance);
+        _sn = _sn.boolToSN(5, impliedConsent);
+        _sn = _sn.boolToSN(6, againstShallBuy);
+        _sn = _sn.boolToSN(7, basedOnParValue);
+        _sn[8] = bytes1(votingDays);
 
         sn = _sn.bytesToBytes32();
     }
 
     function setRule(
         uint8 typeOfRule,
-        uint256 ratioHead,
-        uint256 ratioAmount,
+        uint ratioHead,
+        uint ratioAmount,
         bool onlyAttendance,
         bool impliedConsent,
-        bool againstShallBuy
+        bool againstShallBuy,
+        bool basedOnParValue,
+        uint8 votingDays
     ) external onlyAttorney typeAllowed(typeOfRule) {
-        bytes32 rule = _createRule(
+        require(votingDays > 0, "ZERO votingDays");
+
+        bytes32 sn = _createRule(
             ratioHead,
             ratioAmount,
             onlyAttendance,
             impliedConsent,
-            againstShallBuy
+            againstShallBuy,
+            basedOnParValue,
+            votingDays
         );
 
-        rules[typeOfRule] = rule;
+        rules[typeOfRule] = sn;
 
-        emit SetRule(typeOfRule, rule);
-    }
-
-    function setCommonRules(uint8 _votingDays, bool _basedOnParValue)
-        external
-        onlyAttorney
-    {
-        require(_votingDays > 0, "不应小于零");
-
-        votingDays = _votingDays;
-        basedOnParValue = _basedOnParValue;
-
-        emit SetCommonRules(_votingDays, _basedOnParValue);
+        emit SetRule(typeOfRule, sn);
     }
 }

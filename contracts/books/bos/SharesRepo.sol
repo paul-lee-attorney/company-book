@@ -4,12 +4,12 @@
 
 pragma solidity ^0.4.24;
 
-import "../common/lib/SafeMath.sol";
-import "../common/lib/ArrayUtils.sol";
-import "../common/lib/serialNumber/SNFactory.sol";
-import "../common/lib/serialNumber/ShareSNParser.sol";
+import "../../common/lib/SafeMath.sol";
+import "../../common/lib/ArrayUtils.sol";
+import "../../common/lib/serialNumber/SNFactory.sol";
+import "../../common/lib/serialNumber/ShareSNParser.sol";
 
-import "../common/config/AdminSetting.sol";
+import "../../common/config/AdminSetting.sol";
 
 contract SharesRepo is AdminSetting {
     using SNFactory for bytes;
@@ -17,6 +17,7 @@ contract SharesRepo is AdminSetting {
     using SafeMath for uint256;
     using ArrayUtils for uint256[];
     using ArrayUtils for address[];
+    using ArrayUtils for bytes32[];
 
     //Share 股票
     struct Share {
@@ -57,7 +58,7 @@ contract SharesRepo is AdminSetting {
     uint8 public counterOfClasses;
 
     //shareNumber数组
-    bytes32[] public snList;
+    bytes32[] internal _snList;
 
     //##################
     //##    Event     ##
@@ -142,8 +143,8 @@ contract SharesRepo is AdminSetting {
         _sn[0] = bytes1(class);
         _sn = _sn.intToSN(1, sequenceNumber, 2);
         _sn = _sn.intToSN(3, issueDate, 4);
-        _sn = _sn.addrToSN(7, shareholder, 20);
-        _sn = _sn.intToSN(27, preSN, 5); // sequenceNumber 2 + issueDate 3
+        _sn = _sn.addrToSN(7, shareholder);
+        _sn = _sn.bytes32ToSN(27, bytes32(preSN), 0, 5); // sequenceNumber 2 + issueDate 3
 
         sn = _sn.bytesToBytes32();
     }
@@ -167,7 +168,7 @@ contract SharesRepo is AdminSetting {
         share.unitPrice = unitPrice;
 
         isShare[shareNumber] = true;
-        shareNumber.insertToQue(snList);
+        shareNumber.insertToQue(_snList);
 
         emit IssueShare(
             shareNumber,
@@ -180,7 +181,7 @@ contract SharesRepo is AdminSetting {
 
     function _deregisterShare(bytes32 shareNumber) internal {
         delete _shares[shareNumber];
-        snList.removeByValue(shareNumber);
+        _snList.removeByValue(shareNumber);
         isShare[shareNumber] = false;
 
         emit DeregisterShare(shareNumber);
@@ -191,6 +192,7 @@ contract SharesRepo is AdminSetting {
         uint256 amount,
         uint32 paidInDate
     ) internal {
+        require(paidInDate > 0, "paidInDate NOT a PAST time");
         require(paidInDate <= now + 2 hours, "paidInDate NOT a PAST time");
 
         Share storage share = _shares[shareNumber];
@@ -200,8 +202,6 @@ contract SharesRepo is AdminSetting {
 
         share.paidPar += amount; //溢出校验已通过
         share.cleanPar += amount;
-
-        if (paidInDate == 0) paidInDate = now;
 
         emit PayInCapital(shareNumber, amount, paidInDate);
     }
@@ -290,7 +290,7 @@ contract SharesRepo is AdminSetting {
 
     /// @param shareNumber - 股票编号
     /// @param paidInDeadline - 实缴出资期限
-    function updatePaidInDeadline(bytes32 shareNumber, uint256 paidInDeadline)
+    function updatePaidInDeadline(bytes32 shareNumber, uint32 paidInDeadline)
         external
         onlyBookeeper
         shareExist(shareNumber)
@@ -305,7 +305,7 @@ contract SharesRepo is AdminSetting {
     //##################
 
     function snList() external view returns (bytes32[]) {
-        return snList;
+        return _snList;
     }
 
     function getShare(bytes32 shareNumber)
@@ -333,7 +333,7 @@ contract SharesRepo is AdminSetting {
 
     function parseSN(bytes32 shareNumber)
         external
-        pure
+        view
         shareExist(shareNumber)
         returns (
             uint8 class,
@@ -359,11 +359,11 @@ contract SharesRepo is AdminSetting {
         bytes5 ssn = bytes5(uint40(shareNumber));
 
         if (ssn > 0) {
-            uint256 len = snList.length;
+            uint256 len = _snList.length;
 
             for (uint256 i = 0; i < len; i++) {
-                if (ssn == bytes5(snList[i] << 8)) {
-                    preSN = snList[i];
+                if (ssn == bytes5(_snList[i] << 8)) {
+                    preSN = _snList[i];
                     break;
                 }
             }

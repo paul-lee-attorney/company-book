@@ -7,22 +7,22 @@ pragma solidity ^0.4.24;
 import "../LockUp.sol";
 
 contract ILockUp {
-    function setLocker(uint256 shareNumber, uint256 dueDate) external;
+    function setLocker(uint shareNumber, uint dueDate) external;
 
-    function delLocker(uint256 shareNumber) external;
+    function delLocker(uint shareNumber) external;
 
-    function addKeyholder(uint256 shareNumber, address keyholder) external;
+    function addKeyholder(uint shareNumber, address keyholder) external;
 
-    function removeKeyholder(uint256 shareNumber, address keyholder) external;
+    function removeKeyholder(uint shareNumber, address keyholder) external;
 
     // ################
     // ##  查询接口  ##
     // ################
 
-    function lockerExist(uint256 shareNumber) public view returns (bool);
+    function lockerExist(uint shareNumber) public view returns (bool);
 
-    function getLocker(uint256 shareNumber)
+    function getLocker(uint shareNumber)
         public
         view
-        returns (uint256 dueDate, address[] keyHolders);
+        returns (uint dueDate, address[] keyHolders);
 }

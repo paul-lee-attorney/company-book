@@ -1,65 +1,52 @@
 pragma solidity ^0.4.24;
 
 library ShareSNParser {
-    function class(bytes32 shareNumber) internal pure returns (uint8 class) {
-        class = uint8(shareNumber[0]);
+    function class(bytes32 shareNumber) internal pure returns (uint8) {
+        return uint8(shareNumber[0]);
     }
 
-    function sequence(bytes32 shareNumber) internal pure returns (uint16 sn) {
-        sn = uint16(bytes2(shareNumber << 8));
+    function sequence(bytes32 shareNumber) internal pure returns (uint16) {
+        return uint16(bytes2(shareNumber << 8));
     }
 
-    function issueDate(bytes32 shareNumber)
+    function issueDate(bytes32 shareNumber) internal pure returns (uint) {
+        return uint(bytes4(shareNumber << 24));
+    }
+
+    function short(bytes32 shareNumber) internal pure returns (bytes6) {
+        return bytes6(shareNumber << 8);
+    }
+
+    function shortToSN(bytes32 ssn, bytes32[] memory sharesList)
         internal
         pure
-        returns (uint256 issueDate)
+        returns (bytes32)
     {
-        issueDate = uint256(bytes4(shareNumber << 24));
-    }
+        uint len = sharesList.length;
+        for (uint i = 0; i < len; i++)
+            if (bytes6(ssn) == bytes6(sharesList[i] << 8)) return sharesList[i];
 
-    function short(bytes32 shareNumber) internal pure returns (bytes6 short) {
-        short = bytes6(shareNumber << 8);
-    }
-
-    function shortToSN(bytes32 short, bytes32[] memory sharesList)
-        internal
-        pure
-        returns (bytes32 sn)
-    {
-        uint256 len = sharesList.length;
-        for (uint256 i = 0; i < len; i++) {
-            if (bytes6(short) == bytes6(sharesList[i] << 8)) {
-                sn = sharesList[i];
-                break;
-            }
-        }
+        return bytes32(0);
     }
 
     function preSN(bytes32 shareNumber, bytes32[] memory sharesList)
         internal
         pure
-        returns (bytes32 sn)
+        returns (bytes32)
     {
-        bytes5 short = bytes5(shareNumber << 216);
-        uint256 len = sharesList.length;
-        for (uint256 i = 0; i < len; i++) {
-            if (short == bytes5(sharesList[i] << 8)) {
-                sn = sharesList[i];
-                break;
-            }
-        }
+        bytes5 ssn = bytes5(shareNumber << 216);
+        uint len = sharesList.length;
+        for (uint i = 0; i < len; i++)
+            if (ssn == bytes5(sharesList[i] << 8)) return sharesList[i];
+        return bytes32(0);
     }
 
-    function shareholder(bytes32 shareNumber)
-        internal
-        pure
-        returns (address shareholder)
-    {
-        shareholder = address(bytes20(shareNumber << 56));
+    function shareholder(bytes32 shareNumber) internal pure returns (address) {
+        return address(bytes20(shareNumber << 56));
     }
 
     function insertToQue(bytes32 sn, bytes32[] storage que) internal {
-        uint256 len = que.length;
+        uint len = que.length;
         que.push(sn);
 
         while (len > 0) {

@@ -20,7 +20,7 @@ import "./SafeMath.sol";
 
 library LibArrayForUint256Utils {
     /**
-     * @dev Searches a sortd uint256 array and returns the first element index that
+     * @dev Searches a sortd uint array and returns the first element index that
      * match the key value, Time complexity O(log n)
      *
      * @param array is expected to be sorted in ascending order
@@ -29,20 +29,20 @@ library LibArrayForUint256Utils {
      * @return if matches key in the array return true,else return false
      * @return the first element index that match the key value,if not exist,return 0
      */
-    // function binarySearch(uint256[] storage array, uint256 key)
+    // function binarySearch(uint[] storage array, uint key)
     //     internal
     //     view
-    //     returns (bool, uint256)
+    //     returns (bool, uint)
     // {
     //     if (array.length == 0) {
     //         return (false, 0);
     //     }
 
-    //     uint256 low = 0;
-    //     uint256 high = array.length - 1;
+    //     uint low = 0;
+    //     uint high = array.length - 1;
 
     //     while (low <= high) {
-    //         uint256 mid = SafeMath.average(low, high);
+    //         uint mid = SafeMath.average(low, high);
     //         if (array[mid] == key) {
     //             return (true, mid);
     //         } else if (array[mid] > key) {
@@ -55,16 +55,16 @@ library LibArrayForUint256Utils {
     //     return (false, 0);
     // }
 
-    function firstIndexOf(uint256[] storage array, uint256 key)
+    function firstIndexOf(uint[] storage array, uint key)
         internal
         view
-        returns (bool, uint256)
+        returns (bool, uint)
     {
         if (array.length == 0) {
             return (false, 0);
         }
 
-        for (uint256 i = 0; i < array.length; i++) {
+        for (uint i = 0; i < array.length; i++) {
             if (array[i] == key) {
                 return (true, i);
             }
@@ -72,16 +72,16 @@ library LibArrayForUint256Utils {
         return (false, 0);
     }
 
-    // function reverse(uint256[] storage array) internal {
-    //     uint256 temp;
-    //     for (uint256 i = 0; i < array.length / 2; i++) {
+    // function reverse(uint[] storage array) internal {
+    //     uint temp;
+    //     for (uint i = 0; i < array.length / 2; i++) {
     //         temp = array[i];
     //         array[i] = array[array.length - 1 - i];
     //         array[array.length - 1 - i] = temp;
     //     }
     // }
 
-    // function equals(uint256[] storage a, uint256[] storage b)
+    // function equals(uint[] storage a, uint[] storage b)
     //     internal
     //     view
     //     returns (bool)
@@ -89,7 +89,7 @@ library LibArrayForUint256Utils {
     //     if (a.length != b.length) {
     //         return false;
     //     }
-    //     for (uint256 i = 0; i < a.length; i++) {
+    //     for (uint i = 0; i < a.length; i++) {
     //         if (a[i] != b[i]) {
     //             return false;
     //         }
@@ -97,7 +97,7 @@ library LibArrayForUint256Utils {
     //     return true;
     // }
 
-    function removeByIndex(uint256[] storage array, uint256 index) internal {
+    function removeByIndex(uint[] storage array, uint index) internal {
         require(index < array.length, "ArrayForUint256: index out of bounds");
 
         while (index < array.length - 1) {
@@ -107,8 +107,8 @@ library LibArrayForUint256Utils {
         array.length--;
     }
 
-    function removeByValue(uint256[] storage array, uint256 value) internal {
-        uint256 index;
+    function removeByValue(uint[] storage array, uint value) internal {
+        uint index;
         bool isIn;
         (isIn, index) = firstIndexOf(array, value);
         if (isIn) {
@@ -116,8 +116,8 @@ library LibArrayForUint256Utils {
         }
     }
 
-    function addValue(uint256[] storage array, uint256 value) internal {
-        uint256 index;
+    function addValue(uint[] storage array, uint value) internal {
+        uint index;
         bool isIn;
         (isIn, index) = firstIndexOf(array, value);
         if (!isIn) {
@@ -125,24 +125,24 @@ library LibArrayForUint256Utils {
         }
     }
 
-    // function extend(uint256[] storage a, uint256[] storage b) internal {
+    // function extend(uint[] storage a, uint[] storage b) internal {
     //     if (b.length != 0) {
-    //         for (uint256 i = 0; i < b.length; i++) {
+    //         for (uint i = 0; i < b.length; i++) {
     //             a.push(b[i]);
     //         }
     //     }
     // }
 
-    // function distinct(uint256[] storage array)
+    // function distinct(uint[] storage array)
     //     internal
-    //     returns (uint256 length)
+    //     returns (uint length)
     // {
     //     bool contains;
-    //     uint256 index;
-    //     for (uint256 i = 0; i < array.length; i++) {
+    //     uint index;
+    //     for (uint i = 0; i < array.length; i++) {
     //         contains = false;
     //         index = 0;
-    //         uint256 j = i + 1;
+    //         uint j = i + 1;
     //         for (; j < array.length; j++) {
     //             if (array[j] == array[i]) {
     //                 contains = true;
@@ -161,24 +161,24 @@ library LibArrayForUint256Utils {
     //     length = array.length;
     // }
 
-    // function qsort(uint256[] storage array) internal {
+    // function qsort(uint[] storage array) internal {
     //     qsort(array, 0, array.length - 1);
     // }
 
     // function qsort(
-    //     uint256[] storage array,
-    //     uint256 begin,
-    //     uint256 end
+    //     uint[] storage array,
+    //     uint begin,
+    //     uint end
     // ) private {
-    //     if (begin >= end || end == uint256(-1)) return;
-    //     uint256 pivot = array[end];
+    //     if (begin >= end || end == uint(-1)) return;
+    //     uint pivot = array[end];
 
-    //     uint256 store = begin;
-    //     uint256 i = begin;
+    //     uint store = begin;
+    //     uint i = begin;
     //     for (; i < end; i++) {
     //         if (array[i] < pivot) {
     //             if (i > store) {
-    //                 uint256 tmp = array[i];
+    //                 uint tmp = array[i];
     //                 array[i] = array[store];
     //                 array[store] = tmp;
     //             }
@@ -193,14 +193,14 @@ library LibArrayForUint256Utils {
     //     qsort(array, store + 1, end);
     // }
 
-    // function max(uint256[] storage array)
+    // function max(uint[] storage array)
     //     internal
     //     view
-    //     returns (uint256 maxValue, uint256 maxIndex)
+    //     returns (uint maxValue, uint maxIndex)
     // {
     //     maxValue = array[0];
     //     maxIndex = 0;
-    //     for (uint256 i = 0; i < array.length; i++) {
+    //     for (uint i = 0; i < array.length; i++) {
     //         if (array[i] > maxValue) {
     //             maxValue = array[i];
     //             maxIndex = i;
@@ -208,14 +208,14 @@ library LibArrayForUint256Utils {
     //     }
     // }
 
-    // function min(uint256[] storage array)
+    // function min(uint[] storage array)
     //     internal
     //     view
-    //     returns (uint256 minValue, uint256 minIndex)
+    //     returns (uint minValue, uint minIndex)
     // {
     //     minValue = array[0];
     //     minIndex = 0;
-    //     for (uint256 i = 0; i < array.length; i++) {
+    //     for (uint i = 0; i < array.length; i++) {
     //         if (array[i] < minValue) {
     //             minValue = array[i];
     //             minIndex = i;

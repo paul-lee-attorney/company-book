@@ -4,17 +4,17 @@
 
 pragma solidity ^0.4.24;
 
-import "../common/interfaces/IAdminSetting.sol";
-import "../common/interfaces/IDraftSetting.sol";
-import "../common/interfaces/IBOSSetting.sol";
-import "../common/interfaces/IBOMSetting.sol";
+import "../../common/interfaces/IAdminSetting.sol";
+import "../../common/interfaces/IDraftSetting.sol";
+import "../../common/interfaces/IBOSSetting.sol";
+import "../../common/interfaces/IBOMSetting.sol";
 
-import "../common/lib/ArrayUtils.sol";
+import "../../common/lib/ArrayUtils.sol";
 
-import "../common/component/SigPage.sol";
-import "../common/component/EnumsRepo.sol";
-import "../common/component/CloneFactory.sol";
-import "../common/config/BOHSetting.sol";
+import "../../common/components/SigPage.sol";
+import "../../common/components/EnumsRepo.sol";
+import "../../common/components/CloneFactory.sol";
+import "../../common/config/BOHSetting.sol";
 
 import "./interfaces/ITerm.sol";
 
@@ -152,7 +152,7 @@ contract ShareholdersAgreement is EnumsRepo, CloneFactory, BOHSetting, SigPage {
     }
 
     function finalizeSHA() external onlyAttorney {
-        for (uint256 i = 0; i < _terms.length; i++) {
+        for (uint i = 0; i < _terms.length; i++) {
             IDraftSetting(_terms[i]).lockContents();
         }
     }

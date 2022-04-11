@@ -4,16 +4,18 @@
 
 pragma solidity ^0.4.24;
 
-import "../common/lib/SafeMath.sol";
-import "../common/lib/serialNumber/SNFactory.sol";
-import "../common/lib/serialNumber/ShareSNParser.sol";
+import "../../common/lib/SafeMath.sol";
+import "../../common/lib/ArrayUtils.sol";
+import "../../common/lib/serialNumber/SNFactory.sol";
+import "../../common/lib/serialNumber/ShareSNParser.sol";
 
-import "../common/config/BOSSetting.sol";
+import "../../common/config/BOSSetting.sol";
 
 contract BookOfPledges is BOSSetting {
     using SafeMath for uint8;
     using SNFactory for bytes;
     using ShareSNParser for bytes32;
+    using ArrayUtils for bytes32[];
 
     //Pledge 质权
     struct Pledge {
@@ -82,7 +84,7 @@ contract BookOfPledges is BOSSetting {
         bytes32 shareNumber,
         address creditor,
         uint256 pledgedPar
-    ) private pure returns (bytes32 sn) {
+    ) private view returns (bytes32 sn) {
         bytes memory _sn = new bytes(32);
 
         _sn = _sn.shortToSN(0, shareNumber.short());
@@ -153,28 +155,12 @@ contract BookOfPledges is BOSSetting {
         pld.pledgedPar = pledgedPar;
         pld.guaranteedAmt = guaranteedAmt;
 
-        emit UpdatePledge(sn, creditor, pledgedPar, guaranteedAmt);
+        emit UpdatePledge(sn, pledgedPar, guaranteedAmt);
     }
 
     //##################
     //##    读接口    ##
     //##################
-
-    function getPledgesList(bytes32 shareNumber)
-        external
-        view
-        returns (bytes32[])
-    {
-        require(lenOfPledgeQue[shareNumber] > 0, "NO _pledges attached");
-
-        uint8 len = lenOfPledgeQue[shareNumber];
-        bytes32[] memory list = new bytes32(len);
-
-        for (uint8 i = 0; i < len; i++)
-            list[i] = pledgedQue[shareNumber][i + 1];
-
-        return list;
-    }
 
     function parseSN(bytes32 sn)
         public
@@ -192,10 +178,10 @@ contract BookOfPledges is BOSSetting {
         creditor = address(uint160(sn));
     }
 
-    function getPledge(sn)
+    function getPledge(bytes32 sn)
         external
         view
-        onlyPledged(sn)
+        pledgeExist(sn)
         returns (
             bytes32 shareNumber,
             uint256 pledgedPar,

@@ -58,7 +58,7 @@ contract BookOfShares is MembersRepo {
         uint8 class,
         uint256 parValue,
         uint256 paidPar,
-        uint256 paidInDeadline,
+        uint32 paidInDeadline,
         uint32 issueDate,
         uint256 issuePrice
     ) external onlyBookeeper {
@@ -80,7 +80,7 @@ contract BookOfShares is MembersRepo {
         require(class <= counterOfClasses, "class OVER FLOW");
         if (class == counterOfClasses) counterOfClasses++;
 
-        if (issuePrice == 0) issuePrice = 100;
+        // if (issuePrice == 0) issuePrice = 100;
 
         bytes32 shareNumber = _createShareNumber(
             class,
@@ -104,7 +104,7 @@ contract BookOfShares is MembersRepo {
     function payInCapital(
         bytes32 shareNumber,
         uint256 amount,
-        uint256 paidInDate
+        uint32 paidInDate
     ) external onlyBookeeper {
         // 增加“股票”项下实缴出资金额
         _payInCapital(shareNumber, amount, paidInDate);
@@ -155,7 +155,7 @@ contract BookOfShares is MembersRepo {
             shareNumber_1,
             parValue,
             paidPar,
-            share.paidInDeadline,
+            _shares[shareNumber].paidInDeadline,
             unitPrice
         );
     }
@@ -226,12 +226,12 @@ contract BookOfShares is MembersRepo {
     {
         require(class < counterOfClasses, "class over flow");
 
-        uint256 len = snList.length;
+        uint256 len = _snList.length;
         address[] storage members;
 
         for (uint256 i = 0; i < len; i++)
-            if (snList[i].class() == class)
-                members.push(snList[i].shareholder());
+            if (_snList[i].class() == class)
+                members.push(_snList[i].shareholder());
 
         output = members;
     }
@@ -243,11 +243,11 @@ contract BookOfShares is MembersRepo {
     {
         require(class < counterOfClasses, "class over flow");
 
-        uint256 len = snList.length;
+        uint256 len = _snList.length;
         bytes32[] storage list;
 
         for (uint256 i = 0; i < len; i++)
-            if (snList[i].class() == class) list.push(snList[i]);
+            if (_snList[i].class() == class) list.push(_snList[i]);
 
         output = list;
     }

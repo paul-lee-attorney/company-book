@@ -5,11 +5,11 @@
 
 pragma solidity ^0.4.24;
 
-import "../common/lib/serialNumber/SNFactory.sol";
-import "../common/lib/SafeMath.sol";
-import "../common/lib/ArrayUtils.sol";
+import "../lib/serialNumber/SNFactory.sol";
+import "../lib/SafeMath.sol";
+import "../lib/ArrayUtils.sol";
 
-import "../common/config/BOSSetting.sol";
+import "../config/BOSSetting.sol";
 
 import "./CloneFactory.sol";
 
@@ -91,11 +91,11 @@ contract BookOfDocuments is CloneFactory, BOSSetting {
     //##    写接口    ##
     //##################
 
-    function createSN(address body, uint8 docType)
-        internal
-        pure
-        returns (bytes32 sn)
-    {
+    function _createSN(
+        address body,
+        uint8 docType,
+        uint256 createDate
+    ) internal view returns (bytes32 sn) {
         // sn : 条款对象 序列号
         bytes memory _sn = new bytes(32);
 
@@ -103,13 +103,13 @@ contract BookOfDocuments is CloneFactory, BOSSetting {
         _sn[0] = bytes1(docType);
 
         // 第 1-4 字节: 创建时间戳（秒）
-        _sn = _sn.intToSN(1, now, 4);
+        _sn = _sn.intToSN(1, createDate, 4);
 
         // 第 5-24 字节：创建者地址
-        _sn = _sn.addrToSN(5, msg.sender, 20);
+        _sn = _sn.addrToSN(5, msg.sender);
 
         // 第 25-31 字节：文件合约地址（后56位）
-        _sn = _sn.addrToSN(25, body, 7);
+        _sn = _sn.intToSN(25, uint256(body), 7);
 
         sn = _sn.bytesToBytes32();
     }
@@ -119,15 +119,16 @@ contract BookOfDocuments is CloneFactory, BOSSetting {
         emit SetTemplate(body);
     }
 
-    function createDoc(uint8 docType)
+    function createDoc(uint8 docType, uint256 createDate)
         external
         onlyBookeeper
         tempReady
+        currentDate(createDate)
         returns (address body)
     {
         body = createClone(template);
 
-        bytes32 sn = createSN(body, docType);
+        bytes32 sn = _createSN(body, docType, createDate);
 
         _snToDoc[sn].body = body;
 

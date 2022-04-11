@@ -16,13 +16,13 @@ interface IBookOfShares {
     ) external;
 
     function payInCapital(
-        uint256 shareNumber,
+        bytes32 shareNumber,
         uint256 amount,
         uint256 paidInDate
     ) external;
 
     function transferShare(
-        uint256 shareNumber,
+        bytes32 shareNumber,
         uint256 parValue,
         uint256 paidInAmount,
         address to,
@@ -31,14 +31,14 @@ interface IBookOfShares {
     ) external;
 
     function decreaseCapital(
-        uint256 shareNumber,
+        bytes32 shareNumber,
         uint256 parValue,
         uint256 paidInAmount
     ) external;
 
-    function updateShareState(uint256 shareNumber, uint8 state) external;
+    function updateShareState(bytes32 shareNumber, uint8 state) external;
 
-    function updatePaidInDeadline(uint256 shareNumber, uint256 paidInDeadline)
+    function updatePaidInDeadline(bytes32 shareNumber, uint256 paidInDeadline)
         external;
 
     function increaseCleanPar(bytes32 shareNumber, uint256 parValue) external;
@@ -53,24 +53,23 @@ interface IBookOfShares {
 
     function paidInCap() external view returns (uint256);
 
-    function getShare(uint256 shareNumber)
+    function snList() external view returns (bytes32[]);
+
+    function getShare(bytes32 shareNumber)
         external
         view
         returns (
-            address shareholder,
-            uint8 class,
             uint256 parValue,
-            uint256 paidInAmount,
+            uint256 paidPar,
             uint256 cleanPar,
             uint256 paidInDeadline,
-            uint256 issueDate,
             uint256 unitPrice,
             uint8 state
         );
 
-    function shareExist(uint256 shareNumber) external view returns (bool);
+    function isShare(bytes32 shareNumber) external view returns (bool);
 
-    function sharesList() external view returns (uint256[]);
+    function sharesList() external view returns (bytes32[]);
 
     function getPreSN(bytes32 shareNumber)
         external
@@ -108,7 +107,7 @@ interface IBookOfShares {
         external
         view
         returns (
-            uint256 shareNumber,
+            bytes32 shareNumber,
             uint256 pledgedPar,
             address creditor,
             uint256 guaranteedAmt
@@ -116,19 +115,19 @@ interface IBookOfShares {
 
     function pledgeExist(bytes32 sn) external view returns (bool);
 
-    function pledgeQue(uint256 shareNumber, uint256 sequenceNumber)
+    function pledgeQue(bytes32 shareNumber, uint256 sequenceNumber)
         external
         view
         returns (bytes32);
 
-    function lenOfPledgeQue(uint256 shareNumber)
+    function lenOfPledgeQue(bytes32 shareNumber)
         external
         view
         returns (uint256);
 
-    function cleanPar(uint256 shareNumber) external view returns (uint256);
+    function cleanPar(bytes32 shareNumber) external view returns (uint256);
 
-    function getPledgesList(uint256 shareNumber)
+    function getPledgesList(bytes32 shareNumber)
         external
         view
         returns (bytes32[]);

@@ -4,17 +4,20 @@
 
 pragma solidity ^0.4.24;
 
-import "../common/config/DraftSetting.sol";
-import "../common/lib/ArrayUtils.sol";
+import "../../common/config/DraftSetting.sol";
+import "../../common/lib/ArrayUtils.sol";
 
 contract Groups is DraftSetting {
     using ArrayUtils for address[];
+    using ArrayUtils for uint8[];
 
     // acct => group : 1 - 创始团队 ; 2... - 其他一致行动人集团或独立股东
     mapping(address => uint8) public groupNumberOf;
 
     // group => accts
     mapping(uint8 => address[]) public membersOfGroup;
+
+    mapping(uint8 => bool) public isGroupNumber;
 
     uint8 public counterOfGroups;
 
@@ -57,8 +60,9 @@ contract Groups is DraftSetting {
         membersOfGroup[group].addValue(member);
 
         if (group > counterOfGroups) {
-            groupsList.push(group);
+            _groupsList.push(group);
             counterOfGroups = group;
+            isGroupNumber[group] = true;
         }
 
         emit AddMemberToGroup(group, member);
@@ -84,7 +88,9 @@ contract Groups is DraftSetting {
     function _delGroup(uint8 group) private groupIdTest(group) {
         delete membersOfGroup[group];
 
-        groupsList.removeByValue(group);
+        _groupsList.removeByValue(group);
+
+        isGroupNumber[group] = false;
 
         emit DelGroup(group);
     }

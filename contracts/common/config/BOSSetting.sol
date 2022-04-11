@@ -4,9 +4,9 @@
 
 pragma solidity ^0.4.24;
 
-import "../common/interfaces/IBookOfShares.sol";
+import "../interfaces/IBookOfShares.sol";
 
-import "../common/config/AdminSetting.sol";
+import "../config/AdminSetting.sol";
 
 contract BOSSetting is AdminSetting {
     IBookOfShares internal _bos;
@@ -29,8 +29,8 @@ contract BOSSetting is AdminSetting {
         _;
     }
 
-    modifier beShare(uint256 shareNumber) {
-        require(_bos.shareExist(shareNumber), "shareNumber NOT exist");
+    modifier shareExist(bytes32 shareNumber) {
+        require(_bos.isShare(shareNumber), "shareNumber NOT exist");
         _;
     }
 

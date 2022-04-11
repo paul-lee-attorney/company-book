@@ -4,8 +4,8 @@
 
 pragma solidity ^0.4.24;
 
-import "../common/lib/ArrayUtils.sol";
-import "../common/lib/serialNumber/ShareSNParser.sol";
+import "../../common/lib/ArrayUtils.sol";
+import "../../common/lib/serialNumber/ShareSNParser.sol";
 
 import "./SharesRepo.sol";
 
@@ -37,7 +37,7 @@ contract MembersRepo is SharesRepo {
         _;
     }
 
-    modifier beMember(address acct) {
+    modifier memberExist(address acct) {
         require(isMember[acct], "Acct is NOT Member");
         _;
     }
@@ -79,11 +79,11 @@ contract MembersRepo is SharesRepo {
     }
 
     function _updateMembersList(address acct) internal {
-        uint256 len = snList.length;
+        uint256 len = _snList.length;
         bool flag;
 
         for (uint256 i = 0; i < len; i++) {
-            if (acct == snList[i].shareholder()) {
+            if (acct == _snList[i].shareholder()) {
                 flag = true;
                 break;
             }
@@ -103,20 +103,20 @@ contract MembersRepo is SharesRepo {
     function getMember(address acct)
         public
         view
-        beMember(acct)
+        memberExist(acct)
         returns (
-            uint256[] sharesInHand,
+            bytes32[] sharesInHand,
             uint256 parValue,
             uint256 paidPar
         )
     {
         bytes32[] storage sharesList;
-        uint256 len = snList.length;
+        uint256 len = _snList.length;
 
         for (uint256 i = 0; i < len; i++) {
-            if (snList[i].shareholder() == acct) {
-                sharesList.push(snList[i]);
-                (uint256 par, uint256 paid, , , ) = getShare(snList[i]);
+            if (_snList[i].shareholder() == acct) {
+                sharesList.push(_snList[i]);
+                (uint256 par, uint256 paid, , , , ) = getShare(_snList[i]);
                 parValue += par;
                 paidPar += paid;
             }

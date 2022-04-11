@@ -16,7 +16,7 @@ interface ITagAlong {
     function setTag(
         uint8 dragerID,
         uint8 triggerType,
-        uint256 threshold,
+        uint threshold,
         bool proRata
     ) external;
 
@@ -44,7 +44,7 @@ interface ITagAlong {
         returns (
             address[] followers,
             uint8 triggerType,
-            uint256 threshold,
+            uint threshold,
             bool proRata
         );
 }

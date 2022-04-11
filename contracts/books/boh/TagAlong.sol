@@ -4,19 +4,19 @@
 
 pragma solidity ^0.4.24;
 
-import "../common/config/BOSSetting.sol";
-import "../common/config/BOMSetting.sol";
-import "../common/config/DraftSetting.sol";
+import "../../common/config/BOSSetting.sol";
+import "../../common/config/BOMSetting.sol";
+import "../../common/config/DraftSetting.sol";
 
-import "../common/lib/ArrayUtils.sol";
-import "../common/lib/SafeMath.sol";
+import "../../common/lib/ArrayUtils.sol";
+import "../../common/lib/SafeMath.sol";
 
-import "../common/interfaces/IAgreement.sol";
-import "../common/interfaces/ISigPage.sol";
+import "../../common/interfaces/IAgreement.sol";
+import "../../common/interfaces/ISigPage.sol";
 
 import "./Groups.sol";
 
-// import "../common/interfaces/IMotion.sol";
+// import "../../common/interfaces/IMotion.sol";
 
 contract TagAlong is BOSSetting, BOMSetting, Groups {
     using ArrayUtils for address[];
@@ -60,11 +60,6 @@ contract TagAlong is BOSSetting, BOMSetting, Groups {
     // ##  modifier  ##
     // ################
 
-    modifier groupIdTest(uint8 groupID) {
-        require(groupID > 0 && groupID <= _groupsList, "group overflow");
-        _;
-    }
-
     modifier beDrager(uint8 dragerID) {
         require(isDrager[dragerID], "WRONG drager ID");
         _;
@@ -79,7 +74,8 @@ contract TagAlong is BOSSetting, BOMSetting, Groups {
         uint8 triggerType,
         uint256 threshold,
         bool proRata
-    ) external onlyAttorney groupIdTest(dragerID) {
+    ) external onlyAttorney {
+        require(isGroupNumber[dragerID], "group NOT exist");
         require(triggerType < 4, "触发类别错误");
         require(threshold < 5000 && threshold > 0, "实质性影响比例不正确");
 
@@ -160,7 +156,7 @@ contract TagAlong is BOSSetting, BOMSetting, Groups {
         view
         returns (bool biggest, uint256 shareRatio)
     {
-        uint8 len = _groupsList.length;
+        uint8 len = uint8(_groupsList.length);
         uint256[] memory parValue = new uint256[](len);
         uint8 i = 0;
 
@@ -222,7 +218,7 @@ contract TagAlong is BOSSetting, BOMSetting, Groups {
     function isTriggered(address ia) public view onlyBookeeper returns (bool) {
         bytes32[] memory dealsList = IAgreement(ia).dealsList();
 
-        uint8 len = dealsList.length;
+        uint8 len = uint8(dealsList.length);
 
         uint256 parToSell;
         uint256 parToBuy;
@@ -260,7 +256,7 @@ contract TagAlong is BOSSetting, BOMSetting, Groups {
         return false;
     }
 
-    function _isExempted(address seller, address[] storage consentParties)
+    function _isExempted(address seller, address[] memory consentParties)
         private
         view
         returns (bool)
@@ -273,13 +269,20 @@ contract TagAlong is BOSSetting, BOMSetting, Groups {
 
         Tag storage tag = _tags[dragerID];
 
+        bool exist;
+
         for (uint8 i = 0; i < tag.followers.length; i++) {
-            (bool exist, ) = consentParties.firstIndexOf(tag.followers[i]);
+            exist = false;
+            for (uint256 j = 0; j < consentParties.length; j++) {
+                if (consentParties[j] == tag.followers[i]) {
+                    exist = true;
+                    break;
+                }
+            }
             if (!exist) {
                 return false;
             }
         }
-
         return true;
     }
 
@@ -288,10 +291,10 @@ contract TagAlong is BOSSetting, BOMSetting, Groups {
 
         if (!isTriggered(ia)) return true;
 
-        (address[] memory parties, ) = _bom.getYea(ia);
-        address[] storage consentParties;
-        for (uint256 j = 0; j < parties.length; j++)
-            consentParties.push(parties[j]);
+        (address[] memory consentParties, ) = _bom.getYea(ia);
+        // address[] storage consentParties;
+        // for (uint j = 0; j < parties.length; j++)
+        //     consentParties.push(parties[j]);
 
         bytes32[] memory dealsList = IAgreement(ia).dealsList();
 

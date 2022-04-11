@@ -20,13 +20,13 @@ library LibArrayFrUint8Utils {
     function firstIndexOf(uint8[] storage array, uint8 key)
         internal
         view
-        returns (bool, uint256)
+        returns (bool, uint)
     {
         if (array.length == 0) {
             return (false, 0);
         }
 
-        for (uint256 i = 0; i < array.length; i++) {
+        for (uint i = 0; i < array.length; i++) {
             if (array[i] == key) {
                 return (true, i);
             }
@@ -36,7 +36,7 @@ library LibArrayFrUint8Utils {
 
     // function reverse(uint8[] storage array) internal {
     //     uint8 temp;
-    //     for (uint256 i = 0; i < array.length / 2; i++) {
+    //     for (uint i = 0; i < array.length / 2; i++) {
     //         temp = array[i];
     //         array[i] = array[array.length - 1 - i];
     //         array[array.length - 1 - i] = temp;
@@ -51,7 +51,7 @@ library LibArrayFrUint8Utils {
     //     if (a.length != b.length) {
     //         return false;
     //     }
-    //     for (uint256 i = 0; i < a.length; i++) {
+    //     for (uint i = 0; i < a.length; i++) {
     //         if (a[i] != b[i]) {
     //             return false;
     //         }
@@ -59,7 +59,7 @@ library LibArrayFrUint8Utils {
     //     return true;
     // }
 
-    function removeByIndex(uint8[] storage array, uint256 index) internal {
+    function removeByIndex(uint8[] storage array, uint index) internal {
         require(index < array.length, "ArrayForUint8: index out of bounds");
 
         while (index < array.length - 1) {
@@ -70,7 +70,7 @@ library LibArrayFrUint8Utils {
     }
 
     function removeByValue(uint8[] storage array, uint8 value) internal {
-        uint256 index;
+        uint index;
         bool isIn;
         (isIn, index) = firstIndexOf(array, value);
         if (isIn) {
@@ -79,7 +79,7 @@ library LibArrayFrUint8Utils {
     }
 
     function addValue(uint8[] storage array, uint8 value) internal {
-        uint256 index;
+        uint index;
         bool isIn;
         (isIn, index) = firstIndexOf(array, value);
         if (!isIn) {
@@ -89,19 +89,19 @@ library LibArrayFrUint8Utils {
 
     // function extend(uint8[] storage a, uint8[] storage b) internal {
     //     if (b.length != 0) {
-    //         for (uint256 i = 0; i < b.length; i++) {
+    //         for (uint i = 0; i < b.length; i++) {
     //             a.push(b[i]);
     //         }
     //     }
     // }
 
-    // function distinct(uint8[] storage array) internal returns (uint256 length) {
+    // function distinct(uint8[] storage array) internal returns (uint length) {
     //     bool contains;
-    //     uint256 index;
-    //     for (uint256 i = 0; i < array.length; i++) {
+    //     uint index;
+    //     for (uint i = 0; i < array.length; i++) {
     //         contains = false;
     //         index = 0;
-    //         uint256 j = i + 1;
+    //         uint j = i + 1;
     //         for (; j < array.length; j++) {
     //             if (array[j] == array[i]) {
     //                 contains = true;
@@ -126,14 +126,14 @@ library LibArrayFrUint8Utils {
 
     // function qsort(
     //     uint8[] storage array,
-    //     uint256 begin,
-    //     uint256 end
+    //     uint begin,
+    //     uint end
     // ) private {
-    //     if (begin >= end || end == uint256(-1)) return;
+    //     if (begin >= end || end == uint(-1)) return;
     //     uint8 pivot = array[end];
 
-    //     uint256 store = begin;
-    //     uint256 i = begin;
+    //     uint store = begin;
+    //     uint i = begin;
     //     for (; i < end; i++) {
     //         if (array[i] < pivot) {
     //             uint8 tmp = array[i];
@@ -153,11 +153,11 @@ library LibArrayFrUint8Utils {
     // function max(uint8[] storage array)
     //     internal
     //     view
-    //     returns (uint8 maxValue, uint256 maxIndex)
+    //     returns (uint8 maxValue, uint maxIndex)
     // {
     //     maxValue = array[0];
     //     maxIndex = 0;
-    //     for (uint256 i = 0; i < array.length; i++) {
+    //     for (uint i = 0; i < array.length; i++) {
     //         if (array[i] > maxValue) {
     //             maxValue = array[i];
     //             maxIndex = i;
@@ -168,11 +168,11 @@ library LibArrayFrUint8Utils {
     // function min(uint8[] storage array)
     //     internal
     //     view
-    //     returns (uint8 minValue, uint256 minIndex)
+    //     returns (uint8 minValue, uint minIndex)
     // {
     //     minValue = array[0];
     //     minIndex = 0;
-    //     for (uint256 i = 0; i < array.length; i++) {
+    //     for (uint i = 0; i < array.length; i++) {
     //         if (array[i] < minValue) {
     //             minValue = array[i];
     //             minIndex = i;

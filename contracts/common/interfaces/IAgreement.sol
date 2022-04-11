@@ -40,6 +40,13 @@ interface IAgreement {
 
     function closeDeal(bytes32 sn, string hashKey) external;
 
+    function splitDeal(
+        bytes32 sn,
+        address buyer,
+        uint256 parValue,
+        uint256 paidPar
+    ) external;
+
     function revokeDeal(bytes32 sn, string hashKey) external;
 
     //  ######################
@@ -68,8 +75,7 @@ interface IAgreement {
             bytes32 hashLock
         );
 
-    function dealsList() external view returns (bytes32[]) {
-
+    function dealsList() external view returns (bytes32[]);
 
     function parseSN(bytes32 sn)
         external

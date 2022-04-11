@@ -17,9 +17,9 @@
 pragma solidity ^0.4.24;
 
 library LibString {
-    function lenOfChars(string memory src) internal pure returns (uint256) {
-        uint256 i = 0;
-        uint256 length = 0;
+    function lenOfChars(string memory src) internal pure returns (uint) {
+        uint i = 0;
+        uint length = 0;
         bytes memory string_rep = bytes(src);
         //UTF-8 skip word
         while (i < string_rep.length) {
@@ -29,7 +29,7 @@ library LibString {
         return length;
     }
 
-    function lenOfBytes(string memory src) internal pure returns (uint256) {
+    function lenOfBytes(string memory src) internal pure returns (uint) {
         bytes memory srcb = bytes(src);
         return srcb.length;
     }
@@ -46,8 +46,8 @@ library LibString {
             return false;
         }
 
-        uint256 needleLen = prefix_rep.length;
-        for (uint256 i = 0; i < needleLen; i++) {
+        uint needleLen = prefix_rep.length;
+        for (uint i = 0; i < needleLen; i++) {
             if (src_rep[i] != prefix_rep[i]) return false;
         }
 
@@ -65,9 +65,9 @@ library LibString {
         if (src_rep.length < tail_rep.length) {
             return false;
         }
-        uint256 srcLen = src_rep.length;
-        uint256 needleLen = tail_rep.length;
-        for (uint256 i = 0; i < needleLen; i++) {
+        uint srcLen = src_rep.length;
+        uint needleLen = tail_rep.length;
+        for (uint i = 0; i < needleLen; i++) {
             if (src_rep[srcLen - needleLen + i] != tail_rep[i]) return false;
         }
 
@@ -85,8 +85,8 @@ library LibString {
         if (self_rep.length != other_rep.length) {
             return false;
         }
-        uint256 selfLen = self_rep.length;
-        for (uint256 i = 0; i < selfLen; i++) {
+        uint selfLen = self_rep.length;
+        for (uint i = 0; i < selfLen; i++) {
             if (self_rep[i] != other_rep[i]) return false;
         }
         return true;
@@ -104,7 +104,7 @@ library LibString {
         bytes memory src_rep = bytes(src);
         if (src_rep.length == 0) return true;
 
-        for (uint256 i = 0; i < src_rep.length; i++) {
+        for (uint i = 0; i < src_rep.length; i++) {
             bytes1 b = src_rep[i];
             if (
                 b != 0x20 &&
@@ -124,9 +124,9 @@ library LibString {
     {
         _ret = new string(bytes(self).length + bytes(str).length);
 
-        uint256 selfptr;
-        uint256 strptr;
-        uint256 retptr;
+        uint selfptr;
+        uint strptr;
+        uint retptr;
         assembly {
             selfptr := add(self, 0x20)
             strptr := add(str, 0x20)
@@ -140,16 +140,16 @@ library LibString {
     //start is char index, not byte index
     function substrByCharIndex(
         string memory self,
-        uint256 start,
-        uint256 len
+        uint start,
+        uint len
     ) internal pure returns (string memory) {
         if (len == 0) return "";
         //start - bytePos
         //len - byteLen
-        uint256 bytePos = 0;
-        uint256 byteLen = 0;
-        uint256 i = 0;
-        uint256 chars = 0;
+        uint bytePos = 0;
+        uint byteLen = 0;
+        uint i = 0;
+        uint chars = 0;
         bytes memory self_rep = bytes(self);
         bool startMet = false;
         //UTF-8 skip word
@@ -172,8 +172,8 @@ library LibString {
 
         string memory ret = new string(byteLen);
 
-        uint256 selfptr;
-        uint256 retptr;
+        uint selfptr;
+        uint retptr;
         assembly {
             selfptr := add(self, 0x20)
             retptr := add(ret, 0x20)
@@ -191,7 +191,7 @@ library LibString {
         bytes memory selfb = bytes(self);
         bytes memory otherb = bytes(other);
         //byte by byte
-        for (uint256 i = 0; i < selfb.length && i < otherb.length; i++) {
+        for (uint i = 0; i < selfb.length && i < otherb.length; i++) {
             bytes1 b1 = selfb[i];
             bytes1 b2 = otherb[i];
             if (b1 > b2) return 1;
@@ -210,7 +210,7 @@ library LibString {
     {
         bytes memory selfb = bytes(self);
         bytes memory otherb = bytes(other);
-        for (uint256 i = 0; i < selfb.length && i < otherb.length; i++) {
+        for (uint i = 0; i < selfb.length && i < otherb.length; i++) {
             bytes1 b1 = selfb[i];
             bytes1 b2 = otherb[i];
             bytes1 ch1 = b1 | 0x20;
@@ -235,7 +235,7 @@ library LibString {
         returns (string memory)
     {
         bytes memory srcb = bytes(src);
-        for (uint256 i = 0; i < srcb.length; i++) {
+        for (uint i = 0; i < srcb.length; i++) {
             bytes1 b = srcb[i];
             if (b >= "a" && b <= "z") {
                 b &= bytes1(0xDF); // -32
@@ -251,7 +251,7 @@ library LibString {
         returns (string memory)
     {
         bytes memory srcb = bytes(src);
-        for (uint256 i = 0; i < srcb.length; i++) {
+        for (uint i = 0; i < srcb.length; i++) {
             bytes1 b = srcb[i];
             if (b >= "A" && b <= "Z") {
                 b |= 0x20;
@@ -301,14 +301,14 @@ library LibString {
     function indexOf(
         string memory src,
         string memory value,
-        uint256 offset
+        uint offset
     ) internal pure returns (int256) {
         bytes memory srcBytes = bytes(src);
         bytes memory valueBytes = bytes(value);
 
         assert(valueBytes.length == 1);
 
-        for (uint256 i = offset; i < srcBytes.length; i++) {
+        for (uint i = offset; i < srcBytes.length; i++) {
             if (srcBytes[i] == valueBytes[0]) {
                 return int256(i);
             }
@@ -324,15 +324,15 @@ library LibString {
     {
         bytes memory srcBytes = bytes(src);
 
-        uint256 offset = 0;
-        uint256 splitsCount = 1;
+        uint offset = 0;
+        uint splitsCount = 1;
         int256 limit = -1;
         while (offset < srcBytes.length - 1) {
             limit = indexOf(src, separator, offset);
             if (limit == -1) break;
             else {
                 splitsCount++;
-                offset = uint256(limit) + 1;
+                offset = uint(limit) + 1;
             }
         }
 
@@ -346,14 +346,14 @@ library LibString {
                 limit = int256(srcBytes.length);
             }
 
-            string memory tmp = new string(uint256(limit) - offset);
+            string memory tmp = new string(uint(limit) - offset);
             bytes memory tmpBytes = bytes(tmp);
 
-            uint256 j = 0;
-            for (uint256 i = offset; i < uint256(limit); i++) {
+            uint j = 0;
+            for (uint i = offset; i < uint(limit); i++) {
                 tmpBytes[j++] = srcBytes[i];
             }
-            offset = uint256(limit) + 1;
+            offset = uint(limit) + 1;
             splitArr[splitsCount++] = string(tmpBytes);
         }
         return splitArr;
@@ -361,10 +361,10 @@ library LibString {
 
     //------------HELPER FUNCTIONS----------------
 
-    function utf8CharBytesLength(bytes memory stringRep, uint256 ptr)
+    function utf8CharBytesLength(bytes memory stringRep, uint ptr)
         internal
         pure
-        returns (uint256)
+        returns (uint)
     {
         if ((stringRep[ptr] >> 7) == bytes1(0)) return 1;
         if ((stringRep[ptr] >> 5) == bytes1(0x06)) return 2;
@@ -374,9 +374,9 @@ library LibString {
     }
 
     function memcpy(
-        uint256 dest,
-        uint256 src,
-        uint256 len
+        uint dest,
+        uint src,
+        uint len
     ) private pure {
         // Copy word-length chunks while possible
         for (; len >= 32; len -= 32) {
@@ -388,7 +388,7 @@ library LibString {
         }
 
         // Copy remaining bytes
-        uint256 mask = 256**(32 - len) - 1;
+        uint mask = 256**(32 - len) - 1;
         assembly {
             let srcpart := and(mload(src), not(mask))
             let destpart := and(mload(dest), mask)

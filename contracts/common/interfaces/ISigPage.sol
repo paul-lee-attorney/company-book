@@ -11,11 +11,11 @@ interface ISigPage {
 
     event DocStateRevised(address doc, uint8 state);
 
-    event SetSigDeadline(address doc, uint256 deadline);
+    event SetSigDeadline(address doc, uint deadline);
 
-    event SetClosingStartpoint(address doc, uint256 startpoint);
+    event SetClosingStartpoint(address doc, uint startpoint);
 
-    event SetClosingDeadline(address doc, uint256 deadline);
+    event SetClosingDeadline(address doc, uint deadline);
 
     event AddParty(address doc, address acct);
 
@@ -27,9 +27,9 @@ interface ISigPage {
     //##    设置接口    ##
     //####################
 
-    function setSigDeadline(uint256 deadline) external;
+    function setSigDeadline(uint deadline) external;
 
-    function setClosingDeadline(uint256 deadline) external;
+    function setClosingDeadline(uint deadline) external;
 
     function circulateDoc() external;
 
@@ -55,11 +55,11 @@ interface ISigPage {
 
     function docState() external returns (uint8);
 
-    function sigDeadline() external returns (uint256);
+    function sigDeadline() external returns (uint);
 
-    function closingStartpoint() external returns (uint256);
+    function closingStartpoint() external returns (uint);
 
-    function closingDeadline() external returns (uint256);
+    function closingDeadline() external returns (uint);
 
     function isParty(address acct) external returns (bool);
 
@@ -67,9 +67,9 @@ interface ISigPage {
 
     function signedBy(address acct) external returns (bool);
 
-    function sigDate(address acct) external returns (uint256);
+    function sigDate(address acct) external returns (uint);
 
     function signers() external returns (address[]);
 
-    function qtyOfSigners() external returns (uint256);
+    function qtyOfSigners() external returns (uint);
 }

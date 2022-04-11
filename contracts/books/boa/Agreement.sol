@@ -4,20 +4,22 @@
 
 pragma solidity ^0.4.24;
 
-import "../common/config/BOSSetting.sol";
+import "../../common/config/BOSSetting.sol";
 
-import "../common/lib/SafeMath.sol";
-import "../common/lib/ArrayUtils.sol";
-import "../common/lib/serialNumber/SNFactory.sol";
-import "../common/lib/DealSNParser.sol";
+import "../../common/lib/SafeMath.sol";
+import "../../common/lib/ArrayUtils.sol";
+import "../../common/lib/serialNumber/SNFactory.sol";
+import "../../common/lib/serialNumber/DealSNParser.sol";
+import "../../common/lib/serialNumber/ShareSNParser.sol";
 
-import "../common/component/SigPage.sol";
+import "../../common/components/SigPage.sol";
 
 contract Agreement is BOSSetting, SigPage {
     using SafeMath for uint256;
     using SafeMath for uint8;
     using SNFactory for bytes;
     using DealSNParser for bytes32;
+    using ShareSNParser for bytes32;
     using ArrayUtils for bytes32[];
 
     /* struct sn{
@@ -61,6 +63,14 @@ contract Agreement is BOSSetting, SigPage {
     //##################
 
     event CreateDeal(
+        bytes32 indexed sn,
+        uint256 unitPrice,
+        uint256 parValue,
+        uint256 paidPar,
+        uint256 closingDate
+    );
+
+    event UpdateDeal(
         bytes32 indexed sn,
         uint256 unitPrice,
         uint256 parValue,
@@ -113,7 +123,7 @@ contract Agreement is BOSSetting, SigPage {
         bytes32 shareNumber,
         uint8 class,
         address buyer
-    ) private pure returns (bytes32 sn) {
+    ) private view returns (bytes32 sn) {
         bytes memory _sn = new bytes(32);
 
         _sn = _sn.sequenceToSN(0, counterOfDeals);
@@ -143,11 +153,11 @@ contract Agreement is BOSSetting, SigPage {
         require(closingDate > now, "closingDate shall be future");
 
         if (typeOfDeal > 1) {
-            require(_bos.shareExist(shareNumber), "shareNumber not exist");
+            require(_bos.isShare(shareNumber), "shareNumber not exist");
 
-            require(shareNumber.getClass() == class, "class NOT correct");
+            require(shareNumber.class() == class, "class NOT correct");
 
-            (uint256 parValueOfShare, uint256 paidParOfShare, , , ) = _bos
+            (uint256 parValueOfShare, uint256 paidParOfShare, , , , ) = _bos
                 .getShare(shareNumber);
             require(parValueOfShare >= parValue, "parValue overflow");
             require(paidParOfShare >= paidPar, "paidPar overflow");
@@ -165,8 +175,6 @@ contract Agreement is BOSSetting, SigPage {
         }
 
         counterOfDeals++;
-
-        if (unitPrice == 0) unitPrice = 100;
 
         bytes32 sn = _createSN(typeOfDeal, shareNumber, class, buyer);
 
@@ -214,9 +222,9 @@ contract Agreement is BOSSetting, SigPage {
 
         Deal storage deal = _deals[sn];
 
-        if (sn.getTypeOfDeal() > 1) {
-            (uint256 parValueOfShare, uint256 paidParOfShare, , , ) = _bos
-                .getShare(sn.getShareNumberOfDeal(_bos.getSharesList()));
+        if (sn.typeOfDeal() > 1) {
+            (uint256 parValueOfShare, uint256 paidParOfShare, , , , ) = _bos
+                .getShare(sn.shareNumber(_bos.sharesList()));
             require(parValueOfShare >= parValue, "parValue overflow");
             require(paidParOfShare >= paidPar, "paidPar overflow");
         }
@@ -334,18 +342,21 @@ contract Agreement is BOSSetting, SigPage {
         emit RevokeDeal(sn, hashKey);
     }
 
-    _extendSN(bytes32 sn, address buyer) private pure returns(bytes32 extSN) {
+    function _extendSN(bytes32 sn, address buyer)
+        private
+        view
+        returns (bytes32 extSN)
+    {
         bytes memory _sn = new bytes(32);
-        
-        for (uint8 i=0; i<32; i++) _sn[i] = sn[i];
+
+        for (uint8 i = 0; i < 32; i++) _sn[i] = sn[i];
 
         _sn = _sn.sequenceToSN(0, counterOfDeals);
-        _sn[2] = 4;
+        _sn[2] = 0x04;
         _sn = _sn.addrToSN(10, buyer);
 
         extSN = _sn.bytesToBytes32();
     }
-
 
     function splitDeal(
         bytes32 sn,
@@ -353,7 +364,6 @@ contract Agreement is BOSSetting, SigPage {
         uint256 parValue,
         uint256 paidPar
     ) external onlyCleared(sn) onlyBookeeper {
-
         counterOfDeals++;
         bytes32 extSN = _extendSN(sn, buyer);
 
@@ -364,7 +374,7 @@ contract Agreement is BOSSetting, SigPage {
 
         deal_1.sn = extSN;
 
-        deal_l.unitPrice = deal.unitPrice;
+        deal_1.unitPrice = deal.unitPrice;
 
         require(deal.parValue >= parValue, "parValue over flow");
         deal.parValue -= parValue;
@@ -377,7 +387,6 @@ contract Agreement is BOSSetting, SigPage {
         deal_1.closingDate = deal.closingDate;
 
         emit SplitDeal(sn, extSN, parValue, paidPar);
-
     }
 
     //  #################################
@@ -427,7 +436,7 @@ contract Agreement is BOSSetting, SigPage {
         buyer = address(bytes20(sn << 80));
 
         bytes6 ssn = bytes6(sn << 24);
-        bytes32[] list = _bos.snList();
+        bytes32[] memory list = _bos.sharesList();
         uint256 len = list.length;
 
         for (uint256 i = 0; i < len; i++) {

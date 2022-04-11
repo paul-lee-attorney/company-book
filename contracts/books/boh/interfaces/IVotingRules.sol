@@ -11,8 +11,8 @@ interface IVotingRules {
 
     function setRule(
         uint8 typeOfRule,
-        uint256 ratioHead,
-        uint256 ratioAmount,
+        uint ratioHead,
+        uint ratioAmount,
         bool onlyAttendance,
         bool impliedConsent,
         bool againstShallBuy

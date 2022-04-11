@@ -7,7 +7,7 @@ pragma solidity ^0.4.24;
 import "../AntiDilution.sol";
 
 interface IAntiDilution {
-    function setBenchmark(uint8 class, uint256 price) external;
+    function setBenchmark(uint8 class, uint price) external;
 
     function delBenchmark(uint8 class) external;
 
@@ -26,7 +26,7 @@ interface IAntiDilution {
         view
         returns (
             uint8 rank,
-            uint256 price,
+            uint price,
             address[] obligors
         );
 }

@@ -42,12 +42,12 @@ interface IShareholdersAgreement {
     function termIsTriggered(
         uint8 title,
         address ia,
-        uint8 snOfDeal
+        bytes32 snOfDeal
     ) external view returns (bool);
 
     function termIsExempted(
         uint8 title,
         address ia,
-        uint8 snOfDeal
+        bytes32 snOfDeal
     ) external returns (bool);
 }

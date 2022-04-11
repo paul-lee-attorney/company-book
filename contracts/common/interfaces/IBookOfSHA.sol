@@ -33,7 +33,7 @@ interface IBookOfSHA {
 
     function isSubmitted(address body) external view returns (bool);
 
-    function qtyOfDocuments() external view returns (uint256);
+    function qtyOfDocuments() external view returns (uint);
 
     function docs() external view returns (bytes32[]);
 

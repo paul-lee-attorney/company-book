@@ -4,17 +4,17 @@
 
 pragma solidity ^0.4.24;
 
-import "../common/config/BOSSetting.sol";
-import "../common/config/BOHSetting.sol";
+import "../../common/config/BOSSetting.sol";
+import "../../common/config/BOHSetting.sol";
 
-import "../common/lib/ArrayUtils.sol";
-import "../common/lib/serialNumber/VotingRuleParser.sol";
+import "../../common/lib/ArrayUtils.sol";
+import "../../common/lib/serialNumber/VotingRuleParser.sol";
 
-// import "../common/interfaces/IBookOfMotions.sol";
-import "../common/interfaces/ISigPage.sol";
-import "../common/interfaces/IAgreement.sol";
+// import "../../common/interfaces/IBookOfMotions.sol";
+import "../../common/interfaces/ISigPage.sol";
+import "../../common/interfaces/IAgreement.sol";
 
-import "../common/component/EnumsRepo.sol";
+import "../../common/components/EnumsRepo.sol";
 
 import "../boh/interfaces/IVotingRules.sol";
 
@@ -213,47 +213,67 @@ contract BookOfMotions is EnumsRepo, BOSSetting, BOHSetting {
         emit Vote(ia, sender, false, voteAmt);
     }
 
-    function _getParas(uint8 votingType, Motion storage motion)
-        private
-        returns (
-            uint256 ratioHead,
-            uint256 ratioAmount,
-            uint256 totalHead,
-            uint256 totalAmt,
-            bool againstShallBuy
-        )
-    {
-        bytes32 rule = IVotingRules(
-            getSHA().getTerm(uint8(TermTitle.VOTING_RULES))
-        ).rules(votingType);
-
-        ratioHead = rule.ratioHead();
-        ratioAmount = rule.ratioAmount();
-        againstShallBuy = rule.agianstShallBuy();
-
-        address[] storage memberSigners = ISigPage(ia).singers();
-        address[] storage otherMembers = _bos.membersList();
+    function _otherMembers(address ia) private returns (address[]) {
+        address[] memory signers = ISigPage(ia).signers();
+        address[] memory members = _bos.membersList();
+        // address[] storage otherMembers;
         uint256 i;
+        uint256 j;
+        uint256 len = members.length;
 
-        for (i = 0; i < memberSigners.length; i++) {
-            (bool exist, ) = otherMembers.firstIndexOf(memberSigners[i]);
-            if (exist) otherMembers.removeByValue(memberSigners[i]);
-            else memberSigners.removeByValue(memberSigners[i]);
+        for (i = 0; i < signers.length; i++) {
+            for (j = 0; j < len; j++) {
+                if (members[j] == signers[i]) {
+                    members[j] = address(0);
+                    len--;
+                    break;
+                }
+            }
         }
 
-        totalHead = otherMembers.length;
+        address[] memory otherMembers = new address[](len);
+        i = 0;
+        for (j = 0; j < members.length; j++)
+            if (members[j] != address(0)) {
+                otherMembers[i] = members[j];
+                i++;
+            }
 
-        for (i = 0; i < otherMembers.length; i++) {
+        return otherMembers;
+    }
+
+    function _getParas(
+        address ia,
+        uint8 votingType,
+        Motion storage motion
+    )
+        private
+        returns (
+            bytes32 rule,
+            uint256 totalHead,
+            uint256 totalAmt
+        )
+    {
+        address votingRules = getSHA().getTerm(uint8(TermTitle.VOTING_RULES));
+        rule = IVotingRules(votingRules).rules(votingType);
+
+        address[] memory otherMembers = _otherMembers(ia);
+
+        totalHead = otherMembers.length;
+        uint256 i;
+
+        for (i = 0; i < totalHead; i++) {
             (, uint256 parValue, uint256 paidPar) = _bos.getMember(
                 otherMembers[i]
             );
-            totalAmt = rule.basedOnParValue() ? parValue : paidPar;
+            if (rule.basedOnParValue()) totalAmt += parValue;
+            else totalAmt += paidPar;
         }
 
         if (rule.impliedConsent()) {
             motion.supportPar += (totalAmt - motion.sumOfVoteAmt);
 
-            for (uint8 i = 0; i < otherMembers.length; i++) {
+            for (i = 0; i < totalHead; i++) {
                 if (!motion.voted[otherMembers[i]])
                     motion.membersOfYea.push(otherMembers[i]);
             }
@@ -268,27 +288,26 @@ contract BookOfMotions is EnumsRepo, BOSSetting, BOHSetting {
     function voteCounting(address ia, uint8 votingType) external onlyBookeeper {
         Motion storage motion = _iaToMotion[ia];
 
-        (
-            uint256 ratioHead,
-            uint256 ratioAmount,
-            uint256 totalHead,
-            uint256 totalAmt,
-            bool againstShallBuy
-        ) = _getParas(votingType, motion);
+        (bytes32 rule, uint256 totalHead, uint256 totalAmt) = _getParas(
+            ia,
+            votingType,
+            motion
+        );
 
-        bool flag1 = ratioHead > 0
+        bool flag1 = rule.ratioHead() > 0
             ? totalHead > 0
-                ? (motion.membersOfYea.length * 10000) / totalHead >= ratioHead
+                ? (motion.membersOfYea.length * 10000) / totalHead >=
+                    rule.ratioHead()
                 : false
             : true;
 
-        bool flag2 = ratioAmount > 0
+        bool flag2 = rule.ratioAmount() > 0
             ? totalAmt > 0
-                ? (motion.supportPar * 10000) / totalAmt >= ratioAmount
+                ? (motion.supportPar * 10000) / totalAmt >= rule.ratioAmount()
                 : false
             : true;
 
-        motion.state = flag1 && flag2 ? 2 : againstShallBuy ? 4 : 3;
+        motion.state = flag1 && flag2 ? 2 : rule.againstShallBuy() ? 4 : 3;
 
         emit VoteCounting(ia, votingType, motion.state);
     }
@@ -360,7 +379,7 @@ contract BookOfMotions is EnumsRepo, BOSSetting, BOHSetting {
     {
         require(haveVoted(ia, acct), "did NOT vote");
 
-        Motion memory motion = _iaToMotion(ia);
+        Motion storage motion = _iaToMotion[ia];
         attitude = motion.sigOfYea[acct] > 0;
         date = attitude ? motion.sigOfYea[acct] : motion.sigOfNay[acct];
         amount = motion.voteAmt[acct];

@@ -10,14 +10,14 @@ contract SigPage is DraftSetting {
     // 0-pending 1-finalized 2-signed
     uint8 public docState;
 
-    uint public sigDeadline;
+    uint32 public sigDeadline;
 
-    uint public closingDeadline;
+    uint32 public closingDeadline;
 
     mapping(address => bool) public isParty;
     uint8 public qtyOfParties;
 
-    mapping(address => uint) public sigDate;
+    mapping(address => uint32) public sigDate;
     address[] private _signers;
 
     //####################
@@ -26,15 +26,15 @@ contract SigPage is DraftSetting {
 
     event UpdateStateOfDoc(uint8 state);
 
-    event SetSigDeadline(uint deadline);
+    event SetSigDeadline(uint32 deadline);
 
-    event SetClosingDeadline(uint deadline);
+    event SetClosingDeadline(uint32 deadline);
 
     event AddParty(address acct);
 
     event RemoveParty(address acct);
 
-    event SignDoc(address acct);
+    event SignDoc(address acct, uint32 sigDate);
 
     //####################
     //##    modifier    ##
@@ -55,7 +55,7 @@ contract SigPage is DraftSetting {
         _;
     }
 
-    modifier onlyFutureTime(uint time) {
+    modifier onlyFutureTime(uint32 time) {
         require(time > now, "NOT FUTURE time");
         _;
     }
@@ -64,7 +64,7 @@ contract SigPage is DraftSetting {
     //##    设置接口    ##
     //####################
 
-    function setSigDeadline(uint deadline)
+    function setSigDeadline(uint32 deadline)
         external
         onlyAttorney
         onlyFutureTime(deadline)
@@ -74,7 +74,7 @@ contract SigPage is DraftSetting {
         emit SetSigDeadline(deadline);
     }
 
-    function setClosingDeadline(uint deadline)
+    function setClosingDeadline(uint32 deadline)
         external
         onlyAttorney
         onlyFutureTime(deadline)
@@ -84,7 +84,7 @@ contract SigPage is DraftSetting {
         emit SetClosingDeadline(deadline);
     }
 
-    function addPartyToDoc(address acct) public onlyAttorney {
+    function addPartyToDoc(address acct) public {
         if (!isParty[acct]) {
             isParty[acct] = true;
             qtyOfParties++;
@@ -106,13 +106,18 @@ contract SigPage is DraftSetting {
         emit UpdateStateOfDoc(docState);
     }
 
-    function signDoc() external onlyParty notSigned {
+    function signDoc(uint32 _sigDate)
+        external
+        onlyParty
+        notSigned
+        currentDate(_sigDate)
+    {
         require(docState == 1, "Doc NOT finalized");
-        require(now < sigDeadline, "later than SigDeadline");
+        require(_sigDate < sigDeadline, "later than SigDeadline");
         address sender = msg.sender;
-        sigDate[sender] = now;
+        sigDate[sender] = _sigDate;
         _signers.push(sender);
-        emit SignDoc(sender);
+        emit SignDoc(sender, _sigDate);
 
         if (qtyOfParties == uint8(_signers.length)) {
             docState = 2;
@@ -125,11 +130,16 @@ contract SigPage is DraftSetting {
         emit UpdateStateOfDoc(docState);
     }
 
-    function acceptDoc() external onlyParty notSigned {
+    function acceptDoc(uint32 _sigDate)
+        external
+        onlyParty
+        notSigned
+        currentDate(_sigDate)
+    {
         address sender = msg.sender;
-        sigDate[sender] = now;
+        sigDate[sender] = _sigDate;
         _signers.push(sender);
-        emit SignDoc(sender);
+        emit SignDoc(sender, _sigDate);
     }
 
     //####################

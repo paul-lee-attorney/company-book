@@ -23,11 +23,11 @@ contract Agreement is BOSSetting, SigPage {
     using ArrayUtils for bytes32[];
 
     /* struct sn{
-    uint16 sequence; 2
-    uint8 typeOfDeal; 1   // 1-CI 2-ST(to 3rd) 3-ST(internal) 4-RT(replaced to against voter)
-    bytes6 shortShareNumber; 6
-    uint8 class; 1
-    address buyer; 20
+        uint16 sequence; 2
+        uint8 typeOfDeal; 1   // 1-CI 2-ST(to 3rd) 3-ST(internal) 4-RT(replaced sales to against voter)
+        bytes6 shortShareNumber; 6
+        uint8 class; 1
+        address buyer; 20
 } */
 
     struct Deal {
@@ -35,7 +35,7 @@ contract Agreement is BOSSetting, SigPage {
         uint256 unitPrice;
         uint256 parValue;
         uint256 paidPar;
-        uint256 closingDate;
+        uint32 closingDate;
         uint8 state; // 0-pending 1-cleared 2-closed 3-revoked
         bytes32 hashLock;
     }
@@ -202,7 +202,7 @@ contract Agreement is BOSSetting, SigPage {
         );
     }
 
-    function delDeal(bytes32 sn) external onlyAttorney dealExist(sn) {
+    function delDeal(bytes32 sn) external attorneyOrBookeeper dealExist(sn) {
         delete _deals[sn];
         _dealsList.removeByValue(sn);
         // counterOfDeals--;
@@ -386,6 +386,8 @@ contract Agreement is BOSSetting, SigPage {
 
         deal_1.closingDate = deal.closingDate;
 
+        addPartyToDoc(buyer);
+
         emit SplitDeal(sn, extSN, parValue, paidPar);
     }
 
@@ -401,7 +403,7 @@ contract Agreement is BOSSetting, SigPage {
             uint256 unitPrice,
             uint256 parValue,
             uint256 paidPar,
-            uint256 closingDate,
+            uint32 closingDate,
             uint8 state, // 0-pending 1-cleared 2-closed 3-terminated
             bytes32 hashLock
         )

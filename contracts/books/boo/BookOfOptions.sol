@@ -31,13 +31,13 @@ contract BookOfOptions is BOSSetting {
     }
 
     // bytes32 snOfOpt{
-    // uint32 triggerDate;
-    // uint16 counterOfOptions;
-    // uint8 exerciseDays;
-    // uint8 closingDays;
-    // uint8 typeOfOpt; //0-call; 1-put
-    // address obligor;
-    // uint24 price;
+    //      uint32 triggerDate;
+    //      uint16 counterOfOptions;
+    //      uint8 exerciseDays;
+    //      uint8 closingDays;
+    //      uint8 typeOfOpt; //0-call; 1-put
+    //      address obligor;
+    //      uint24 price;
     // }
 
     // sn => Option

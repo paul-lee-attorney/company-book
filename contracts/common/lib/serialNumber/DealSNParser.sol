@@ -23,9 +23,9 @@ library DealSNParser {
         returns (bytes32)
     {
         bytes6 ssn = bytes6(sn << 24);
-        uint len = sharesList.length;
+        uint256 len = sharesList.length;
 
-        for (uint i = 0; i < len; i++)
+        for (uint256 i = 0; i < len; i++)
             if (ssn == bytes6(sharesList[i] << 8)) return sharesList[i];
 
         return bytes32(0);
@@ -41,9 +41,9 @@ library DealSNParser {
         returns (address)
     {
         bytes6 ssn = bytes6(sn << 24);
-        uint len = sharesList.length;
+        uint256 len = sharesList.length;
 
-        for (uint i = 0; i < len; i++)
+        for (uint256 i = 0; i < len; i++)
             if (ssn == bytes6(sharesList[i] << 8))
                 return address(bytes20(sharesList[i] << 56));
 

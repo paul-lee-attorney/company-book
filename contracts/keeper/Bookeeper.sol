@@ -290,11 +290,25 @@ contract Bookeeper is
 
         require(IAgreement(ia).typeOfIA() != 3, "NOT need to vote");
 
-        uint8 votingDays = IVotingRules(
+        bytes32 rule = IVotingRules(
             getSHA().getTerm(uint8(TermTitle.VOTING_RULES))
-        ).votingDays();
+        ).rules(_getVotingType(ia));
 
-        _bom.proposeMotion(ia, proposeDate + uint256(votingDays) * 86400);
+        _bom.proposeMotion(
+            ia,
+            proposeDate + uint256(rule.votingDays()) * 86400
+        );
+    }
+
+    function _getVotingType(address ia)
+        private
+        view
+        returns (uint8 votingType)
+    {
+        uint8 typeOfIA = IAgreement(ia).typeOfIA();
+        votingType = (typeOfIA == 2 || typeOfIA == 5) ? 2 : (typeOfIA == 3)
+            ? 0
+            : 1;
     }
 
     function voteCounting(address ia) external onlyPartyOf(ia) {
@@ -302,12 +316,7 @@ contract Bookeeper is
         require(_bom.getState(ia) == 1, "NOT in voting");
         require(now > _bom.getVotingDeadline(ia), "voting NOT end");
 
-        uint8 typeOfIA = IAgreement(ia).typeOfIA();
-        uint8 votingType = (typeOfIA == 2 || typeOfIA == 5)
-            ? 2
-            : (typeOfIA == 3)
-            ? 0
-            : 1;
+        uint8 votingType = _getVotingType(ia);
 
         require(votingType > 0, "NOT need to vote");
 
@@ -317,16 +326,23 @@ contract Bookeeper is
     function replaceRejectedDeal(
         address ia,
         bytes32 sn,
-        uint256 exerciseDate
+        uint32 exerciseDate
     ) external currentDate(exerciseDate) {
         require(IAgreement(ia).isDeal(sn), "deal NOT exist");
         require(_bom.getState(ia) == 4, "agianst NO need to buy");
 
-        (, , , uint256 closingDate, , ) = IAgreement(ia).getDeal(sn);
+        (, , , uint32 closingDate, , ) = IAgreement(ia).getDeal(sn);
         require(exerciseDate < closingDate, "MISSED closing date");
 
+        bytes32 rule = IVotingRules(
+            getSHA().getTerm(uint8(TermTitle.VOTING_RULES))
+        ).rules(_getVotingType(ia));
+
         require(
-            exerciseDate < _bom.getVotingDeadline(ia) + 7 days,
+            exerciseDate <
+                _bom.getVotingDeadline(ia) +
+                    uint32(rule.execDaysForPutOpt()) *
+                    86400,
             "MISSED execute deadline"
         );
 
@@ -357,6 +373,35 @@ contract Bookeeper is
                 paidPar.mul(voteAmt).mul(10000) / againstPar / 10000
             );
         }
+    }
+
+    function turnOverAgainstVote(
+        address ia,
+        bytes32 sn,
+        uint32 turnOverDate
+    ) external currentDate(turnOverDate) {
+        require(sn.typeOfDeal() == 4, "NOT a replaced deal");
+
+        require(ISigPage(ia).sigDate(sn.buyer()) == 0, "already SIGNED deal");
+
+        bytes32 rule = IVotingRules(
+            getSHA().getTerm(uint8(TermTitle.VOTING_RULES))
+        ).rules(_getVotingType(ia));
+
+        require(
+            turnOverDate >
+                _bom.getVotingDeadline(ia) +
+                    uint32(
+                        rule.execDaysForPutOpt() + rule.turnOverDaysForFuture()
+                    ) *
+                    86400,
+            "signe deadline NOT reached"
+        );
+
+        IAgreement(ia).delDeal(sn);
+
+        _bom.turnOverVote(ia, sn.buyer(), turnOverDate);
+        _bom.voteCounting(ia, _getVotingType(ia));
     }
 
     // ##############
@@ -413,16 +458,11 @@ contract Bookeeper is
     function closeDeal(
         bytes32 sn,
         address ia,
+        uint32 closingDate,
         string hashKey
-    ) external returns (bool flag) {
-        //校验ia是否注册；
+    ) external currentDate(closingDate) {
+        //校验ia是否注册;
         require(_boa.isRegistered(ia), "协议  未注册");
-
-        //获取Deal
-        // Agreement.Deal memory deal = IAgreement(ia).getDeal(sn);
-
-        (, bytes32 shareNumber, uint8 class, , address buyer) = IAgreement(ia)
-            .parseSN(sn);
 
         (
             uint256 unitPrice,
@@ -433,14 +473,15 @@ contract Bookeeper is
 
         ) = IAgreement(ia).getDeal(sn);
 
+        // address buyer = sn.buyer();
+
         //交易发起人为买方;
-        require(buyer == msg.sender, "仅 买方  可调用");
+        require(sn.buyer() == msg.sender, "仅 买方  可调用");
 
         //验证hashKey, 执行Deal
         IAgreement(ia).closeDeal(sn, hashKey);
 
-        uint256 closingDate = now;
-        // uint paidInDate;
+        bytes32 shareNumber = sn.shareNumber(_bos.snList());
 
         //释放Share的质押标记(若需)，执行交易
         if (shareNumber > 0) {
@@ -449,14 +490,14 @@ contract Bookeeper is
                 shareNumber,
                 parValue,
                 paidPar,
-                buyer,
+                sn.buyer(),
                 closingDate,
                 unitPrice
             );
         } else {
             _bos.issueShare(
-                buyer,
-                class,
+                sn.buyer(),
+                sn.class(),
                 parValue,
                 paidPar,
                 closingDate, //paidInDeadline
@@ -464,8 +505,6 @@ contract Bookeeper is
                 unitPrice //issuePrice
             );
         }
-
-        flag = true;
     }
 
     function revokeDeal(
@@ -475,22 +514,16 @@ contract Bookeeper is
     ) external {
         require(_boa.isRegistered(ia), "IA NOT registered");
 
-        (
-            uint8 typeOfDeal,
-            bytes32 shareNumber,
-            ,
-            address seller,
-
-        ) = IAgreement(ia).parseSN(sn);
-
         address sender = msg.sender;
         require(
-            (typeOfDeal == 1 && sender == getBookeeper()) || sender == seller,
+            (sn.typeOfDeal() == 1 && sender == getBookeeper()) ||
+                sender == sn.seller(_bos.snList()),
             "NOT seller or bookeeper"
         );
 
         IAgreement(ia).revokeDeal(sn, hashKey);
 
-        if (typeOfDeal > 1) _bos.updateShareState(shareNumber, 0);
+        if (sn.typeOfDeal() > 1)
+            _bos.updateShareState(sn.shareNumber(_bos.snList()), 0);
     }
 }

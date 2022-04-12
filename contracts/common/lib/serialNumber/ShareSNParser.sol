@@ -9,8 +9,8 @@ library ShareSNParser {
         return uint16(bytes2(shareNumber << 8));
     }
 
-    function issueDate(bytes32 shareNumber) internal pure returns (uint) {
-        return uint(bytes4(shareNumber << 24));
+    function issueDate(bytes32 shareNumber) internal pure returns (uint256) {
+        return uint256(bytes4(shareNumber << 24));
     }
 
     function short(bytes32 shareNumber) internal pure returns (bytes6) {
@@ -22,8 +22,8 @@ library ShareSNParser {
         pure
         returns (bytes32)
     {
-        uint len = sharesList.length;
-        for (uint i = 0; i < len; i++)
+        uint256 len = sharesList.length;
+        for (uint256 i = 0; i < len; i++)
             if (bytes6(ssn) == bytes6(sharesList[i] << 8)) return sharesList[i];
 
         return bytes32(0);
@@ -35,8 +35,8 @@ library ShareSNParser {
         returns (bytes32)
     {
         bytes5 ssn = bytes5(shareNumber << 216);
-        uint len = sharesList.length;
-        for (uint i = 0; i < len; i++)
+        uint256 len = sharesList.length;
+        for (uint256 i = 0; i < len; i++)
             if (ssn == bytes5(sharesList[i] << 8)) return sharesList[i];
         return bytes32(0);
     }
@@ -46,7 +46,7 @@ library ShareSNParser {
     }
 
     function insertToQue(bytes32 sn, bytes32[] storage que) internal {
-        uint len = que.length;
+        uint256 len = que.length;
         que.push(sn);
 
         while (len > 0) {

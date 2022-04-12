@@ -24,11 +24,11 @@ contract BookOfMotions is EnumsRepo, BOSSetting, BOHSetting {
 
     struct Motion {
         address ia;
-        uint256 votingDeadline;
-        mapping(address => uint256) sigOfYea;
+        uint32 votingDeadline;
+        mapping(address => uint32) sigOfYea;
         address[] membersOfYea;
         uint256 supportPar;
-        mapping(address => uint256) sigOfNay;
+        mapping(address => uint32) sigOfNay;
         address[] membersOfNay;
         uint256 againstPar;
         mapping(address => bool) voted;
@@ -53,7 +53,7 @@ contract BookOfMotions is EnumsRepo, BOSSetting, BOHSetting {
 
     event ProposeMotion(
         address indexed ia,
-        uint256 votingDeadline,
+        uint32 votingDeadline,
         address proposedBy
     );
 
@@ -63,6 +63,8 @@ contract BookOfMotions is EnumsRepo, BOSSetting, BOHSetting {
         bool support,
         uint256 voteAmt
     );
+
+    event TurnOverVote(address indexed ia, address voter, uint256 voteAmt);
 
     event VoteCounting(address indexed ia, uint8 docType, uint8 result);
 
@@ -130,7 +132,7 @@ contract BookOfMotions is EnumsRepo, BOSSetting, BOHSetting {
     //##    写接口    ##
     //##################
 
-    function proposeMotion(address ia, uint256 votingDeadline)
+    function proposeMotion(address ia, uint32 votingDeadline)
         external
         onlyBookeeper
         notProposed(ia)
@@ -161,7 +163,7 @@ contract BookOfMotions is EnumsRepo, BOSSetting, BOHSetting {
         }
     }
 
-    function supportMotion(address ia, uint256 sigDate)
+    function supportMotion(address ia, uint32 sigDate)
         external
         onlyMember
         notVotedTo(ia)
@@ -187,7 +189,7 @@ contract BookOfMotions is EnumsRepo, BOSSetting, BOHSetting {
         emit Vote(ia, sender, true, voteAmt);
     }
 
-    function againstMotion(address ia, uint256 sigDate)
+    function againstMotion(address ia, uint32 sigDate)
         external
         onlyMember
         notVotedTo(ia)
@@ -312,6 +314,29 @@ contract BookOfMotions is EnumsRepo, BOSSetting, BOHSetting {
         emit VoteCounting(ia, votingType, motion.state);
     }
 
+    function turnOverVote(
+        address ia,
+        address voter,
+        uint32 turnOverDate
+    ) external onlyBookeeper currentDate(turnOverDate) {
+        Motion storage motion = _iaToMotion[ia];
+        require(motion.state == 4, "NOT a motion can be turned over");
+        require(motion.sigOfNay[voter] > 0, "NOT an against voter");
+
+        motion.sigOfNay[voter] = 0;
+        motion.membersOfNay.removeByValue(voter);
+
+        motion.sigOfYea[voter] = turnOverDate;
+        motion.membersOfYea.push(voter);
+
+        uint256 voteAmt = _getVoteAmount(voter);
+
+        motion.againstPar -= voteAmt;
+        motion.supportPar += voteAmt;
+
+        emit TurnOverVote(ia, voter, voteAmt);
+    }
+
     //##################
     //##    读接口    ##
     //##################
@@ -320,7 +345,7 @@ contract BookOfMotions is EnumsRepo, BOSSetting, BOHSetting {
         external
         view
         onlyProposed(ia)
-        returns (uint256)
+        returns (uint32)
     {
         return _iaToMotion[ia].votingDeadline;
     }
@@ -373,7 +398,7 @@ contract BookOfMotions is EnumsRepo, BOSSetting, BOHSetting {
         view
         returns (
             bool attitude,
-            uint256 date,
+            uint32 date,
             uint256 amount
         )
     {

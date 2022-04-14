@@ -143,7 +143,7 @@ contract Agreement is BOSSetting, SigPage {
         uint256 unitPrice,
         uint256 parValue,
         uint256 paidPar,
-        uint256 closingDate
+        uint32 closingDate
     ) external onlyAttorney {
         require(typeOfDeal > 0 && typeOfDeal < 4, "typeOfDeal over flow");
         require(buyer != address(0), "buyer is ZERO address");
@@ -214,7 +214,7 @@ contract Agreement is BOSSetting, SigPage {
         uint256 unitPrice,
         uint256 parValue,
         uint256 paidPar,
-        uint256 closingDate
+        uint32 closingDate
     ) external onlyAttorney dealExist(sn) {
         require(parValue > 0, "parValue is ZERO");
         require(paidPar <= parValue, "paidPar overflow");
@@ -281,7 +281,7 @@ contract Agreement is BOSSetting, SigPage {
     function clearDealCP(
         bytes32 sn,
         bytes32 hashLock,
-        uint256 closingDate
+        uint32 closingDate
     ) external onlyBookeeper dealExist(sn) {
         Deal storage deal = _deals[sn];
 

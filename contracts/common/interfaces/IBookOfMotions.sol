@@ -36,6 +36,12 @@ interface IBookOfMotions {
 
     function voteCounting(address ia, uint8 votingType) external;
 
+    function turnOverVote(
+        address ia,
+        address voter,
+        uint32 turnOverDate
+    ) external;
+
     //##################
     //##    读接口    ##
     //##################

@@ -18,6 +18,7 @@ import "../common/lib/serialNumber/ShareSNParser.sol";
 import "../common/lib/serialNumber/PledgeSNParser.sol";
 import "../common/lib/serialNumber/DealSNParser.sol";
 import "../common/lib/serialNumber/OptionSNParser.sol";
+import "../common/lib/serialNumber/VotingRuleParser.sol";
 
 import "../common/interfaces/IBOSSetting.sol";
 import "../common/interfaces/IAgreement.sol";
@@ -41,6 +42,7 @@ contract Bookeeper is
     using PledgeSNParser for bytes32;
     using DealSNParser for bytes32;
     using OptionSNParser for bytes32;
+    using VotingRuleParser for bytes32;
 
     address[15] public termsTemplate;
 
@@ -278,7 +280,7 @@ contract Bookeeper is
     // ##   Motion   ##
     // ################
 
-    function proposeMotion(address ia, uint256 proposeDate)
+    function proposeMotion(address ia, uint32 proposeDate)
         external
         onlyPartyOf(ia)
         currentDate(proposeDate)
@@ -294,10 +296,7 @@ contract Bookeeper is
             getSHA().getTerm(uint8(TermTitle.VOTING_RULES))
         ).rules(_getVotingType(ia));
 
-        _bom.proposeMotion(
-            ia,
-            proposeDate + uint256(rule.votingDays()) * 86400
-        );
+        _bom.proposeMotion(ia, proposeDate + uint32(rule.votingDays()) * 86400);
     }
 
     function _getVotingType(address ia)

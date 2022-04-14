@@ -70,7 +70,7 @@ interface IAgreement {
             uint256 unitPrice,
             uint256 parValue,
             uint256 paidInAmount,
-            uint256 closingDate,
+            uint32 closingDate,
             uint8 state, // 0-pending 1-cleared 2-closed 3-terminated
             bytes32 hashLock
         );

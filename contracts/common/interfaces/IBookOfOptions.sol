@@ -9,7 +9,7 @@ interface IBookOfOptions {
 
     function isOption(bytes32 sn) external returns (bool);
 
-    function counterOfOpts() external returns (uint16);
+    function counterOfOptions() external returns (uint16);
 
     // ################
     // ##   写接口   ##
@@ -19,20 +19,20 @@ interface IBookOfOptions {
         uint8 typeOfOpt,
         address rightholder,
         address obligor,
-        uint triggerDate,
+        uint32 triggerDate,
         uint8 exerciseDays,
         uint8 closingDays,
-        uint price,
-        uint parValue
+        uint256 price,
+        uint256 parValue
     ) external;
 
     function pushToFuture(
         bytes32 shareNumber,
         address obligor,
-        uint exerciseDate,
-        uint closingDate,
-        uint price,
-        uint parValue
+        uint32 exerciseDate,
+        uint32 closingDate,
+        uint256 price,
+        uint256 parValue
     ) external;
 
     function setState(bytes32 sn, uint8 state) external;
@@ -46,8 +46,8 @@ interface IBookOfOptions {
         view
         returns (
             address rightholder,
-            uint closingDate,
-            uint parValue,
+            uint32 closingDate,
+            uint256 parValue,
             bytes32 hashLock,
             uint8 state
         );
@@ -60,10 +60,10 @@ interface IBookOfOptions {
         returns (
             uint8 typeOfOpt,
             address obligor,
-            uint triggerDate,
+            uint32 triggerDate,
             uint8 exerciseDays,
             uint8 closingDays,
-            uint price
+            uint256 price
         );
 
     function getSNList() external view returns (bytes32[] list);
@@ -74,20 +74,20 @@ interface IBookOfOptions {
 
     function execOption(
         bytes32 sn,
-        uint exerciseDate,
+        uint32 exerciseDate,
         bytes32 hashLock
     ) external;
 
     function addFuture(
         bytes32 sn,
         bytes32 shareNumber,
-        uint parValue
+        uint256 parValue
     ) external;
 
     function removeFuture(
         bytes32 sn,
         bytes32 shareNumber,
-        uint parValue
+        uint256 parValue
     ) external;
 
     function closeOption(bytes32 sn, bytes32 hashKey) external;

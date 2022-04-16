@@ -4,10 +4,10 @@
 
 pragma solidity ^0.4.24;
 
-import "../../common/config/BOSSetting.sol";
-import "../../common/config/DraftSetting.sol";
+import "../../../common/config/BOSSetting.sol";
+import "../../../common/config/DraftSetting.sol";
 
-import "../../common/lib/serialNumber/SNFactory.sol";
+import "../../../common/lib/serialNumber/SNFactory.sol";
 
 contract VotingRules_ is BOSSetting, DraftSetting {
     using SNFactory for bytes;
@@ -27,7 +27,7 @@ contract VotingRules_ is BOSSetting, DraftSetting {
     // typeOfRule => Rule : 0-ST(internal) 1-CI 2-ST(to 3rd Party)
     bytes32[3] public rules;
 
-    constructor() {
+    constructor() public {
         // votingDays = 30; // default 30 days as per Company Law Act
 
         // default for Capital Increase : (10进制) 0000 6666 00 00 00 00 30 00
@@ -72,7 +72,7 @@ contract VotingRules_ is BOSSetting, DraftSetting {
         uint8 votingDays,
         uint8 execDaysForPutOpt,
         uint8 turnOverDaysForFuture
-    ) private returns (bytes32 sn) {
+    ) private pure returns (bytes32 sn) {
         bytes memory _sn = new bytes(32);
 
         _sn = _sn.intToSN(0, ratioHead, 2);

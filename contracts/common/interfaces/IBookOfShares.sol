@@ -99,7 +99,7 @@ interface IBookOfShares {
 
     function counterOfShares() external view returns (uint256);
 
-    function counterOfClass() external view returns (uint8);
+    function counterOfClasses() external view returns (uint8);
 
     // ========== PledgesRepo ==============
 

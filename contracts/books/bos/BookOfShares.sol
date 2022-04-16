@@ -187,7 +187,7 @@ contract BookOfShares is MembersRepo {
 
         require(parValue > 0, "parValue is ZERO");
         require(share.parValue >= parValue, "parValue OVERFLOW");
-        require(share.cleanPar >= paidPar, "cleanPar OVERFLOW");
+        require(share.cleanPar >= parValue, "cleanPar OVERFLOW");
         require(share.state < 4, "FREEZED share");
         require(paidPar <= parValue, "paidPar BIGGER than parValue");
 

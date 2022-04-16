@@ -7,11 +7,11 @@ pragma solidity ^0.4.24;
 import "../interfaces/IAdminSetting.sol";
 
 contract AdminSetting is IAdminSetting {
-    address internal _admin;
+    address private _admin;
 
-    address internal _backup;
+    address private _backup;
 
-    address internal _bookeeper;
+    address private _bookeeper;
 
     // ##################
     // ##   修饰器     ##
@@ -45,14 +45,14 @@ contract AdminSetting is IAdminSetting {
         _;
     }
 
-    modifier onlyStakeholders() {
-        address sender = msg.sender;
-        require(
-            sender == _admin || sender == _bookeeper,
-            "NOT interested party"
-        );
-        _;
-    }
+    // modifier onlyStakeholders() {
+    //     address sender = msg.sender;
+    //     require(
+    //         sender == _admin || sender == _bookeeper,
+    //         "NOT interested party"
+    //     );
+    //     _;
+    // }
 
     modifier currentDate(uint256 date) {
         require(

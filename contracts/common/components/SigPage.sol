@@ -92,7 +92,7 @@ contract SigPage is DraftSetting {
         }
     }
 
-    function removePartyFromDoc(address acct) external onlyAttorney {
+    function removePartyFromDoc(address acct) public onlyAttorney {
         if (isParty[acct]) {
             delete isParty[acct];
             qtyOfParties--;

@@ -53,15 +53,15 @@ interface IAgreement {
     //  ##     查询接口     ##
     //  ######################
 
-    function parToSell(address acct) external view returns (uint256 parValue);
+    // function parToSell(address acct) external view returns (uint256 output);
 
-    function parToBuy(address acct) external view returns (uint256 parValue);
+    // function parToBuy(address acct) external view returns (uint256 output);
 
     function isDeal(bytes32 sn) external view returns (bool);
 
     function counterOfDeals() external view returns (uint16);
 
-    function typeOfIA() external view returns (uint8);
+    // function typeOfIA() external view returns (uint8 output);
 
     function getDeal(bytes32 sn)
         external

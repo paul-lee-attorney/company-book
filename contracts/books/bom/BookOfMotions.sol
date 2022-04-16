@@ -4,7 +4,7 @@
 
 pragma solidity ^0.4.24;
 
-import "../../common/config/BOSSetting.sol";
+// import "../../common/config/BOSSetting.sol";
 import "../../common/config/BOHSetting.sol";
 
 import "../../common/lib/ArrayUtils.sol";
@@ -17,8 +17,9 @@ import "../../common/interfaces/IAgreement.sol";
 import "../../common/components/EnumsRepo.sol";
 
 import "../boh/interfaces/IVotingRules.sol";
+import "../boa/AgreementCalculator.sol";
 
-contract BookOfMotions is EnumsRepo, BOSSetting, BOHSetting {
+contract BookOfMotions is EnumsRepo, AgreementCalculator, BOHSetting {
     using ArrayUtils for address[];
     using VotingRuleParser for bytes32;
 
@@ -81,7 +82,7 @@ contract BookOfMotions is EnumsRepo, BOSSetting, BOHSetting {
     }
 
     modifier notInternalST(address body) {
-        require(IAgreement(body).typeOfIA() != 3, "NOT need to vote");
+        require(typeOfIA(body) != 3, "NOT need to vote");
         _;
     }
 

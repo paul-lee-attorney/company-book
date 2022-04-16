@@ -5,26 +5,21 @@
 pragma solidity ^0.4.24;
 
 import "../../common/config/BOSSetting.sol";
-// import "../../common/config/BOMSetting.sol";
-import "../../common/config/BOASetting.sol";
-import "../../common/config/AdminSetting.sol";
 
 import "../../common/lib/ArrayUtils.sol";
 import "../../common/lib/serialNumber/SNFactory.sol";
 import "../../common/lib/serialNumber/ShareSNParser.sol";
-
-// import "../../common/interfaces/IAgreement.sol";
-// import "../../common/interfaces/ISigPage.sol";
+import "../../common/lib/serialNumber/OptionSNParser.sol";
 
 contract BookOfOptions is BOSSetting {
-    // using ArrayUtils for address[];
     using ArrayUtils for bytes32[];
     using SNFactory for bytes;
     using ShareSNParser for bytes32;
+    using OptionSNParser for bytes32;
 
     struct Option {
         address rightholder;
-        uint256 closingDate;
+        uint32 closingDate;
         uint256 parValue;
         bytes32 hashLock;
         uint8 state; // 0-pending; 1-issued; 2-executed; 3-futureReady; 4-closed; 5-expired;
@@ -51,6 +46,7 @@ contract BookOfOptions is BOSSetting {
     // sn => futures
     mapping(bytes32 => bytes32[]) public futures;
 
+    // sn => bool
     mapping(bytes32 => bool) public isOption;
 
     bytes32[] private _snList;
@@ -69,7 +65,7 @@ contract BookOfOptions is BOSSetting {
 
     event SetOptState(bytes32 indexed sn, uint8 state);
 
-    event ExecOpt(bytes32 indexed sn, uint256 exerciseDate, bytes32 hashLock);
+    event ExecOpt(bytes32 indexed sn, uint32 exerciseDate, bytes32 hashLock);
 
     event RevokeOpt(bytes32 indexed sn);
 
@@ -93,14 +89,14 @@ contract BookOfOptions is BOSSetting {
     function createSN(
         uint8 typeOfOpt, //0-call option; 1-put option
         address obligor,
-        uint256 triggerDate,
+        uint32 triggerDate,
         uint8 exerciseDays,
         uint8 closingDays,
         uint256 price
     ) private view returns (bytes32 sn) {
         bytes memory _sn = new bytes(32);
 
-        _sn = _sn.intToSN(0, triggerDate, 4);
+        _sn = _sn.dateToSN(0, triggerDate);
         _sn = _sn.intToSN(4, counterOfOptions, 2);
         _sn[6] = bytes1(exerciseDays);
         _sn[7] = bytes1(closingDays);
@@ -115,7 +111,7 @@ contract BookOfOptions is BOSSetting {
         uint8 typeOfOpt,
         address rightholder,
         address obligor,
-        uint256 triggerDate,
+        uint32 triggerDate,
         uint8 exerciseDays,
         uint8 closingDays,
         uint256 price,
@@ -151,156 +147,13 @@ contract BookOfOptions is BOSSetting {
         emit SetOpt(sn, rightholder, parValue);
     }
 
-    function pushToFuture(
-        bytes32 shareNumber,
-        address obligor,
-        uint256 exerciseDate,
-        uint256 closingDate,
-        uint256 price,
-        uint256 parValue
-    ) external onlyBookeeper {
-        counterOfOptions++;
-
-        bytes32 sn = createSN(
-            1,
-            obligor,
-            exerciseDate,
-            0,
-            uint8((closingDate - exerciseDate) / 86400),
-            price
-        );
-
-        Option storage opt = _options[sn];
-
-        opt.rightholder = shareNumber.shareholder();
-        opt.parValue = parValue;
-        opt.state = 3;
-
-        isOption[sn] = true;
-        sn.insertToQue(_snList);
-
-        emit SetOpt(sn, shareNumber.shareholder(), parValue);
-
-        bytes32 ft = _createFuture(shareNumber, parValue);
-        futures[sn].push(ft);
-
-        emit AddFuture(sn, shareNumber, parValue);
-    }
-
-    function setState(bytes32 sn, uint8 state) external onlyBookeeper {
-        _options[sn].state = state;
-        emit SetOptState(sn, state);
-    }
-
-    // ################
-    // ##  查询接口  ##
-    // ################
-
-    function getOption(bytes32 sn)
-        external
-        view
-        optionExist(sn)
-        returns (
-            address rightholder,
-            uint256 closingDate,
-            uint256 parValue,
-            bytes32 hashLock,
-            uint8 state
-        )
-    {
-        Option memory opt = _options[sn];
-        rightholder = opt.rightholder;
-        closingDate = opt.closingDate;
-        parValue = opt.parValue;
-        hashLock = opt.hashLock;
-        state = opt.state;
-    }
-
-    function stateOfOption(bytes32 sn)
-        external
-        view
-        optionExist(sn)
-        returns (uint8)
-    {
-        return _options[sn].state;
-    }
-
-    function parseSN(bytes32 sn)
-        public
-        pure
-        returns (
-            uint8 typeOfOpt,
-            address obligor,
-            uint256 triggerDate,
-            uint8 exerciseDays,
-            uint8 closingDays,
-            uint256 price
-        )
-    {
-        typeOfOpt = uint8(sn[8]);
-        obligor = address(bytes20(sn << 72));
-        triggerDate = uint256(bytes4(sn));
-        exerciseDays = uint8(sn[6]);
-        closingDays = uint8(sn[7]);
-        price = uint256(bytes3(sn << 232));
-    }
-
-    function getSNList() external view returns (bytes32[] list) {
-        list = _snList;
-    }
-
-    // ################
-    // ##  Term接口  ##
-    // ################
-
-    function execOption(
-        bytes32 sn,
-        uint256 exerciseDate,
-        bytes32 hashLock
-    ) external onlyBookeeper optionExist(sn) currentDate(exerciseDate) {
-        (
-            ,
-            ,
-            uint256 triggerDate,
-            uint8 exerciseDays,
-            uint8 closingDays,
-
-        ) = parseSN(sn);
-
-        require(
-            exerciseDate >= triggerDate &&
-                exerciseDate <= triggerDate + exerciseDays * 86400,
-            "NOT in exercise period"
-        );
-
-        Option storage opt = _options[sn];
-
-        opt.closingDate = exerciseDate + closingDays * 86400;
-        opt.hashLock = hashLock;
-        opt.state = 2;
-
-        emit ExecOpt(sn, exerciseDate, hashLock);
-    }
-
-    function _createFuture(bytes32 shareNumber, uint256 parValue)
-        internal
-        pure
-        returns (bytes32 ft)
-    {
-        bytes memory _ft = new bytes(32);
-
-        _ft = _ft.bytes32ToSN(0, shareNumber, 1, 6);
-        _ft = _ft.intToSN(6, parValue, 26);
-
-        ft = _ft.bytesToBytes32();
-    }
-
     function addFuture(
         bytes32 sn,
         bytes32 shareNumber,
         uint256 parValue
     ) external onlyBookeeper optionExist(sn) {
-        (uint8 typeOfOpt, address obligor, , , , ) = parseSN(sn);
+        uint8 typeOfOpt = sn.typeOfOpt();
+        address obligor = sn.obligorOfOpt();
 
         Option storage opt = _options[sn];
 
@@ -354,6 +207,80 @@ contract BookOfOptions is BOSSetting {
         }
     }
 
+    // function setState(bytes32 sn, uint8 state) external onlyBookeeper {
+    //     _options[sn].state = state;
+    //     emit SetOptState(sn, state);
+    // }
+
+    // ################
+    // ##  查询接口  ##
+    // ################
+
+    function getOption(bytes32 sn)
+        external
+        view
+        optionExist(sn)
+        returns (
+            address rightholder,
+            uint32 closingDate,
+            uint256 parValue,
+            bytes32 hashLock,
+            uint8 state
+        )
+    {
+        Option memory opt = _options[sn];
+        rightholder = opt.rightholder;
+        closingDate = opt.closingDate;
+        parValue = opt.parValue;
+        hashLock = opt.hashLock;
+        state = opt.state;
+    }
+
+    function getSNList() external view returns (bytes32[] list) {
+        list = _snList;
+    }
+
+    // ################
+    // ##  Term接口  ##
+    // ################
+
+    function execOption(
+        bytes32 sn,
+        uint32 exerciseDate,
+        bytes32 hashLock
+    ) external onlyBookeeper optionExist(sn) currentDate(exerciseDate) {
+        uint32 triggerDate = sn.triggerDateOfOpt();
+        uint8 exerciseDays = sn.exerciseDaysOfOpt();
+        uint8 closingDays = sn.closingDaysOfOpt();
+
+        require(
+            exerciseDate >= triggerDate &&
+                exerciseDate <= triggerDate + exerciseDays * 86400,
+            "NOT in exercise period"
+        );
+
+        Option storage opt = _options[sn];
+
+        opt.closingDate = exerciseDate + closingDays * 86400;
+        opt.hashLock = hashLock;
+        opt.state = 2;
+
+        emit ExecOpt(sn, exerciseDate, hashLock);
+    }
+
+    function _createFuture(bytes32 shareNumber, uint256 parValue)
+        internal
+        pure
+        returns (bytes32 ft)
+    {
+        bytes memory _ft = new bytes(32);
+
+        _ft = _ft.bytes32ToSN(0, shareNumber, 1, 6);
+        _ft = _ft.intToSN(6, parValue, 26);
+
+        ft = _ft.bytesToBytes32();
+    }
+
     function closeOption(bytes32 sn, string hashKey)
         external
         onlyBookeeper
@@ -382,7 +309,9 @@ contract BookOfOptions is BOSSetting {
         if (opt.state == 2 || opt.state == 3)
             require(now >= opt.closingDate + 2 hours, "NOT expired yet");
         if (opt.state == 1) {
-            (, , uint256 triggerDate, uint8 exerciseDays, , ) = parseSN(sn);
+            uint32 triggerDate = sn.triggerDateOfOpt();
+            uint8 exerciseDays = sn.exerciseDaysOfOpt();
+
             require(
                 now >= triggerDate + exerciseDays * 86400 + 2 hours,
                 "available to exercise"

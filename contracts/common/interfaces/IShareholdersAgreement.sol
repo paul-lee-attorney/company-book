@@ -11,9 +11,9 @@ interface IShareholdersAgreement {
 
     function setTermsTemplate(address[15] templates) external;
 
-    function setBOS(address bos) external;
+    // function setBOS(address bos) external;
 
-    function setBOM(address bom) external;
+    // function setBOM(address bom) external;
 
     function removeTemplate(uint8 title) external;
 
@@ -35,9 +35,9 @@ interface IShareholdersAgreement {
 
     function tempOfTitle(uint8 title) external view returns (address);
 
-    function bos() external view returns (address);
+    // function bos() external view returns (address);
 
-    function bom() external view returns (address);
+    // function bom() external view returns (address);
 
     function termIsTriggered(
         uint8 title,

@@ -4,24 +4,28 @@
 
 pragma solidity ^0.4.24;
 
-import "../../common/config/BOSSetting.sol";
-import "../../common/config/BOMSetting.sol";
-import "../../common/config/DraftSetting.sol";
+// import "../../../common/config/BOSSetting.sol";
+import "../../../common/config/BOMSetting.sol";
+import "../../../common/config/DraftSetting.sol";
 
-import "../../common/lib/ArrayUtils.sol";
-import "../../common/lib/SafeMath.sol";
+import "../../../common/lib/ArrayUtils.sol";
+import "../../../common/lib/SafeMath.sol";
+import "../../../common/lib/serialNumber/DealSNParser.sol";
 
-import "../../common/interfaces/IAgreement.sol";
-import "../../common/interfaces/ISigPage.sol";
+import "../../../common/interfaces/IAgreement.sol";
+import "../../../common/interfaces/ISigPage.sol";
+
+import "../../boa/AgreementCalculator.sol";
 
 import "./Groups.sol";
 
-// import "../../common/interfaces/IMotion.sol";
+// import "../../../common/interfaces/IMotion.sol";
 
-contract TagAlong is BOSSetting, BOMSetting, Groups {
+contract TagAlong is AgreementCalculator, BOMSetting, Groups {
     using ArrayUtils for address[];
     using SafeMath for uint256;
     using SafeMath for uint8;
+    using DealSNParser for bytes32;
 
     struct Tag {
         // address of follower;
@@ -220,16 +224,16 @@ contract TagAlong is BOSSetting, BOMSetting, Groups {
 
         uint8 len = uint8(dealsList.length);
 
-        uint256 parToSell;
-        uint256 parToBuy;
+        uint256 pToSell;
+        uint256 pToBuy;
 
         for (uint8 i = 0; i < len; i++) {
-            (uint8 typeOfDeal, , , address seller, address buyer) = IAgreement(
-                ia
-            ).parseSN(dealsList[i]);
+            uint8 typeOfDeal = dealsList[i].typeOfDeal();
+            address seller = dealsList[i].seller(_bos.snList());
+            address buyer = dealsList[i].buyer();
 
-            parToSell = 0;
-            parToBuy = 0;
+            pToSell = 0;
+            pToBuy = 0;
 
             if (
                 typeOfDeal > 1 &&
@@ -240,17 +244,17 @@ contract TagAlong is BOSSetting, BOMSetting, Groups {
                     groupNumberOf[seller]
                 ];
                 for (uint8 j = 0; j < members.length; j++) {
-                    parToSell += IAgreement(ia).parToSell(members[j]);
-                    parToBuy += IAgreement(ia).parToBuy(members[j]);
+                    pToSell += parToSell(ia, members[j]);
+                    pToBuy += parToBuy(ia, members[j]);
                 }
             }
 
-            if (parToSell > parToBuy) {
+            if (pToSell > pToBuy) {
                 if (_tags[groupNumberOf[seller]].triggerType == 0) {
                     return true;
                 }
-                parToSell -= parToBuy;
-                return _isTriggered(seller, parToSell);
+                pToSell -= pToBuy;
+                return _isTriggered(seller, pToSell);
             }
         }
         return false;
@@ -299,9 +303,8 @@ contract TagAlong is BOSSetting, BOMSetting, Groups {
         bytes32[] memory dealsList = IAgreement(ia).dealsList();
 
         for (uint8 i = 0; i < dealsList.length; i++) {
-            (uint8 typeOfDeal, , , address seller, ) = IAgreement(ia).parseSN(
-                dealsList[i]
-            );
+            uint8 typeOfDeal = dealsList[i].typeOfDeal();
+            address seller = dealsList[i].seller(_bos.snList());
 
             if (
                 typeOfDeal > 1 &&

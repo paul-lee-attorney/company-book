@@ -36,7 +36,7 @@ contract SharesRepo is AdminSetting {
     //     uint16 sequence; //顺序编码
     //     uint32 issueDate; //发行日期
     //     address shareholder; //股东地址
-    //     bytes5 preSN; //来源股票编号索引（sequence + issueDate(前五位))
+    //     bytes5 preSN; //来源股票编号索引（sequence + issueDate(前24位, 精度误差256秒))
     // }
 
     //注册资本总额

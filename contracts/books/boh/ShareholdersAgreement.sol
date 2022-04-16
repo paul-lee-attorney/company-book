@@ -14,16 +14,26 @@ import "../../common/lib/ArrayUtils.sol";
 import "../../common/components/SigPage.sol";
 import "../../common/components/EnumsRepo.sol";
 import "../../common/components/CloneFactory.sol";
+
 import "../../common/config/BOHSetting.sol";
+import "../../common/config/BOSSetting.sol";
+import "../../common/config/BOMSetting.sol";
 
 import "./interfaces/ITerm.sol";
 
-contract ShareholdersAgreement is EnumsRepo, CloneFactory, BOHSetting, SigPage {
+contract ShareholdersAgreement is
+    EnumsRepo,
+    CloneFactory,
+    BOSSetting,
+    BOMSetting,
+    BOHSetting,
+    SigPage
+{
     using ArrayUtils for address[];
     using ArrayUtils for uint8[];
 
-    address public bos;
-    address public bom;
+    // address public bos;
+    // address public bom;
 
     // title => template address
     mapping(uint8 => address) public tempOfTitle;
@@ -80,13 +90,13 @@ contract ShareholdersAgreement is EnumsRepo, CloneFactory, BOHSetting, SigPage {
     //##    写接口    ##
     //##################
 
-    function setBOS(address _bos) external onlyBookeeper {
-        bos = _bos;
-    }
+    // function setBOS(address _bos) external onlyBookeeper {
+    //     bos = _bos;
+    // }
 
-    function setBOM(address _bom) external onlyBookeeper {
-        bom = _bom;
-    }
+    // function setBOM(address _bom) external onlyBookeeper {
+    //     bom = _bom;
+    // }
 
     function setTermsTemplate(address[15] templates) external onlyBookeeper {
         for (uint8 i = 0; i < 15; i++) {
@@ -125,10 +135,10 @@ contract ShareholdersAgreement is EnumsRepo, CloneFactory, BOHSetting, SigPage {
     {
         body = createClone(tempOfTitle[title]);
         IAdminSetting(body).init(msg.sender, this);
-        IBOSSetting(body).setBOS(bos);
+        IBOSSetting(body).setBOS(address(_bos));
 
         if (title != uint8(TermTitle.VOTING_RULES))
-            IBOMSetting(body).setBOM(bom);
+            IBOMSetting(body).setBOM(address(_bom));
 
         _titleToBody[title] = body;
         _bodyToTitle[body] = title;
@@ -152,7 +162,7 @@ contract ShareholdersAgreement is EnumsRepo, CloneFactory, BOHSetting, SigPage {
     }
 
     function finalizeSHA() external onlyAttorney {
-        for (uint i = 0; i < _terms.length; i++) {
+        for (uint256 i = 0; i < _terms.length; i++) {
             IDraftSetting(_terms[i]).lockContents();
         }
     }

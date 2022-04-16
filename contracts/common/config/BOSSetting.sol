@@ -6,7 +6,7 @@ pragma solidity ^0.4.24;
 
 import "../interfaces/IBookOfShares.sol";
 
-import "../config/AdminSetting.sol";
+import "./AdminSetting.sol";
 
 contract BOSSetting is AdminSetting {
     IBookOfShares internal _bos;
@@ -39,7 +39,7 @@ contract BOSSetting is AdminSetting {
         emit SetBOS(bos);
     }
 
-    function getBOS() external view returns (address) {
-        return address(_bos);
-    }
+    // function getBOS() external view returns (address) {
+    //     return address(_bos);
+    // }
 }

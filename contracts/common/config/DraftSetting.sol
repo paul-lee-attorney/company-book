@@ -26,13 +26,13 @@ contract DraftSetting is AdminSetting {
         _;
     }
 
-    modifier attorneyOrBookeeper() {
-        require(
-            msg.sender == _attorney || msg.sender == _bookeeper,
-            "NOT attorney or bookeeper"
-        );
-        _;
-    }
+    // modifier attorneyOrBookeeper() {
+    //     require(
+    //         msg.sender == _attorney || msg.sender == _bookeeper,
+    //         "NOT attorney or bookeeper"
+    //     );
+    //     _;
+    // }
 
     // ##################
     // ##   设置端口   ##

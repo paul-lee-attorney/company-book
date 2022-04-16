@@ -6,7 +6,7 @@ pragma solidity ^0.4.24;
 
 import "../common/config/AdminSetting.sol";
 
-import "../common/config/BOSSetting.sol";
+// import "../common/config/BOSSetting.sol";
 import "../common/config/BOHSetting.sol";
 import "../common/config/BOASetting.sol";
 import "../common/config/BOMSetting.sol";
@@ -25,12 +25,13 @@ import "../common/interfaces/IAgreement.sol";
 import "../common/interfaces/ISigPage.sol";
 
 import "../books/boh/interfaces/IVotingRules.sol";
+import "../books/boa/AgreementCalculator.sol";
 
 import "../common/components/EnumsRepo.sol";
 
 contract Bookeeper is
     EnumsRepo,
-    BOSSetting,
+    AgreementCalculator,
     BOASetting,
     BOHSetting,
     BOMSetting,
@@ -105,64 +106,13 @@ contract Bookeeper is
         IAdminSetting(book).setBookeeper(bookeeper);
     }
 
-    // #############
-    // ##   SHA   ##
-    // #############
-
-    function addTermTemplate(uint8 title, address add) external onlyAdmin {
-        termsTemplate[title] = add;
-        emit AddTemplate(title, add);
-    }
-
-    function createSHA(uint8 docType)
-        external
-        onlyMember
-        returns (address body)
-    {
-        body = _boh.createDoc(docType);
-
-        IAdminSetting(body).init(msg.sender, this);
-        IShareholdersAgreement(body).setTermsTemplate(termsTemplate);
-        IShareholdersAgreement(body).setBOS(address(_bos));
-        IShareholdersAgreement(body).setBOM(address(_bom));
-    }
-
-    function removeSHA(address body)
-        external
-        onlyAdminOf(body)
-        notEstablished(body)
-    {
-        _boh.removeDoc(body);
-    }
-
-    function submitSHA(address body, bytes32 docHash)
-        external
-        onlyAdminOf(body)
-        beEstablished(body)
-    {
-        _boh.submitSHA(body, docHash);
-
-        IAdminSetting(body).abandonAdmin();
-    }
-
-    function effectiveSHA(address body) external onlyPartyOf(body) {
-        require(_boh.isSubmitted(body), "SHA not submitted yet");
-        // 将之前有效的SHA，撤销其效力
-        if (_boh.getTheOne() != address(0))
-            ISigPage(_boh.getTheOne()).updateStateOfDoc(5);
-
-        _boh.setPointer(body);
-
-        ISigPage(body).updateStateOfDoc(4);
-    }
-
     // ##################
     // ##    Option    ##
     // ##################
 
     function execOption(
         bytes32 sn,
-        uint256 exerciseDate,
+        uint32 exerciseDate,
         bytes32 hashLock
     ) external {
         (address rightholder, , , , ) = _boo.getOption(sn);
@@ -171,10 +121,10 @@ contract Bookeeper is
 
         require(_boo.stateOfOption(sn) == 1, "option's state is NOT correct");
 
-        uint256 triggerDate = sn.triggerDateOfOpt();
+        uint32 triggerDate = sn.triggerDateOfOpt();
         uint8 exerciseDays = sn.exerciseDaysOfOpt();
 
-        if (now > triggerDate + uint256(exerciseDays) * 86400)
+        if (now > triggerDate + uint32(exerciseDays) * 86400)
             _boo.setState(sn, 3); // option expired
         else if (now >= triggerDate) _boo.setState(sn, 2);
 
@@ -280,128 +230,130 @@ contract Bookeeper is
     // ##   Motion   ##
     // ################
 
-    function proposeMotion(address ia, uint32 proposeDate)
-        external
-        onlyPartyOf(ia)
-        currentDate(proposeDate)
-    {
-        require(
-            _boa.isRegistered(ia),
-            "Investment Agreement is NOT registered"
-        );
+    // function proposeMotion(address ia, uint32 proposeDate)
+    //     external
+    //     onlyPartyOf(ia)
+    //     currentDate(proposeDate)
+    // {
+    //     require(
+    //         _boa.isRegistered(ia),
+    //         "Investment Agreement is NOT registered"
+    //     );
 
-        require(IAgreement(ia).typeOfIA() != 3, "NOT need to vote");
+    //     require(typeOfIA(ia) != 3, "NOT need to vote");
 
-        bytes32 rule = IVotingRules(
-            getSHA().getTerm(uint8(TermTitle.VOTING_RULES))
-        ).rules(_getVotingType(ia));
+    //     bytes32 rule = IVotingRules(
+    //         getSHA().getTerm(uint8(TermTitle.VOTING_RULES))
+    //     ).rules(_getVotingType(ia));
 
-        _bom.proposeMotion(ia, proposeDate + uint32(rule.votingDays()) * 86400);
-    }
+    //     _bom.proposeMotion(ia, proposeDate + uint32(rule.votingDays()) * 86400);
+    // }
 
-    function _getVotingType(address ia)
-        private
-        view
-        returns (uint8 votingType)
-    {
-        uint8 typeOfIA = IAgreement(ia).typeOfIA();
-        votingType = (typeOfIA == 2 || typeOfIA == 5) ? 2 : (typeOfIA == 3)
-            ? 0
-            : 1;
-    }
+    // function _getVotingType(address ia)
+    //     private
+    //     view
+    //     returns (uint8 votingType)
+    // {
+    //     uint8 typeOfAgreement = typeOfIA(ia);
+    //     votingType = (typeOfAgreement == 2 || typeOfAgreement == 5)
+    //         ? 2
+    //         : (typeOfAgreement == 3)
+    //         ? 0
+    //         : 1;
+    // }
 
-    function voteCounting(address ia) external onlyPartyOf(ia) {
-        require(_bom.isProposed(ia), "NOT proposed");
-        require(_bom.getState(ia) == 1, "NOT in voting");
-        require(now > _bom.getVotingDeadline(ia), "voting NOT end");
+    // function voteCounting(address ia) external onlyPartyOf(ia) {
+    //     require(_bom.isProposed(ia), "NOT proposed");
+    //     require(_bom.getState(ia) == 1, "NOT in voting");
+    //     require(now > _bom.getVotingDeadline(ia), "voting NOT end");
 
-        uint8 votingType = _getVotingType(ia);
+    //     uint8 votingType = _getVotingType(ia);
 
-        require(votingType > 0, "NOT need to vote");
+    //     require(votingType > 0, "NOT need to vote");
 
-        _bom.voteCounting(ia, votingType);
-    }
+    //     _bom.voteCounting(ia, votingType);
+    // }
 
-    function replaceRejectedDeal(
-        address ia,
-        bytes32 sn,
-        uint32 exerciseDate
-    ) external currentDate(exerciseDate) {
-        require(IAgreement(ia).isDeal(sn), "deal NOT exist");
-        require(_bom.getState(ia) == 4, "agianst NO need to buy");
+    // function replaceRejectedDeal(
+    //     address ia,
+    //     bytes32 sn,
+    //     uint32 exerciseDate
+    // ) external currentDate(exerciseDate) {
+    //     require(IAgreement(ia).isDeal(sn), "deal NOT exist");
+    //     require(_bom.getState(ia) == 4, "agianst NO need to buy");
 
-        (, , , uint32 closingDate, , ) = IAgreement(ia).getDeal(sn);
-        require(exerciseDate < closingDate, "MISSED closing date");
+    //     (, , , uint32 closingDate, , ) = IAgreement(ia).getDeal(sn);
+    //     require(exerciseDate < closingDate, "MISSED closing date");
 
-        bytes32 rule = IVotingRules(
-            getSHA().getTerm(uint8(TermTitle.VOTING_RULES))
-        ).rules(_getVotingType(ia));
+    //     bytes32 rule = IVotingRules(
+    //         getSHA().getTerm(uint8(TermTitle.VOTING_RULES))
+    //     ).rules(_getVotingType(ia));
 
-        require(
-            exerciseDate <
-                _bom.getVotingDeadline(ia) +
-                    uint32(rule.execDaysForPutOpt()) *
-                    86400,
-            "MISSED execute deadline"
-        );
+    //     require(
+    //         exerciseDate <
+    //             _bom.getVotingDeadline(ia) +
+    //                 uint32(rule.execDaysForPutOpt()) *
+    //                 86400,
+    //         "MISSED execute deadline"
+    //     );
 
-        require(sn.typeOfDeal() == 2, "NOT a 3rd party ST Deal");
-        require(
-            msg.sender == sn.seller(_bos.snList()),
-            "NOT Seller of the Deal"
-        );
+    //     require(sn.typeOfDeal() == 2, "NOT a 3rd party ST Deal");
+    //     require(
+    //         msg.sender == sn.seller(_bos.snList()),
+    //         "NOT Seller of the Deal"
+    //     );
 
-        _splitDeal(ia, sn);
-    }
+    //     _splitDeal(ia, sn);
+    // }
 
-    function _splitDeal(address ia, bytes32 sn) private {
-        (, uint256 parValue, uint256 paidPar, , , ) = IAgreement(ia).getDeal(
-            sn
-        );
+    // function _splitDeal(address ia, bytes32 sn) private {
+    //     (, uint256 parValue, uint256 paidPar, , , ) = IAgreement(ia).getDeal(
+    //         sn
+    //     );
 
-        (address[] memory buyers, uint256 againstPar) = _bom.getNay(ia);
+    //     (address[] memory buyers, uint256 againstPar) = _bom.getNay(ia);
 
-        // uint256 len = buyers.length;
+    //     // uint256 len = buyers.length;
 
-        for (uint256 i = 0; i < buyers.length; i++) {
-            (, , uint256 voteAmt) = _bom.getVote(ia, buyers[i]);
-            IAgreement(ia).splitDeal(
-                sn,
-                buyers[i],
-                parValue.mul(voteAmt).mul(10000) / againstPar / 10000,
-                paidPar.mul(voteAmt).mul(10000) / againstPar / 10000
-            );
-        }
-    }
+    //     for (uint256 i = 0; i < buyers.length; i++) {
+    //         (, , uint256 voteAmt) = _bom.getVote(ia, buyers[i]);
+    //         IAgreement(ia).splitDeal(
+    //             sn,
+    //             buyers[i],
+    //             parValue.mul(voteAmt).mul(10000) / againstPar / 10000,
+    //             paidPar.mul(voteAmt).mul(10000) / againstPar / 10000
+    //         );
+    //     }
+    // }
 
-    function turnOverAgainstVote(
-        address ia,
-        bytes32 sn,
-        uint32 turnOverDate
-    ) external currentDate(turnOverDate) {
-        require(sn.typeOfDeal() == 4, "NOT a replaced deal");
+    // function turnOverAgainstVote(
+    //     address ia,
+    //     bytes32 sn,
+    //     uint32 turnOverDate
+    // ) external currentDate(turnOverDate) {
+    //     require(sn.typeOfDeal() == 4, "NOT a replaced deal");
 
-        require(ISigPage(ia).sigDate(sn.buyer()) == 0, "already SIGNED deal");
+    //     require(ISigPage(ia).sigDate(sn.buyer()) == 0, "already SIGNED deal");
 
-        bytes32 rule = IVotingRules(
-            getSHA().getTerm(uint8(TermTitle.VOTING_RULES))
-        ).rules(_getVotingType(ia));
+    //     bytes32 rule = IVotingRules(
+    //         getSHA().getTerm(uint8(TermTitle.VOTING_RULES))
+    //     ).rules(_getVotingType(ia));
 
-        require(
-            turnOverDate >
-                _bom.getVotingDeadline(ia) +
-                    uint32(
-                        rule.execDaysForPutOpt() + rule.turnOverDaysForFuture()
-                    ) *
-                    86400,
-            "signe deadline NOT reached"
-        );
+    //     require(
+    //         turnOverDate >
+    //             _bom.getVotingDeadline(ia) +
+    //                 uint32(
+    //                     rule.execDaysForPutOpt() + rule.turnOverDaysForFuture()
+    //                 ) *
+    //                 86400,
+    //         "signe deadline NOT reached"
+    //     );
 
-        IAgreement(ia).delDeal(sn);
+    //     // IAgreement(ia).delDeal(sn);
 
-        _bom.turnOverVote(ia, sn.buyer(), turnOverDate);
-        _bom.voteCounting(ia, _getVotingType(ia));
-    }
+    //     _bom.turnOverVote(ia, sn.buyer(), turnOverDate);
+    //     _bom.voteCounting(ia, _getVotingType(ia));
+    // }
 
     // ##############
     // ##   Deal   ##
@@ -415,13 +367,9 @@ contract Bookeeper is
     ) external returns (bool flag) {
         require(_bom.isPassed(ia), "Motion NOT passed");
 
-        (
-            uint8 typeOfDeal,
-            bytes32 shareNumber,
-            ,
-            address seller,
-
-        ) = IAgreement(ia).parseSN(sn);
+        uint8 typeOfDeal = sn.typeOfDeal();
+        bytes32 shareNumber = sn.shareNumber(_bos.snList());
+        address seller = sn.seller(_bos.snList());
 
         //交易发起人为卖方或簿记管理人(Bookeeper);
         address sender = msg.sender;

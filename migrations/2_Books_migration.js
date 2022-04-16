@@ -39,15 +39,15 @@ var TagAlong =
         await deployer.deploy(Bookeeper, accounts[0]);
         let bookeeper = await Bookeeper.deployed();
 
-        await bookeeper.setBOS(bos.address);
-        await bookeeper.setBOA(boa.address);
-        await bookeeper.setBOH(boh.address);
-        await bookeeper.setBOM(bom.address);
+        // await bookeeper.setBOS(bos.address);
+        // await bookeeper.setBOA(boa.address);
+        // await bookeeper.setBOH(boh.address);
+        // await bookeeper.setBOM(bom.address);
 
-        await bos.setBookeeper(bookeeper.address);
-        await boa.setBookeeper(bookeeper.address);
-        await boh.setBookeeper(bookeeper.address);
-        await bom.setBookeeper(bookeeper.address);
+        // await bos.setBookeeper(bookeeper.address);
+        // await boa.setBookeeper(bookeeper.address);
+        // await boh.setBookeeper(bookeeper.address);
+        // await bom.setBookeeper(bookeeper.address);
 
-        await bookeeper.setBookeeper(accounts[1]);
+        // await bookeeper.setBookeeper(accounts[1]);
     };

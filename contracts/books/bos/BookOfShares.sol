@@ -98,16 +98,16 @@ contract BookOfShares is MembersRepo {
     }
 
     /// @notice 在已经发行的股票项下，实缴出资
-    /// @param shareNumber - 股票编号
+    /// @param ssn - 股票短号
     /// @param amount - 实缴出资金额（单位“分”）
     /// @param paidInDate - 实缴出资日期（妙计时间戳）
     function payInCapital(
-        bytes32 shareNumber,
+        bytes6 ssn,
         uint256 amount,
         uint32 paidInDate
     ) external onlyBookeeper {
         // 增加“股票”项下实缴出资金额
-        _payInCapital(shareNumber, amount, paidInDate);
+        _payInCapital(ssn, amount, paidInDate);
 
         // 增加公司的“实缴出资”总额
         _capIncrease(0, amount);
@@ -155,12 +155,12 @@ contract BookOfShares is MembersRepo {
             shareNumber_1,
             parValue,
             paidPar,
-            _shares[shareNumber].paidInDeadline,
+            _shares[shareNumber.short()].paidInDeadline,
             unitPrice
         );
     }
 
-    /// @param shareNumber 拟减资的股票编号
+    /// @param shareNumber 拟减资的股票短号
     /// @param parValue 拟减少的认缴出资金额（单位“分”）
     /// @param paidPar 拟减少的实缴出资金额（单位“分”）
     function decreaseCapital(
@@ -183,7 +183,7 @@ contract BookOfShares is MembersRepo {
         uint256 parValue,
         uint256 paidPar
     ) private {
-        Share storage share = _shares[shareNumber];
+        Share storage share = _shares[shareNumber.short()];
 
         require(parValue > 0, "parValue is ZERO");
         require(share.parValue >= parValue, "parValue OVERFLOW");
@@ -197,7 +197,7 @@ contract BookOfShares is MembersRepo {
             _updateMembersList(shareNumber.shareholder());
         } else {
             // 仅调低认缴和实缴金额，保留原股票
-            _subAmountFromShare(shareNumber, parValue, paidPar);
+            _subAmountFromShare(shareNumber.short(), parValue, paidPar);
         }
     }
 

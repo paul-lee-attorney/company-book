@@ -17,6 +17,10 @@ library ShareSNParser {
         return bytes6(shareNumber << 8);
     }
 
+    function shareholder(bytes32 shareNumber) internal pure returns (address) {
+        return address(bytes20(shareNumber << 56));
+    }
+
     function shortToSN(bytes32 ssn, bytes32[] memory sharesList)
         internal
         pure
@@ -39,20 +43,5 @@ library ShareSNParser {
         for (uint256 i = 0; i < len; i++)
             if (ssn == bytes5(sharesList[i] << 8)) return sharesList[i];
         return bytes32(0);
-    }
-
-    function shareholder(bytes32 shareNumber) internal pure returns (address) {
-        return address(bytes20(shareNumber << 56));
-    }
-
-    function insertToQue(bytes32 sn, bytes32[] storage que) internal {
-        uint256 len = que.length;
-        que.push(sn);
-
-        while (len > 0) {
-            if (que[len - 1] <= que[len]) break;
-            (que[len - 1], que[len]) = (que[len], que[len - 1]);
-            len--;
-        }
     }
 }

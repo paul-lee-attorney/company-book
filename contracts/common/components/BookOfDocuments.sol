@@ -6,6 +6,7 @@
 pragma solidity ^0.4.24;
 
 import "../lib/serialNumber/SNFactory.sol";
+import "../lib/serialNumber/DocSNParser.sol";
 import "../lib/SafeMath.sol";
 import "../lib/ArrayUtils.sol";
 
@@ -15,30 +16,38 @@ import "./CloneFactory.sol";
 
 contract BookOfDocuments is CloneFactory, BOSSetting {
     using SNFactory for bytes;
-    using SafeMath for uint256;
+    using SNFactory for bytes32;
+    using DocSNParser for bytes32;
+    // using SafeMath for uint256;
     using ArrayUtils for bytes32[];
 
     string public bookName;
     address public template;
 
     struct Doc {
-        address body;
+        bytes32 sn;
+        uint32 submitDate;
         bytes32 docHash;
         uint8 state; // 0-draft 1-submitted 2-closed/effective 3-terminated/revoked
     }
 
-    // sn => Doc
-    mapping(bytes32 => Doc) internal _snToDoc;
+    // struct snInfo {
+    //     uint8 docType;           1
+    //     uint16 sequence;         2
+    //     uint32 createDate;       4
+    //     address creator;         20
+    //     bytes5 addrSuffixOfDoc;  5
+    // }
 
-    // body => sn
-    mapping(address => bytes32) public bodyToSN;
+    // addrOfBody => Doc
+    mapping(address => Doc) internal _docs;
 
-    // body => bool
+    // addrOfBody => bool
     mapping(address => bool) public isRegistered;
 
-    bytes32[] private _docs;
+    bytes32[] private _docsList;
 
-    // bytes32 private _pointer;
+    uint16 counterOfDocs;
 
     constructor(
         string _bookName,
@@ -59,7 +68,7 @@ contract BookOfDocuments is CloneFactory, BOSSetting {
 
     event RemoveDoc(bytes32 indexed sn, address body);
 
-    event SubmitDoc(bytes32 indexed sn, address body);
+    event SubmitDoc(bytes32 indexed sn, address submittor);
 
     // event SetPointer(bytes32 indexed pointer, address body);
 
@@ -78,12 +87,12 @@ contract BookOfDocuments is CloneFactory, BOSSetting {
     }
 
     modifier onlyForPending(address body) {
-        require(_snToDoc[bodyToSN[body]].state == 0, "doc NOT pending");
+        require(_docs[body].state == 0, "doc NOT pending");
         _;
     }
 
     modifier onlyForSubmitted(address body) {
-        require(_snToDoc[bodyToSN[body]].state == 1, "doc NOT submitted");
+        require(_docs[body].state == 1, "doc NOT submitted");
         _;
     }
 
@@ -92,24 +101,19 @@ contract BookOfDocuments is CloneFactory, BOSSetting {
     //##################
 
     function _createSN(
-        address body,
         uint8 docType,
-        uint256 createDate
-    ) internal view returns (bytes32 sn) {
-        // sn : 条款对象 序列号
+        uint16 sequence,
+        uint32 createDate,
+        address creator,
+        address body
+    ) private pure returns (bytes32 sn) {
         bytes memory _sn = new bytes(32);
 
-        // 第 0 字节：docType - 文件内部分类(0-255)
         _sn[0] = bytes1(docType);
-
-        // 第 1-4 字节: 创建时间戳（秒）
-        _sn = _sn.intToSN(1, createDate, 4);
-
-        // 第 5-24 字节：创建者地址
-        _sn = _sn.addrToSN(5, msg.sender);
-
-        // 第 25-31 字节：文件合约地址（后56位）
-        _sn = _sn.intToSN(25, uint256(body), 7);
+        _sn = _sn.sequenceToSN(1, sequence);
+        _sn = _sn.dateToSN(3, createDate);
+        _sn = _sn.addrToSN(7, creator);
+        _sn = _sn.bytes32ToSN(27, bytes32(body), 15, 5);
 
         sn = _sn.bytesToBytes32();
     }
@@ -119,7 +123,11 @@ contract BookOfDocuments is CloneFactory, BOSSetting {
         emit SetTemplate(body);
     }
 
-    function createDoc(uint8 docType, uint256 createDate)
+    function createDoc(
+        uint8 docType,
+        uint32 createDate,
+        address creator
+    )
         external
         onlyBookeeper
         tempReady
@@ -128,15 +136,20 @@ contract BookOfDocuments is CloneFactory, BOSSetting {
     {
         body = createClone(template);
 
-        bytes32 sn = _createSN(body, docType, createDate);
+        counterOfDocs++;
 
-        _snToDoc[sn].body = body;
+        bytes32 sn = _createSN(
+            docType,
+            counterOfDocs,
+            createDate,
+            creator,
+            body
+        );
 
-        bodyToSN[body] = sn;
+        _docs[body].sn = sn;
 
         isRegistered[body] = true;
-
-        _docs.push(sn);
+        sn.insertToQue(_docsList);
 
         emit CreateDoc(sn, body);
     }
@@ -147,32 +160,36 @@ contract BookOfDocuments is CloneFactory, BOSSetting {
         onlyRegistered(body)
         onlyForPending(body)
     {
-        bytes32 sn = bodyToSN[body];
+        bytes32 sn = _docs[body].sn;
 
-        delete _snToDoc[bodyToSN[body]];
+        _docsList.removeByValue(sn);
 
-        delete bodyToSN[body];
+        delete _docs[body];
 
         delete isRegistered[body];
-
-        _docs.removeByValue(sn);
 
         emit RemoveDoc(sn, body);
     }
 
-    function submitDoc(address body, bytes32 docHash)
+    function submitDoc(
+        address body,
+        uint32 submitDate,
+        bytes32 docHash,
+        address submitter
+    )
         public
         onlyBookeeper
         onlyRegistered(body)
         onlyForPending(body)
+        currentDate(submitDate)
     {
-        bytes32 sn = bodyToSN[body];
+        Doc storage doc = _docs[body];
 
-        Doc storage doc = _snToDoc[sn];
+        doc.submitDate = submitDate;
         doc.docHash = docHash;
         doc.state = 1;
 
-        emit SubmitDoc(sn, body);
+        emit SubmitDoc(doc.sn, submitter);
     }
 
     //##################
@@ -184,29 +201,33 @@ contract BookOfDocuments is CloneFactory, BOSSetting {
     }
 
     function isSubmitted(address body) external view returns (bool) {
-        return _snToDoc[bodyToSN[body]].state == 1;
+        return _docs[body].state == 1;
     }
 
-    function qtyOfDocuments() external view returns (uint256) {
-        return _docs.length;
+    function qtyOfDocs() external view returns (uint256) {
+        return _docsList.length;
     }
 
-    function docs() external view returns (bytes32[]) {
-        return _docs;
+    function docsList() external view returns (bytes32[]) {
+        return _docsList;
     }
 
-    function getDoc(bytes32 sn)
+    function getDoc(address body)
         external
         view
-        onlyRegistered(_snToDoc[sn].body)
+        onlyRegistered(body)
         returns (
-            address body,
+            bytes32 sn,
+            uint32 submitDate,
             bytes32 docHash,
             uint8 state
         )
     {
-        body = _snToDoc[sn].body;
-        docHash = _snToDoc[sn].docHash;
-        state = _snToDoc[sn].state;
+        Doc storage doc = _docs[body];
+
+        sn = doc.sn;
+        submitDate = doc.submitDate;
+        docHash = doc.docHash;
+        state = doc.state;
     }
 }

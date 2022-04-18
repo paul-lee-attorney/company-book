@@ -6,16 +6,12 @@ pragma solidity ^0.4.24;
 
 contract BookOfTerms {
     // body => bool
-    mapping(address => bool) private _registeredTerms;
+    mapping(address => bool) public isRegistered;
 
     event AddTermToRegistry(address indexed term);
 
     function _addTermToRegistry(address term) internal {
-        _registeredTerms[term] = true;
+        isRegistered[term] = true;
         emit AddTermToRegistry(term);
-    }
-
-    function isRegisteredTerm(address term) external view returns (bool) {
-        return _registeredTerms[term];
     }
 }

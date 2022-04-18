@@ -56,7 +56,7 @@ contract SigPage is DraftSetting {
     }
 
     modifier onlyFutureTime(uint32 time) {
-        require(time > now, "NOT FUTURE time");
+        require(time > now + 15 minutes, "NOT FUTURE time");
         _;
     }
 
@@ -85,6 +85,8 @@ contract SigPage is DraftSetting {
     }
 
     function addPartyToDoc(address acct) public {
+        require(msg.sender == getAttorney() || msg.sender == getBookeeper());
+
         if (!isParty[acct]) {
             isParty[acct] = true;
             qtyOfParties++;
@@ -92,7 +94,9 @@ contract SigPage is DraftSetting {
         }
     }
 
-    function removePartyFromDoc(address acct) public onlyAttorney {
+    function removePartyFromDoc(address acct) public {
+        require(msg.sender == getAttorney() || msg.sender == getBookeeper());
+
         if (isParty[acct]) {
             delete isParty[acct];
             qtyOfParties--;
@@ -150,11 +154,11 @@ contract SigPage is DraftSetting {
         return _signers;
     }
 
-    function isEstablished() external view returns (bool) {
-        return docState == 2;
-    }
+    // function isEstablished() external view returns (bool) {
+    //     return docState == 2;
+    // }
 
-    function signedBy(address acct) external view returns (bool) {
-        return sigDate[acct] > 0;
-    }
+    // function signedBy(address acct) external view returns (bool) {
+    //     return sigDate[acct] > 0;
+    // }
 }

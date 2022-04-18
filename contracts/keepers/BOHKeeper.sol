@@ -97,10 +97,10 @@ contract BOHKeeper is BOSSetting, BOHSetting, BOMSetting {
     function effectiveSHA(address body) external onlyPartyOf(body) {
         require(_boh.isSubmitted(body), "SHA not submitted yet");
         // 将之前有效的SHA，撤销其效力
-        if (_boh.getTheOne() != address(0))
-            ISigPage(_boh.getTheOne()).updateStateOfDoc(5);
+        if (_boh.pointer() != address(0))
+            ISigPage(_boh.pointer()).updateStateOfDoc(5);
 
-        _boh.setPointer(body);
+        _boh.changePointer(body);
 
         ISigPage(body).updateStateOfDoc(4);
     }

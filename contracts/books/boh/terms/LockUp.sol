@@ -30,30 +30,30 @@ contract LockUp is BOSSetting, BOMSetting, DraftSetting {
     // 基准日条件未成就时，按“2277-09-19”设定到期日
     uint256 constant REMOTE_FUTURE = 9710553600;
 
-    // shareNumber => Locker
-    mapping(bytes32 => Locker) private _lockers;
+    // ssn => Locker
+    mapping(bytes6 => Locker) private _lockers;
 
-    // shareNumber => bool
-    mapping(bytes32 => bool) public isLocked;
+    // ssn => bool
+    mapping(bytes6 => bool) public isLocked;
 
     // ################
     // ##   Event   ##
     // ################
 
-    event SetLocker(bytes32 indexed shareNumber, uint256 dueDate);
+    event SetLocker(bytes6 indexed ssn, uint256 dueDate);
 
-    event AddKeyholder(bytes32 indexed shareNumber, address keyholder);
+    event AddKeyholder(bytes6 indexed ssn, address keyholder);
 
-    event RemoveKeyholder(bytes32 indexed shareNumber, address keyholder);
+    event RemoveKeyholder(bytes6 indexed ssn, address keyholder);
 
-    event DelLocker(bytes32 indexed shareNumber);
+    event DelLocker(bytes6 indexed ssn);
 
     // ################
     // ##  Modifier  ##
     // ################
 
-    modifier beLocked(bytes32 shareNumber) {
-        require(isLocked[shareNumber], "share NOT locked");
+    modifier beLocked(bytes6 ssn) {
+        require(isLocked[ssn], "share NOT locked");
         _;
     }
 
@@ -61,55 +61,47 @@ contract LockUp is BOSSetting, BOMSetting, DraftSetting {
     // ##   写接口   ##
     // ################
 
-    function setLocker(bytes32 shareNumber, uint256 dueDate)
+    function setLocker(bytes6 ssn, uint256 dueDate)
         external
         onlyAttorney
-        shareExist(shareNumber)
+        shareExist(ssn)
     {
-        _lockers[shareNumber].dueDate = dueDate == 0 ? REMOTE_FUTURE : dueDate;
-        isLocked[shareNumber] = true;
+        _lockers[ssn].dueDate = dueDate == 0 ? REMOTE_FUTURE : dueDate;
+        isLocked[ssn] = true;
 
-        emit SetLocker(shareNumber, _lockers[shareNumber].dueDate);
+        emit SetLocker(ssn, _lockers[ssn].dueDate);
     }
 
-    function delLocker(bytes32 shareNumber)
-        external
-        onlyAttorney
-        beLocked(shareNumber)
-    {
-        delete _lockers[shareNumber];
-        isLocked[shareNumber] = false;
+    function delLocker(bytes6 ssn) external onlyAttorney beLocked(ssn) {
+        delete _lockers[ssn];
+        isLocked[ssn] = false;
 
-        emit DelLocker(shareNumber);
+        emit DelLocker(ssn);
     }
 
-    function addKeyholder(bytes32 shareNumber, address keyholder)
+    function addKeyholder(bytes6 ssn, address keyholder)
         external
         onlyAttorney
-        beLocked(shareNumber)
+        beLocked(ssn)
     {
-        (bool exist, ) = _lockers[shareNumber].keyHolders.firstIndexOf(
-            keyholder
-        );
+        (bool exist, ) = _lockers[ssn].keyHolders.firstIndexOf(keyholder);
 
         if (!exist) {
-            _lockers[shareNumber].keyHolders.push(keyholder);
-            emit AddKeyholder(shareNumber, keyholder);
+            _lockers[ssn].keyHolders.push(keyholder);
+            emit AddKeyholder(ssn, keyholder);
         }
     }
 
-    function removeKeyholder(bytes32 shareNumber, address keyholder)
+    function removeKeyholder(bytes6 ssn, address keyholder)
         external
         onlyAttorney
-        beLocked(shareNumber)
+        beLocked(ssn)
     {
-        (bool exist, ) = _lockers[shareNumber].keyHolders.firstIndexOf(
-            keyholder
-        );
+        (bool exist, ) = _lockers[ssn].keyHolders.firstIndexOf(keyholder);
 
         if (exist) {
-            _lockers[shareNumber].keyHolders.removeByValue(keyholder);
-            emit RemoveKeyholder(shareNumber, keyholder);
+            _lockers[ssn].keyHolders.removeByValue(keyholder);
+            emit RemoveKeyholder(ssn, keyholder);
         }
     }
 
@@ -117,14 +109,14 @@ contract LockUp is BOSSetting, BOMSetting, DraftSetting {
     // ##  查询接口  ##
     // ################
 
-    function getLocker(bytes32 shareNumber)
+    function getLocker(bytes6 ssn)
         public
         view
-        beLocked(shareNumber)
+        beLocked(ssn)
         returns (uint256 dueDate, address[] keyHolders)
     {
-        dueDate = _lockers[shareNumber].dueDate;
-        keyHolders = _lockers[shareNumber].keyHolders;
+        dueDate = _lockers[ssn].dueDate;
+        keyHolders = _lockers[ssn].keyHolders;
     }
 
     // ################
@@ -140,25 +132,25 @@ contract LockUp is BOSSetting, BOMSetting, DraftSetting {
         (, , , uint256 closingDate, , ) = IAgreement(ia).getDeal(sn);
 
         uint8 typeOfDeal = sn.typeOfDeal();
-        bytes32 shareNumber = sn.shareNumber(_bos.snList());
+        bytes6 ssn = sn.shortShareNumberOfDeal();
 
         if (
             typeOfDeal > 1 &&
-            isLocked[shareNumber] &&
-            _lockers[shareNumber].dueDate >= closingDate
+            isLocked[ssn] &&
+            _lockers[ssn].dueDate >= closingDate
         ) return true;
 
         return false;
     }
 
-    function _isExempted(bytes32 shareNumber, address[] consentParties)
+    function _isExempted(bytes6 ssn, address[] consentParties)
         private
         view
         returns (bool)
     {
-        if (!isLocked[shareNumber]) return true;
+        if (!isLocked[ssn]) return true;
 
-        Locker storage locker = _lockers[shareNumber];
+        Locker storage locker = _lockers[ssn];
 
         if (locker.keyHolders.length > consentParties.length) {
             return false;
@@ -187,8 +179,8 @@ contract LockUp is BOSSetting, BOMSetting, DraftSetting {
     {
         (address[] memory consentParties, ) = _bom.getYea(ia);
 
-        bytes32 shareNumber = sn.shareNumber(_bos.snList());
+        bytes6 ssn = sn.shortShareNumberOfDeal();
 
-        return _isExempted(shareNumber, consentParties);
+        return _isExempted(ssn, consentParties);
     }
 }

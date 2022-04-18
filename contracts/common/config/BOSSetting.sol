@@ -29,8 +29,8 @@ contract BOSSetting is AdminSetting {
         _;
     }
 
-    modifier shareExist(bytes32 shareNumber) {
-        require(_bos.isShare(shareNumber), "shareNumber NOT exist");
+    modifier shareExist(bytes6 ssn) {
+        require(_bos.isShare(ssn), "shareNumber NOT exist");
         _;
     }
 
@@ -38,8 +38,4 @@ contract BOSSetting is AdminSetting {
         _bos = IBookOfShares(bos);
         emit SetBOS(bos);
     }
-
-    // function getBOS() external view returns (address) {
-    //     return address(_bos);
-    // }
 }

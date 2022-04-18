@@ -41,7 +41,7 @@ interface IBookOfDocuments {
 
     function submitDoc(address body, bytes32 docHash) external;
 
-    function setPointer(address body) external;
+    // function setPointer(address body) external;
 
     //##################
     //##    读接口    ##
@@ -55,7 +55,7 @@ interface IBookOfDocuments {
 
     function isSubmitted(address body) external view returns (bool);
 
-    function qtyOfDocuments() external view returns (uint);
+    function qtyOfDocuments() external view returns (uint256);
 
     function docs() external view returns (bytes32[]);
 

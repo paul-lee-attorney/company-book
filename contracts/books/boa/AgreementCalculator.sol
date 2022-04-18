@@ -20,9 +20,12 @@ contract AgreementCalculator is BOSSetting {
         uint256 len = dealsList.length;
 
         for (uint256 i = 0; i < len; i++)
-            if (dealsList[i].seller(_bos.snList()) == acct) {
+            if (
+                dealsList[i].typeOfDeal() > 1 &&
+                dealsList[i].sellerOfDeal(_bos.snList()) == acct
+            ) {
                 (, uint256 parValue, , , , ) = IAgreement(ia).getDeal(
-                    dealsList[i]
+                    dealsList[i].shortOfDeal()
                 );
                 output += parValue;
             }
@@ -36,9 +39,9 @@ contract AgreementCalculator is BOSSetting {
         bytes32[] memory dealsList = IAgreement(ia).dealsList();
         uint256 len = dealsList.length;
         for (uint256 i = 0; i < len; i++)
-            if (dealsList[i].buyer() == acct) {
+            if (dealsList[i].typeOfDeal() > 1 && dealsList[i].buyerOfDeal() == acct) {
                 (, uint256 parValue, , , , ) = IAgreement(ia).getDeal(
-                    dealsList[i]
+                    dealsList[i].shortOfDeal()
                 );
                 output += parValue;
             }

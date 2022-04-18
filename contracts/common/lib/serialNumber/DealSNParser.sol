@@ -1,46 +1,49 @@
 pragma solidity ^0.4.24;
 
 library DealSNParser {
-    function sequenceOfDeal(bytes32 sn) internal pure returns (uint16) {
-        return uint16(bytes2(sn));
+    function classOfDeal(bytes32 sn) internal pure returns (uint8) {
+        return uint8(sn[0]);
     }
 
     function typeOfDeal(bytes32 sn) internal pure returns (uint8) {
-        return uint8(sn[3]);
+        return uint8(sn[1]);
     }
 
-    function classOfDeal(bytes32 sn) internal pure returns (uint8) {
-        return uint8(sn[9]);
+    function sequenceOfDeal(bytes32 sn) internal pure returns (uint16) {
+        return uint16(bytes2(sn << 16));
     }
 
-    function buyer(bytes32 sn) internal pure returns (address) {
-        return address(bytes20(sn << 80));
+    function buyerOfDeal(bytes32 sn) internal pure returns (address) {
+        return address(bytes20(sn << 32));
     }
 
-    function shareNumber(bytes32 sn, bytes32[] memory sharesList)
+    function shortShareNumberOfDeal(bytes32 sn) internal pure returns (bytes6) {
+        return bytes6(sn << 192);
+    }
+
+    function shortOfDeal(bytes32 sn) internal pure returns (bytes6) {
+        return bytes6(sn << 16);
+    }
+
+    function shareNumberOfDeal(bytes32 sn, bytes32[] memory sharesList)
         internal
         pure
         returns (bytes32)
     {
-        bytes6 ssn = bytes6(sn << 24);
+        bytes6 ssn = bytes6(sn << 192);
         uint256 len = sharesList.length;
-
         for (uint256 i = 0; i < len; i++)
             if (ssn == bytes6(sharesList[i] << 8)) return sharesList[i];
-
-        return bytes32(0);
     }
 
-    function shortOfSeller(bytes32 sn) internal pure returns (bytes6) {
-        return bytes6(sn << 24);
-    }
-
-    function seller(bytes32 sn, bytes32[] memory sharesList)
+    function sellerOfDeal(bytes32 sn, bytes32[] memory sharesList)
         internal
         pure
         returns (address)
     {
-        bytes6 ssn = bytes6(sn << 24);
+        bytes6 ssn = bytes6(sn << 192);
+        if (sn == bytes6(0)) return address(0);
+
         uint256 len = sharesList.length;
 
         for (uint256 i = 0; i < len; i++)

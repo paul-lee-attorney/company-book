@@ -5,7 +5,7 @@
 pragma solidity ^0.4.24;
 
 library PledgeSNParser {
-    function shortOfShareNumber(bytes32 sn) internal pure returns (bytes6) {
+    function shortOfShare(bytes32 sn) internal pure returns (bytes6) {
         return bytes6(sn);
     }
 
@@ -13,15 +13,15 @@ library PledgeSNParser {
         return uint16(bytes2(sn << 48));
     }
 
-    function createDateOfPledge(bytes32 sn) internal pure returns (uint256) {
-        return uint256(bytes4(sn << 64));
+    function createDateOfPledge(bytes32 sn) internal pure returns (uint32) {
+        return uint32(bytes4(sn << 64));
     }
 
     function shortOfPledge(bytes32 sn) internal pure returns (bytes6) {
         return bytes6(sn << 48);
     }
 
-    function creditor(bytes32 sn) internal pure returns (address) {
+    function debtor(bytes32 sn) internal pure returns (address) {
         return address(uint160(sn));
     }
 

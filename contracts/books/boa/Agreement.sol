@@ -15,19 +15,21 @@ import "../../common/components/SigPage.sol";
 
 contract Agreement is BOSSetting, SigPage {
     using SNFactory for bytes;
+    using SNFactory for bytes32;
     using DealSNParser for bytes32;
     using ShareSNParser for bytes32;
     using ArrayUtils for bytes32[];
 
     /* struct sn{
-        uint16 sequence; 2
-        uint8 typeOfDeal; 1   // 1-CI 2-ST(to 3rd) 3-ST(internal) 4-RT(replaced sales to against voter)
-        bytes6 shortShareNumber; 6
         uint8 class; 1
+        uint8 typeOfDeal; 1   // 1-CI 2-ST(to 3rd) 3-ST(internal) 4-RT(replaced sales to against voter)
+        uint16 sequence; 2
         address buyer; 20
+        bytes6 shortShareNumber; 6
 } */
 
     struct Deal {
+        bytes32 sn;
         uint256 unitPrice;
         uint256 parValue;
         uint256 paidPar;
@@ -42,11 +44,11 @@ contract Agreement is BOSSetting, SigPage {
     // party address => parValue
     // mapping(address => uint256) public parToBuy;
 
-    // sn => Deal
-    mapping(bytes32 => Deal) private _deals;
+    // ssn => Deal
+    mapping(bytes6 => Deal) private _deals;
 
-    // sn => exist?
-    mapping(bytes32 => bool) public isDeal;
+    // ssn => exist?
+    mapping(bytes6 => bool) public isDeal;
 
     bytes32[] private _dealsList;
 
@@ -76,7 +78,7 @@ contract Agreement is BOSSetting, SigPage {
     );
 
     event SplitDeal(
-        bytes32 indexed sn,
+        bytes32 indexed ssn,
         bytes32 indexed extSN,
         uint256 parValue,
         uint256 paidPar
@@ -84,7 +86,7 @@ contract Agreement is BOSSetting, SigPage {
 
     event DelDeal(bytes32 indexed sn);
 
-    event SetTypeOfIA(uint8 _typeOfIA);
+    // event SetTypeOfIA(uint8 _typeOfIA);
 
     event ClearDealCP(
         bytes32 indexed sn,
@@ -101,13 +103,13 @@ contract Agreement is BOSSetting, SigPage {
     //##   Modifier   ##
     //##################
 
-    modifier onlyCleared(bytes32 sn) {
-        require(_deals[sn].state == 1);
+    modifier onlyCleared(bytes6 ssn) {
+        require(_deals[ssn].state == 1);
         _;
     }
 
-    modifier dealExist(bytes32 sn) {
-        require(isDeal[sn], "NOT a deal sn");
+    modifier dealExist(bytes6 ssn) {
+        require(isDeal[ssn], "NOT a deal sn");
         _;
     }
 
@@ -116,19 +118,19 @@ contract Agreement is BOSSetting, SigPage {
     //##################
 
     function _createSN(
-        uint16 sequence,
-        uint8 typeOfDeal,
-        bytes32 shareNumber,
         uint8 class,
-        address buyer
+        uint8 typeOfDeal,
+        uint16 sequence,
+        address buyer,
+        bytes32 shareNumber
     ) private pure returns (bytes32) {
         bytes memory _sn = new bytes(32);
 
-        _sn = _sn.sequenceToSN(0, sequence);
-        _sn[2] = bytes1(typeOfDeal);
-        _sn = _sn.bytes32ToSN(3, shareNumber, 1, 6);
-        _sn[9] = bytes1(class);
-        _sn = _sn.addrToSN(10, buyer);
+        _sn[0] = bytes1(class);
+        _sn[1] = bytes1(typeOfDeal);
+        _sn = _sn.sequenceToSN(2, sequence);
+        _sn = _sn.addrToSN(4, buyer);
+        _sn = _sn.bytes32ToSN(24, shareNumber, 1, 6);
 
         return _sn.bytesToBytes32();
     }
@@ -151,12 +153,12 @@ contract Agreement is BOSSetting, SigPage {
         require(closingDate > now, "closingDate shall be future");
 
         if (typeOfDeal > 1) {
-            require(_bos.isShare(shareNumber), "shareNumber not exist");
+            require(_bos.isShare(shareNumber.short()), "shareNumber not exist");
 
             require(shareNumber.class() == class, "class NOT correct");
 
-            (uint256 parValueOfShare, uint256 paidParOfShare, , , , ) = _bos
-                .getShare(shareNumber);
+            (, uint256 parValueOfShare, uint256 paidParOfShare, , , , ) = _bos
+                .getShare(shareNumber.short());
             require(parValueOfShare >= parValue, "parValue overflow");
             require(paidParOfShare >= paidPar, "paidPar overflow");
 
@@ -181,65 +183,72 @@ contract Agreement is BOSSetting, SigPage {
         counterOfDeals++;
 
         bytes32 sn = _createSN(
-            counterOfDeals,
-            typeOfDeal,
-            shareNumber,
             class,
-            buyer
+            typeOfDeal,
+            counterOfDeals,
+            buyer,
+            shareNumber
         );
 
-        _dealsList.push(sn);
+        Deal storage deal = _deals[sn.shortOfDeal()];
 
-        Deal storage deal = _deals[sn];
-
+        deal.sn = sn;
         deal.unitPrice = unitPrice;
         deal.parValue = parValue;
         deal.paidPar = paidPar;
         deal.closingDate = closingDate;
 
+        sn.insertToQue(_dealsList);
+        isDeal[sn.shortOfDeal()] = true;
+
         emit CreateDeal(sn, unitPrice, parValue, paidPar, closingDate);
     }
 
-    function delDeal(bytes32 sn) external onlyAttorney dealExist(sn) {
+    function delDeal(bytes6 ssn) external onlyAttorney dealExist(ssn) {
         // Deal storage deal = _deals[sn];
 
+        bytes32 sn = _deals[ssn].sn;
+
         if (sn.typeOfDeal() > 1) {
-            // address seller = sn.seller();
-            removePartyFromDoc(sn.seller(_bos.snList()));
+            // address seller = sn.sellerOfDeal();
+            removePartyFromDoc(sn.sellerOfDeal(_bos.snList()));
             // parToSell[seller] -= deal.parValue;
         }
 
-        // address buyer = sn.buyer();
+        // address buyer = sn.buyerOfDeal();
 
-        removePartyFromDoc(sn.buyer());
+        removePartyFromDoc(sn.buyerOfDeal());
         // parToBuy[buyer] -= deal.parValue;
 
-        delete _deals[sn];
+        delete _deals[ssn];
         _dealsList.removeByValue(sn);
+        isDeal[ssn] = false;
 
         emit DelDeal(sn);
     }
 
     function updateDeal(
-        bytes32 sn,
+        bytes6 ssn,
         uint256 unitPrice,
         uint256 parValue,
         uint256 paidPar,
         uint32 closingDate
-    ) external onlyAttorney dealExist(sn) {
+    ) external onlyAttorney dealExist(ssn) {
         require(parValue > 0, "parValue is ZERO");
         require(paidPar <= parValue, "paidPar overflow");
         require(closingDate > now, "closingDate shall be future");
 
-        Deal storage deal = _deals[sn];
+        Deal storage deal = _deals[ssn];
+
+        bytes32 sn = deal.sn;
 
         if (sn.typeOfDeal() > 1) {
-            (uint256 parValueOfShare, uint256 paidParOfShare, , , , ) = _bos
-                .getShare(sn.shareNumber(_bos.snList()));
+            (, uint256 parValueOfShare, uint256 paidParOfShare, , , , ) = _bos
+                .getShare(sn.shortShareNumberOfDeal());
             require(parValueOfShare >= parValue, "parValue overflow");
             require(paidParOfShare >= paidPar, "paidPar overflow");
 
-            // address seller = sn.seller(_bos.snList());
+            // address seller = sn.sellerOfDeal(_bos.snList());
 
             // if (parValue != deal.parValue)
             //     parToSell[seller] =
@@ -249,7 +258,7 @@ contract Agreement is BOSSetting, SigPage {
         }
 
         // if (parValue != deal.parValue) {
-        //     address buyer = sn.buyer();
+        //     address buyer = sn.buyerOfDeal();
         //     parToBuy[buyer] = parToBuy[buyer] + parValue - deal.parValue;
         // }
 
@@ -262,11 +271,11 @@ contract Agreement is BOSSetting, SigPage {
     }
 
     function clearDealCP(
-        bytes32 sn,
+        bytes6 ssn,
         bytes32 hashLock,
         uint32 closingDate
-    ) external onlyBookeeper dealExist(sn) {
-        Deal storage deal = _deals[sn];
+    ) external onlyBookeeper dealExist(ssn) {
+        Deal storage deal = _deals[ssn];
 
         require(
             closingDate == 0 || now < closingDate,
@@ -285,15 +294,15 @@ contract Agreement is BOSSetting, SigPage {
 
         if (closingDate > 0) deal.closingDate = closingDate;
 
-        emit ClearDealCP(sn, 1, hashLock, deal.closingDate);
+        emit ClearDealCP(deal.sn, deal.state, hashLock, deal.closingDate);
     }
 
-    function closeDeal(bytes32 sn, string hashKey)
+    function closeDeal(bytes6 ssn, string hashKey)
         external
-        onlyCleared(sn)
+        onlyCleared(ssn)
         onlyBookeeper
     {
-        Deal storage deal = _deals[sn];
+        Deal storage deal = _deals[ssn];
 
         require(
             deal.hashLock == keccak256(bytes(hashKey)),
@@ -304,15 +313,15 @@ contract Agreement is BOSSetting, SigPage {
 
         deal.state = 2;
 
-        emit CloseDeal(sn, hashKey);
+        emit CloseDeal(deal.sn, hashKey);
     }
 
-    function revokeDeal(bytes32 sn, string hashKey)
+    function revokeDeal(bytes6 ssn, string hashKey)
         external
-        onlyCleared(sn)
+        onlyCleared(ssn)
         onlyBookeeper
     {
-        Deal storage deal = _deals[sn];
+        Deal storage deal = _deals[ssn];
 
         require(deal.closingDate < now, "NOT reached closing date");
 
@@ -323,8 +332,10 @@ contract Agreement is BOSSetting, SigPage {
 
         deal.state = 3;
 
+        bytes32 sn = deal.sn;
+
         if (sn.typeOfDeal() > 1)
-            _bos.increaseCleanPar(sn.shareNumber(_bos.snList()), deal.parValue);
+            _bos.increaseCleanPar(sn.shortShareNumberOfDeal(), deal.parValue);
 
         emit RevokeDeal(sn, hashKey);
     }
@@ -338,28 +349,29 @@ contract Agreement is BOSSetting, SigPage {
 
         for (uint8 i = 0; i < 32; i++) _sn[i] = sn[i];
 
-        _sn = _sn.sequenceToSN(0, sequence);
-        _sn[2] = bytes1(4);
-        _sn = _sn.addrToSN(10, buyer);
+        _sn[1] = bytes1(4);
+        _sn = _sn.sequenceToSN(2, sequence);
+        _sn = _sn.addrToSN(4, buyer);
 
         return _sn.bytesToBytes32();
     }
 
     function splitDeal(
-        bytes32 sn,
+        bytes6 ssn,
         address buyer,
         uint256 parValue,
         uint256 paidPar
-    ) external onlyCleared(sn) onlyBookeeper {
+    ) external onlyCleared(ssn) onlyBookeeper {
         counterOfDeals++;
+
+        Deal storage deal = _deals[ssn];
+        bytes32 sn = deal.sn;
 
         bytes32 extSN = _extendSN(sn, counterOfDeals, buyer);
 
-        _dealsList.push(extSN);
+        Deal storage deal_1 = _deals[extSN.shortOfDeal()];
 
-        Deal storage deal = _deals[sn];
-        Deal storage deal_1 = _deals[extSN];
-
+        deal_1.sn = extSN;
         deal_1.unitPrice = deal.unitPrice;
 
         require(deal.parValue >= parValue, "parValue over flow");
@@ -374,6 +386,9 @@ contract Agreement is BOSSetting, SigPage {
 
         addPartyToDoc(buyer);
 
+        extSN.insertToQue(_dealsList);
+        isDeal[extSN.shortOfDeal()] = true;
+
         emit SplitDeal(sn, extSN, parValue, paidPar);
     }
 
@@ -381,11 +396,12 @@ contract Agreement is BOSSetting, SigPage {
     //  ##       查询接口              ##
     //  #################################
 
-    function getDeal(bytes32 sn)
+    function getDeal(bytes6 ssn)
         external
         view
-        dealExist(sn)
+        dealExist(ssn)
         returns (
+            bytes32 sn,
             uint256 unitPrice,
             uint256 parValue,
             uint256 paidPar,
@@ -394,8 +410,9 @@ contract Agreement is BOSSetting, SigPage {
             bytes32 hashLock
         )
     {
-        Deal storage deal = _deals[sn];
+        Deal storage deal = _deals[ssn];
 
+        sn = deal.sn;
         unitPrice = deal.unitPrice;
         parValue = deal.parValue;
         paidPar = deal.paidPar;
@@ -407,31 +424,4 @@ contract Agreement is BOSSetting, SigPage {
     function dealsList() external view returns (bytes32[]) {
         return _dealsList;
     }
-
-    // function parToSell(address acct) external view returns (uint256 output) {
-    //     uint256 len = _dealsList.length;
-    //     for (uint256 i = 0; i < len; i++)
-    //         if (_dealsList[i].seller(_bos.snList()) == acct)
-    //             output += _deals[_dealsList[i]].parValue;
-    // }
-
-    // function parToBuy(address acct) external view returns (uint256 output) {
-    //     uint256 len = _dealsList.length;
-    //     for (uint256 i = 0; i < len; i++)
-    //         if (_dealsList[i].buyer() == acct)
-    //             output += _deals[_dealsList[i]].parValue;
-    // }
-
-    // // 1-CI 2-ST(to 3rd) 3-ST(internal) 4-(1&3) 5-(2&3) 6-(1&2&3) 7-(1&2)
-    // function typeOfIA() external view returns (uint8 output) {
-    //     uint256 len = _dealsList.length;
-    //     uint8[3] memory signal;
-    //     for (uint256 i = 0; i < len; i++) {
-    //         uint8 typeOfDeal = _dealsList[i].typeOfDeal();
-    //         signal[typeOfDeal - 1] = typeOfDeal;
-    //     }
-    //     // 协议类别计算
-    //     uint8 sumOfSignal = signal[0] + signal[1] + signal[2];
-    //     output = sumOfSignal == 3 ? signal[2] == 0 ? 7 : 3 : sumOfSignal;
-    // }
 }

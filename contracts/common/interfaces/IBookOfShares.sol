@@ -16,7 +16,7 @@ interface IBookOfShares {
     ) external;
 
     function payInCapital(
-        bytes32 shareNumber,
+        bytes6 ssn,
         uint256 amount,
         uint256 paidInDate
     ) external;
@@ -36,14 +36,13 @@ interface IBookOfShares {
         uint256 paidInAmount
     ) external;
 
-    function updateShareState(bytes32 shareNumber, uint8 state) external;
+    function updateShareState(bytes6 ssn, uint8 state) external;
 
-    function updatePaidInDeadline(bytes32 shareNumber, uint256 paidInDeadline)
-        external;
+    function updatePaidInDeadline(bytes6 ssn, uint256 paidInDeadline) external;
 
-    function increaseCleanPar(bytes32 shareNumber, uint256 parValue) external;
+    function increaseCleanPar(bytes6 ssn, uint256 parValue) external;
 
-    function decreaseCleanPar(bytes32 shareNumber, uint256 parValue) external;
+    function decreaseCleanPar(bytes6 ssn, uint256 parValue) external;
 
     // ##################
     // ##   查询接口   ##
@@ -55,10 +54,11 @@ interface IBookOfShares {
 
     function snList() external view returns (bytes32[]);
 
-    function getShare(bytes32 shareNumber)
+    function getShare(bytes6 ssn)
         external
         view
         returns (
+            bytes32 shareNumber,
             uint256 parValue,
             uint256 paidPar,
             uint256 cleanPar,
@@ -67,14 +67,14 @@ interface IBookOfShares {
             uint8 state
         );
 
-    function isShare(bytes32 shareNumber) external view returns (bool);
+    function isShare(bytes6 ssn) external view returns (bool);
 
     function sharesList() external view returns (bytes32[]);
 
-    function getPreSN(bytes32 shareNumber)
-        external
-        view
-        returns (bytes32 preSN);
+    // function getPreSN(bytes32 shareNumber)
+    //     external
+    //     view
+    //     returns (bytes32 preSN);
 
     function membersOfClass(uint8 class) external view returns (address[]);
 

@@ -13,6 +13,7 @@ import "../../common/config/AdminSetting.sol";
 
 contract SharesRepo is AdminSetting {
     using SNFactory for bytes;
+    using SNFactory for bytes32;
     using ShareSNParser for bytes32;
     using SafeMath for uint256;
     using ArrayUtils for uint256[];
@@ -45,11 +46,11 @@ contract SharesRepo is AdminSetting {
     //实缴出资总额
     uint256 public paidCap;
 
-    //shareNumber => Share
-    mapping(bytes32 => Share) internal _shares;
+    //ssn => Share
+    mapping(bytes6 => Share) internal _shares;
 
-    //shareNumber => exist?
-    mapping(bytes32 => bool) public isShare;
+    //ssn => exist?
+    mapping(bytes6 => bool) public isShare;
 
     //股权序列号计数器（2**16-1, 0-65535）
     uint16 public counterOfShares;
@@ -72,14 +73,10 @@ contract SharesRepo is AdminSetting {
         uint256 unitPrice
     );
 
-    event PayInCapital(
-        bytes32 indexed shareNumber,
-        uint256 amount,
-        uint32 paidInDate
-    );
+    event PayInCapital(bytes6 indexed ssn, uint256 amount, uint32 paidInDate);
 
     event SubAmountFromShare(
-        bytes32 indexed shareNumber,
+        bytes6 indexed ssn,
         uint256 parValue,
         uint256 paidPar
     );
@@ -100,30 +97,27 @@ contract SharesRepo is AdminSetting {
 
     event DeregisterShare(bytes32 indexed shareNumber);
 
-    event UpdateShareState(bytes32 indexed shareNumber, uint8 state);
+    event UpdateShareState(bytes6 indexed ssn, uint8 state);
 
-    event UpdatePaidInDeadline(
-        bytes32 indexed shareNumber,
-        uint32 paidInDeadline
-    );
+    event UpdatePaidInDeadline(bytes6 indexed ssn, uint32 paidInDeadline);
 
-    event DecreaseCleanPar(bytes32 shareNumber, uint256 parValue);
+    event DecreaseCleanPar(bytes6 ssn, uint256 parValue);
 
-    event IncreaseCleanPar(bytes32 shareNumber, uint256 parValue);
+    event IncreaseCleanPar(bytes6 ssn, uint256 parValue);
 
-    event PledgeShare(bytes32 indexed shareNumber, uint256 parValue);
+    event PledgeShare(bytes6 indexed ssn, uint256 parValue);
 
     //##################
     //##   Modifier   ##
     //##################
 
-    modifier notFreezed(bytes32 shareNumber) {
-        require(_shares[shareNumber].state < 4, "FREEZED share");
+    modifier notFreezed(bytes6 ssn) {
+        require(_shares[ssn].state < 4, "FREEZED share");
         _;
     }
 
-    modifier shareExist(bytes32 shareNumber) {
-        require(isShare[shareNumber], "shareNumber NOT exist");
+    modifier shareExist(bytes6 ssn) {
+        require(isShare[ssn], "ssn NOT exist");
         _;
     }
 
@@ -136,13 +130,13 @@ contract SharesRepo is AdminSetting {
         uint16 sequenceNumber,
         uint32 issueDate,
         address shareholder,
-        bytes5 preSN
+        bytes6 preSN
     ) internal pure returns (bytes32 sn) {
         bytes memory _sn = new bytes(32);
 
         _sn[0] = bytes1(class);
-        _sn = _sn.intToSN(1, sequenceNumber, 2);
-        _sn = _sn.intToSN(3, issueDate, 4);
+        _sn = _sn.sequenceToSN(1, sequenceNumber);
+        _sn = _sn.dateToSN(3, issueDate);
         _sn = _sn.addrToSN(7, shareholder);
         _sn = _sn.bytes32ToSN(27, bytes32(preSN), 0, 5); // sequenceNumber 2 + issueDate 3
 
@@ -158,7 +152,9 @@ contract SharesRepo is AdminSetting {
     ) internal {
         // require(!isShare[shareNumber], "shareNumber is USED");
 
-        Share storage share = _shares[shareNumber];
+        bytes6 ssn = shareNumber.short();
+
+        Share storage share = _shares[ssn];
 
         share.shareNumber = shareNumber;
         share.parValue = parValue;
@@ -167,7 +163,7 @@ contract SharesRepo is AdminSetting {
         share.paidInDeadline = paidInDeadline;
         share.unitPrice = unitPrice;
 
-        isShare[shareNumber] = true;
+        isShare[ssn] = true;
         shareNumber.insertToQue(_snList);
 
         emit IssueShare(
@@ -180,22 +176,24 @@ contract SharesRepo is AdminSetting {
     }
 
     function _deregisterShare(bytes32 shareNumber) internal {
-        delete _shares[shareNumber];
+        bytes6 ssn = shareNumber.short();
+
+        delete _shares[ssn];
         _snList.removeByValue(shareNumber);
-        isShare[shareNumber] = false;
+        isShare[ssn] = false;
 
         emit DeregisterShare(shareNumber);
     }
 
     function _payInCapital(
-        bytes32 shareNumber,
+        bytes6 ssn,
         uint256 amount,
         uint32 paidInDate
     ) internal {
-        require(paidInDate > 0, "paidInDate NOT a PAST time");
+        require(paidInDate > 0, "ZERO paidInDate");
         require(paidInDate <= now + 2 hours, "paidInDate NOT a PAST time");
 
-        Share storage share = _shares[shareNumber];
+        Share storage share = _shares[ssn];
 
         require(paidInDate <= share.paidInDeadline);
         require(share.paidPar + amount <= share.parValue, "amount overflow");
@@ -203,17 +201,17 @@ contract SharesRepo is AdminSetting {
         share.paidPar += amount; //溢出校验已通过
         share.cleanPar += amount;
 
-        emit PayInCapital(shareNumber, amount, paidInDate);
+        emit PayInCapital(ssn, amount, paidInDate);
     }
 
     function _subAmountFromShare(
-        bytes32 shareNumber,
+        bytes6 ssn,
         uint256 parValue,
         uint256 paidPar
     ) internal {
         // require(paidPar <= parValue, "paidPar BIGGER than parValue");
 
-        Share storage share = _shares[shareNumber];
+        Share storage share = _shares[ssn];
 
         // require(paidPar <= share.paidPar, "paidPar overflow");
 
@@ -221,7 +219,7 @@ contract SharesRepo is AdminSetting {
         share.paidPar -= paidPar;
         share.cleanPar -= paidPar;
 
-        emit SubAmountFromShare(shareNumber, parValue, paidPar);
+        emit SubAmountFromShare(ssn, parValue, paidPar);
     }
 
     function _capIncrease(uint256 parValue, uint256 paidPar) internal {
@@ -238,14 +236,14 @@ contract SharesRepo is AdminSetting {
         emit CapDecrease(parValue, regCap, paidPar, paidCap);
     }
 
-    function decreaseCleanPar(bytes32 shareNumber, uint256 parValue)
+    function decreaseCleanPar(bytes6 ssn, uint256 parValue)
         external
-        shareExist(shareNumber)
-        notFreezed(shareNumber)
+        shareExist(ssn)
+        notFreezed(ssn)
     {
         require(parValue > 0, "ZERO parValue");
 
-        Share storage share = _shares[shareNumber];
+        Share storage share = _shares[ssn];
 
         require(parValue <= share.cleanPar, "INSUFFICIENT cleanPar");
 
@@ -253,16 +251,16 @@ contract SharesRepo is AdminSetting {
 
         if (share.state < 2) share.state += 2;
 
-        emit DecreaseCleanPar(shareNumber, parValue);
+        emit DecreaseCleanPar(ssn, parValue);
     }
 
-    function increaseCleanPar(bytes32 shareNumber, uint256 parValue)
+    function increaseCleanPar(bytes6 ssn, uint256 parValue)
         external
-        shareExist(shareNumber)
+        shareExist(ssn)
     {
         require(parValue > 0, "ZERO parValue");
 
-        Share storage share = _shares[shareNumber];
+        Share storage share = _shares[ssn];
         require(
             share.paidPar >= (share.cleanPar + parValue),
             "parValue overflow"
@@ -273,31 +271,31 @@ contract SharesRepo is AdminSetting {
         if (share.cleanPar == share.paidPar && share.state != 4)
             share.state = 0;
 
-        emit IncreaseCleanPar(shareNumber, parValue);
+        emit IncreaseCleanPar(ssn, parValue);
     }
 
-    /// @param shareNumber - 股票编号
+    /// @param ssn - 股票短号
     /// @param state - 股票状态 （0：正常，1：出质，2：远期占用; 3:1+2; 4:查封; 5:1+4; 6:2+4; 7:1+2+4 ）
-    function updateShareState(bytes32 shareNumber, uint8 state)
+    function updateShareState(bytes6 ssn, uint8 state)
         external
         onlyBookeeper
-        shareExist(shareNumber)
+        shareExist(ssn)
     {
-        _shares[shareNumber].state = state;
+        _shares[ssn].state = state;
 
-        emit UpdateShareState(shareNumber, state);
+        emit UpdateShareState(ssn, state);
     }
 
-    /// @param shareNumber - 股票编号
+    /// @param ssn - 股票短号
     /// @param paidInDeadline - 实缴出资期限
-    function updatePaidInDeadline(bytes32 shareNumber, uint32 paidInDeadline)
+    function updatePaidInDeadline(bytes6 ssn, uint32 paidInDeadline)
         external
         onlyBookeeper
-        shareExist(shareNumber)
+        shareExist(ssn)
     {
-        _shares[shareNumber].paidInDeadline = paidInDeadline;
+        _shares[ssn].paidInDeadline = paidInDeadline;
 
-        emit UpdatePaidInDeadline(shareNumber, paidInDeadline);
+        emit UpdatePaidInDeadline(ssn, paidInDeadline);
     }
 
     //##################
@@ -308,11 +306,12 @@ contract SharesRepo is AdminSetting {
         return _snList;
     }
 
-    function getShare(bytes32 shareNumber)
+    function getShare(bytes6 ssn)
         public
         view
-        shareExist(shareNumber)
+        shareExist(ssn)
         returns (
+            bytes32 shareNumber,
             uint256 parValue,
             uint256 paidPar,
             uint256 cleanPar,
@@ -321,52 +320,14 @@ contract SharesRepo is AdminSetting {
             uint8 state
         )
     {
-        Share storage share = _shares[shareNumber];
+        Share storage share = _shares[ssn];
 
+        shareNumber = share.shareNumber;
         parValue = share.parValue;
         paidPar = share.paidPar;
         cleanPar = share.cleanPar;
         paidInDeadline = share.paidInDeadline;
         unitPrice = share.unitPrice;
         state = share.state;
-    }
-
-    function parseSN(bytes32 shareNumber)
-        external
-        view
-        shareExist(shareNumber)
-        returns (
-            uint8 class,
-            uint16 sequence,
-            uint32 issueDate,
-            address shareholder,
-            bytes5 preSN
-        )
-    {
-        class = uint8(bytes1(shareNumber));
-        sequence = uint16(bytes2(shareNumber << 8));
-        issueDate = uint32(bytes4(shareNumber << 24));
-        shareholder = address(bytes20(shareNumber << 56));
-        preSN = bytes5(shareNumber << 216);
-    }
-
-    function preShareNumber(bytes32 shareNumber)
-        public
-        view
-        shareExist(shareNumber)
-        returns (bytes32 preSN)
-    {
-        bytes5 ssn = bytes5(uint40(shareNumber));
-
-        if (ssn > 0) {
-            uint256 len = _snList.length;
-
-            for (uint256 i = 0; i < len; i++) {
-                if (ssn == bytes5(_snList[i] << 8)) {
-                    preSN = _snList[i];
-                    break;
-                }
-            }
-        }
     }
 }

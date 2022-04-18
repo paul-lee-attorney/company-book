@@ -118,7 +118,7 @@ contract BOMKeeper is
 
         require(sn.typeOfDeal() == 2, "NOT a 3rd party ST Deal");
         require(
-            msg.sender == sn.seller(_bos.snList()),
+            msg.sender == sn.sellerOfDeal(_bos.snList()),
             "NOT Seller of the Deal"
         );
 
@@ -152,7 +152,10 @@ contract BOMKeeper is
     ) external currentDate(turnOverDate) {
         require(sn.typeOfDeal() == 4, "NOT a replaced deal");
 
-        require(ISigPage(ia).sigDate(sn.buyer()) == 0, "already SIGNED deal");
+        require(
+            ISigPage(ia).sigDate(sn.buyerOfDeal()) == 0,
+            "already SIGNED deal"
+        );
 
         bytes32 rule = IVotingRules(
             getSHA().getTerm(uint8(TermTitle.VOTING_RULES))
@@ -168,7 +171,7 @@ contract BOMKeeper is
             "signe deadline NOT reached"
         );
 
-        _bom.turnOverVote(ia, sn.buyer(), turnOverDate);
+        _bom.turnOverVote(ia, sn.buyerOfDeal(), turnOverDate);
         _bom.voteCounting(ia, _getVotingType(ia));
     }
 }

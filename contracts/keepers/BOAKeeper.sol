@@ -106,8 +106,8 @@ contract BOAKeeper is
         require(_bom.isPassed(ia), "Motion NOT passed");
 
         uint8 typeOfDeal = sn.typeOfDeal();
-        bytes32 shareNumber = sn.shareNumber(_bos.snList());
-        address seller = sn.seller(_bos.snList());
+        bytes6 ssn = sn.shortShareNumberOfDeal();
+        address seller = sn.sellerOfDeal(_bos.snList());
 
         //交易发起人为卖方或簿记管理人(Bookeeper);
         address sender = msg.sender;
@@ -121,7 +121,7 @@ contract BOAKeeper is
             _checkSHA(_termsForShareTransfer, ia, sn);
 
             (, uint256 parOfDeal, , , , ) = IAgreement(ia).getDeal(sn);
-            _bos.decreaseCleanPar(shareNumber, parOfDeal);
+            _bos.decreaseCleanPar(ssn, parOfDeal);
         } else _checkSHA(_termsForCapitalIncrease, ia, sn);
 
         IAgreement(ia).clearDealCP(sn, hashLock, closingDate);
@@ -159,30 +159,30 @@ contract BOAKeeper is
 
         ) = IAgreement(ia).getDeal(sn);
 
-        // address buyer = sn.buyer();
+        // address buyer = sn.buyerOfDeal();
 
         //交易发起人为买方;
-        require(sn.buyer() == msg.sender, "仅 买方  可调用");
+        require(sn.buyerOfDeal() == msg.sender, "仅 买方  可调用");
 
         //验证hashKey, 执行Deal
         IAgreement(ia).closeDeal(sn, hashKey);
 
-        bytes32 shareNumber = sn.shareNumber(_bos.snList());
+        bytes32 shareNumber = sn.shareNumberOfDeal(_bos.snList());
 
         //释放Share的质押标记(若需)，执行交易
         if (shareNumber > bytes32(0)) {
-            _bos.increaseCleanPar(shareNumber, parValue);
+            _bos.increaseCleanPar(sn.shortShareNumberOfDeal(), parValue);
             _bos.transferShare(
                 shareNumber,
                 parValue,
                 paidPar,
-                sn.buyer(),
+                sn.buyerOfDeal(),
                 closingDate,
                 unitPrice
             );
         } else {
             _bos.issueShare(
-                sn.buyer(),
+                sn.buyerOfDeal(),
                 sn.classOfDeal(),
                 parValue,
                 paidPar,
@@ -203,13 +203,13 @@ contract BOAKeeper is
         address sender = msg.sender;
         require(
             (sn.typeOfDeal() == 1 && sender == getBookeeper()) ||
-                sender == sn.seller(_bos.snList()),
+                sender == sn.sellerOfDeal(_bos.snList()),
             "NOT seller or bookeeper"
         );
 
         IAgreement(ia).revokeDeal(sn, hashKey);
 
         if (sn.typeOfDeal() > 1)
-            _bos.updateShareState(sn.shareNumber(_bos.snList()), 0);
+            _bos.updateShareState(sn.shortShareNumberOfDeal(), 0);
     }
 }

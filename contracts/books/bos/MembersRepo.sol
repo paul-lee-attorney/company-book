@@ -116,7 +116,9 @@ contract MembersRepo is SharesRepo {
         for (uint256 i = 0; i < len; i++) {
             if (_snList[i].shareholder() == acct) {
                 sharesList.push(_snList[i]);
-                (uint256 par, uint256 paid, , , , ) = getShare(_snList[i]);
+                (, uint256 par, uint256 paid, , , , ) = getShare(
+                    _snList[i].short()
+                );
                 parValue += par;
                 paidPar += paid;
             }

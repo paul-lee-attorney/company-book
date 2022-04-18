@@ -229,8 +229,8 @@ contract TagAlong is AgreementCalculator, BOMSetting, Groups {
 
         for (uint8 i = 0; i < len; i++) {
             uint8 typeOfDeal = dealsList[i].typeOfDeal();
-            address seller = dealsList[i].seller(_bos.snList());
-            address buyer = dealsList[i].buyer();
+            address seller = dealsList[i].sellerOfDeal(_bos.snList());
+            address buyer = dealsList[i].buyerOfDeal();
 
             pToSell = 0;
             pToBuy = 0;
@@ -304,7 +304,7 @@ contract TagAlong is AgreementCalculator, BOMSetting, Groups {
 
         for (uint8 i = 0; i < dealsList.length; i++) {
             uint8 typeOfDeal = dealsList[i].typeOfDeal();
-            address seller = dealsList[i].seller(_bos.snList());
+            address seller = dealsList[i].sellerOfDeal(_bos.snList());
 
             if (
                 typeOfDeal > 1 &&

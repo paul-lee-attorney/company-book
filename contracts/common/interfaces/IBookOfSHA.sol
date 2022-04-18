@@ -17,7 +17,7 @@ interface IBookOfSHA {
 
     function submitSHA(address body, bytes32 docHash) external;
 
-    function setPointer(address body) external;
+    function changePointer(address body) external;
 
     //##################
     //##    读接口    ##
@@ -33,7 +33,7 @@ interface IBookOfSHA {
 
     function isSubmitted(address body) external view returns (bool);
 
-    function qtyOfDocuments() external view returns (uint);
+    function qtyOfDocuments() external view returns (uint256);
 
     function docs() external view returns (bytes32[]);
 
@@ -48,7 +48,5 @@ interface IBookOfSHA {
 
     function bodyToSN(address body) external view returns (bytes32);
 
-    function pointer() external view returns (bytes32);
-
-    function getTheOne() external view returns (address);
+    function pointer() external view returns (address);
 }

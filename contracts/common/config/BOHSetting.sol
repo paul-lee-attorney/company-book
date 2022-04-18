@@ -24,6 +24,6 @@ contract BOHSetting is AdminSetting {
     // }
 
     function getSHA() internal view returns (IShareholdersAgreement) {
-        return IShareholdersAgreement(_boh.getTheOne());
+        return IShareholdersAgreement(_boh.pointer());
     }
 }

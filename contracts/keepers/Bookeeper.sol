@@ -153,7 +153,7 @@ contract Bookeeper is
     ) external {
         require(shareNumber.shareholder() == msg.sender, "NOT shareholder");
 
-        _bos.decreaseCleanPar(shareNumber, pledgedPar);
+        _bos.decreaseCleanPar(shareNumber.short(), pledgedPar);
 
         _bop.createPledge(
             createDate,
@@ -174,23 +174,34 @@ contract Bookeeper is
         (bytes32 shareNumber, uint256 orgPledgedPar, , ) = _bop.getPledge(sn);
 
         if (pledgedPar < orgPledgedPar) {
-            require(msg.sender == sn.creditor(), "NOT creditor");
-            _bos.increaseCleanPar(shareNumber, orgPledgedPar - pledgedPar);
+            require(msg.sender == sn.debtor(), "NOT creditor");
+            _bos.increaseCleanPar(
+                shareNumber.short(),
+                orgPledgedPar - pledgedPar
+            );
         } else if (pledgedPar > orgPledgedPar) {
-            require(msg.sender == shareNumber.shareholder(), "NOT shareholder");
-            _bos.decreaseCleanPar(shareNumber, pledgedPar - orgPledgedPar);
+            (, , address creditor, ) = _bop.getPledge(sn.shortOfPledge());
+            require(msg.sender == creditor, "NOT creditor");
+            _bos.decreaseCleanPar(
+                shareNumber.short(),
+                pledgedPar - orgPledgedPar
+            );
         }
 
         _bop.updatePledge(sn, pledgedPar, guaranteedAmt);
     }
 
     function delPledge(bytes32 sn) external {
-        require(msg.sender == sn.creditor(), "NOT creditor");
+        (, uint256 pledgedPar, address creditor, ) = _bop.getPledge(
+            sn.shortOfPledge()
+        );
 
-        (bytes32 shareNumber, uint256 pledgedPar, , ) = _bop.getPledge(sn);
-        _bos.increaseCleanPar(shareNumber, pledgedPar);
+        require(msg.sender == creditor, "NOT creditor");
 
-        _bop.delPledge(sn);
+        // (bytes32 shareNumber, uint256 pledgedPar, , ) = _bop.getPledge(sn);
+        _bos.increaseCleanPar(sn.shortOfShare(), pledgedPar);
+
+        _bop.delPledge(sn.shortOfPledge());
     }
 
     // ###################
@@ -299,7 +310,7 @@ contract Bookeeper is
 
     //     require(sn.typeOfDeal() == 2, "NOT a 3rd party ST Deal");
     //     require(
-    //         msg.sender == sn.seller(_bos.snList()),
+    //         msg.sender == sn.sellerOfDeal(_bos.snList()),
     //         "NOT Seller of the Deal"
     //     );
 
@@ -333,7 +344,7 @@ contract Bookeeper is
     // ) external currentDate(turnOverDate) {
     //     require(sn.typeOfDeal() == 4, "NOT a replaced deal");
 
-    //     require(ISigPage(ia).sigDate(sn.buyer()) == 0, "already SIGNED deal");
+    //     require(ISigPage(ia).sigDate(sn.buyerOfDeal()) == 0, "already SIGNED deal");
 
     //     bytes32 rule = IVotingRules(
     //         getSHA().getTerm(uint8(TermTitle.VOTING_RULES))
@@ -351,126 +362,7 @@ contract Bookeeper is
 
     //     // IAgreement(ia).delDeal(sn);
 
-    //     _bom.turnOverVote(ia, sn.buyer(), turnOverDate);
+    //     _bom.turnOverVote(ia, sn.buyerOfDeal(), turnOverDate);
     //     _bom.voteCounting(ia, _getVotingType(ia));
     // }
-
-    // ##############
-    // ##   Deal   ##
-    // ##############
-
-    function pushToCoffer(
-        bytes32 sn,
-        address ia,
-        bytes32 hashLock,
-        uint256 closingDate
-    ) external returns (bool flag) {
-        require(_bom.isPassed(ia), "Motion NOT passed");
-
-        uint8 typeOfDeal = sn.typeOfDeal();
-        bytes32 shareNumber = sn.shareNumber(_bos.snList());
-        address seller = sn.seller(_bos.snList());
-
-        //交易发起人为卖方或簿记管理人(Bookeeper);
-        address sender = msg.sender;
-        require(
-            (typeOfDeal == 1 && sender == getBookeeper()) || sender == seller,
-            "NOT seller or Bookeeper"
-        );
-
-        //SHA校验
-        if (typeOfDeal > 1) flag = _checkFlag(_termsForShareTransfer, ia, sn);
-        else flag = _checkFlag(_termsForCapitalIncrease, ia, sn);
-
-        if (flag) {
-            IAgreement(ia).clearDealCP(sn, hashLock, closingDate);
-            if (typeOfDeal > 1) _bos.updateShareState(shareNumber, 1);
-        }
-    }
-
-    function _checkFlag(
-        TermTitle[] terms,
-        address ia,
-        bytes32 sn
-    ) private returns (bool flag) {
-        uint256 len = terms.length;
-        for (uint256 i = 0; i < len; i++) {
-            if (getSHA().hasTitle(uint8(terms[i]))) {
-                flag = getSHA().termIsExempted(uint8(terms[i]), ia, sn);
-                if (!flag) return;
-            }
-        }
-    }
-
-    function closeDeal(
-        bytes32 sn,
-        address ia,
-        uint32 closingDate,
-        string hashKey
-    ) external currentDate(closingDate) {
-        //校验ia是否注册;
-        require(_boa.isRegistered(ia), "协议  未注册");
-
-        (
-            uint256 unitPrice,
-            uint256 parValue,
-            uint256 paidPar,
-            ,
-            ,
-
-        ) = IAgreement(ia).getDeal(sn);
-
-        // address buyer = sn.buyer();
-
-        //交易发起人为买方;
-        require(sn.buyer() == msg.sender, "仅 买方  可调用");
-
-        //验证hashKey, 执行Deal
-        IAgreement(ia).closeDeal(sn, hashKey);
-
-        bytes32 shareNumber = sn.shareNumber(_bos.snList());
-
-        //释放Share的质押标记(若需)，执行交易
-        if (shareNumber > 0) {
-            _bos.updateShareState(shareNumber, 0);
-            _bos.transferShare(
-                shareNumber,
-                parValue,
-                paidPar,
-                sn.buyer(),
-                closingDate,
-                unitPrice
-            );
-        } else {
-            _bos.issueShare(
-                sn.buyer(),
-                sn.class(),
-                parValue,
-                paidPar,
-                closingDate, //paidInDeadline
-                closingDate, //issueDate
-                unitPrice //issuePrice
-            );
-        }
-    }
-
-    function revokeDeal(
-        bytes32 sn,
-        address ia,
-        string hashKey
-    ) external {
-        require(_boa.isRegistered(ia), "IA NOT registered");
-
-        address sender = msg.sender;
-        require(
-            (sn.typeOfDeal() == 1 && sender == getBookeeper()) ||
-                sender == sn.seller(_bos.snList()),
-            "NOT seller or bookeeper"
-        );
-
-        IAgreement(ia).revokeDeal(sn, hashKey);
-
-        if (sn.typeOfDeal() > 1)
-            _bos.updateShareState(sn.shareNumber(_bos.snList()), 0);
-    }
 }

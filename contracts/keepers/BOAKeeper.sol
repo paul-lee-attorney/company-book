@@ -112,7 +112,7 @@ contract BOAKeeper is
         //交易发起人为卖方或簿记管理人(Bookeeper);
         address sender = msg.sender;
         require(
-            (typeOfDeal == 1 && sender == getBookeeper()) || sender == seller,
+            (typeOfDeal == 1 && sender == getGK()) || sender == seller,
             "NOT seller or Bookeeper"
         );
 
@@ -202,7 +202,7 @@ contract BOAKeeper is
 
         address sender = msg.sender;
         require(
-            (sn.typeOfDeal() == 1 && sender == getBookeeper()) ||
+            (sn.typeOfDeal() == 1 && sender == getGK()) ||
                 sender == sn.sellerOfDeal(_bos.snList()),
             "NOT seller or bookeeper"
         );

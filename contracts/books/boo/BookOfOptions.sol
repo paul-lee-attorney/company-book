@@ -27,7 +27,7 @@ contract BookOfOptions is BOSSetting {
         uint8 state; // 0-pending; 1-issued; 2-executed; 3-futureReady; 4-closed; 5-expired;
     }
 
-    // bytes32 snOfOpt{
+    // bytes32 snInfo{
     //      uint8 typeOfOpt; //0-call; 1-put
     //      uint16 counterOfOptions;
     //      uint32 triggerDate;
@@ -119,7 +119,7 @@ contract BookOfOptions is BOSSetting {
         uint8 closingDays,
         uint256 price,
         uint256 parValue
-    ) external onlyBookeeper {
+    ) external onlyKeeper {
         require(typeOfOpt < 2, "typeOfOpt overflow");
         require(triggerDate > now, "triggerDate NOT future");
         require(price > 0, "price is ZERO");
@@ -158,7 +158,7 @@ contract BookOfOptions is BOSSetting {
         bytes6 ssn,
         bytes32 shareNumber,
         uint256 parValue
-    ) external onlyBookeeper optionExist(ssn) {
+    ) external onlyKeeper optionExist(ssn) {
         Option storage opt = _options[ssn];
 
         require(opt.state == 2, "WRONG state of option");
@@ -214,7 +214,7 @@ contract BookOfOptions is BOSSetting {
         bytes6 ssn,
         bytes32 shareNumber,
         uint256 parValue
-    ) external onlyBookeeper optionExist(ssn) {
+    ) external onlyKeeper optionExist(ssn) {
         bytes32 ft = _createFuture(shareNumber, parValue);
 
         bytes32[] storage fts = futures[ssn];
@@ -265,7 +265,7 @@ contract BookOfOptions is BOSSetting {
         bytes6 ssn,
         uint32 exerciseDate,
         bytes32 hashLock
-    ) external onlyBookeeper optionExist(ssn) currentDate(exerciseDate) {
+    ) external onlyKeeper optionExist(ssn) currentDate(exerciseDate) {
         Option storage opt = _options[ssn];
 
         bytes32 sn = opt.sn;
@@ -301,7 +301,7 @@ contract BookOfOptions is BOSSetting {
 
     function closeOption(bytes6 ssn, string hashKey)
         external
-        onlyBookeeper
+        onlyKeeper
         optionExist(ssn)
     {
         Option storage opt = _options[ssn];
@@ -321,7 +321,7 @@ contract BookOfOptions is BOSSetting {
         emit CloseOpt(opt.sn, hashKey);
     }
 
-    function revokeOption(bytes6 ssn) external onlyBookeeper optionExist(ssn) {
+    function revokeOption(bytes6 ssn) external onlyKeeper optionExist(ssn) {
         Option storage opt = _options[ssn];
 
         require(opt.state < 4, "WRONG state");

@@ -13,7 +13,7 @@ contract BOASetting is AdminSetting {
 
     event SetBOA(address boa);
 
-    function setBOA(address boa) external onlyBookeeper {
+    function setBOA(address boa) external onlyKeeper {
         _boa = IBookOfDocuments(boa);
         emit SetBOA(boa);
     }

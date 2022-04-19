@@ -13,7 +13,7 @@ contract BOPSetting is AdminSetting {
 
     event SetBOP(address bop);
 
-    function setBOP(address bop) external onlyBookeeper {
+    function setBOP(address bop) external onlyKeeper {
         _bop = IBookOfPledges(bop);
         emit SetBOP(bop);
     }

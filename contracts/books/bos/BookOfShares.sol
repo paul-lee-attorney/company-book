@@ -61,7 +61,7 @@ contract BookOfShares is MembersRepo {
         uint32 paidInDeadline,
         uint32 issueDate,
         uint256 issuePrice
-    ) external onlyBookeeper {
+    ) external onlyKeeper {
         require(shareholder != address(0), "shareholder address is ZERO");
         require(issueDate > 0, "ZERO issueDate");
         require(issueDate <= now + 2 hours, "issueDate NOT a PAST time");
@@ -105,7 +105,7 @@ contract BookOfShares is MembersRepo {
         bytes6 ssn,
         uint256 amount,
         uint32 paidInDate
-    ) external onlyBookeeper {
+    ) external onlyKeeper {
         // 增加“股票”项下实缴出资金额
         _payInCapital(ssn, amount, paidInDate);
 
@@ -127,7 +127,7 @@ contract BookOfShares is MembersRepo {
         address to,
         uint32 closingDate,
         uint256 unitPrice
-    ) external onlyBookeeper {
+    ) external onlyKeeper {
         require(to != address(0), "shareholder address is ZERO");
         require(closingDate <= now + 2 hours, "closingDate NOT a PAST time");
         require(
@@ -167,7 +167,7 @@ contract BookOfShares is MembersRepo {
         bytes32 shareNumber,
         uint256 parValue,
         uint256 paidPar
-    ) external onlyBookeeper {
+    ) external onlyKeeper {
         // 减少特定“股票”项下的认缴和实缴金额
         _decreaseShareAmount(shareNumber, parValue, paidPar);
 

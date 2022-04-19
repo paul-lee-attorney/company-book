@@ -33,7 +33,7 @@ contract BookOfSHA is BookOfTerms, BookOfDocuments {
         uint32 submitDate,
         bytes32 docHash,
         address submitter
-    ) external onlyBookeeper {
+    ) external onlyKeeper {
         submitDoc(body, submitDate, docHash, submitter);
 
         address[] memory terms = IShareholdersAgreement(body).terms();
@@ -45,7 +45,7 @@ contract BookOfSHA is BookOfTerms, BookOfDocuments {
 
     function changePointer(address body)
         external
-        onlyBookeeper
+        onlyKeeper
         onlyRegistered(body)
         onlyForSubmitted(body)
     {

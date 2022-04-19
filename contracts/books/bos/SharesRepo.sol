@@ -278,7 +278,7 @@ contract SharesRepo is AdminSetting {
     /// @param state - 股票状态 （0：正常，1：出质，2：远期占用; 3:1+2; 4:查封; 5:1+4; 6:2+4; 7:1+2+4 ）
     function updateShareState(bytes6 ssn, uint8 state)
         external
-        onlyBookeeper
+        onlyKeeper
         shareExist(ssn)
     {
         _shares[ssn].state = state;
@@ -290,7 +290,7 @@ contract SharesRepo is AdminSetting {
     /// @param paidInDeadline - 实缴出资期限
     function updatePaidInDeadline(bytes6 ssn, uint32 paidInDeadline)
         external
-        onlyBookeeper
+        onlyKeeper
         shareExist(ssn)
     {
         _shares[ssn].paidInDeadline = paidInDeadline;

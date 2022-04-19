@@ -84,8 +84,8 @@ contract SigPage is DraftSetting {
         emit SetClosingDeadline(deadline);
     }
 
-    function addPartyToDoc(address acct) public {
-        require(msg.sender == getAttorney() || msg.sender == getBookeeper());
+    function addPartyToDoc(address acct) public attorneyOrKeeper {
+        // require(msg.sender == getAttorney() || msg.sender == getGK());
 
         if (!isParty[acct]) {
             isParty[acct] = true;
@@ -94,8 +94,8 @@ contract SigPage is DraftSetting {
         }
     }
 
-    function removePartyFromDoc(address acct) public {
-        require(msg.sender == getAttorney() || msg.sender == getBookeeper());
+    function removePartyFromDoc(address acct) public attorneyOrKeeper {
+        // require(msg.sender == getAttorney() || msg.sender == getGK());
 
         if (isParty[acct]) {
             delete isParty[acct];
@@ -129,7 +129,7 @@ contract SigPage is DraftSetting {
         }
     }
 
-    function updateStateOfDoc(uint8 state) external onlyBookeeper {
+    function updateStateOfDoc(uint8 state) external onlyKeeper {
         docState = state;
         emit UpdateStateOfDoc(docState);
     }

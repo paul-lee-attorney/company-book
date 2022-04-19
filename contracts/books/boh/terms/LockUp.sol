@@ -126,7 +126,7 @@ contract LockUp is BOSSetting, BOMSetting, DraftSetting {
     function isTriggered(address ia, bytes32 sn)
         external
         view
-        onlyBookeeper
+        onlyKeeper
         returns (bool)
     {
         (, , , uint256 closingDate, , ) = IAgreement(ia).getDeal(sn);
@@ -174,7 +174,7 @@ contract LockUp is BOSSetting, BOMSetting, DraftSetting {
     function isExempted(address ia, bytes32 sn)
         external
         view
-        onlyBookeeper
+        onlyKeeper
         returns (bool)
     {
         (address[] memory consentParties, ) = _bom.getYea(ia);

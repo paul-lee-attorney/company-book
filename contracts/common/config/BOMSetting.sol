@@ -13,7 +13,7 @@ contract BOMSetting is AdminSetting {
 
     event SetBOM(address bom);
 
-    function setBOM(address bom) external onlyBookeeper {
+    function setBOM(address bom) external onlyKeeper {
         _bom = IBookOfMotions(bom);
         emit SetBOM(bom);
     }

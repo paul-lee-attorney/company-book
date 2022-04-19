@@ -23,6 +23,7 @@ import "../common/lib/serialNumber/VotingRuleParser.sol";
 import "../common/interfaces/IBOSSetting.sol";
 import "../common/interfaces/IAgreement.sol";
 import "../common/interfaces/ISigPage.sol";
+import "../common/interfaces/IAdminSetting.sol";
 
 import "../books/boh/interfaces/IVotingRules.sol";
 import "../books/boa/AgreementCalculator.sol";
@@ -99,12 +100,12 @@ contract Bookeeper is
     // ##   Admin   ##
     // ###############
 
-    function setKeeperOfBook(address book, address bookeeper)
-        external
-        onlyBookeeper
-    {
-        IAdminSetting(book).setBookeeper(bookeeper);
-    }
+    // function setKeeperOfBook(address book, address bookeeper)
+    //     external
+    //     onlyKeeper
+    // {
+    //     IAdminSetting(book).setBookeeper(bookeeper);
+    // }
 
     // ##################
     // ##    Option    ##

@@ -219,7 +219,7 @@ contract TagAlong is AgreementCalculator, BOMSetting, Groups {
         }
     }
 
-    function isTriggered(address ia) public view onlyBookeeper returns (bool) {
+    function isTriggered(address ia) public view onlyKeeper returns (bool) {
         bytes32[] memory dealsList = IAgreement(ia).dealsList();
 
         uint8 len = uint8(dealsList.length);
@@ -290,7 +290,7 @@ contract TagAlong is AgreementCalculator, BOMSetting, Groups {
         return true;
     }
 
-    function isExempted(address ia) public view onlyBookeeper returns (bool) {
+    function isExempted(address ia) public view onlyKeeper returns (bool) {
         require(_bom.isPassed(ia), "决议没有通过");
 
         if (!isTriggered(ia)) return true;

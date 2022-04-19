@@ -13,7 +13,7 @@ contract BOOSetting is AdminSetting {
 
     event SetBOO(address boo);
 
-    function setBOO(address boo) external onlyBookeeper {
+    function setBOO(address boo) external onlyKeeper {
         _boo = IBookOfOptions(boo);
         emit SetBOO(boo);
     }

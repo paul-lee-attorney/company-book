@@ -29,8 +29,7 @@ contract BookOfPledges is BOSSetting {
         uint256 guaranteedAmt; //担保金额
     }
 
-    // SNInfo 质押编码规则
-    // struct SNInfo {
+    // struct snInfo {
     //     bytes6 shortOfShare; 6
     //     uint16 sequence; 2
     //     uint32 createDate; 4
@@ -108,7 +107,7 @@ contract BookOfPledges is BOSSetting {
         uint256 guaranteedAmt
     )
         external
-        onlyBookeeper
+        onlyKeeper
         shareExist(shareNumber.short())
         currentDate(createDate)
     {
@@ -139,7 +138,7 @@ contract BookOfPledges is BOSSetting {
         emit CreatePledge(sn, shareNumber, pledgedPar, creditor, guaranteedAmt);
     }
 
-    function delPledge(bytes6 ssn) external onlyBookeeper pledgeExist(ssn) {
+    function delPledge(bytes6 ssn) external onlyKeeper pledgeExist(ssn) {
         Pledge storage pld = _pledges[ssn];
 
         pledgesOf[pld.sn.shortOfShare()].removeByValue(pld.sn);
@@ -159,7 +158,7 @@ contract BookOfPledges is BOSSetting {
         bytes6 ssn,
         uint256 pledgedPar,
         uint256 guaranteedAmt
-    ) external onlyBookeeper pledgeExist(ssn) {
+    ) external onlyKeeper pledgeExist(ssn) {
         require(pledgedPar > 0, "ZERO pledged parvalue");
 
         Pledge storage pld = _pledges[ssn];

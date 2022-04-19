@@ -107,7 +107,7 @@ contract AntiDilution is BOSSetting, BOMSetting, DraftSetting {
         onlyAttorney
         onlyMarked(class)
     {
-        ISigPage(getBookeeper()).isParty(obligor);
+        ISigPage(getGK()).isParty(obligor);
 
         (bool exist, ) = obligors[classToMark[class]].firstIndexOf(obligor);
 
@@ -150,7 +150,7 @@ contract AntiDilution is BOSSetting, BOMSetting, DraftSetting {
     function isTriggered(address ia, bytes32 sn)
         public
         view
-        onlyBookeeper
+        onlyKeeper
         returns (bool)
     {
         (uint256 unitPrice, , , , , ) = IAgreement(ia).getDeal(sn);
@@ -200,7 +200,7 @@ contract AntiDilution is BOSSetting, BOMSetting, DraftSetting {
     function isExempted(address ia, bytes32 sn)
         public
         view
-        onlyBookeeper
+        onlyKeeper
         returns (bool)
     {
         if (!isTriggered(ia, sn)) return true;

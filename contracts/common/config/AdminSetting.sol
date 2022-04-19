@@ -4,22 +4,44 @@
 
 pragma solidity ^0.4.24;
 
-import "../interfaces/IAdminSetting.sol";
-
-contract AdminSetting is IAdminSetting {
+contract AdminSetting {
     address private _admin;
 
-    address private _backup;
+    address private _backupAdmin;
 
-    address private _bookeeper;
+    address private _generalKeeper;
+
+    address private _backupKeeper;
+
+    mapping(address => bool) private _keepers;
+
+    // ##################
+    // ##   Event      ##
+    // ##################
+
+    event Init(address indexed admin, address indexed bookeeper);
+
+    event SetBackupAdmin(address indexed backupAdmin);
+
+    event TakeoverAdmin(address indexed admin);
+
+    event AbandonAdmin();
+
+    event SetBackupKeeper(address indexed backupKeeper);
+
+    event TakeoverBookeeper(address indexed backupKeeper);
+
+    event AppointSubKeeper(address indexed subKeeper);
+
+    event RemoveSubKeeper(address indexed subKeeper);
 
     // ##################
     // ##   修饰器     ##
     // ##################
 
-    modifier adminOrBookeeper() {
+    modifier adminOrKeeper() {
         require(
-            msg.sender == _bookeeper || msg.sender == _admin,
+            _keepers[msg.sender] || msg.sender == _admin,
             "NOT bookeeper or admin"
         );
         _;
@@ -30,13 +52,13 @@ contract AdminSetting is IAdminSetting {
         _;
     }
 
-    modifier onlyBackup() {
-        require(msg.sender == _backup, "NOT backup admin");
+    modifier onlyKeeper() {
+        require(_keepers[msg.sender], "NOT a keeper");
         _;
     }
 
-    modifier onlyBookeeper() {
-        require(msg.sender == _bookeeper, "NOT bookeeper");
+    modifier onlyGeneralKeeper() {
+        require(msg.sender == _generalKeeper, "NOT a keeper");
         _;
     }
 
@@ -44,15 +66,6 @@ contract AdminSetting is IAdminSetting {
         require(add == address(0), "role has been set already");
         _;
     }
-
-    // modifier onlyStakeholders() {
-    //     address sender = msg.sender;
-    //     require(
-    //         sender == _admin || sender == _bookeeper,
-    //         "NOT interested party"
-    //     );
-    //     _;
-    // }
 
     modifier currentDate(uint256 date) {
         require(
@@ -69,32 +82,50 @@ contract AdminSetting is IAdminSetting {
     function init(address admin, address bookeeper)
         public
         onceOnly(_admin)
-        onceOnly(_bookeeper)
+        onceOnly(_generalKeeper)
     {
         _admin = admin;
-        _bookeeper = bookeeper;
+        _generalKeeper = bookeeper;
         emit Init(admin, bookeeper);
     }
 
-    function setBackup(address backup) external onlyAdmin {
-        _backup = backup;
-        emit SetBackup(backup);
+    function setBackupAdmin(address backup) external onlyAdmin {
+        _backupAdmin = backup;
+        emit SetBackupAdmin(backup);
     }
 
-    function takeoverAdmin() external onlyBackup {
+    function takeoverAdmin() external {
+        require(msg.sender == _backupAdmin, "NOT backup admin");
         _admin = msg.sender;
         emit TakeoverAdmin(_admin);
     }
 
-    function abandonAdmin() external onlyBookeeper {
+    function abandonAdmin() external onlyKeeper {
         _admin = address(0);
-        _backup = address(0);
+        _backupAdmin = address(0);
         emit AbandonAdmin();
     }
 
-    function setBookeeper(address bookeeper) external onlyBookeeper {
-        _bookeeper = bookeeper;
-        emit SetBookeeper(bookeeper);
+    function setBackupKeeper(address newKeeper) external onlyGeneralKeeper {
+        _backupKeeper = newKeeper;
+        emit SetBackupKeeper(newKeeper);
+    }
+
+    function takeoverBookeeper() external {
+        require(msg.sender == _backupKeeper, "NOT bookeeper");
+        _generalKeeper = _backupKeeper;
+        emit TakeoverBookeeper(_backupKeeper);
+    }
+
+    function appointSubKeeper(address addr) external onlyGeneralKeeper {
+        _keepers[addr] = true;
+        emit AppointSubKeeper(addr);
+    }
+
+    function removeSubKeeper(address addr) external onlyGeneralKeeper {
+        require(msg.sender == _generalKeeper, "NOT bookeeper");
+        _keepers[addr] = false;
+        emit AppointSubKeeper(addr);
     }
 
     // ##################
@@ -105,11 +136,19 @@ contract AdminSetting is IAdminSetting {
         return _admin;
     }
 
-    function getBackup() public view returns (address) {
-        return _backup;
+    function getBackupAdmin() public view returns (address) {
+        return _backupAdmin;
     }
 
-    function getBookeeper() public view returns (address) {
-        return _bookeeper;
+    function getGK() public view returns (address) {
+        return _generalKeeper;
+    }
+
+    function getBackupKeeper() public view returns (address) {
+        return _backupKeeper;
+    }
+
+    function isKeeper(address acct) public view returns (bool) {
+        return _keepers[acct];
     }
 }

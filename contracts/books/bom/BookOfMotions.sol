@@ -13,6 +13,7 @@ import "../../common/lib/serialNumber/VotingRuleParser.sol";
 // import "../../common/interfaces/IBookOfMotions.sol";
 import "../../common/interfaces/ISigPage.sol";
 import "../../common/interfaces/IAgreement.sol";
+import "../../common/interfaces/IAdminSetting.sol";
 
 import "../../common/components/EnumsRepo.sol";
 
@@ -135,7 +136,7 @@ contract BookOfMotions is EnumsRepo, AgreementCalculator, BOHSetting {
 
     function proposeMotion(address ia, uint32 votingDeadline)
         external
-        onlyBookeeper
+        onlyKeeper
         notProposed(ia)
     {
         Motion storage motion = _iaToMotion[ia];
@@ -288,7 +289,7 @@ contract BookOfMotions is EnumsRepo, AgreementCalculator, BOHSetting {
         }
     }
 
-    function voteCounting(address ia, uint8 votingType) external onlyBookeeper {
+    function voteCounting(address ia, uint8 votingType) external onlyKeeper {
         Motion storage motion = _iaToMotion[ia];
 
         (bytes32 rule, uint256 totalHead, uint256 totalAmt) = _getParas(
@@ -319,7 +320,7 @@ contract BookOfMotions is EnumsRepo, AgreementCalculator, BOHSetting {
         address ia,
         address voter,
         uint32 turnOverDate
-    ) external onlyBookeeper currentDate(turnOverDate) {
+    ) external onlyKeeper currentDate(turnOverDate) {
         Motion storage motion = _iaToMotion[ia];
         require(motion.state == 4, "NOT a motion can be turned over");
         require(motion.sigOfNay[voter] > 0, "NOT an against voter");

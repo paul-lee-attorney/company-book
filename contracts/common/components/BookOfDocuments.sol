@@ -129,7 +129,7 @@ contract BookOfDocuments is CloneFactory, BOSSetting {
         address creator
     )
         external
-        onlyBookeeper
+        onlyKeeper
         tempReady
         currentDate(createDate)
         returns (address body)
@@ -156,7 +156,7 @@ contract BookOfDocuments is CloneFactory, BOSSetting {
 
     function removeDoc(address body)
         external
-        onlyBookeeper
+        onlyKeeper
         onlyRegistered(body)
         onlyForPending(body)
     {
@@ -178,7 +178,7 @@ contract BookOfDocuments is CloneFactory, BOSSetting {
         address submitter
     )
         public
-        onlyBookeeper
+        onlyKeeper
         onlyRegistered(body)
         onlyForPending(body)
         currentDate(submitDate)

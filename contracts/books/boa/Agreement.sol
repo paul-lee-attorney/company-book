@@ -274,7 +274,7 @@ contract Agreement is BOSSetting, SigPage {
         bytes6 ssn,
         bytes32 hashLock,
         uint32 closingDate
-    ) external onlyBookeeper dealExist(ssn) {
+    ) external onlyKeeper dealExist(ssn) {
         Deal storage deal = _deals[ssn];
 
         require(
@@ -300,7 +300,7 @@ contract Agreement is BOSSetting, SigPage {
     function closeDeal(bytes6 ssn, string hashKey)
         external
         onlyCleared(ssn)
-        onlyBookeeper
+        onlyKeeper
     {
         Deal storage deal = _deals[ssn];
 
@@ -319,7 +319,7 @@ contract Agreement is BOSSetting, SigPage {
     function revokeDeal(bytes6 ssn, string hashKey)
         external
         onlyCleared(ssn)
-        onlyBookeeper
+        onlyKeeper
     {
         Deal storage deal = _deals[ssn];
 
@@ -361,7 +361,7 @@ contract Agreement is BOSSetting, SigPage {
         address buyer,
         uint256 parValue,
         uint256 paidPar
-    ) external onlyCleared(ssn) onlyBookeeper {
+    ) external onlyCleared(ssn) onlyKeeper {
         counterOfDeals++;
 
         Deal storage deal = _deals[ssn];

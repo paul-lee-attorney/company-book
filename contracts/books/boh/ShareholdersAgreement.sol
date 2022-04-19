@@ -90,15 +90,15 @@ contract ShareholdersAgreement is
     //##    写接口    ##
     //##################
 
-    // function setBOS(address _bos) external onlyBookeeper {
+    // function setBOS(address _bos) external onlyKeeper {
     //     bos = _bos;
     // }
 
-    // function setBOM(address _bom) external onlyBookeeper {
+    // function setBOM(address _bom) external onlyKeeper {
     //     bom = _bom;
     // }
 
-    function setTermsTemplate(address[15] templates) external onlyBookeeper {
+    function setTermsTemplate(address[15] templates) external onlyKeeper {
         for (uint8 i = 0; i < 15; i++) {
             _setTemplate(i, templates[i]);
         }

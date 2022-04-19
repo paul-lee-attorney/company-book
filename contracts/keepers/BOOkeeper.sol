@@ -22,6 +22,7 @@ import "../common/lib/serialNumber/VotingRuleParser.sol";
 
 import "../common/interfaces/IBOSSetting.sol";
 import "../common/interfaces/IAgreement.sol";
+import "../common/interfaces/IAdminSetting.sol";
 import "../common/interfaces/ISigPage.sol";
 
 import "../books/boh/interfaces/IVotingRules.sol";

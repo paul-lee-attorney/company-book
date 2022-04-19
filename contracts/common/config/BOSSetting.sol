@@ -21,9 +21,7 @@ contract BOSSetting is AdminSetting {
     modifier onlyStakeholders() {
         address sender = msg.sender;
         require(
-            sender == getAdmin() ||
-                sender == getBookeeper() ||
-                _bos.isMember(sender),
+            sender == getAdmin() || sender == getGK() || _bos.isMember(sender),
             "NOT Stakeholders"
         );
         _;
@@ -34,7 +32,7 @@ contract BOSSetting is AdminSetting {
         _;
     }
 
-    function setBOS(address bos) external onlyBookeeper {
+    function setBOS(address bos) external onlyKeeper {
         _bos = IBookOfShares(bos);
         emit SetBOS(bos);
     }

@@ -89,7 +89,7 @@ library SNFactory {
         return sn;
     }
 
-    function insertToQue(bytes32 sn, bytes32[] storage que) internal view {
+    function insertToQue(bytes32 sn, bytes32[] storage que) internal {
         uint256 len = que.length;
         que.push(sn);
 

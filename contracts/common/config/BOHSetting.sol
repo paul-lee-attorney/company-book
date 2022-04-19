@@ -14,7 +14,7 @@ contract BOHSetting is AdminSetting {
 
     event SetBOH(address boh);
 
-    function setBOH(address boh) external onlyBookeeper {
+    function setBOH(address boh) external onlyKeeper {
         _boh = IBookOfSHA(boh);
         emit SetBOH(boh);
     }

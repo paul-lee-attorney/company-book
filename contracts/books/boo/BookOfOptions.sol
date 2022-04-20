@@ -154,6 +154,19 @@ contract BookOfOptions is BOSSetting {
         emit SetOpt(sn, rightholder, parValue);
     }
 
+    function _createFuture(bytes32 shareNumber, uint256 parValue)
+        internal
+        pure
+        returns (bytes32 ft)
+    {
+        bytes memory _ft = new bytes(32);
+
+        _ft = _ft.bytes32ToSN(0, shareNumber, 1, 6);
+        _ft = _ft.intToSN(6, parValue, 26);
+
+        ft = _ft.bytesToBytes32();
+    }
+
     function addFuture(
         bytes6 ssn,
         bytes32 shareNumber,
@@ -179,35 +192,16 @@ contract BookOfOptions is BOSSetting {
             );
         else require(obligor == shareNumber.shareholder(), "WRONG sharehoder");
 
-        (, , , uint256 cleanPar, , , ) = _bos.getShare(shortOfShare);
-        require(cleanPar >= parValue, "NOT sufficient paidInAmout");
+        require(opt.parValue >= parValue, "NOT sufficient paidInAmout");
 
-        uint256 balance = _balanceOfOpt(opt.parValue, ssn);
+        opt.parValue -= parValue;
 
-        bytes32 ft;
-
-        if (balance > parValue) ft = _createFuture(shareNumber, parValue);
-        else {
-            ft = _createFuture(shareNumber, balance);
-            opt.state = 3;
-        }
-
+        bytes32 ft = _createFuture(shareNumber, parValue);
         ft.insertToQue(futures[ssn]);
 
+        if (opt.parValue == 0) opt.state = 3;
+
         emit AddFuture(sn, shareNumber, parValue);
-    }
-
-    function _balanceOfOpt(uint256 balance, bytes6 ssn)
-        private
-        returns (uint256)
-    {
-        bytes32[] memory fts = futures[ssn];
-        uint256 len = fts.length;
-
-        for (uint256 i = 0; i < len; i++)
-            balance -= uint256(bytes26(fts[i] << 48));
-
-        return balance;
     }
 
     function removeFuture(
@@ -221,14 +215,11 @@ contract BookOfOptions is BOSSetting {
 
         (bool exist, ) = fts.firstIndexOf(ft);
 
-        if (exist) {
-            fts.removeByValue(ft);
+        require(exist, "future NOT EXIST");
 
-            // 修改：升级Bookeeper模块及接口，将所有簿记的写权限，归集到Bookeeper
-            _bos.increaseCleanPar(shareNumber.short(), parValue);
+        fts.removeByValue(ft);
 
-            emit DelFuture(_options[ssn].sn, shareNumber, parValue);
-        }
+        emit DelFuture(_options[ssn].sn, shareNumber, parValue);
     }
 
     // ################
@@ -286,19 +277,6 @@ contract BookOfOptions is BOSSetting {
         emit ExecOpt(sn, exerciseDate, hashLock);
     }
 
-    function _createFuture(bytes32 shareNumber, uint256 parValue)
-        internal
-        pure
-        returns (bytes32 ft)
-    {
-        bytes memory _ft = new bytes(32);
-
-        _ft = _ft.bytes32ToSN(0, shareNumber, 1, 6);
-        _ft = _ft.intToSN(6, parValue, 26);
-
-        ft = _ft.bytesToBytes32();
-    }
-
     function closeOption(bytes6 ssn, string hashKey)
         external
         onlyKeeper
@@ -306,7 +284,7 @@ contract BookOfOptions is BOSSetting {
     {
         Option storage opt = _options[ssn];
 
-        require(opt.state == 3, "WRONG state");
+        require(opt.state > 1, "WRONG state");
         require(
             now <= opt.closingDate + 15 minutes &&
                 now >= opt.closingDate - 15 minutes,

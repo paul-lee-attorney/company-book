@@ -41,10 +41,11 @@ interface IBookOfOptions {
     // ##  查询接口  ##
     // ################
 
-    function getOption(bytes32 sn)
+    function getOption(bytes6 ssn)
         external
         view
         returns (
+            bytes32 sn,
             address rightholder,
             uint32 closingDate,
             uint256 parValue,

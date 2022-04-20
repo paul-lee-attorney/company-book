@@ -114,22 +114,24 @@ contract BookOfShares is MembersRepo {
     }
 
     /// @notice 先减少原股票金额（金额降低至“0”则删除），再发行新股票
-    /// @param shareNumber - 股票编号
+    /// @param ssn - 股票短号
     /// @param parValue - 股票面值（认缴出资金额）
     /// @param paidPar - 转让的实缴金额（实缴出资金额）
     /// @param to - 受让方账户地址
     /// @param closingDate - 交割日（秒计时间戳）
     /// @param unitPrice - 转让价格（可用于判断“优先权”等条款，公链应用可设定为“1”）
     function transferShare(
-        bytes32 shareNumber,
+        bytes6 ssn,
         uint256 parValue,
         uint256 paidPar,
         address to,
         uint32 closingDate,
         uint256 unitPrice
     ) external onlyKeeper {
+        bytes32 shareNumber = _shares[ssn].shareNumber;
+
         require(to != address(0), "shareholder address is ZERO");
-        require(closingDate <= now + 2 hours, "closingDate NOT a PAST time");
+        require(closingDate <= now + 15 minutes, "closingDate NOT a PAST time");
         require(
             closingDate > shareNumber.issueDate(),
             "closingDate EARLIER than issueDate"
@@ -138,7 +140,7 @@ contract BookOfShares is MembersRepo {
         // 判断是否需要新增股东，若需要判断是否超过法定人数上限
         _addMember(to);
 
-        _decreaseShareAmount(shareNumber, parValue, paidPar);
+        _decreaseShareAmount(ssn, parValue, paidPar);
 
         counterOfShares++;
 
@@ -155,35 +157,35 @@ contract BookOfShares is MembersRepo {
             shareNumber_1,
             parValue,
             paidPar,
-            _shares[shareNumber.short()].paidInDeadline,
+            _shares[ssn].paidInDeadline,
             unitPrice
         );
     }
 
-    /// @param shareNumber 拟减资的股票短号
+    /// @param ssn 拟减资的股票短号
     /// @param parValue 拟减少的认缴出资金额（单位“分”）
     /// @param paidPar 拟减少的实缴出资金额（单位“分”）
     function decreaseCapital(
-        bytes32 shareNumber,
+        bytes6 ssn,
         uint256 parValue,
         uint256 paidPar
     ) external onlyKeeper {
         // 减少特定“股票”项下的认缴和实缴金额
-        _decreaseShareAmount(shareNumber, parValue, paidPar);
+        _decreaseShareAmount(ssn, parValue, paidPar);
 
         // 减少公司“注册资本”和“实缴出资”总额
         _capDecrease(parValue, paidPar);
     }
 
-    /// @param shareNumber 拟减资的股票编号
+    /// @param ssn 拟减资的股票编号
     /// @param parValue 拟减少的认缴出资金额（单位“分”）
     /// @param paidPar 拟减少的实缴出资金额（单位“分”）
     function _decreaseShareAmount(
-        bytes32 shareNumber,
+        bytes6 ssn,
         uint256 parValue,
         uint256 paidPar
     ) private {
-        Share storage share = _shares[shareNumber.short()];
+        Share storage share = _shares[ssn];
 
         require(parValue > 0, "parValue is ZERO");
         require(share.parValue >= parValue, "parValue OVERFLOW");
@@ -193,11 +195,11 @@ contract BookOfShares is MembersRepo {
 
         // 若拟降低的面值金额等于股票面值，则删除相关股票
         if (parValue == share.parValue) {
-            _deregisterShare(shareNumber);
-            _updateMembersList(shareNumber.shareholder());
+            _deregisterShare(ssn);
+            _updateMembersList(share.shareNumber.shareholder());
         } else {
             // 仅调低认缴和实缴金额，保留原股票
-            _subAmountFromShare(shareNumber.short(), parValue, paidPar);
+            _subAmountFromShare(ssn, parValue, paidPar);
         }
     }
 

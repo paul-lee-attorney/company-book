@@ -105,7 +105,7 @@ contract BOOKeeper is
         uint32 exerciseDate,
         bytes32 hashLock
     ) external {
-        (address rightholder, , , , ) = _boo.getOption(sn);
+        (, address rightholder, , , , ) = _boo.getOption(sn.shortOfOpt());
 
         require(msg.sender == rightholder, "NOT rightholder");
 
@@ -121,12 +121,51 @@ contract BOOKeeper is
         _boo.execOption(sn, exerciseDate, hashLock);
     }
 
-    function closeOption(bytes32 sn, bytes32 hashKey) external {
+    function addFuture(
+        bytes32 sn,
+        bytes32 shareNumber,
+        uint256 parValue
+    ) external {
+        (, address rightholder, , , , ) = _boo.getOption(sn.shortOfOpt());
+        require(msg.sender == rightholder, "NOT rightholder");
+        _bos.decreaseCleanPar(shareNumber.short(), parValue);
+        _boo.addFuture(sn.shortOfOpt(), shareNumber, parValue);
+    }
+
+    function removeFuture(
+        bytes32 sn,
+        bytes32 shareNumber,
+        uint256 parValue
+    ) external {
+        (, address rightholder, , , , ) = _boo.getOption(sn.shortOfOpt());
+        require(msg.sender == rightholder, "NOT rightholder");
+
+        _boo.removeFuture(sn.shortOfOpt(), shareNumber, parValue);
+        _bos.increaseCleanPar(shareNumber.short(), parValue);
+    }
+
+    function closeOption(
+        bytes32 sn,
+        bytes32 hashKey,
+        uint32 closingDate
+    ) external currentDate(closingDate) {
         require(msg.sender == sn.obligorOfOpt(), "NOT obligor of the Option");
+        _boo.closeOption(sn.shortOfOpt(), hashKey);
 
-        (, uint256 closingDate, , , ) = _boo.getOption(sn);
-        require(now <= closingDate, "LATER than closingDeadline");
+        (, address rightholder, , , , ) = _boo.getOption(sn.shortOfOpt());
 
-        _boo.closeOption(sn, hashKey);
+        address buyer = sn.typeOfOpt() > 0 ? sn.obligorOfOpt() : rightholder;
+
+        bytes32[] memory fts = _boo.futures(sn.shortOfOpt());
+
+        for (uint256 i = 0; i < fts.length; i++)
+            _bos.transferShare(
+                fts[i].shortShareNumberOfFt(),
+                fts[i].parValueOfFt(),
+                fts[i].parValueOfFt(),
+                buyer,
+                closingDate,
+                sn.priceOfOpt()
+            );
     }
 }

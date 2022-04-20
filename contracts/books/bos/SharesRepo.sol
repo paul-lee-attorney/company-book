@@ -175,8 +175,8 @@ contract SharesRepo is AdminSetting {
         );
     }
 
-    function _deregisterShare(bytes32 shareNumber) internal {
-        bytes6 ssn = shareNumber.short();
+    function _deregisterShare(bytes6 ssn) internal {
+        bytes32 shareNumber = _shares[ssn].shareNumber;
 
         delete _shares[ssn];
         _snList.removeByValue(shareNumber);

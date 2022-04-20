@@ -116,7 +116,7 @@ contract Bookeeper is
         uint32 exerciseDate,
         bytes32 hashLock
     ) external {
-        (address rightholder, , , , ) = _boo.getOption(sn);
+        (, address rightholder, , , , ) = _boo.getOption(sn.shortOfOpt());
 
         require(msg.sender == rightholder, "NOT rightholder");
 
@@ -135,7 +135,7 @@ contract Bookeeper is
     function closeOption(bytes32 sn, bytes32 hashKey) external {
         require(msg.sender == sn.obligorOfOpt(), "NOT obligor of the Option");
 
-        (, uint256 closingDate, , , ) = _boo.getOption(sn);
+        (, , uint256 closingDate, , , ) = _boo.getOption(sn.shortOfOpt());
         require(now <= closingDate, "LATER than closingDeadline");
 
         _boo.closeOption(sn, hashKey);

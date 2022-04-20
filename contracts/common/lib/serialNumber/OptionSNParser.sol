@@ -36,4 +36,12 @@ library OptionSNParser {
     function priceOfOpt(bytes32 sn) internal pure returns (uint256) {
         return uint256(bytes3(sn << 232));
     }
+
+    function shortShareNumberOfFt(bytes32 sn) internal pure returns (bytes6) {
+        return bytes6(sn);
+    }
+
+    function parValueOfFt(bytes32 sn) internal pure returns (uint256) {
+        return uint256(uint208(sn));
+    }
 }

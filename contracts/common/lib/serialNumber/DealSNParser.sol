@@ -21,8 +21,12 @@ library DealSNParser {
         return bytes6(sn << 192);
     }
 
-    function shortOfDeal(bytes32 sn) internal pure returns (bytes6) {
-        return bytes6(sn << 16);
+    // function shortOfDeal(bytes32 sn) internal pure returns (bytes6) {
+    //     return bytes6(sn << 16);
+    // }
+
+    function preSNOfDeal(bytes32 sn) internal pure returns (uint16) {
+        return uint16(sn);
     }
 
     function shareNumberOfDeal(bytes32 sn, bytes32[] memory sharesList)

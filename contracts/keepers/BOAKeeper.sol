@@ -120,11 +120,13 @@ contract BOAKeeper is
         if (typeOfDeal > 1) {
             _checkSHA(_termsForShareTransfer, ia, sn);
 
-            (, uint256 parOfDeal, , , , ) = IAgreement(ia).getDeal(sn);
+            (, , uint256 parOfDeal, , , , ) = IAgreement(ia).getDeal(
+                sn.sequenceOfDeal()
+            );
             _bos.decreaseCleanPar(ssn, parOfDeal);
         } else _checkSHA(_termsForCapitalIncrease, ia, sn);
 
-        IAgreement(ia).clearDealCP(sn, hashLock, closingDate);
+        IAgreement(ia).clearDealCP(sn.sequenceOfDeal(), hashLock, closingDate);
     }
 
     function _checkSHA(
@@ -151,13 +153,14 @@ contract BOAKeeper is
         require(_boa.isRegistered(ia), "协议  未注册");
 
         (
+            ,
             uint256 unitPrice,
             uint256 parValue,
             uint256 paidPar,
             ,
             ,
 
-        ) = IAgreement(ia).getDeal(sn);
+        ) = IAgreement(ia).getDeal(sn.sequenceOfDeal());
 
         // address buyer = sn.buyerOfDeal();
 
@@ -165,7 +168,7 @@ contract BOAKeeper is
         require(sn.buyerOfDeal() == msg.sender, "仅 买方  可调用");
 
         //验证hashKey, 执行Deal
-        IAgreement(ia).closeDeal(sn, hashKey);
+        IAgreement(ia).closeDeal(sn.sequenceOfDeal(), hashKey);
 
         bytes32 shareNumber = sn.shareNumberOfDeal(_bos.snList());
 
@@ -207,7 +210,7 @@ contract BOAKeeper is
             "NOT seller or bookeeper"
         );
 
-        IAgreement(ia).revokeDeal(sn, hashKey);
+        IAgreement(ia).revokeDeal(sn.sequenceOfDeal(), hashKey);
 
         if (sn.typeOfDeal() > 1)
             _bos.updateShareState(sn.shortShareNumberOfDeal(), 0);

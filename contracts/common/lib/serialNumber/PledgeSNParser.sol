@@ -5,7 +5,11 @@
 pragma solidity ^0.4.24;
 
 library PledgeSNParser {
-    function shortOfShare(bytes32 sn) internal pure returns (bytes6) {
+    function shortShareNumberOfPledge(bytes32 sn)
+        internal
+        pure
+        returns (bytes6)
+    {
         return bytes6(sn);
     }
 

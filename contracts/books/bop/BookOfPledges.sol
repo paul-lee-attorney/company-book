@@ -141,10 +141,10 @@ contract BookOfPledges is BOSSetting {
     function delPledge(bytes6 ssn) external onlyKeeper pledgeExist(ssn) {
         Pledge storage pld = _pledges[ssn];
 
-        pledgesOf[pld.sn.shortOfShare()].removeByValue(pld.sn);
+        pledgesOf[pld.sn.shortShareNumberOfPledge()].removeByValue(pld.sn);
 
-        if (pledgesOf[pld.sn.shortOfShare()].length == 0)
-            delete pledgesOf[pld.sn.shortOfShare()];
+        if (pledgesOf[pld.sn.shortShareNumberOfPledge()].length == 0)
+            delete pledgesOf[pld.sn.shortShareNumberOfPledge()];
 
         snList.removeByValue(pld.sn);
 

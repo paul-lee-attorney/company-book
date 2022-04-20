@@ -141,70 +141,6 @@ contract Bookeeper is
         _boo.closeOption(sn, hashKey);
     }
 
-    // ################
-    // ##   Pledge   ##
-    // ################
-
-    function createPledge(
-        uint32 createDate,
-        bytes32 shareNumber,
-        uint256 pledgedPar,
-        address creditor,
-        uint256 guaranteedAmt
-    ) external {
-        require(shareNumber.shareholder() == msg.sender, "NOT shareholder");
-
-        _bos.decreaseCleanPar(shareNumber.short(), pledgedPar);
-
-        _bop.createPledge(
-            createDate,
-            shareNumber,
-            pledgedPar,
-            creditor,
-            guaranteedAmt
-        );
-    }
-
-    function updatePledge(
-        bytes32 sn,
-        uint256 pledgedPar,
-        uint256 guaranteedAmt
-    ) external {
-        require(pledgedPar > 0, "ZERO pledgedPar");
-
-        (bytes32 shareNumber, uint256 orgPledgedPar, , ) = _bop.getPledge(sn);
-
-        if (pledgedPar < orgPledgedPar) {
-            require(msg.sender == sn.debtor(), "NOT creditor");
-            _bos.increaseCleanPar(
-                shareNumber.short(),
-                orgPledgedPar - pledgedPar
-            );
-        } else if (pledgedPar > orgPledgedPar) {
-            (, , address creditor, ) = _bop.getPledge(sn.shortOfPledge());
-            require(msg.sender == creditor, "NOT creditor");
-            _bos.decreaseCleanPar(
-                shareNumber.short(),
-                pledgedPar - orgPledgedPar
-            );
-        }
-
-        _bop.updatePledge(sn, pledgedPar, guaranteedAmt);
-    }
-
-    function delPledge(bytes32 sn) external {
-        (, uint256 pledgedPar, address creditor, ) = _bop.getPledge(
-            sn.shortOfPledge()
-        );
-
-        require(msg.sender == creditor, "NOT creditor");
-
-        // (bytes32 shareNumber, uint256 pledgedPar, , ) = _bop.getPledge(sn);
-        _bos.increaseCleanPar(sn.shortOfShare(), pledgedPar);
-
-        _bop.delPledge(sn.shortOfPledge());
-    }
-
     // ###################
     // ##   Agreement   ##
     // ###################
@@ -294,7 +230,7 @@ contract Bookeeper is
     //     require(IAgreement(ia).isDeal(sn), "deal NOT exist");
     //     require(_bom.getState(ia) == 4, "agianst NO need to buy");
 
-    //     (, , , uint32 closingDate, , ) = IAgreement(ia).getDeal(sn);
+    //     (, , , uint32 closingDate, , ) = IAgreement(ia).getDeal(sn.sequenceOfDeal());
     //     require(exerciseDate < closingDate, "MISSED closing date");
 
     //     bytes32 rule = IVotingRules(

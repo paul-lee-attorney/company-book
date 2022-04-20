@@ -18,10 +18,11 @@ interface IBookOfPledges {
     //##################
 
     function createPledge(
-        uint32 createDate,
         bytes32 shareNumber,
-        uint256 pledgedPar,
+        uint32 createDate,
         address creditor,
+        address debtor,
+        uint256 pledgedPar,
         uint256 guaranteedAmt
     ) external;
 

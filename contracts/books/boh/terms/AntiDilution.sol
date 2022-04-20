@@ -11,6 +11,7 @@ import "../../../common/config/DraftSetting.sol";
 import "../../../common/lib/ArrayUtils.sol";
 import "../../../common/lib/SafeMath.sol";
 import "../../../common/lib/serialNumber/SNFactory.sol";
+import "../../../common/lib/serialNumber/DealSNParser.sol";
 
 import "../../../common/interfaces/IAgreement.sol";
 import "../../../common/interfaces/ISigPage.sol";
@@ -19,6 +20,7 @@ contract AntiDilution is BOSSetting, BOMSetting, DraftSetting {
     using SNFactory for bytes;
     using ArrayUtils for address[];
     using ArrayUtils for bytes32[];
+    using DealSNParser for bytes32;
 
     // benchmark => obligors
     mapping(bytes32 => address[]) public obligors;
@@ -153,7 +155,9 @@ contract AntiDilution is BOSSetting, BOMSetting, DraftSetting {
         onlyKeeper
         returns (bool)
     {
-        (uint256 unitPrice, , , , , ) = IAgreement(ia).getDeal(sn);
+        (, uint256 unitPrice, , , , , ) = IAgreement(ia).getDeal(
+            sn.sequenceOfDeal()
+        );
         uint8 typeOfDeal = uint8(sn[3]);
 
         if (typeOfDeal > 1) return false;
@@ -207,7 +211,9 @@ contract AntiDilution is BOSSetting, BOMSetting, DraftSetting {
 
         (address[] memory consentParties, ) = _bom.getYea(ia);
 
-        (uint256 unitPrice, , , , , ) = IAgreement(ia).getDeal(sn);
+        (, uint256 unitPrice, , , , , ) = IAgreement(ia).getDeal(
+            sn.sequenceOfDeal()
+        );
 
         return _isExempted(unitPrice, consentParties);
     }

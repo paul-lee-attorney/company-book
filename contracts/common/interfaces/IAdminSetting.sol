@@ -33,7 +33,7 @@ interface IAdminSetting {
 
     function getGK() external view returns (address);
 
-    function getBackupKeeper() public view returns (address);
+    function getBackupKeeper() external view returns (address);
 
-    function isKeeper(address acct) public view returns (bool);
+    function isKeeper(address acct) external view returns (bool);
 }

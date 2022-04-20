@@ -5,6 +5,7 @@
 pragma solidity ^0.4.24;
 
 // import "../../common/config/BOSSetting.sol";
+import "../../common/config/BOASetting.sol";
 import "../../common/config/BOHSetting.sol";
 
 import "../../common/lib/ArrayUtils.sol";
@@ -20,7 +21,12 @@ import "../../common/components/EnumsRepo.sol";
 import "../boh/interfaces/IVotingRules.sol";
 import "../boa/AgreementCalculator.sol";
 
-contract BookOfMotions is EnumsRepo, AgreementCalculator, BOHSetting {
+contract BookOfMotions is
+    EnumsRepo,
+    AgreementCalculator,
+    BOHSetting,
+    BOASetting
+{
     using ArrayUtils for address[];
     using VotingRuleParser for bytes32;
 
@@ -134,20 +140,44 @@ contract BookOfMotions is EnumsRepo, AgreementCalculator, BOHSetting {
     //##    写接口    ##
     //##################
 
-    function proposeMotion(address ia, uint32 votingDeadline)
+    function _getVotingType(address ia)
+        private
+        view
+        returns (uint8 votingType)
+    {
+        uint8 typeOfAgreement = typeOfIA(ia);
+        votingType = (typeOfAgreement == 2 || typeOfAgreement == 5)
+            ? 2
+            : (typeOfAgreement == 3)
+            ? 0
+            : 1;
+    }
+
+    function proposeMotion(address ia, uint32 proposeDate)
         external
         onlyKeeper
         notProposed(ia)
     {
+        require(
+            _boa.isRegistered(ia),
+            "Investment Agreement is NOT registered"
+        );
+
+        require(typeOfIA(ia) != 3, "NOT need to vote");
+
+        bytes32 rule = IVotingRules(
+            getSHA().getTerm(uint8(TermTitle.VOTING_RULES))
+        ).rules(_getVotingType(ia));
+
         Motion storage motion = _iaToMotion[ia];
 
         motion.ia = ia;
-        motion.votingDeadline = votingDeadline;
+        motion.votingDeadline = proposeDate + uint32(rule.votingDays()) * 86400;
         motion.state = 1;
 
         isProposed[ia] = true;
 
-        emit ProposeMotion(ia, votingDeadline, tx.origin);
+        emit ProposeMotion(ia, motion.votingDeadline, tx.origin);
     }
 
     function _getVoteAmount(address sender)
@@ -289,7 +319,21 @@ contract BookOfMotions is EnumsRepo, AgreementCalculator, BOHSetting {
         }
     }
 
-    function voteCounting(address ia, uint8 votingType) external onlyKeeper {
+    function voteCounting(address ia)
+        external
+        onlyKeeper
+        onlyProposed(ia)
+        onlyOnVoting(ia)
+    {
+        require(
+            now + 15 minutes > _iaToMotion[ia].votingDeadline,
+            "voting NOT end"
+        );
+
+        uint8 votingType = _getVotingType(ia);
+
+        require(votingType > 0, "NOT need to vote");
+
         Motion storage motion = _iaToMotion[ia];
 
         (bytes32 rule, uint256 totalHead, uint256 totalAmt) = _getParas(

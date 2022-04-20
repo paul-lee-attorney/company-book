@@ -54,18 +54,84 @@ contract BOMKeeper is
         onlyPartyOf(ia)
         currentDate(proposeDate)
     {
+        _bom.proposeMotion(ia, proposeDate);
+    }
+
+    function voteCounting(address ia) external onlyPartyOf(ia) {
+        _bom.voteCounting(ia);
+    }
+
+    function requestToBuy(
+        address ia,
+        bytes32 sn,
+        uint32 exerciseDate,
+        address againstVoter,
+        uint256 parValue,
+        uint256 paidPar
+    ) external currentDate(exerciseDate) {
+        require(IAgreement(ia).isDeal(sn.sequenceOfDeal()), "deal NOT exist");
+        require(sn.typeOfDeal() == 2, "NOT a 3rd party ST Deal");
         require(
-            _boa.isRegistered(ia),
-            "Investment Agreement is NOT registered"
+            msg.sender == sn.sellerOfDeal(_bos.snList()),
+            "NOT Seller of the Deal"
         );
 
-        require(typeOfIA(ia) != 3, "NOT need to vote");
+        (
+            ,
+            ,
+            uint256 orgParValue,
+            uint256 orgPaidPar,
+            uint32 closingDate,
+            ,
+
+        ) = IAgreement(ia).getDeal(sn.sequenceOfDeal());
+        require(exerciseDate < closingDate, "MISSED closing date");
 
         bytes32 rule = IVotingRules(
             getSHA().getTerm(uint8(TermTitle.VOTING_RULES))
         ).rules(_getVotingType(ia));
 
-        _bom.proposeMotion(ia, proposeDate + uint32(rule.votingDays()) * 86400);
+        require(
+            exerciseDate <
+                _bom.getVotingDeadline(ia) +
+                    uint32(rule.execDaysForPutOpt()) *
+                    86400,
+            "MISSED execute deadline"
+        );
+
+        uint256 ratio = _ratioOfNay(ia, againstVoter);
+
+        require(
+            parValue > 0 && parValue <= ((orgParValue * ratio) / 10000),
+            "parValue overflow"
+        );
+
+        require(
+            paidPar > 0 && paidPar <= ((orgPaidPar * ratio) / 10000),
+            "paidPar overflow"
+        );
+
+        IAgreement(ia).splitDeal(
+            sn.sequenceOfDeal(),
+            againstVoter,
+            parValue,
+            paidPar
+        );
+    }
+
+    function _ratioOfNay(address ia, address againstVoter)
+        private
+        returns (uint256)
+    {
+        require(_bom.getState(ia) == 4, "agianst NO need to buy");
+
+        (, uint256 againstPar) = _bom.getNay(ia);
+        (bool attitude, , uint256 amount) = _bom.getVote(ia, againstVoter);
+
+        require(againstPar > 0, "ZERO againstPar");
+        require(!attitude && amount > 0, "NOT NAY voter");
+
+        return ((amount * 10000) / againstPar);
     }
 
     function _getVotingType(address ia)
@@ -81,69 +147,57 @@ contract BOMKeeper is
             : 1;
     }
 
-    function voteCounting(address ia) external onlyPartyOf(ia) {
-        require(_bom.isProposed(ia), "NOT proposed");
-        require(_bom.getState(ia) == 1, "NOT in voting");
-        require(now > _bom.getVotingDeadline(ia), "voting NOT end");
+    // function replaceRejectedDeal(
+    //     address ia,
+    //     bytes32 sn,
+    //     uint32 exerciseDate
+    // ) external currentDate(exerciseDate) {
+    //     require(IAgreement(ia).isDeal(sn), "deal NOT exist");
+    //     require(_bom.getState(ia) == 4, "agianst NO need to buy");
 
-        uint8 votingType = _getVotingType(ia);
+    //     (, , , uint32 closingDate, , ) = IAgreement(ia).getDeal(sn.sequenceOfDeal());
+    //     require(exerciseDate < closingDate, "MISSED closing date");
 
-        require(votingType > 0, "NOT need to vote");
+    //     bytes32 rule = IVotingRules(
+    //         getSHA().getTerm(uint8(TermTitle.VOTING_RULES))
+    //     ).rules(_getVotingType(ia));
 
-        _bom.voteCounting(ia, votingType);
-    }
+    //     require(
+    //         exerciseDate <
+    //             _bom.getVotingDeadline(ia) +
+    //                 uint32(rule.execDaysForPutOpt()) *
+    //                 86400,
+    //         "MISSED execute deadline"
+    //     );
 
-    function replaceRejectedDeal(
-        address ia,
-        bytes32 sn,
-        uint32 exerciseDate
-    ) external currentDate(exerciseDate) {
-        require(IAgreement(ia).isDeal(sn), "deal NOT exist");
-        require(_bom.getState(ia) == 4, "agianst NO need to buy");
+    //     require(sn.typeOfDeal() == 2, "NOT a 3rd party ST Deal");
+    //     require(
+    //         msg.sender == sn.sellerOfDeal(_bos.snList()),
+    //         "NOT Seller of the Deal"
+    //     );
 
-        (, , , uint32 closingDate, , ) = IAgreement(ia).getDeal(sn);
-        require(exerciseDate < closingDate, "MISSED closing date");
+    //     _splitDeal(ia, sn);
+    // }
 
-        bytes32 rule = IVotingRules(
-            getSHA().getTerm(uint8(TermTitle.VOTING_RULES))
-        ).rules(_getVotingType(ia));
+    // function _splitDeal(address ia, bytes32 sn) private {
+    //     (, uint256 parValue, uint256 paidPar, , , ) = IAgreement(ia).getDeal(
+    //         sn
+    //     );
 
-        require(
-            exerciseDate <
-                _bom.getVotingDeadline(ia) +
-                    uint32(rule.execDaysForPutOpt()) *
-                    86400,
-            "MISSED execute deadline"
-        );
+    //     (address[] memory buyers, uint256 againstPar) = _bom.getNay(ia);
 
-        require(sn.typeOfDeal() == 2, "NOT a 3rd party ST Deal");
-        require(
-            msg.sender == sn.sellerOfDeal(_bos.snList()),
-            "NOT Seller of the Deal"
-        );
+    //     // uint256 len = buyers.length;
 
-        _splitDeal(ia, sn);
-    }
-
-    function _splitDeal(address ia, bytes32 sn) private {
-        (, uint256 parValue, uint256 paidPar, , , ) = IAgreement(ia).getDeal(
-            sn
-        );
-
-        (address[] memory buyers, uint256 againstPar) = _bom.getNay(ia);
-
-        // uint256 len = buyers.length;
-
-        for (uint256 i = 0; i < buyers.length; i++) {
-            (, , uint256 voteAmt) = _bom.getVote(ia, buyers[i]);
-            IAgreement(ia).splitDeal(
-                sn,
-                buyers[i],
-                parValue.mul(voteAmt).div(againstPar),
-                paidPar.mul(voteAmt).div(againstPar)
-            );
-        }
-    }
+    //     for (uint256 i = 0; i < buyers.length; i++) {
+    //         (, , uint256 voteAmt) = _bom.getVote(ia, buyers[i]);
+    //         IAgreement(ia).splitDeal(
+    //             sn,
+    //             buyers[i],
+    //             parValue.mul(voteAmt).div(againstPar),
+    //             paidPar.mul(voteAmt).div(againstPar)
+    //         );
+    //     }
+    // }
 
     function turnOverAgainstVote(
         address ia,
@@ -155,6 +209,11 @@ contract BOMKeeper is
         require(
             ISigPage(ia).sigDate(sn.buyerOfDeal()) == 0,
             "already SIGNED deal"
+        );
+
+        require(
+            msg.sender == sn.sellerOfDeal(_bos.snList()),
+            "NOT Seller of the Deal"
         );
 
         bytes32 rule = IVotingRules(
@@ -172,6 +231,9 @@ contract BOMKeeper is
         );
 
         _bom.turnOverVote(ia, sn.buyerOfDeal(), turnOverDate);
-        _bom.voteCounting(ia, _getVotingType(ia));
+
+        // IAgreement(ia).restoreDeal(sn.preSequenceOfDeal())
+
+        _bom.voteCounting(ia);
     }
 }

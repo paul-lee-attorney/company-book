@@ -25,7 +25,8 @@ contract Agreement is BOSSetting, SigPage {
         uint8 typeOfDeal; 1   // 1-CI 2-ST(to 3rd) 3-ST(internal) 4-RT(replaced sales to against voter)
         uint16 sequence; 2
         address buyer; 20
-        bytes6 shortShareNumber; 6
+        uint16 shortShareNumber; 6
+        uint16 preSequence;
 } */
 
     struct Deal {
@@ -44,11 +45,11 @@ contract Agreement is BOSSetting, SigPage {
     // party address => parValue
     // mapping(address => uint256) public parToBuy;
 
-    // ssn => Deal
-    mapping(bytes6 => Deal) private _deals;
+    // sequence => Deal
+    mapping(uint16 => Deal) private _deals;
 
-    // ssn => exist?
-    mapping(bytes6 => bool) public isDeal;
+    // sequence => exist?
+    mapping(uint16 => bool) public isDeal;
 
     bytes32[] private _dealsList;
 
@@ -84,6 +85,8 @@ contract Agreement is BOSSetting, SigPage {
         uint256 paidPar
     );
 
+    event RestoreDeal(bytes32 indexed orgSN, bytes32 indexed splitedSN);
+
     event DelDeal(bytes32 indexed sn);
 
     // event SetTypeOfIA(uint8 _typeOfIA);
@@ -103,12 +106,12 @@ contract Agreement is BOSSetting, SigPage {
     //##   Modifier   ##
     //##################
 
-    modifier onlyCleared(bytes6 ssn) {
+    modifier onlyCleared(uint16 ssn) {
         require(_deals[ssn].state == 1);
         _;
     }
 
-    modifier dealExist(bytes6 ssn) {
+    modifier dealExist(uint16 ssn) {
         require(isDeal[ssn], "NOT a deal sn");
         _;
     }
@@ -122,7 +125,8 @@ contract Agreement is BOSSetting, SigPage {
         uint8 typeOfDeal,
         uint16 sequence,
         address buyer,
-        bytes32 shareNumber
+        bytes32 shareNumber,
+        uint16 preSSN
     ) private pure returns (bytes32) {
         bytes memory _sn = new bytes(32);
 
@@ -131,6 +135,7 @@ contract Agreement is BOSSetting, SigPage {
         _sn = _sn.sequenceToSN(2, sequence);
         _sn = _sn.addrToSN(4, buyer);
         _sn = _sn.bytes32ToSN(24, shareNumber, 1, 6);
+        _sn = _sn.sequenceToSN(31, preSSN);
 
         return _sn.bytesToBytes32();
     }
@@ -187,10 +192,11 @@ contract Agreement is BOSSetting, SigPage {
             typeOfDeal,
             counterOfDeals,
             buyer,
-            shareNumber
+            shareNumber,
+            0
         );
 
-        Deal storage deal = _deals[sn.shortOfDeal()];
+        Deal storage deal = _deals[counterOfDeals];
 
         deal.sn = sn;
         deal.unitPrice = unitPrice;
@@ -199,12 +205,12 @@ contract Agreement is BOSSetting, SigPage {
         deal.closingDate = closingDate;
 
         sn.insertToQue(_dealsList);
-        isDeal[sn.shortOfDeal()] = true;
+        isDeal[counterOfDeals] = true;
 
         emit CreateDeal(sn, unitPrice, parValue, paidPar, closingDate);
     }
 
-    function delDeal(bytes6 ssn) external onlyAttorney dealExist(ssn) {
+    function delDeal(uint16 ssn) public dealExist(ssn) attorneyOrKeeper {
         // Deal storage deal = _deals[sn];
 
         bytes32 sn = _deals[ssn].sn;
@@ -228,7 +234,7 @@ contract Agreement is BOSSetting, SigPage {
     }
 
     function updateDeal(
-        bytes6 ssn,
+        uint16 ssn,
         uint256 unitPrice,
         uint256 parValue,
         uint256 paidPar,
@@ -271,7 +277,7 @@ contract Agreement is BOSSetting, SigPage {
     }
 
     function clearDealCP(
-        bytes6 ssn,
+        uint16 ssn,
         bytes32 hashLock,
         uint32 closingDate
     ) external onlyKeeper dealExist(ssn) {
@@ -297,7 +303,7 @@ contract Agreement is BOSSetting, SigPage {
         emit ClearDealCP(deal.sn, deal.state, hashLock, deal.closingDate);
     }
 
-    function closeDeal(bytes6 ssn, string hashKey)
+    function closeDeal(uint16 ssn, string hashKey)
         external
         onlyCleared(ssn)
         onlyKeeper
@@ -316,7 +322,7 @@ contract Agreement is BOSSetting, SigPage {
         emit CloseDeal(deal.sn, hashKey);
     }
 
-    function revokeDeal(bytes6 ssn, string hashKey)
+    function revokeDeal(uint16 ssn, string hashKey)
         external
         onlyCleared(ssn)
         onlyKeeper
@@ -352,12 +358,13 @@ contract Agreement is BOSSetting, SigPage {
         _sn[1] = bytes1(4);
         _sn = _sn.sequenceToSN(2, sequence);
         _sn = _sn.addrToSN(4, buyer);
+        _sn = _sn.sequenceToSN(31, sn.sequenceOfDeal());
 
         return _sn.bytesToBytes32();
     }
 
     function splitDeal(
-        bytes6 ssn,
+        uint16 ssn,
         address buyer,
         uint256 parValue,
         uint256 paidPar
@@ -369,7 +376,7 @@ contract Agreement is BOSSetting, SigPage {
 
         bytes32 extSN = _extendSN(sn, counterOfDeals, buyer);
 
-        Deal storage deal_1 = _deals[extSN.shortOfDeal()];
+        Deal storage deal_1 = _deals[counterOfDeals];
 
         deal_1.sn = extSN;
         deal_1.unitPrice = deal.unitPrice;
@@ -387,16 +394,29 @@ contract Agreement is BOSSetting, SigPage {
         addPartyToDoc(buyer);
 
         extSN.insertToQue(_dealsList);
-        isDeal[extSN.shortOfDeal()] = true;
+        isDeal[counterOfDeals] = true;
 
         emit SplitDeal(sn, extSN, parValue, paidPar);
+    }
+
+    function restoreDeal(uint16 ssn) external onlyKeeper {
+        Deal storage deal = _deals[ssn];
+        Deal storage orgDeal = _deals[deal.sn.preSNOfDeal()];
+
+        orgDeal.parValue += deal.parValue;
+        orgDeal.paidPar += deal.paidPar;
+
+        emit RestoreDeal(orgDeal.sn, deal.sn);
+
+        removePartyFromDoc(deal.sn.buyerOfDeal());
+        delDeal(ssn);
     }
 
     //  #################################
     //  ##       查询接口              ##
     //  #################################
 
-    function getDeal(bytes6 ssn)
+    function getDeal(uint16 ssn)
         external
         view
         dealExist(ssn)

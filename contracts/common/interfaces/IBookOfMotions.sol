@@ -34,7 +34,7 @@ interface IBookOfMotions {
 
     function againstMotion(address ia) external;
 
-    function voteCounting(address ia, uint8 votingType) external;
+    function voteCounting(address ia) external;
 
     function turnOverVote(
         address ia,

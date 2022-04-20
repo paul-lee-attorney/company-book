@@ -129,7 +129,9 @@ contract LockUp is BOSSetting, BOMSetting, DraftSetting {
         onlyKeeper
         returns (bool)
     {
-        (, , , uint256 closingDate, , ) = IAgreement(ia).getDeal(sn);
+        (, , , , uint256 closingDate, , ) = IAgreement(ia).getDeal(
+            sn.sequenceOfDeal()
+        );
 
         uint8 typeOfDeal = sn.typeOfDeal();
         bytes6 ssn = sn.shortShareNumberOfDeal();

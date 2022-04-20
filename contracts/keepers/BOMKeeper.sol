@@ -121,6 +121,7 @@ contract BOMKeeper is
 
     function _ratioOfNay(address ia, address againstVoter)
         private
+        view
         returns (uint256)
     {
         require(_bom.getState(ia) == 4, "agianst NO need to buy");
@@ -146,58 +147,6 @@ contract BOMKeeper is
             ? 0
             : 1;
     }
-
-    // function replaceRejectedDeal(
-    //     address ia,
-    //     bytes32 sn,
-    //     uint32 exerciseDate
-    // ) external currentDate(exerciseDate) {
-    //     require(IAgreement(ia).isDeal(sn), "deal NOT exist");
-    //     require(_bom.getState(ia) == 4, "agianst NO need to buy");
-
-    //     (, , , uint32 closingDate, , ) = IAgreement(ia).getDeal(sn.sequenceOfDeal());
-    //     require(exerciseDate < closingDate, "MISSED closing date");
-
-    //     bytes32 rule = IVotingRules(
-    //         getSHA().getTerm(uint8(TermTitle.VOTING_RULES))
-    //     ).rules(_getVotingType(ia));
-
-    //     require(
-    //         exerciseDate <
-    //             _bom.getVotingDeadline(ia) +
-    //                 uint32(rule.execDaysForPutOpt()) *
-    //                 86400,
-    //         "MISSED execute deadline"
-    //     );
-
-    //     require(sn.typeOfDeal() == 2, "NOT a 3rd party ST Deal");
-    //     require(
-    //         msg.sender == sn.sellerOfDeal(_bos.snList()),
-    //         "NOT Seller of the Deal"
-    //     );
-
-    //     _splitDeal(ia, sn);
-    // }
-
-    // function _splitDeal(address ia, bytes32 sn) private {
-    //     (, uint256 parValue, uint256 paidPar, , , ) = IAgreement(ia).getDeal(
-    //         sn
-    //     );
-
-    //     (address[] memory buyers, uint256 againstPar) = _bom.getNay(ia);
-
-    //     // uint256 len = buyers.length;
-
-    //     for (uint256 i = 0; i < buyers.length; i++) {
-    //         (, , uint256 voteAmt) = _bom.getVote(ia, buyers[i]);
-    //         IAgreement(ia).splitDeal(
-    //             sn,
-    //             buyers[i],
-    //             parValue.mul(voteAmt).div(againstPar),
-    //             paidPar.mul(voteAmt).div(againstPar)
-    //         );
-    //     }
-    // }
 
     function turnOverAgainstVote(
         address ia,
@@ -230,10 +179,9 @@ contract BOMKeeper is
             "signe deadline NOT reached"
         );
 
+        IAgreement(ia).restoreDeal(sn.preSNOfDeal());
+
         _bom.turnOverVote(ia, sn.buyerOfDeal(), turnOverDate);
-
-        // IAgreement(ia).restoreDeal(sn.preSequenceOfDeal())
-
         _bom.voteCounting(ia);
     }
 }

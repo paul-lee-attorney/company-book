@@ -158,10 +158,7 @@ contract BookOfMotions is
         onlyKeeper
         notProposed(ia)
     {
-        require(
-            _boa.isRegistered(ia),
-            "Investment Agreement is NOT registered"
-        );
+        require(_boa.isRegistered(ia), "Agreement NOT REGISTERED");
 
         require(typeOfIA(ia) != 3, "NOT need to vote");
 
@@ -180,13 +177,14 @@ contract BookOfMotions is
         emit ProposeMotion(ia, motion.votingDeadline, tx.origin);
     }
 
-    function _getVoteAmount(address sender)
+    function _getVoteAmount(address ia, address sender)
         private
         view
         returns (uint256 amount)
     {
         if (
             IVotingRules(getSHA().getTerm(uint8(TermTitle.VOTING_RULES)))
+                .rules(_getVotingType(ia))
                 .basedOnParValue()
         ) {
             (, amount, ) = _bos.getMember(sender);
@@ -211,7 +209,7 @@ contract BookOfMotions is
         motion.sigOfYea[sender] = sigDate;
         motion.membersOfYea.push(sender);
 
-        uint256 voteAmt = _getVoteAmount(sender);
+        uint256 voteAmt = _getVoteAmount(ia, sender);
 
         motion.supportPar += voteAmt;
         motion.voteAmt[sender] = voteAmt;
@@ -237,7 +235,7 @@ contract BookOfMotions is
         motion.sigOfNay[sender] = sigDate;
         motion.membersOfNay.push(sender);
 
-        uint256 voteAmt = _getVoteAmount(sender);
+        uint256 voteAmt = _getVoteAmount(ia, sender);
 
         motion.againstPar += voteAmt;
         motion.voteAmt[sender] = voteAmt;
@@ -375,7 +373,7 @@ contract BookOfMotions is
         motion.sigOfYea[voter] = turnOverDate;
         motion.membersOfYea.push(voter);
 
-        uint256 voteAmt = _getVoteAmount(voter);
+        uint256 voteAmt = _getVoteAmount(ia, voter);
 
         motion.againstPar -= voteAmt;
         motion.supportPar += voteAmt;

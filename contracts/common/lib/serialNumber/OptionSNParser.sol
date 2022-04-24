@@ -42,6 +42,10 @@ library OptionSNParser {
     }
 
     function parValueOfFt(bytes32 sn) internal pure returns (uint256) {
-        return uint256(uint208(sn));
+        return uint256(uint104(sn << 104));
+    }
+
+    function paidParOfFt(bytes32 sn) internal pure returns (uint256) {
+        return uint256(uint104(sn));
     }
 }

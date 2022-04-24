@@ -4,12 +4,11 @@
 
 pragma solidity ^0.4.24;
 
-import "../../../common/config/BOSSetting.sol";
 import "../../../common/config/DraftSetting.sol";
 
 import "../../../common/lib/serialNumber/SNFactory.sol";
 
-contract VotingRules_ is BOSSetting, DraftSetting {
+contract VotingRules is DraftSetting {
     using SNFactory for bytes;
 
     // struct snInfo {
@@ -21,40 +20,58 @@ contract VotingRules_ is BOSSetting, DraftSetting {
     //     bool basedOnParValue; //default: false - based on PaidInAmount; true- ParValue
     //     uint8 votingDays; //default: 30 natrual days
     //     uint8 execDaysForPutOpt; //default: 7 natrual days
-    //     uint8 turnOverDaysForFuture; //default: 7 natrual days
+    //     uint8 typeOfVote;
     // }
 
-    // typeOfRule => Rule : 0-ST(internal) 1-CI 2-ST(to 3rd Party)
-    bytes32[3] public rules;
+    // typeOfVote => Rule : 1-CI 2-ST(to 3rd Party) 3-ST(to otherMember) 4-(1&3) 5-(2&3) 6-(1&2&3) 7-(1&2)
+    bytes32[8] public votingRules;
 
     constructor() public {
         // votingDays = 30; // default 30 days as per Company Law Act
 
-        // default for Capital Increase : (10进制) 0000 6666 00 00 00 00 30 00
-        rules[
+        // default for Capital Increase : (10进制) 0000 6666 00 00 00 00 30 00  01
+        votingRules[
             1
-        ] = 0x004242000000001e0000000000000000000000000000000000000000000000;
+        ] = 0x004242000000001e0001000000000000000000000000000000000000000000;
 
-        // default for Share Transfer : (10进制) 0000 5000 00 01 01 00 30 07 07
-        rules[
+        votingRules[
+            4
+        ] = 0x004242000000001e0004000000000000000000000000000000000000000000;
+
+        votingRules[
+            6
+        ] = 0x004242000000001e0706000000000000000000000000000000000000000000;
+
+        votingRules[
+            7
+        ] = 0x004242000000001e0707000000000000000000000000000000000000000000;
+
+        // default for Share Transfer : (10进制) 0000 5000 00 01 01 00 30 07 02
+        votingRules[
             2
-        ] = 0x003200000101001e0707000000000000000000000000000000000000000000;
+        ] = 0x003200000101001e0702000000000000000000000000000000000000000000;
+
+        votingRules[
+            3
+        ] = 0x00000000000000000003000000000000000000000000000000000000000000;
+
+        votingRules[
+            5
+        ] = 0x003200000101001e0705000000000000000000000000000000000000000000;
     }
 
     // ################
     // ##   Event    ##
     // ################
 
-    event SetRule(uint8 typeOfRule, bytes32 sn);
-
-    // event SetCommonRules(uint8 votingDays, bool basedOnParValue);
+    event SetRule(uint8 typeOfVote, bytes32 sn);
 
     // ################
     // ##  Modifier  ##
     // ################
 
-    modifier typeAllowed(uint8 typeOfRule) {
-        require(typeOfRule < 3, "typeOfRule overflow");
+    modifier typeAllowed(uint8 typeOfVote) {
+        require(typeOfVote < 8, "typeOfVote overflow");
         _;
     }
 
@@ -62,7 +79,8 @@ contract VotingRules_ is BOSSetting, DraftSetting {
     // ##   写接口   ##
     // ################
 
-    function _createRule(
+    function setRule(
+        uint8 typeOfVote,
         uint256 ratioHead,
         uint256 ratioAmount,
         bool onlyAttendance,
@@ -70,9 +88,10 @@ contract VotingRules_ is BOSSetting, DraftSetting {
         bool againstShallBuy,
         bool basedOnParValue,
         uint8 votingDays,
-        uint8 execDaysForPutOpt,
-        uint8 turnOverDaysForFuture
-    ) private pure returns (bytes32 sn) {
+        uint8 execDaysForPutOpt
+    ) external onlyAttorney typeAllowed(typeOfVote) {
+        require(votingDays > 0, "ZERO votingDays");
+
         bytes memory _sn = new bytes(32);
 
         _sn = _sn.intToSN(0, ratioHead, 2);
@@ -83,39 +102,10 @@ contract VotingRules_ is BOSSetting, DraftSetting {
         _sn = _sn.boolToSN(7, basedOnParValue);
         _sn[8] = bytes1(votingDays);
         _sn[9] = bytes1(execDaysForPutOpt);
-        _sn[10] = bytes1(turnOverDaysForFuture);
+        _sn[10] = bytes1(typeOfVote);
 
-        sn = _sn.bytesToBytes32();
-    }
+        votingRules[typeOfVote] = _sn.bytesToBytes32();
 
-    function setRule(
-        uint8 typeOfRule,
-        uint256 ratioHead,
-        uint256 ratioAmount,
-        bool onlyAttendance,
-        bool impliedConsent,
-        bool againstShallBuy,
-        bool basedOnParValue,
-        uint8 votingDays,
-        uint8 execDaysForPutOpt,
-        uint8 turnOverDaysForFuture
-    ) external onlyAttorney typeAllowed(typeOfRule) {
-        require(votingDays > 0, "ZERO votingDays");
-
-        bytes32 sn = _createRule(
-            ratioHead,
-            ratioAmount,
-            onlyAttendance,
-            impliedConsent,
-            againstShallBuy,
-            basedOnParValue,
-            votingDays,
-            execDaysForPutOpt,
-            turnOverDaysForFuture
-        );
-
-        rules[typeOfRule] = sn;
-
-        emit SetRule(typeOfRule, sn);
+        emit SetRule(typeOfVote, votingRules[typeOfVote]);
     }
 }

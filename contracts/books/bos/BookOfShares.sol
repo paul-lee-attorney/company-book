@@ -93,6 +93,9 @@ contract BookOfShares is MembersRepo {
         // 在《股权簿》中添加新股票（签发新的《出资证明书》）
         _issueShare(shareNumber, parValue, paidPar, paidInDeadline, issuePrice);
 
+        // 将股票编号加入《股东名册》记载的股东名下
+        _addShareToMember(shareNumber.short(), shareholder);
+
         // 增加“认缴出资”和“实缴出资”金额
         _capIncrease(parValue, paidPar);
     }
@@ -160,6 +163,8 @@ contract BookOfShares is MembersRepo {
             _shares[ssn].paidInDeadline,
             unitPrice
         );
+
+        _addShareToMember(ssn, to);
     }
 
     /// @param ssn 拟减资的股票短号
@@ -195,6 +200,7 @@ contract BookOfShares is MembersRepo {
 
         // 若拟降低的面值金额等于股票面值，则删除相关股票
         if (parValue == share.parValue) {
+            _removeShareFromMember(ssn, share.shareNumber.shareholder());
             _deregisterShare(ssn);
             _updateMembersList(share.shareNumber.shareholder());
         } else {

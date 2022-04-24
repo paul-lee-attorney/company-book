@@ -6,8 +6,7 @@ pragma solidity ^0.4.24;
 
 import "../../common/interfaces/IAdminSetting.sol";
 import "../../common/interfaces/IDraftSetting.sol";
-import "../../common/interfaces/IBOSSetting.sol";
-import "../../common/interfaces/IBOMSetting.sol";
+import "../../common/interfaces/IBookSetting.sol";
 
 import "../../common/lib/ArrayUtils.sol";
 
@@ -21,9 +20,12 @@ import "../../common/config/BOMSetting.sol";
 
 import "./interfaces/ITerm.sol";
 
+import "./terms/VotingRules.sol";
+
 contract ShareholdersAgreement is
     EnumsRepo,
     CloneFactory,
+    VotingRules,
     BOSSetting,
     BOMSetting,
     BOHSetting,
@@ -31,9 +33,6 @@ contract ShareholdersAgreement is
 {
     using ArrayUtils for address[];
     using ArrayUtils for uint8[];
-
-    // address public bos;
-    // address public bom;
 
     // title => template address
     mapping(uint8 => address) public tempOfTitle;
@@ -90,14 +89,6 @@ contract ShareholdersAgreement is
     //##    写接口    ##
     //##################
 
-    // function setBOS(address _bos) external onlyKeeper {
-    //     bos = _bos;
-    // }
-
-    // function setBOM(address _bom) external onlyKeeper {
-    //     bom = _bom;
-    // }
-
     function setTermsTemplate(address[15] templates) external onlyKeeper {
         for (uint8 i = 0; i < 15; i++) {
             _setTemplate(i, templates[i]);
@@ -135,10 +126,10 @@ contract ShareholdersAgreement is
     {
         body = createClone(tempOfTitle[title]);
         IAdminSetting(body).init(msg.sender, this);
-        IBOSSetting(body).setBOS(address(_bos));
+        IBookSetting(body).setBOS(address(_bos));
 
         if (title != uint8(TermTitle.VOTING_RULES))
-            IBOMSetting(body).setBOM(address(_bom));
+            IBookSetting(body).setBOM(address(_bom));
 
         _titleToBody[title] = body;
         _bodyToTitle[body] = title;

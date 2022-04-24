@@ -10,8 +10,8 @@ import "../common/config/BOMSetting.sol";
 
 import "../common/interfaces/IAdminSetting.sol";
 import "../common/interfaces/IShareholdersAgreement.sol";
-import "../common/interfaces/IBOSSetting.sol";
-import "../common/interfaces/IBOMSetting.sol";
+import "../common/interfaces/IBookSetting.sol";
+// import "../common/interfaces/IBOMSetting.sol";
 import "../common/interfaces/ISigPage.sol";
 
 contract BOHKeeper is BOSSetting, BOHSetting, BOMSetting {
@@ -72,8 +72,8 @@ contract BOHKeeper is BOSSetting, BOHSetting, BOMSetting {
 
         IAdminSetting(body).init(msg.sender, this);
         IShareholdersAgreement(body).setTermsTemplate(termsTemplate);
-        IBOSSetting(body).setBOS(address(_bos));
-        IBOMSetting(body).setBOM(address(_bom));
+        IBookSetting(body).setBOS(address(_bos));
+        IBookSetting(body).setBOM(address(_bom));
     }
 
     function removeSHA(address body)

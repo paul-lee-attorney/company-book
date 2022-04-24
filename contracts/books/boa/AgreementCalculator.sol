@@ -5,6 +5,7 @@
 pragma solidity ^0.4.24;
 
 import "../../common/interfaces/IAgreement.sol";
+import "../../common/interfaces/ISigPage.sol";
 import "../../common/config/BOSSetting.sol";
 import "../../common/lib/serialNumber/DealSNParser.sol";
 
@@ -63,5 +64,27 @@ contract AgreementCalculator is BOSSetting {
         // 协议类别计算
         uint8 sumOfSignal = signal[0] + signal[1] + signal[2];
         output = sumOfSignal == 3 ? signal[2] == 0 ? 7 : 3 : sumOfSignal;
+    }
+
+    function otherMembers(address ia) internal view returns (address[]) {
+        address[] memory signers = ISigPage(ia).signers();
+        address[] memory members = _bos.membersList();
+        address[] storage others;
+
+        uint256 lenSigners = signers.length;
+        uint256 lenMembers = members.length;
+
+        for (uint256 i = 0; i < lenMembers; i++) {
+            bool flag = false;
+            for (uint256 j = 0; j < lenSigners; j++) {
+                if (members[i] == signers[j]) {
+                    flag = true;
+                    break;
+                }
+            }
+            if (!flag) others.push(members[i]);
+        }
+
+        return others;
     }
 }

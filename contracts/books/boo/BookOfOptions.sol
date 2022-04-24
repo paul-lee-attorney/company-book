@@ -14,7 +14,7 @@ import "../../common/lib/serialNumber/OptionSNParser.sol";
 contract BookOfOptions is BOSSetting {
     using ArrayUtils for bytes32[];
     using SNFactory for bytes;
-    using SNFactory for bytes32;
+    // using SNFactory for bytes32;
     using ShareSNParser for bytes32;
     using OptionSNParser for bytes32;
 
@@ -23,8 +23,12 @@ contract BookOfOptions is BOSSetting {
         address rightholder;
         uint32 closingDate;
         uint256 parValue;
+        uint256 paidPar;
+        uint256 futurePar;
+        uint256 futurePaid;
+        uint256 pledgePaid;
         bytes32 hashLock;
-        uint8 state; // 0-pending; 1-issued; 2-executed; 3-futureReady; 4-closed; 5-expired;
+        uint8 state; // 0-pending; 1-issued; 2-executed; 3-futureReady; 4-pledgeReady; 5-closed; 6-revoked; 7-expired;
     }
 
     // bytes32 snInfo{
@@ -42,11 +46,15 @@ contract BookOfOptions is BOSSetting {
 
     // bytes32 future {
     //     uint48 shortShareNumber; 0-5
-    //     uint208 parValue; 6-31
+    //     uint104 parValue; 6-18
+    //     uint104 paidPar; 19-31
     // }
 
     // ssn => futures
     mapping(bytes6 => bytes32[]) public futures;
+
+    // ssn => pledges
+    mapping(bytes6 => bytes32[]) public pledges;
 
     // ssn => bool
     mapping(bytes6 => bool) public isOption;
@@ -55,11 +63,22 @@ contract BookOfOptions is BOSSetting {
 
     uint16 public counterOfOptions;
 
+    constructor(address bookeeper) public {
+        init(msg.sender, bookeeper);
+    }
+
     // ################
     // ##   Event    ##
     // ################
 
-    event SetOpt(bytes32 indexed sn, address rightholder, uint256 parValue);
+    event CreateOpt(
+        bytes32 indexed sn,
+        address rightholder,
+        uint256 parValue,
+        uint256 paidPar
+    );
+
+    // event SetState(bytes32 indexed sn, uint8 state);
 
     event DelOpt(bytes32 indexed sn);
 
@@ -67,13 +86,22 @@ contract BookOfOptions is BOSSetting {
 
     event SetOptState(bytes32 indexed sn, uint8 state);
 
-    event ExecOpt(bytes32 indexed sn, uint32 exerciseDate, bytes32 hashLock);
+    event ExecOpt(bytes32 indexed sn, uint32 exerciseDate);
 
     event RevokeOpt(bytes32 indexed sn);
 
-    event AddFuture(bytes32 indexed sn, bytes32 shareNumber, uint256 parValue);
+    event AddFuture(
+        bytes32 indexed sn,
+        bytes32 shareNumber,
+        uint256 parValue,
+        uint256 paidPar
+    );
 
-    event DelFuture(bytes32 indexed sn, bytes32 shareNumber, uint256 parValue);
+    event DelFuture(bytes32 indexed sn);
+
+    event AddPledge(bytes32 indexed sn, bytes32 shareNumber, uint256 paidPar);
+
+    event LockOpt(bytes32 indexed sn, bytes32 hashLock);
 
     // ################
     // ##  Modifier  ##
@@ -118,18 +146,20 @@ contract BookOfOptions is BOSSetting {
         uint8 exerciseDays,
         uint8 closingDays,
         uint256 price,
-        uint256 parValue
-    ) external onlyKeeper {
+        uint256 parValue,
+        uint256 paidPar
+    ) external onlyKeeper returns (bytes32 sn) {
         require(typeOfOpt < 2, "typeOfOpt overflow");
-        require(triggerDate > now, "triggerDate NOT future");
+        require(triggerDate >= now - 15 minutes, "triggerDate NOT future");
         require(price > 0, "price is ZERO");
-        require(parValue > 0, "ZERO parValue");
+        require(paidPar > 0, "ZERO paidPar");
+        require(parValue >= paidPar, "INSUFFICIENT parValue");
         require(exerciseDays > 0, "ZERO exerciseDays");
         require(closingDays > 0, "ZERO closingDays");
 
         counterOfOptions++;
 
-        bytes32 sn = createSN(
+        sn = createSN(
             typeOfOpt,
             counterOfOptions,
             triggerDate,
@@ -145,24 +175,59 @@ contract BookOfOptions is BOSSetting {
 
         opt.sn = sn;
         opt.rightholder = rightholder;
+        opt.parValue = paidPar;
         opt.parValue = parValue;
+        opt.paidPar = paidPar;
         opt.state = 1;
 
         isOption[ssn] = true;
-        sn.insertToQue(_snList);
+        _snList.push(sn);
 
-        emit SetOpt(sn, rightholder, parValue);
+        emit CreateOpt(sn, rightholder, parValue, paidPar);
     }
 
-    function _createFuture(bytes32 shareNumber, uint256 parValue)
-        internal
-        pure
-        returns (bytes32 ft)
+    // function setState(bytes6 ssn, uint8 state) external onlyKeeper {
+    //     Option storage opt = _options[ssn];
+    //     opt.state = state;
+    //     emit SetState(opt.sn, state);
+    // }
+
+    function execOption(bytes6 ssn, uint32 exerciseDate)
+        external
+        onlyKeeper
+        optionExist(ssn)
+        currentDate(exerciseDate)
     {
+        Option storage opt = _options[ssn];
+
+        bytes32 sn = opt.sn;
+        uint32 triggerDate = sn.triggerDateOfOpt();
+        uint8 exerciseDays = sn.exerciseDaysOfOpt();
+        uint8 closingDays = sn.closingDaysOfOpt();
+
+        require(opt.state == 1, "option's state is NOT correct");
+        require(
+            exerciseDate >= triggerDate &&
+                exerciseDate <= triggerDate + exerciseDays * 86400,
+            "NOT in exercise period"
+        );
+
+        opt.closingDate = exerciseDate + closingDays * 86400;
+        opt.state = 2;
+
+        emit ExecOpt(sn, exerciseDate);
+    }
+
+    function _createFuture(
+        bytes32 shareNumber,
+        uint256 parValue,
+        uint256 paidPar
+    ) internal pure returns (bytes32 ft) {
         bytes memory _ft = new bytes(32);
 
         _ft = _ft.bytes32ToSN(0, shareNumber, 1, 6);
-        _ft = _ft.intToSN(6, parValue, 26);
+        _ft = _ft.intToSN(6, parValue, 13);
+        _ft = _ft.intToSN(19, paidPar, 13);
 
         ft = _ft.bytesToBytes32();
     }
@@ -170,11 +235,13 @@ contract BookOfOptions is BOSSetting {
     function addFuture(
         bytes6 ssn,
         bytes32 shareNumber,
-        uint256 parValue
+        uint256 parValue,
+        uint256 paidPar
     ) external onlyKeeper optionExist(ssn) {
         Option storage opt = _options[ssn];
 
-        require(opt.state == 2, "WRONG state of option");
+        require(now <= opt.closingDate + 15 minutes, "MISSED closingDate");
+        require(opt.state == 2, "option NOT exec");
 
         bytes32 sn = opt.sn;
 
@@ -192,34 +259,131 @@ contract BookOfOptions is BOSSetting {
             );
         else require(obligor == shareNumber.shareholder(), "WRONG sharehoder");
 
-        require(opt.parValue >= parValue, "NOT sufficient paidInAmout");
+        require(
+            opt.parValue >= opt.futurePar + parValue,
+            "NOT sufficient parValue"
+        );
+        opt.futurePar += parValue;
 
-        opt.parValue -= parValue;
+        require(
+            opt.parValue >= opt.futurePaid + paidPar,
+            "NOT sufficient paidPar"
+        );
+        opt.futurePaid += paidPar;
 
-        bytes32 ft = _createFuture(shareNumber, parValue);
-        ft.insertToQue(futures[ssn]);
+        bytes32 ft = _createFuture(shareNumber, parValue, paidPar);
+        futures[ssn].push(ft);
 
-        if (opt.parValue == 0) opt.state = 3;
+        if (opt.parValue == opt.futurePar && opt.paidPar == opt.futurePaid)
+            opt.state = 3;
 
-        emit AddFuture(sn, shareNumber, parValue);
+        emit AddFuture(sn, shareNumber, parValue, paidPar);
     }
 
-    function removeFuture(
-        bytes6 ssn,
-        bytes32 shareNumber,
-        uint256 parValue
-    ) external onlyKeeper optionExist(ssn) {
-        bytes32 ft = _createFuture(shareNumber, parValue);
+    function removeFuture(bytes6 ssn, bytes32 ft)
+        external
+        onlyKeeper
+        optionExist(ssn)
+    {
+        Option storage opt = _options[ssn];
+        require(opt.state < 5, "WRONG state");
+        require(now - 15 minutes <= opt.closingDate, "MISSED closingDate");
 
         bytes32[] storage fts = futures[ssn];
 
         (bool exist, ) = fts.firstIndexOf(ft);
-
         require(exist, "future NOT EXIST");
 
         fts.removeByValue(ft);
+        opt.futurePar -= ft.parValueOfFt();
+        opt.futurePaid -= ft.paidParOfFt();
 
-        emit DelFuture(_options[ssn].sn, shareNumber, parValue);
+        if (opt.state == 3) opt.state = 2;
+
+        emit DelFuture(_options[ssn].sn);
+    }
+
+    function requestPledge(
+        bytes6 ssn,
+        bytes32 shareNumber,
+        uint256 paidPar
+    ) external onlyKeeper optionExist(ssn) {
+        Option storage opt = _options[ssn];
+
+        require(opt.state < 5, "WRONG state");
+        require(opt.state > 1, "WRONG state");
+
+        bytes32 sn = opt.sn;
+        uint8 typeOfOpt = sn.typeOfOpt();
+        address obligor = sn.obligorOfOpt();
+
+        // bytes6 shortOfShare = shareNumber.short();
+
+        if (typeOfOpt == 1)
+            require(obligor == shareNumber.shareholder(), "WRONG shareholder");
+        else
+            require(
+                opt.rightholder == shareNumber.shareholder(),
+                "WRONG sharehoder"
+            );
+
+        require(
+            opt.paidPar >= opt.pledgePaid + paidPar,
+            "pledge paidPar OVERFLOW"
+        );
+        opt.pledgePaid += paidPar;
+
+        bytes32 pld = _createFuture(shareNumber, paidPar, paidPar);
+        pledges[ssn].push(pld);
+
+        if (opt.paidPar == opt.pledgePaid) opt.state = 4;
+
+        emit AddPledge(sn, shareNumber, paidPar);
+    }
+
+    function lockOption(bytes6 ssn, bytes32 hashLock)
+        external
+        optionExist(ssn)
+        onlyKeeper
+    {
+        Option storage opt = _options[ssn];
+        require(opt.state > 1, "WRONG state");
+        opt.hashLock = hashLock;
+
+        emit LockOpt(opt.sn, hashLock);
+    }
+
+    function closeOption(
+        bytes6 ssn,
+        string hashKey,
+        uint32 closingDate
+    ) external onlyKeeper optionExist(ssn) currentDate(closingDate) {
+        Option storage opt = _options[ssn];
+
+        require(opt.state > 1, "WRONG state");
+        require(opt.state < 5, "WRONG state");
+        require(closingDate <= opt.closingDate, "MISSED closingDate");
+        require(opt.hashLock == keccak256(bytes(hashKey)), "WRONG key");
+
+        opt.state = 5;
+
+        emit CloseOpt(opt.sn, hashKey);
+    }
+
+    function revokeOption(bytes6 ssn, uint32 revokeDate)
+        external
+        onlyKeeper
+        optionExist(ssn)
+        currentDate(revokeDate)
+    {
+        Option storage opt = _options[ssn];
+
+        require(opt.state < 5, "WRONG state");
+        require(revokeDate > opt.closingDate, "closing period NOT expired");
+
+        opt.state = 6;
+
+        emit RevokeOpt(opt.sn);
     }
 
     // ################
@@ -235,6 +399,7 @@ contract BookOfOptions is BOSSetting {
             address rightholder,
             uint32 closingDate,
             uint256 parValue,
+            uint256 paidPar,
             bytes32 hashLock,
             uint8 state
         )
@@ -244,80 +409,16 @@ contract BookOfOptions is BOSSetting {
         rightholder = opt.rightholder;
         closingDate = opt.closingDate;
         parValue = opt.parValue;
+        paidPar = opt.paidPar;
         hashLock = opt.hashLock;
         state = opt.state;
     }
 
-    function getSNList() external view returns (bytes32[] list) {
+    function stateOfOption(bytes6 ssn) external view returns (uint8) {
+        return _options[ssn].state;
+    }
+
+    function snList() external view returns (bytes32[] list) {
         list = _snList;
-    }
-
-    function execOption(
-        bytes6 ssn,
-        uint32 exerciseDate,
-        bytes32 hashLock
-    ) external onlyKeeper optionExist(ssn) currentDate(exerciseDate) {
-        Option storage opt = _options[ssn];
-
-        bytes32 sn = opt.sn;
-        uint32 triggerDate = sn.triggerDateOfOpt();
-        uint8 exerciseDays = sn.exerciseDaysOfOpt();
-        uint8 closingDays = sn.closingDaysOfOpt();
-
-        require(
-            exerciseDate >= triggerDate &&
-                exerciseDate <= triggerDate + exerciseDays * 86400,
-            "NOT in exercise period"
-        );
-
-        opt.closingDate = exerciseDate + closingDays * 86400;
-        opt.hashLock = hashLock;
-        opt.state = 2;
-
-        emit ExecOpt(sn, exerciseDate, hashLock);
-    }
-
-    function closeOption(bytes6 ssn, string hashKey)
-        external
-        onlyKeeper
-        optionExist(ssn)
-    {
-        Option storage opt = _options[ssn];
-
-        require(opt.state > 1, "WRONG state");
-        require(
-            now <= opt.closingDate + 15 minutes &&
-                now >= opt.closingDate - 15 minutes,
-            "NOT closingDate"
-        );
-        require(opt.hashLock == keccak256(bytes(hashKey)), "WRONG key");
-
-        opt.state = 4;
-
-        // 加入： 交割FUTURE
-
-        emit CloseOpt(opt.sn, hashKey);
-    }
-
-    function revokeOption(bytes6 ssn) external onlyKeeper optionExist(ssn) {
-        Option storage opt = _options[ssn];
-
-        require(opt.state < 4, "WRONG state");
-
-        if (opt.state == 2 || opt.state == 3)
-            require(now >= opt.closingDate + 15 minutes, "NOT expired yet");
-        if (opt.state == 1) {
-            uint32 triggerDate = opt.sn.triggerDateOfOpt();
-            uint8 exerciseDays = opt.sn.exerciseDaysOfOpt();
-
-            require(
-                now >= triggerDate + exerciseDays * 86400 + 15 minutes,
-                "available to exercise"
-            );
-        }
-
-        opt.state = 5;
-
-        emit RevokeOpt(opt.sn);
     }
 }

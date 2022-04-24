@@ -71,25 +71,17 @@ interface IBookOfShares {
 
     function sharesList() external view returns (bytes32[]);
 
-    // function getPreSN(bytes32 shareNumber)
-    //     external
-    //     view
-    //     returns (bytes32 preSN);
-
     function membersOfClass(uint8 class) external view returns (address[]);
 
     function sharesOfClass(uint8 class) external view returns (uint256[]);
 
     function isMember(address acct) external view returns (bool);
 
-    function getMember(address acct)
-        external
-        view
-        returns (
-            uint256[] sharesInHand,
-            uint256 parValue,
-            uint256 paidInAmount
-        );
+    function sharesInHand(address acct) external view returns (bytes32[]);
+
+    function parInHand(address acct) external view returns (uint256 parValue);
+
+    function paidInHand(address acct) external view returns (uint256 paidPar);
 
     function membersList() external view returns (address[]);
 

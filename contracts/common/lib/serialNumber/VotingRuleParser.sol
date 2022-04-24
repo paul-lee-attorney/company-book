@@ -33,7 +33,7 @@ library VotingRuleParser {
         return uint8(sn[9]);
     }
 
-    function turnOverDaysForFuture(bytes32 sn) internal pure returns (uint8) {
+    function typeOfVote(bytes32 sn) internal pure returns (uint8) {
         return uint8(sn[10]);
     }
 }

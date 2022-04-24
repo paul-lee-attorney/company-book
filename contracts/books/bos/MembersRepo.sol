@@ -15,6 +15,8 @@ contract MembersRepo is SharesRepo {
 
     mapping(address => bool) public isMember;
 
+    mapping(address => bytes32[]) public sharesInHand;
+
     // 股东名册
     address[] private _membersList;
 
@@ -78,6 +80,22 @@ contract MembersRepo is SharesRepo {
         emit RemoveMember(acct, _membersList.length);
     }
 
+    function _addShareToMember(bytes6 ssn, address acct)
+        internal
+        shareExist(ssn)
+        memberExist(acct)
+    {
+        sharesInHand[acct].push(_shares[ssn].sn);
+    }
+
+    function _removeShareFromMember(bytes6 ssn, address acct)
+        internal
+        shareExist(ssn)
+        memberExist(acct)
+    {
+        sharesInHand[acct].removeByValue(_shares[ssn].sn);
+    }
+
     function _updateMembersList(address acct) internal {
         uint256 len = _snList.length;
         bool flag;
@@ -100,30 +118,25 @@ contract MembersRepo is SharesRepo {
         return _membersList;
     }
 
-    function getMember(address acct)
-        public
+    function parInHand(address acct)
+        external
         view
         memberExist(acct)
-        returns (
-            bytes32[] sharesInHand,
-            uint256 parValue,
-            uint256 paidPar
-        )
+        returns (uint256 parValue)
     {
-        bytes32[] storage sharesList;
-        uint256 len = _snList.length;
+        uint256 len = sharesInHand[acct].length;
+        for (uint256 i = 0; i < len; i++)
+            parValue += _shares[sharesInHand[acct][i].short()].parValue;
+    }
 
-        for (uint256 i = 0; i < len; i++) {
-            if (_snList[i].shareholder() == acct) {
-                sharesList.push(_snList[i]);
-                (, uint256 par, uint256 paid, , , , ) = getShare(
-                    _snList[i].short()
-                );
-                parValue += par;
-                paidPar += paid;
-            }
-        }
-
-        sharesInHand = sharesList;
+    function paidInHand(address acct)
+        external
+        view
+        memberExist(acct)
+        returns (uint256 paidPar)
+    {
+        uint256 len = sharesInHand[acct].length;
+        for (uint256 i = 0; i < len; i++)
+            paidPar += _shares[sharesInHand[acct][i].short()].paidPar;
     }
 }

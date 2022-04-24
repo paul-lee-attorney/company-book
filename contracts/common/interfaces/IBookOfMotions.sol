@@ -36,19 +36,22 @@ interface IBookOfMotions {
 
     function voteCounting(address ia) external;
 
-    function turnOverVote(
+    function requestToBuy(
         address ia,
-        address voter,
-        uint32 turnOverDate
-    ) external;
+        bytes32 sn,
+        uint32 exerciseDate,
+        address agianstVoter
+    ) external returns (uint256 parValue, uint256 paidPar);
 
     //##################
     //##    读接口    ##
     //##################
 
-    function getVotingDeadline(address ia) external view returns (uint256);
+    function votingRule(address ia) external view returns (uint32);
 
-    function getState(address ia) external view returns (uint8);
+    function votingDeadline(address ia) external view returns (uint256);
+
+    function state(address ia) external view returns (uint8);
 
     function votedYea(address ia, address acct) external returns (bool);
 
@@ -64,9 +67,9 @@ interface IBookOfMotions {
         view
         returns (address[] membersOfNay, uint256 againstPar);
 
-    function getSumOfVoteAmt(address ia) external view returns (uint256);
+    function sumOfVoteAmt(address ia) external view returns (uint256);
 
-    function haveVoted(address ia, address acct) external view returns (bool);
+    function isVoted(address ia, address acct) external view returns (bool);
 
     function getVote(address ia, address acct)
         external

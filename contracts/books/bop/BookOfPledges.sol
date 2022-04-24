@@ -49,6 +49,10 @@ contract BookOfPledges is BOSSetting {
 
     bytes32[] public snList;
 
+    constructor(address bookeeper) public {
+        init(msg.sender, bookeeper);
+    }
+
     //##################
     //##    Event     ##
     //##################

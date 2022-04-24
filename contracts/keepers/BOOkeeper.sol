@@ -20,12 +20,11 @@ import "../common/lib/serialNumber/DealSNParser.sol";
 import "../common/lib/serialNumber/OptionSNParser.sol";
 import "../common/lib/serialNumber/VotingRuleParser.sol";
 
-import "../common/interfaces/IBOSSetting.sol";
+import "../common/interfaces/IBookSetting.sol";
 import "../common/interfaces/IAgreement.sol";
 import "../common/interfaces/IAdminSetting.sol";
 import "../common/interfaces/ISigPage.sol";
 
-import "../books/boh/interfaces/IVotingRules.sol";
 import "../books/boa/AgreementCalculator.sol";
 
 import "../common/components/EnumsRepo.sol";
@@ -96,76 +95,128 @@ contract BOOKeeper is
         _;
     }
 
+    modifier onlyRightholder(bytes32 sn) {
+        (, address rightholder, , , , , ) = _boo.getOption(sn.shortOfOpt());
+        require(msg.sender == rightholder, "NOT rightholder");
+        _;
+    }
+
+    modifier onlySeller(bytes32 sn) {
+        address seller = msg.sender;
+
+        if (sn.typeOfOpt() > 0) {
+            (, address rightholder, , , , , ) = _boo.getOption(sn.shortOfOpt());
+            require(seller == rightholder, "NOT seller");
+        } else require(seller == sn.obligorOfOpt(), "NOT seller");
+
+        _;
+    }
+
+    modifier onlyBuyer(bytes32 sn) {
+        address buyer = msg.sender;
+
+        if (sn.typeOfOpt() > 0)
+            require(buyer == sn.obligorOfOpt(), "NOT buyer");
+        else {
+            (, address rightholder, , , , , ) = _boo.getOption(sn.shortOfOpt());
+            require(buyer == rightholder, "NOT buyer");
+        }
+
+        _;
+    }
+
     // ##################
     // ##    Option    ##
     // ##################
 
-    function execOption(
-        bytes32 sn,
-        uint32 exerciseDate,
-        bytes32 hashLock
-    ) external {
-        (, address rightholder, , , , ) = _boo.getOption(sn.shortOfOpt());
-
-        require(msg.sender == rightholder, "NOT rightholder");
-
-        require(_boo.stateOfOption(sn) == 1, "option's state is NOT correct");
-
-        uint32 triggerDate = sn.triggerDateOfOpt();
-        uint8 exerciseDays = sn.exerciseDaysOfOpt();
-
-        if (now > triggerDate + uint32(exerciseDays) * 86400)
-            _boo.setState(sn, 3); // option expired
-        else if (now >= triggerDate) _boo.setState(sn, 2);
-
-        _boo.execOption(sn, exerciseDate, hashLock);
+    function execOption(bytes32 sn, uint32 exerciseDate)
+        external
+        onlyRightholder(sn)
+    {
+        _boo.execOption(sn.shortOfOpt(), exerciseDate);
     }
 
     function addFuture(
         bytes32 sn,
         bytes32 shareNumber,
-        uint256 parValue
-    ) external {
-        (, address rightholder, , , , ) = _boo.getOption(sn.shortOfOpt());
-        require(msg.sender == rightholder, "NOT rightholder");
-        _bos.decreaseCleanPar(shareNumber.short(), parValue);
-        _boo.addFuture(sn.shortOfOpt(), shareNumber, parValue);
+        uint256 paidPar
+    ) external onlyRightholder(sn) {
+        _bos.decreaseCleanPar(shareNumber.short(), paidPar);
+        _boo.addFuture(sn.shortOfOpt(), shareNumber, paidPar, paidPar);
     }
 
-    function removeFuture(
+    function removeFuture(bytes32 sn, bytes32 ft) external onlyRightholder(sn) {
+        _boo.removeFuture(sn.shortOfOpt(), ft);
+        _bos.increaseCleanPar(ft.shortShareNumberOfFt(), ft.paidParOfFt());
+    }
+
+    function requestPledge(
         bytes32 sn,
         bytes32 shareNumber,
-        uint256 parValue
-    ) external {
-        (, address rightholder, , , , ) = _boo.getOption(sn.shortOfOpt());
-        require(msg.sender == rightholder, "NOT rightholder");
+        uint256 paidPar
+    ) external onlySeller(sn) {
+        _bos.decreaseCleanPar(shareNumber.short(), paidPar);
+        _boo.requestPledge(sn.shortOfOpt(), shareNumber, paidPar);
+    }
 
-        _boo.removeFuture(sn.shortOfOpt(), shareNumber, parValue);
-        _bos.increaseCleanPar(shareNumber.short(), parValue);
+    function lockOption(bytes32 sn, bytes32 hashLock) external onlySeller(sn) {
+        _boo.lockOption(sn.shortOfOpt(), hashLock);
+    }
+
+    function _recoverCleanPar(bytes32[] plds) private {
+        uint256 len = plds.length;
+
+        for (uint256 i = 0; i < len; i++)
+            _bos.increaseCleanPar(
+                plds[i].shortShareNumberOfFt(),
+                plds[i].paidParOfFt()
+            );
     }
 
     function closeOption(
         bytes32 sn,
-        bytes32 hashKey,
+        string hashKey,
         uint32 closingDate
-    ) external currentDate(closingDate) {
-        require(msg.sender == sn.obligorOfOpt(), "NOT obligor of the Option");
-        _boo.closeOption(sn.shortOfOpt(), hashKey);
+    ) external onlyBuyer(sn) {
+        address buyer = msg.sender;
+        uint256 price = sn.priceOfOpt();
 
-        (, address rightholder, , , , ) = _boo.getOption(sn.shortOfOpt());
-
-        address buyer = sn.typeOfOpt() > 0 ? sn.obligorOfOpt() : rightholder;
+        _boo.closeOption(sn.shortOfOpt(), hashKey, closingDate);
 
         bytes32[] memory fts = _boo.futures(sn.shortOfOpt());
 
-        for (uint256 i = 0; i < fts.length; i++)
+        _recoverCleanPar(fts);
+
+        for (uint256 i = 0; i < fts.length; i++) {
             _bos.transferShare(
                 fts[i].shortShareNumberOfFt(),
                 fts[i].parValueOfFt(),
-                fts[i].parValueOfFt(),
+                fts[i].paidParOfFt(),
                 buyer,
                 closingDate,
-                sn.priceOfOpt()
+                price
             );
+        }
+
+        _recoverCleanPar(_boo.pledges(sn.shortOfOpt()));
+    }
+
+    function revokeOption(bytes32 sn, uint32 revokeDate)
+        external
+        onlyRightholder(sn)
+    {
+        _boo.revokeOption(sn.shortOfOpt(), revokeDate);
+
+        if (sn.typeOfOpt() > 0) _recoverCleanPar(_boo.futures(sn.shortOfOpt()));
+        else _recoverCleanPar(_boo.pledges(sn.shortOfOpt()));
+    }
+
+    function releasePledges(bytes32 sn) external onlyRightholder(sn) {
+        (, , , , , , uint8 state) = _boo.getOption(sn.shortOfOpt());
+
+        require(state == 6, "option NOT revoked");
+
+        if (sn.typeOfOpt() > 0) _recoverCleanPar(_boo.pledges(sn.shortOfOpt()));
+        else _recoverCleanPar(_boo.futures(sn.shortOfOpt()));
     }
 }

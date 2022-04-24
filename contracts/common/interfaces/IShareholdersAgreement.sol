@@ -21,6 +21,18 @@ interface IShareholdersAgreement {
 
     function removeTerm(uint8 title) external;
 
+    function setRule(
+        uint8 typeOfVote,
+        uint256 ratioHead,
+        uint256 ratioAmount,
+        bool onlyAttendance,
+        bool impliedConsent,
+        bool againstShallBuy,
+        bool basedOnParValue,
+        uint8 votingDays,
+        uint8 execDaysForPutOpt
+    ) external;
+
     function finalizeSHA() external;
 
     //##################
@@ -35,9 +47,7 @@ interface IShareholdersAgreement {
 
     function tempOfTitle(uint8 title) external view returns (address);
 
-    // function bos() external view returns (address);
-
-    // function bom() external view returns (address);
+    function votingRules(uint8 typeOfVote) external view returns (bytes32);
 
     function termIsTriggered(
         uint8 title,

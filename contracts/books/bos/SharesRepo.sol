@@ -254,24 +254,24 @@ contract SharesRepo is AdminSetting {
         emit DecreaseCleanPar(ssn, parValue);
     }
 
-    function increaseCleanPar(bytes6 ssn, uint256 parValue)
+    function increaseCleanPar(bytes6 ssn, uint256 paidPar)
         external
         shareExist(ssn)
     {
-        require(parValue > 0, "ZERO parValue");
+        require(paidPar > 0, "ZERO paidPar");
 
         Share storage share = _shares[ssn];
         require(
-            share.paidPar >= (share.cleanPar + parValue),
-            "parValue overflow"
+            share.paidPar >= (share.cleanPar + paidPar),
+            "paidPar overflow"
         );
 
-        share.cleanPar += parValue;
+        share.cleanPar += paidPar;
 
         if (share.cleanPar == share.paidPar && share.state != 4)
             share.state = 0;
 
-        emit IncreaseCleanPar(ssn, parValue);
+        emit IncreaseCleanPar(ssn, paidPar);
     }
 
     /// @param ssn - 股票短号

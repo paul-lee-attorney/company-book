@@ -5,9 +5,9 @@
 pragma solidity ^0.4.24;
 
 import "../common/interfaces/IAdminSetting.sol";
-import "../common/interfaces/IBOSSetting.sol";
 import "../common/interfaces/IAgreement.sol";
 import "../common/interfaces/ISigPage.sol";
+import "../common/interfaces/IBookSetting.sol";
 
 import "../common/config/BOMSetting.sol";
 import "../common/config/BOASetting.sol";
@@ -20,9 +20,9 @@ import "../common/components/EnumsRepo.sol";
 
 contract BOAKeeper is
     EnumsRepo,
-    BOMSetting,
     BOASetting,
     BOHSetting,
+    BOMSetting,
     BOSSetting
 {
     using DealSNParser for bytes32;
@@ -76,7 +76,7 @@ contract BOAKeeper is
         body = _boa.createDoc(docType);
 
         IAdminSetting(body).init(msg.sender, this);
-        IBOSSetting(body).setBOS(address(_bos));
+        IBookSetting(body).setBOS(address(_bos));
     }
 
     function removeIA(address body)
@@ -93,7 +93,6 @@ contract BOAKeeper is
         beEstablished(body)
     {
         _boa.submitDoc(body, docHash);
-        // ISigPage(body).submitDoc();
         IAdminSetting(body).abandonAdmin();
     }
 
@@ -105,26 +104,21 @@ contract BOAKeeper is
     ) external {
         require(_bom.isPassed(ia), "Motion NOT passed");
 
-        uint8 typeOfDeal = sn.typeOfDeal();
-        bytes6 ssn = sn.shortShareNumberOfDeal();
-        address seller = sn.sellerOfDeal(_bos.snList());
-
-        //交易发起人为卖方或簿记管理人(Bookeeper);
         address sender = msg.sender;
-        require(
-            (typeOfDeal == 1 && sender == getGK()) || sender == seller,
-            "NOT seller or Bookeeper"
-        );
 
-        //SHA校验
-        if (typeOfDeal > 1) {
+        if (sn.typeOfDeal() > 1) {
+            require(sender == sn.sellerOfDeal(_bos.snList()), "NOT seller");
+
             _checkSHA(_termsForShareTransfer, ia, sn);
 
-            (, , uint256 parOfDeal, , , , ) = IAgreement(ia).getDeal(
+            (, , uint256 parValue, , , , ) = IAgreement(ia).getDeal(
                 sn.sequenceOfDeal()
             );
-            _bos.decreaseCleanPar(ssn, parOfDeal);
-        } else _checkSHA(_termsForCapitalIncrease, ia, sn);
+            _bos.decreaseCleanPar(sn.shortShareNumberOfDeal(), parValue);
+        } else {
+            require(sender == getGK(), "NOT GeneralKeeper");
+            _checkSHA(_termsForCapitalIncrease, ia, sn);
+        }
 
         IAgreement(ia).clearDealCP(sn.sequenceOfDeal(), hashLock, closingDate);
     }
@@ -212,7 +206,13 @@ contract BOAKeeper is
 
         IAgreement(ia).revokeDeal(sn.sequenceOfDeal(), hashKey);
 
-        if (sn.typeOfDeal() > 1)
+        if (sn.typeOfDeal() > 1) {
+            (, , uint256 parValue, , , , ) = IAgreement(ia).getDeal(
+                sn.sequenceOfDeal()
+            );
+
+            _bos.increaseCleanPar(sn.shortShareNumberOfDeal(), parValue);
             _bos.updateShareState(sn.shortShareNumberOfDeal(), 0);
+        }
     }
 }

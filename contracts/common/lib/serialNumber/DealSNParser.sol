@@ -17,12 +17,12 @@ library DealSNParser {
         return address(bytes20(sn << 32));
     }
 
-    function shortShareNumberOfDeal(bytes32 sn) internal pure returns (bytes6) {
-        return bytes6(sn << 192);
+    function groupOfBuyer(bytes32 sn) internal pure returns (uint16) {
+        return uint16(bytes2(sn << 192));
     }
 
-    function preSNOfDeal(bytes32 sn) internal pure returns (uint16) {
-        return uint16(sn);
+    function shortShareNumberOfDeal(bytes32 sn) internal pure returns (bytes6) {
+        return bytes6(sn << 208);
     }
 
     function shareNumberOfDeal(bytes32 sn, bytes32[] memory sharesList)

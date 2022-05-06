@@ -31,6 +31,7 @@ contract EnumsRepo {
         ANTI_DILUTION,
         PRE_EMPTIVE,
         FIRST_REFUSAL,
+        GROUP_UPDATE,
         DRAG_ALONG,
         TAG_ALONG,
         PUT_OPTION,

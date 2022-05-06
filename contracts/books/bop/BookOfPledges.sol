@@ -160,6 +160,7 @@ contract BookOfPledges is BOSSetting {
 
     function updatePledge(
         bytes6 ssn,
+        address creditor,
         uint256 pledgedPar,
         uint256 guaranteedAmt
     ) external onlyKeeper pledgeExist(ssn) {
@@ -167,6 +168,7 @@ contract BookOfPledges is BOSSetting {
 
         Pledge storage pld = _pledges[ssn];
 
+        pld.creditor = creditor;
         pld.pledgedPar = pledgedPar;
         pld.guaranteedAmt = guaranteedAmt;
 

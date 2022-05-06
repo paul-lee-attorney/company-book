@@ -10,6 +10,7 @@ import "../common/config/BOMSetting.sol";
 import "../common/config/BOOSetting.sol";
 
 import "../common/lib/SafeMath.sol";
+import "../common/lib/serialNumber/ShareSNParser.sol";
 import "../common/lib/serialNumber/DealSNParser.sol";
 import "../common/lib/serialNumber/VotingRuleParser.sol";
 import "../common/lib/serialNumber/OptionSNParser.sol";
@@ -19,12 +20,11 @@ import "../common/interfaces/ISigPage.sol";
 
 // import "../books/boh/interfaces/IVotingRules.sol";
 
-import "../books/boa/AgreementCalculator.sol";
+// import "../books/boa/AgreementCalculator.sol";
 
 import "../common/components/EnumsRepo.sol";
 
 contract BOMKeeper is
-    AgreementCalculator,
     BOASetting,
     BOMSetting,
     BOHSetting,
@@ -32,6 +32,7 @@ contract BOMKeeper is
     EnumsRepo
 {
     using SafeMath for uint256;
+    using ShareSNParser for bytes32;
     using DealSNParser for bytes32;
     using OptionSNParser for bytes32;
     using VotingRuleParser for bytes32;
@@ -73,8 +74,13 @@ contract BOMKeeper is
     ) external currentDate(exerciseDate) {
         // require(IAgreement(ia).isDeal(sn.sequenceOfDeal()), "deal NOT exist");
         // require(sn.typeOfDeal() == 2, "NOT a 3rd party ST Deal");
+
+        bytes32 shareNumber = IAgreement(ia).shareNumberOfDeal(
+            sn.sequenceOfDeal()
+        );
+
         require(
-            msg.sender == sn.sellerOfDeal(_bos.snList()),
+            msg.sender == shareNumber.shareholder(),
             "NOT Seller of the Deal"
         );
 
@@ -103,11 +109,6 @@ contract BOMKeeper is
         );
 
         _boo.execOption(snOfOpt.shortOfOpt(), exerciseDate);
-        _boo.addFuture(
-            snOfOpt.shortOfOpt(),
-            sn.shareNumberOfDeal(_bos.snList()),
-            parValue,
-            paidPar
-        );
+        _boo.addFuture(snOfOpt.shortOfOpt(), shareNumber, parValue, paidPar);
     }
 }

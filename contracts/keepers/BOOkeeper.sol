@@ -12,6 +12,7 @@ import "../common/config/BOASetting.sol";
 import "../common/config/BOMSetting.sol";
 import "../common/config/BOPSetting.sol";
 import "../common/config/BOOSetting.sol";
+import "../common/config/BOSSetting.sol";
 
 import "../common/lib/SafeMath.sol";
 import "../common/lib/serialNumber/ShareSNParser.sol";
@@ -25,18 +26,18 @@ import "../common/interfaces/IAgreement.sol";
 import "../common/interfaces/IAdminSetting.sol";
 import "../common/interfaces/ISigPage.sol";
 
-import "../books/boa/AgreementCalculator.sol";
+// import "../books/boa/AgreementCalculator.sol";
 
 import "../common/components/EnumsRepo.sol";
 
 contract BOOKeeper is
     EnumsRepo,
-    AgreementCalculator,
     BOASetting,
     BOHSetting,
     BOMSetting,
     BOPSetting,
-    BOOSetting
+    BOOSetting,
+    BOSSetting
 {
     using SafeMath for uint256;
     using ShareSNParser for bytes32;

@@ -4,21 +4,25 @@
 
 pragma solidity ^0.4.24;
 
-import "../interfaces/IBookOfDocuments.sol";
+import "../interfaces/IBookOfAgreements.sol";
+import "../interfaces/IAgreementCalculator.sol";
 
 import "../config/AdminSetting.sol";
 
 contract BOASetting is AdminSetting {
-    IBookOfDocuments internal _boa;
+    IBookOfAgreements internal _boa;
+    IAgreementCalculator internal _agrmtCal;
 
     event SetBOA(address boa);
+    event SetAgrmtCalculator(address cal);
 
     function setBOA(address boa) external onlyKeeper {
-        _boa = IBookOfDocuments(boa);
+        _boa = IBookOfAgreements(boa);
         emit SetBOA(boa);
     }
 
-    // function getBOA() public view returns (IBookOfDocuments) {
-    //     return _boa;
-    // }
+    function setBOACal(address cal) external onlyKeeper {
+        _agrmtCal = IAgreementCalculator(cal);
+        emit SetAgrmtCalculator(cal);
+    }
 }

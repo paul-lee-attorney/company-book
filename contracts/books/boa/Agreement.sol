@@ -25,13 +25,14 @@ contract Agreement is BOSSetting, SigPage {
         uint8 typeOfDeal; 1   // 1-CI 2-ST(to 3rd) 3-ST(internal)
         uint16 sequence; 2
         address buyer; 20
+        uint16 group; 2
         uint16 shortShareNumber; 6
-        uint16 preSequence;
     } 
     */
 
     struct Deal {
         bytes32 sn;
+        bytes32 shareNumber;
         uint256 unitPrice;
         uint256 parValue;
         uint256 paidPar;
@@ -54,7 +55,9 @@ contract Agreement is BOSSetting, SigPage {
     //##    Event     ##
     //##################
 
-    event CreateDeal(
+    event CreateDeal(bytes32 indexed sn);
+
+    event UpdateDeal(
         bytes32 indexed sn,
         uint256 unitPrice,
         uint256 parValue,
@@ -98,8 +101,8 @@ contract Agreement is BOSSetting, SigPage {
         uint8 typeOfDeal,
         uint16 sequence,
         address buyer,
-        bytes32 shareNumber,
-        uint16 preSSN
+        uint16 group,
+        bytes32 shareNumber
     ) private pure returns (bytes32) {
         bytes memory _sn = new bytes(32);
 
@@ -107,28 +110,20 @@ contract Agreement is BOSSetting, SigPage {
         _sn[1] = bytes1(typeOfDeal);
         _sn = _sn.sequenceToSN(2, sequence);
         _sn = _sn.addrToSN(4, buyer);
-        _sn = _sn.bytes32ToSN(24, shareNumber, 1, 6);
-        _sn = _sn.sequenceToSN(31, preSSN);
+        _sn = _sn.sequenceToSN(24, group);
+        _sn = _sn.bytes32ToSN(26, shareNumber, 1, 6);
 
         return _sn.bytesToBytes32();
     }
 
     function createDeal(
-        // uint8 typeOfDeal,
         bytes32 shareNumber,
         uint8 class,
         address buyer,
-        uint256 unitPrice,
-        uint256 parValue,
-        uint256 paidPar,
-        uint32 closingDate
+        uint16 group
     ) external onlyAttorney {
-        // require(typeOfDeal > 0 && typeOfDeal < 4, "typeOfDeal over flow");
         require(buyer != address(0), "buyer is ZERO address");
-
-        require(parValue > 0, "parValue is ZERO");
-        require(parValue >= paidPar, "paidPar overflow");
-        require(closingDate > now + 15 minutes, "closingDate shall be future");
+        require(group > 0, "ZERO group");
 
         uint8 typeOfDeal = 1;
 
@@ -141,10 +136,6 @@ contract Agreement is BOSSetting, SigPage {
 
             addPartyToDoc(shareNumber.shareholder());
         } else {
-            require(
-                shareNumber == bytes32(0),
-                "capital increase deal shall ONLY have ZERO shareNumber"
-            );
             require(class <= _bos.counterOfClasses(), "class overflow");
         }
 
@@ -157,29 +148,53 @@ contract Agreement is BOSSetting, SigPage {
             typeOfDeal,
             counterOfDeals,
             buyer,
-            shareNumber,
-            0
+            group,
+            shareNumber
         );
 
         Deal storage deal = _deals[counterOfDeals];
 
         deal.sn = sn;
+        deal.shareNumber = shareNumber;
+        // deal.unitPrice = unitPrice;
+        // deal.parValue = parValue;
+        // deal.paidPar = paidPar;
+        // deal.closingDate = closingDate;
+
+        _dealsList.push(sn);
+        isDeal[counterOfDeals] = true;
+
+        emit CreateDeal(sn);
+    }
+
+    function updateDeal(
+        uint16 ssn,
+        uint256 unitPrice,
+        uint256 parValue,
+        uint256 paidPar,
+        uint32 closingDate
+    ) external dealExist(ssn) onlyAttorney {
+        require(parValue > 0, "parValue is ZERO");
+        require(parValue >= paidPar, "paidPar overflow");
+        require(closingDate > now + 15 minutes, "closingDate shall be future");
+
+        Deal storage deal = _deals[ssn];
+
         deal.unitPrice = unitPrice;
         deal.parValue = parValue;
         deal.paidPar = paidPar;
         deal.closingDate = closingDate;
 
-        _dealsList.push(sn);
-        isDeal[counterOfDeals] = true;
-
-        emit CreateDeal(sn, unitPrice, parValue, paidPar, closingDate);
+        emit UpdateDeal(deal.sn, unitPrice, parValue, paidPar, closingDate);
     }
 
     function delDeal(uint16 ssn) external dealExist(ssn) attorneyOrKeeper {
-        bytes32 sn = _deals[ssn].sn;
+        Deal storage deal = _deals[ssn];
+
+        bytes32 sn = deal.sn;
 
         if (sn.typeOfDeal() > 1) {
-            removePartyFromDoc(sn.sellerOfDeal(_bos.snList()));
+            removePartyFromDoc(deal.shareNumber.shareholder());
         }
 
         removePartyFromDoc(sn.buyerOfDeal());
@@ -286,6 +301,15 @@ contract Agreement is BOSSetting, SigPage {
         closingDate = deal.closingDate;
         state = deal.state;
         hashLock = deal.hashLock;
+    }
+
+    function shareNumberOfDeal(uint16 ssn)
+        external
+        view
+        dealExist(ssn)
+        returns (bytes32)
+    {
+        return _deals[ssn].shareNumber;
     }
 
     function dealsList() external view returns (bytes32[]) {

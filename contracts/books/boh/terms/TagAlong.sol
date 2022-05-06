@@ -4,68 +4,82 @@
 
 pragma solidity ^0.4.24;
 
-// import "../../../common/config/BOSSetting.sol";
+import "../../../common/config/BOSSetting.sol";
+import "../../../common/config/BOASetting.sol";
 import "../../../common/config/BOMSetting.sol";
 import "../../../common/config/DraftSetting.sol";
 
 import "../../../common/lib/ArrayUtils.sol";
 import "../../../common/lib/SafeMath.sol";
+import "../../../common/lib/serialNumber/ShareSNParser.sol";
 import "../../../common/lib/serialNumber/DealSNParser.sol";
+import "../../../common/lib/serialNumber/TagRuleParser.sol";
+import "../../../common/lib/serialNumber/SNFactory.sol";
 
 import "../../../common/interfaces/IAgreement.sol";
 import "../../../common/interfaces/ISigPage.sol";
 
-import "../../boa/AgreementCalculator.sol";
+// import "../../boa/AgreementCalculator.sol";
 
-import "./Groups.sol";
-
-// import "../../../common/interfaces/IMotion.sol";
-
-contract TagAlong is AgreementCalculator, BOMSetting, Groups {
+contract TagAlong is BOMSetting, BOSSetting, BOASetting, DraftSetting {
     using ArrayUtils for address[];
-    using SafeMath for uint256;
-    using SafeMath for uint8;
+    using ArrayUtils for uint16[];
+    // using SafeMath for uint256;
+    // using SafeMath for uint8;
+    using ShareSNParser for bytes32;
     using DealSNParser for bytes32;
+    using TagRuleParser for bytes32;
+    using SNFactory for bytes;
 
     struct Tag {
-        // address of follower;
-        address[] followers;
-        // 0-no condition; 1-ratio>50%; 2-(biggest ratio & >= threshold); 3-biggest shareholder (ratio < threshold)
-        uint8 triggerType;
-        // threshold to define material control party
-        uint256 threshold;
-        // false - free amount; true - pro rata (transfered parValue : original parValue)
-        bool proRata;
+        mapping(uint16 => bool) isFollower;
+        uint16[] followers;
+        bytes32 rule;
     }
 
-    // dragerGroupID => Tag
-    mapping(uint8 => Tag) private _tags;
-    // dragerGroupID => bool
-    mapping(uint8 => bool) public isDrager;
+    // struct tagRule {
+    //     uint16 drager;
+    //     // 0-no condition; 1- biggest && shareRatio > threshold;
+    //     uint8 triggerType;
+    //     bool basedOnPar;
+    //     // threshold to define material control party
+    //     uint32 threshold;
+    //     // false - free amount; true - pro rata (transfered parValue : original parValue)
+    //     bool proRata;
+    // }
+
+    // drager => bool
+    mapping(uint16 => bool) public isDrager;
+
+    // drager => Tag
+    mapping(uint16 => Tag) private _tags;
+
+    mapping(uint16 => bool) private _exemptedGroups;
 
     // ################
     // ##   Event    ##
     // ################
 
     event SetTag(
-        uint8 indexed dragerID,
+        uint16 indexed drager,
         uint8 triggerType,
+        bool basedOnPar,
         uint256 threshold,
         bool proRata
     );
 
-    event AddFollower(uint8 indexed dragerID, address follower);
+    event AddFollower(uint16 indexed drager, address follower);
 
-    event RemoveFollower(uint8 indexed dragerID, address follower);
+    event RemoveFollower(uint16 indexed drager, address follower);
 
-    event DelTag(uint8 indexed dragerID);
+    event DelTag(uint16 indexed drager);
 
     // ################
     // ##  modifier  ##
     // ################
 
-    modifier beDrager(uint8 dragerID) {
-        require(isDrager[dragerID], "WRONG drager ID");
+    modifier dragerExist(uint16 drager) {
+        require(isDrager[drager], "WRONG drager ID");
         _;
     }
 
@@ -73,245 +87,180 @@ contract TagAlong is AgreementCalculator, BOMSetting, Groups {
     // ##   写接口   ##
     // ################
 
-    function setTag(
-        uint8 dragerID,
+    function _createTagRule(
+        uint16 drager,
         uint8 triggerType,
-        uint256 threshold,
+        bool basedOnPar,
+        uint32 threshold,
+        bool proRata
+    ) private pure returns (bytes32 sn) {
+        bytes memory _sn = new bytes(32);
+
+        _sn = _sn.sequenceToSN(0, drager);
+        _sn[2] = bytes1(triggerType);
+        _sn = _sn.boolToSN(3, basedOnPar);
+        _sn = _sn.intToSN(4, threshold, 4);
+        _sn = _sn.boolToSN(8, proRata);
+
+        return _sn.bytesToBytes32();
+    }
+
+    function createTag(
+        uint16 drager,
+        uint8 triggerType,
+        bool basedOnPar,
+        uint32 threshold,
         bool proRata
     ) external onlyAttorney {
-        require(isGroupNumber[dragerID], "group NOT exist");
-        require(triggerType < 4, "触发类别错误");
-        require(threshold < 5000 && threshold > 0, "实质性影响比例不正确");
+        require(triggerType < 4, "WRONG trigger type");
+        require(threshold <= 5000, "WRONG ratio of threshold");
+        require(_tags[drager].rule == bytes32(0), "tag rule ALREADY EXIST");
 
-        Tag storage tag = _tags[dragerID];
-        isDrager[dragerID] = true;
+        bytes32 rule = _createTagRule(
+            drager,
+            triggerType,
+            basedOnPar,
+            threshold,
+            proRata
+        );
 
-        tag.triggerType = triggerType;
-        tag.threshold = threshold;
-        tag.proRata = proRata;
+        isDrager[drager] = true;
+        _tags[drager].rule = rule;
 
-        emit SetTag(dragerID, triggerType, threshold, proRata);
+        emit SetTag(drager, triggerType, basedOnPar, threshold, proRata);
     }
 
-    function addFollower(uint8 dragerID, address follower)
+    function addFollower(uint16 drager, uint16 follower)
         external
         onlyAttorney
-        beDrager(dragerID)
+        dragerExist(drager)
     {
-        _tags[dragerID].followers.addValue(follower);
+        require(!_tags[drager].isFollower[follower], "already followed");
 
-        emit AddFollower(dragerID, follower);
+        _tags[drager].isFollower[follower] = true;
+        _tags[drager].followers.push(follower);
+
+        emit AddFollower(drager, follower);
     }
 
-    function removeFollower(uint8 dragerID, address follower)
+    function removeFollower(uint16 drager, uint16 follower)
         external
         onlyAttorney
-        beDrager(dragerID)
+        dragerExist(drager)
     {
-        _tags[dragerID].followers.removeByValue(follower);
+        require(_tags[drager].isFollower[follower], "not followed");
 
-        emit RemoveFollower(dragerID, follower);
+        delete _tags[drager].isFollower[follower];
+
+        _tags[drager].followers.removeByValue(follower);
+
+        emit RemoveFollower(drager, follower);
     }
 
-    function delTag(uint8 dragerID) external onlyAttorney beDrager(dragerID) {
-        delete _tags[dragerID];
-        delete isDrager[dragerID];
+    function delTag(uint16 drager) external onlyAttorney dragerExist(drager) {
+        delete _tags[drager];
+        delete isDrager[drager];
 
-        emit DelTag(dragerID);
+        emit DelTag(drager);
     }
 
     // ################
     // ##  查询接口  ##
     // ################
 
-    function tagExist(address seller)
+    function tagRule(uint16 drager)
         external
         view
-        onlyStakeholders
-        returns (bool)
+        dragerExist(drager)
+        returns (bytes32)
     {
-        return isDrager[groupNumberOf[seller]];
+        return _tags[drager].rule;
     }
 
-    function getTag(address seller)
+    function isFollower(uint16 drager, uint16 follower)
         external
         view
-        onlyStakeholders
-        beDrager(groupNumberOf[seller])
-        returns (
-            address[] followers,
-            uint8 triggerType,
-            uint256 threshold,
-            bool proRata
-        )
+        dragerExist(drager)
+        returns (bool)
     {
-        followers = _tags[groupNumberOf[seller]].followers;
-        triggerType = _tags[groupNumberOf[seller]].triggerType;
-        threshold = _tags[groupNumberOf[seller]].threshold;
-        proRata = _tags[groupNumberOf[seller]].proRata;
+        return _tags[drager].isFollower[follower];
+    }
+
+    function followers(uint16 drager)
+        external
+        view
+        dragerExist(drager)
+        returns (uint16[])
+    {
+        return _tags[drager].followers;
     }
 
     // ################
     // ##  Term接口  ##
     // ################
 
-    function _getDragerPosition(uint8 dragerID, uint256 parToSell)
-        private
+    function isTriggered(address ia, bytes32 sn)
+        public
         view
-        returns (bool biggest, uint256 shareRatio)
-    {
-        uint8 len = uint8(_groupsList.length);
-        uint256[] memory parValue = new uint256[](len);
-        uint8 i = 0;
-
-        for (; i < len; i++) {
-            for (uint8 j = 0; j < membersOfGroup[_groupsList[i]].length; j++) {
-                (, uint256 par, ) = _bos.getMember(
-                    membersOfGroup[_groupsList[i]][j]
-                );
-                parValue[i].add(par);
-            }
-        }
-
-        shareRatio = parValue[dragerID].sub(parToSell).mul(10000).div(
-            _bos.regCap()
-        );
-
-        biggest = true;
-
-        if (shareRatio > 5000) {
-            return (biggest, shareRatio);
-        }
-
-        i = 0;
-        while (biggest && i < _groupsList.length) {
-            if (parValue[i] > parValue[dragerID]) {
-                biggest = false;
-            }
-
-            i++;
-        }
-        return (biggest, shareRatio);
-    }
-
-    function _isTriggered(address seller, uint256 parToSell)
-        private
-        view
+        onlyKeeper
         returns (bool)
     {
-        uint8 dragerID = groupNumberOf[seller];
+        if (sn.typeOfDeal() == 1) return false;
 
-        if (!isDrager[dragerID]) return false;
+        address seller = IAgreement(ia)
+            .shareNumberOfDeal(sn.sequenceOfDeal())
+            .shareholder();
 
-        (bool biggest, uint256 shareRatio) = _getDragerPosition(
-            dragerID,
-            parToSell
-        );
+        uint16 groupNo = _bos.groupNo(seller);
 
-        Tag storage tag = _tags[dragerID];
+        if (!isDrager[groupNo]) return false;
 
-        if (tag.triggerType == 1) {
-            return !(shareRatio > 5000);
-        } else if (tag.triggerType == 2) {
-            return !(biggest && (shareRatio >= tag.threshold));
-        } else if (tag.triggerType == 3) {
-            return !biggest;
-        }
-    }
+        bytes32 rule = _tags[groupNo].rule;
 
-    function isTriggered(address ia) public view onlyKeeper returns (bool) {
-        bytes32[] memory dealsList = IAgreement(ia).dealsList();
+        if (rule.triggerTypeOfTag() == 0) return true;
 
-        uint8 len = uint8(dealsList.length);
+        if (_bos.controller() != groupNo) return false;
 
-        uint256 pToSell;
-        uint256 pToBuy;
+        (, , bool isOrgController, , uint256 shareRatio) = _boa.topGroup(ia);
 
-        for (uint8 i = 0; i < len; i++) {
-            uint8 typeOfDeal = dealsList[i].typeOfDeal();
-            address seller = dealsList[i].sellerOfDeal(_bos.snList());
-            address buyer = dealsList[i].buyerOfDeal();
+        if (!isOrgController) return true;
 
-            pToSell = 0;
-            pToBuy = 0;
+        if (shareRatio <= rule.thresholdOfTag()) return true;
 
-            if (
-                typeOfDeal > 1 &&
-                isDrager[groupNumberOf[seller]] &&
-                groupNumberOf[seller] != groupNumberOf[buyer]
-            ) {
-                address[] memory members = membersOfGroup[
-                    groupNumberOf[seller]
-                ];
-                for (uint8 j = 0; j < members.length; j++) {
-                    pToSell += parToSell(ia, members[j]);
-                    pToBuy += parToBuy(ia, members[j]);
-                }
-            }
-
-            if (pToSell > pToBuy) {
-                if (_tags[groupNumberOf[seller]].triggerType == 0) {
-                    return true;
-                }
-                pToSell -= pToBuy;
-                return _isTriggered(seller, pToSell);
-            }
-        }
         return false;
     }
 
-    function _isExempted(address seller, address[] memory consentParties)
-        private
-        view
+    function isExempted(address ia, bytes32 sn)
+        public
+        onlyKeeper
         returns (bool)
     {
-        require(consentParties.length > 0, "consentParties is zero");
+        require(_bom.isPassed(ia), "motion NOT passed");
 
-        uint8 dragerID = groupNumberOf[seller];
-
-        if (!isDrager[dragerID]) return true;
-
-        Tag storage tag = _tags[dragerID];
-
-        bool exist;
-
-        for (uint8 i = 0; i < tag.followers.length; i++) {
-            exist = false;
-            for (uint256 j = 0; j < consentParties.length; j++) {
-                if (consentParties[j] == tag.followers[i]) {
-                    exist = true;
-                    break;
-                }
-            }
-            if (!exist) {
-                return false;
-            }
-        }
-        return true;
-    }
-
-    function isExempted(address ia) public view onlyKeeper returns (bool) {
-        require(_bom.isPassed(ia), "决议没有通过");
-
-        if (!isTriggered(ia)) return true;
+        if (!isTriggered(ia, sn)) return true;
 
         (address[] memory consentParties, ) = _bom.getYea(ia);
-        // address[] storage consentParties;
-        // for (uint j = 0; j < parties.length; j++)
-        //     consentParties.push(parties[j]);
 
-        bytes32[] memory dealsList = IAgreement(ia).dealsList();
+        uint256 i;
 
-        for (uint8 i = 0; i < dealsList.length; i++) {
-            uint8 typeOfDeal = dealsList[i].typeOfDeal();
-            address seller = dealsList[i].sellerOfDeal(_bos.snList());
+        for (i = 0; i < consentParties.length; i++)
+            _exemptedGroups[_bos.groupNo(consentParties[i])] = true;
 
-            if (
-                typeOfDeal > 1 &&
-                isDrager[groupNumberOf[seller]] &&
-                !_isExempted(seller, consentParties)
-            ) return false;
-        }
+        address[] memory signers = ISigPage(ia).signers();
+
+        for (i = 0; i < signers.length; i++)
+            _exemptedGroups[_bos.groupNo(signers[i])] = true;
+
+        uint16[] memory rightholders = _tags[
+            _bos.groupNo(
+                IAgreement(ia)
+                    .shareNumberOfDeal(sn.sequenceOfDeal())
+                    .shareholder()
+            )
+        ].followers;
+
+        for (i = 0; i < rightholders.length; i++)
+            if (!_exemptedGroups[rightholders[i]]) return false;
 
         return true;
     }

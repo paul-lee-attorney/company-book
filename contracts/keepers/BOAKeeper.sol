@@ -15,6 +15,7 @@ import "../common/config/BOSSetting.sol";
 import "../common/config/BOHSetting.sol";
 
 import "../common/lib/serialNumber/DealSNParser.sol";
+import "../common/lib/serialNumber/ShareSNParser.sol";
 
 import "../common/components/EnumsRepo.sol";
 
@@ -26,6 +27,7 @@ contract BOAKeeper is
     BOSSetting
 {
     using DealSNParser for bytes32;
+    using ShareSNParser for bytes32;
 
     TermTitle[] private _termsForCapitalIncrease = [
         TermTitle.ANTI_DILUTION,
@@ -107,7 +109,13 @@ contract BOAKeeper is
         address sender = msg.sender;
 
         if (sn.typeOfDeal() > 1) {
-            require(sender == sn.sellerOfDeal(_bos.snList()), "NOT seller");
+            require(
+                sender ==
+                    IAgreement(ia)
+                        .shareNumberOfDeal(sn.sequenceOfDeal())
+                        .shareholder(),
+                "NOT seller"
+            );
 
             _checkSHA(_termsForShareTransfer, ia, sn);
 
@@ -188,6 +196,11 @@ contract BOAKeeper is
                 unitPrice //issuePrice
             );
         }
+
+        if (sn.groupOfBuyer() > 0)
+            _bos.addMemberToGroup(sn.buyerOfDeal(), sn.groupOfBuyer());
+
+        _bosCal.updateController(true);
     }
 
     function revokeDeal(
@@ -200,7 +213,10 @@ contract BOAKeeper is
         address sender = msg.sender;
         require(
             (sn.typeOfDeal() == 1 && sender == getGK()) ||
-                sender == sn.sellerOfDeal(_bos.snList()),
+                sender ==
+                IAgreement(ia)
+                    .shareNumberOfDeal(sn.sequenceOfDeal())
+                    .shareholder(),
             "NOT seller or bookeeper"
         );
 

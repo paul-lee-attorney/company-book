@@ -30,6 +30,7 @@ interface IBookOfPledges {
 
     function updatePledge(
         bytes32 sn,
+        address creditor,
         uint256 pledgedPar,
         uint256 guaranteedAmt
     ) external;

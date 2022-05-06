@@ -66,7 +66,12 @@ contract BOPKeeper is BOSSetting, BOPSetting {
             _bos.decreaseCleanPar(shortShareNumber, pledgedPar - orgPledgedPar);
         }
 
-        _bop.updatePledge(sn.shortOfPledge(), pledgedPar, guaranteedAmt);
+        _bop.updatePledge(
+            sn.shortOfPledge(),
+            creditor,
+            pledgedPar,
+            guaranteedAmt
+        );
     }
 
     function delPledge(bytes32 sn) external {

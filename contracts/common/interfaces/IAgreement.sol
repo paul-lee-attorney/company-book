@@ -72,5 +72,7 @@ interface IAgreement {
             bytes32 hashLock
         );
 
+    function shareNumberOfDeal(uint16 ssn) external view returns (bytes32);
+
     function dealsList() external view returns (bytes32[]);
 }

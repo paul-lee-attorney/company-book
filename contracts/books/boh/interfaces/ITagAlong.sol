@@ -4,47 +4,41 @@
 
 pragma solidity ^0.4.24;
 
-import "../TagAlong.sol";
-
 interface ITagAlong {
-    function addMemberToGroup(uint8 groupID, address member) external;
-
-    function removeMemberFromGroup(uint8 groupID, address member) external;
-
-    function delGroup(uint8 groupID) external;
-
-    function setTag(
-        uint8 dragerID,
+    function createTag(
+        uint16 drager,
         uint8 triggerType,
-        uint threshold,
+        bool basedOnPar,
+        uint256 threshold,
         bool proRata
     ) external;
 
-    function addFollower(uint8 dragerID, address follower) external;
+    function addFollower(uint16 drager, uint16 follower) external;
 
-    function removeFollower(uint8 dragerID, address follower) external;
+    function removeFollower(uint16 drager, uint16 follower) external;
 
-    function delTag(uint8 dragerID) external;
+    function delTag(uint16 drager) external;
 
     // ################
     // ##  查询接口  ##
     // ################
 
-    function getQtyOfGroups() external view returns (uint8);
+    function tagRule(uint16 drager) external view returns (bytes32);
 
-    function getGroupNumOf(address seller) external view returns (uint8);
+    function isDrager(uint16 drager) external view returns (bool);
 
-    function getMembersOfGroup(uint8 groupID) external view returns (address[]);
-
-    function tagExist(address seller) external view returns (bool);
-
-    function getTag(address seller)
+    function isFollower(uint16 drager, uint16 follower)
         external
         view
-        returns (
-            address[] followers,
-            uint8 triggerType,
-            uint threshold,
-            bool proRata
-        );
+        returns (bool);
+
+    function followers(uint16 drager) external view returns (uint16[]);
+
+    // ################
+    // ##  Term接口  ##
+    // ################
+
+    function isTriggered(address ia, bytes32 sn) external view returns (bool);
+
+    function isExempted(address ia, bytes32 sn) external view returns (bool);
 }

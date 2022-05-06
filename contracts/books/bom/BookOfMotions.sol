@@ -7,9 +7,11 @@ pragma solidity ^0.4.24;
 // import "../../common/config/BOSSetting.sol";
 import "../../common/config/BOASetting.sol";
 import "../../common/config/BOHSetting.sol";
+import "../../common/config/BOSSetting.sol";
 
 import "../../common/lib/ArrayUtils.sol";
 import "../../common/lib/serialNumber/VotingRuleParser.sol";
+import "../../common/lib/serialNumber/DealSNParser.sol";
 
 // import "../../common/interfaces/IBookOfMotions.sol";
 import "../../common/interfaces/ISigPage.sol";
@@ -18,16 +20,10 @@ import "../../common/interfaces/IAdminSetting.sol";
 
 import "../../common/components/EnumsRepo.sol";
 
-import "../boa/AgreementCalculator.sol";
-
-contract BookOfMotions is
-    EnumsRepo,
-    AgreementCalculator,
-    BOHSetting,
-    BOASetting
-{
+contract BookOfMotions is EnumsRepo, BOHSetting, BOASetting, BOSSetting {
     using ArrayUtils for address[];
     using VotingRuleParser for bytes32;
+    using DealSNParser for bytes32;
 
     struct Motion {
         bytes32 votingRule;
@@ -88,7 +84,7 @@ contract BookOfMotions is
     }
 
     modifier notInternalST(address body) {
-        require(typeOfIA(body) != 3, "NOT need to vote");
+        require(_agrmtCal.typeOfIA(body) != 3, "NOT need to vote");
         _;
     }
 
@@ -143,7 +139,7 @@ contract BookOfMotions is
     {
         require(_boa.isRegistered(ia), "Agreement NOT REGISTERED");
 
-        bytes32 rule = getSHA().votingRules(typeOfIA(ia));
+        bytes32 rule = getSHA().votingRules(_agrmtCal.typeOfIA(ia));
 
         Motion storage motion = _motions[ia];
 
@@ -162,9 +158,9 @@ contract BookOfMotions is
         returns (uint256 amount)
     {
         if (_motions[ia].votingRule.basedOnParValue()) {
-            amount = _bos.parInHand(sender);
+            amount = _bosCal.parInHand(sender);
         } else {
-            amount = _bos.paidInHand(sender);
+            amount = _bosCal.paidInHand(sender);
         }
     }
 
@@ -230,16 +226,16 @@ contract BookOfMotions is
             totalHead = motion.membersOfYea.length + motion.membersOfNay.length;
             totalAmt = motion.sumOfVoteAmt;
         } else {
-            address[] memory others = otherMembers(ia);
+            address[] memory others = _agrmtCal.otherMembers(ia);
 
             totalHead = others.length;
 
             uint256 i;
             for (i = 0; i < totalHead; i++) {
                 if (motion.votingRule.basedOnParValue()) {
-                    totalAmt += _bos.parInHand(others[i]);
+                    totalAmt += _bosCal.parInHand(others[i]);
                 } else {
-                    totalAmt += _bos.paidInHand(others[i]);
+                    totalAmt += _bosCal.paidInHand(others[i]);
                 }
             }
 

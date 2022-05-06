@@ -7,9 +7,9 @@ pragma solidity ^0.4.24;
 import "../../common/lib/ArrayUtils.sol";
 import "../../common/lib/serialNumber/ShareSNParser.sol";
 
-import "./SharesRepo.sol";
+import "./GroupsRepo.sol";
 
-contract MembersRepo is SharesRepo {
+contract MembersRepo is GroupsRepo {
     using ArrayUtils for address[];
     using ShareSNParser for bytes32;
 
@@ -29,6 +29,7 @@ contract MembersRepo is SharesRepo {
     event SetMaxQtyOfMembers(uint8 max);
     event AddMember(address indexed acct, uint256 qtyOfMembers);
     event RemoveMember(address indexed acct, uint256 qtyOfMembers);
+    event SetGroupNo(address acct, uint8 groupNo);
 
     //##################
     //##    修饰器    ##s
@@ -77,6 +78,8 @@ contract MembersRepo is SharesRepo {
         _membersList.removeByValue(acct);
         isMember[acct] = false;
 
+        if (groupNo[acct] > 0) removeMemberFromGroup(acct, groupNo[acct]);
+
         emit RemoveMember(acct, _membersList.length);
     }
 
@@ -85,7 +88,7 @@ contract MembersRepo is SharesRepo {
         shareExist(ssn)
         memberExist(acct)
     {
-        sharesInHand[acct].push(_shares[ssn].sn);
+        sharesInHand[acct].push(_shares[ssn].shareNumber);
     }
 
     function _removeShareFromMember(bytes6 ssn, address acct)
@@ -93,7 +96,7 @@ contract MembersRepo is SharesRepo {
         shareExist(ssn)
         memberExist(acct)
     {
-        sharesInHand[acct].removeByValue(_shares[ssn].sn);
+        sharesInHand[acct].removeByValue(_shares[ssn].shareNumber);
     }
 
     function _updateMembersList(address acct) internal {
@@ -110,33 +113,22 @@ contract MembersRepo is SharesRepo {
         if (!flag) _removeMember(acct);
     }
 
+    function setGroupNo(address acct, uint8 group) external onlyKeeper {
+        require(group > 0, "ZERO group");
+        require(group <= counterOfGroups + 1, "group OVER FLOW");
+
+        if (group > counterOfGroups) counterOfGroups = group;
+
+        groupNo[acct] = group;
+
+        emit SetGroupNo(acct, group);
+    }
+
     //##################
     //##   查询接口   ##
     //##################
 
     function membersList() external view returns (address[]) {
         return _membersList;
-    }
-
-    function parInHand(address acct)
-        external
-        view
-        memberExist(acct)
-        returns (uint256 parValue)
-    {
-        uint256 len = sharesInHand[acct].length;
-        for (uint256 i = 0; i < len; i++)
-            parValue += _shares[sharesInHand[acct][i].short()].parValue;
-    }
-
-    function paidInHand(address acct)
-        external
-        view
-        memberExist(acct)
-        returns (uint256 paidPar)
-    {
-        uint256 len = sharesInHand[acct].length;
-        for (uint256 i = 0; i < len; i++)
-            paidPar += _shares[sharesInHand[acct][i].short()].paidPar;
     }
 }

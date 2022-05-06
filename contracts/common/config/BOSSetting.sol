@@ -5,16 +5,24 @@
 pragma solidity ^0.4.24;
 
 import "../interfaces/IBookOfShares.sol";
+import "../interfaces/IBOSCalculator.sol";
 
 import "./AdminSetting.sol";
 
 contract BOSSetting is AdminSetting {
     IBookOfShares internal _bos;
+    IBOSCalculator internal _bosCal;
 
     event SetBOS(address bos);
+    event SetBOSCal(address cal);
 
     modifier onlyMember() {
         require(_bos.isMember(msg.sender), "NOT Member");
+        _;
+    }
+
+    modifier memberExist(address acct) {
+        require(_bos.isMember(acct), "member NOT exist");
         _;
     }
 
@@ -35,5 +43,10 @@ contract BOSSetting is AdminSetting {
     function setBOS(address bos) external onlyKeeper {
         _bos = IBookOfShares(bos);
         emit SetBOS(bos);
+    }
+
+    function setBOSCal(address cal) external onlyKeeper {
+        _bosCal = IBOSCalculator(cal);
+        emit SetBOSCal(cal);
     }
 }

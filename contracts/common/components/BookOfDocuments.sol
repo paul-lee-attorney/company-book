@@ -47,7 +47,7 @@ contract BookOfDocuments is CloneFactory, BOSSetting {
 
     bytes32[] private _docsList;
 
-    uint16 counterOfDocs;
+    uint16 public counterOfDocs;
 
     constructor(
         string _bookName,
@@ -196,9 +196,9 @@ contract BookOfDocuments is CloneFactory, BOSSetting {
     //##    读接口    ##
     //##################
 
-    function getTemplate() external view tempReady returns (address) {
-        return template;
-    }
+    // function getTemplate() external view tempReady returns (address) {
+    //     return template;
+    // }
 
     function isSubmitted(address body) external view returns (bool) {
         return _docs[body].state == 1;

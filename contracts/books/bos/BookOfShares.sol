@@ -202,7 +202,7 @@ contract BookOfShares is MembersRepo {
         if (parValue == share.parValue) {
             _removeShareFromMember(ssn, share.shareNumber.shareholder());
             _deregisterShare(ssn);
-            _updateMembersList(share.shareNumber.shareholder());
+            // _updateMembersList(share.shareNumber.shareholder());
         } else {
             // 仅调低认缴和实缴金额，保留原股票
             _subAmountFromShare(ssn, parValue, paidPar);
@@ -225,38 +225,5 @@ contract BookOfShares is MembersRepo {
         returns (bool)
     {
         return _regNumHash == keccak256(bytes(regNum));
-    }
-
-    function membersOfClass(uint8 class)
-        external
-        view
-        returns (address[] output)
-    {
-        require(class < counterOfClasses, "class over flow");
-
-        uint256 len = _snList.length;
-        address[] storage members;
-
-        for (uint256 i = 0; i < len; i++)
-            if (_snList[i].class() == class)
-                members.push(_snList[i].shareholder());
-
-        output = members;
-    }
-
-    function sharesOfClass(uint8 class)
-        external
-        view
-        returns (bytes32[] output)
-    {
-        require(class < counterOfClasses, "class over flow");
-
-        uint256 len = _snList.length;
-        bytes32[] storage list;
-
-        for (uint256 i = 0; i < len; i++)
-            if (_snList[i].class() == class) list.push(_snList[i]);
-
-        output = list;
     }
 }

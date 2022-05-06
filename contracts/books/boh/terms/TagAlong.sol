@@ -178,12 +178,25 @@ contract TagAlong is BOMSetting, BOSSetting, BOASetting, DraftSetting {
     }
 
     function isFollower(uint16 drager, uint16 follower)
-        external
+        public
         view
+        onlyKeeper
         dragerExist(drager)
         returns (bool)
     {
         return _tags[drager].isFollower[follower];
+    }
+
+    function isRightholder(address dragerAddr, address followerAddr)
+        external
+        view
+        onlyKeeper
+        returns (bool)
+    {
+        uint16 drager = _bos.groupNo(dragerAddr);
+        uint16 follower = _bos.groupNo(followerAddr);
+
+        return isFollower(drager, follower);
     }
 
     function followers(uint16 drager)
@@ -211,15 +224,15 @@ contract TagAlong is BOMSetting, BOSSetting, BOASetting, DraftSetting {
             .shareNumberOfDeal(sn.sequenceOfDeal())
             .shareholder();
 
-        uint16 groupNo = _bos.groupNo(seller);
+        uint16 sellerGroup = _bos.groupNo(seller);
 
-        if (!isDrager[groupNo]) return false;
+        if (!isDrager[sellerGroup]) return false;
 
-        bytes32 rule = _tags[groupNo].rule;
+        bytes32 rule = _tags[sellerGroup].rule;
 
         if (rule.triggerTypeOfTag() == 0) return true;
 
-        if (_bos.controller() != groupNo) return false;
+        if (_bos.controller() != sellerGroup) return false;
 
         (, , bool isOrgController, , uint256 shareRatio) = _boa.topGroup(ia);
 

@@ -17,6 +17,8 @@ interface IBookOfSHA {
 
     function submitSHA(address body, bytes32 docHash) external;
 
+    function updateStateOfDoc(address body, uint8 newState) external;
+
     function changePointer(address body) external;
 
     //##################

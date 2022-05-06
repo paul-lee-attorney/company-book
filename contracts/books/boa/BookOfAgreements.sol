@@ -12,6 +12,7 @@ import "../../common/config/BOHSetting.sol";
 import "../../common/lib/serialNumber/VotingRuleParser.sol";
 import "../../common/lib/serialNumber/DealSNParser.sol";
 import "../../common/lib/serialNumber/ShareSNParser.sol";
+import "../../common/lib/serialNumber/TagRuleParser.sol";
 
 import "../../common/interfaces/IAgreement.sol";
 import "../../common/interfaces/IAgreementCalculator.sol";
@@ -20,6 +21,7 @@ contract BookOfAgreements is BookOfDocuments, BOHSetting {
     using VotingRuleParser for bytes32;
     using DealSNParser for bytes32;
     using ShareSNParser for bytes32;
+    using TagRuleParser for bytes32;
 
     // using ArrayUtils for uint16[];
 
@@ -72,6 +74,14 @@ contract BookOfAgreements is BookOfDocuments, BOHSetting {
         uint256 topAmt,
         bool isOrgController,
         uint256 shareRatio
+    );
+
+    event AddAlongDeal(
+        address ia,
+        uint16 follower,
+        bytes32 shareNumber,
+        uint256 parValue,
+        uint256 paidPar
     );
 
     //##################
@@ -204,6 +214,57 @@ contract BookOfAgreements is BookOfDocuments, BOHSetting {
             top.isOrgController,
             top.shareRatio
         );
+    }
+
+    function addAlongDeal(
+        address ia,
+        bytes32 rule,
+        bytes32 shareNumber,
+        uint256 parValue,
+        uint256 paidPar
+    ) external onlyKeeper {
+        uint16 drager = rule.dragerOfTag();
+        uint16 follower = _bos.groupNo(shareNumber.shareholder());
+
+        Amt storage fAmt = _mockResults[ia][follower];
+
+        if (!isConcernedGroup[ia][follower]) {
+            fAmt.orgAmt = rule.basedOnParOfTag()
+                ? _bosCal.parOfGroup(follower)
+                : _bosCal.paidOfGroup(follower);
+            isConcernedGroup[ia][follower] = true;
+            groupsConcerned[ia].push(follower);
+        }
+
+        if (rule.basedOnParOfTag()) {
+            require(
+                fAmt.orgAmt >= (fAmt.selAmt + parValue),
+                "parValue over flow"
+            );
+            fAmt.selAmt += parValue;
+        } else {
+            require(
+                fAmt.orgAmt >= (fAmt.selAmt + paidPar),
+                "paidPar over flow"
+            );
+            fAmt.selAmt += paidPar;
+        }
+
+        if (rule.proRataOfTag()) {
+            Amt storage dAmt = _mockResults[ia][drager];
+
+            require(
+                (dAmt.selAmt - dAmt.buyAmt) >=
+                    (fAmt.selAmt * dAmt.orgAmt) / fAmt.orgAmt,
+                "sell amount over flow"
+            );
+        }
+
+        fAmt.rstAmt = fAmt.orgAmt - fAmt.selAmt;
+
+        updateSateOfDoc(ia, 2);
+
+        emit AddAlongDeal(ia, follower, shareNumber, parValue, paidPar);
     }
 
     //##################

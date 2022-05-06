@@ -6,30 +6,12 @@ pragma solidity ^0.4.24;
 
 interface ISigPage {
     //####################
-    //##     event      ##
-    //####################
-
-    event DocStateRevised(address doc, uint8 state);
-
-    event SetSigDeadline(address doc, uint deadline);
-
-    event SetClosingStartpoint(address doc, uint startpoint);
-
-    event SetClosingDeadline(address doc, uint deadline);
-
-    event AddParty(address doc, address acct);
-
-    event RemoveParty(address doc, address acct);
-
-    event SignDoc(address doc, address acct);
-
-    //####################
     //##    设置接口    ##
     //####################
 
-    function setSigDeadline(uint deadline) external;
+    function setSigDeadline(uint256 deadline) external;
 
-    function setClosingDeadline(uint deadline) external;
+    function setClosingDeadline(uint256 deadline) external;
 
     function circulateDoc() external;
 
@@ -45,6 +27,10 @@ interface ISigPage {
 
     function updateStateOfDoc(uint8 state) external;
 
+    function addSigOfParty(address acct, uint32 sigDate) external;
+
+    function removeSigOfParty(address acct) external;
+
     function acceptDoc() external;
 
     //####################
@@ -55,11 +41,11 @@ interface ISigPage {
 
     function docState() external returns (uint8);
 
-    function sigDeadline() external returns (uint);
+    function sigDeadline() external returns (uint256);
 
-    function closingStartpoint() external returns (uint);
+    function closingStartpoint() external returns (uint256);
 
-    function closingDeadline() external returns (uint);
+    function closingDeadline() external returns (uint256);
 
     function isParty(address acct) external returns (bool);
 
@@ -67,9 +53,9 @@ interface ISigPage {
 
     function signedBy(address acct) external returns (bool);
 
-    function sigDate(address acct) external returns (uint);
+    function sigDate(address acct) external returns (uint256);
 
     function signers() external returns (address[]);
 
-    function qtyOfSigners() external returns (uint);
+    function qtyOfSigners() external returns (uint256);
 }

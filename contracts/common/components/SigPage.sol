@@ -4,9 +4,13 @@
 
 pragma solidity ^0.4.24;
 
+import "../../common/lib/ArrayUtils.sol";
+
 import "../config/DraftSetting.sol";
 
 contract SigPage is DraftSetting {
+    using ArrayUtils for address[];
+
     // 0-pending 1-finalized 2-signed
     uint8 public docState;
 
@@ -33,6 +37,10 @@ contract SigPage is DraftSetting {
     event AddParty(address acct);
 
     event RemoveParty(address acct);
+
+    event AddSigOfParty(address acct, uint32 sigDate);
+
+    event RemoveSigOfParty(address acct);
 
     event SignDoc(address acct, uint32 sigDate);
 
@@ -129,9 +137,24 @@ contract SigPage is DraftSetting {
         }
     }
 
-    function updateStateOfDoc(uint8 state) external onlyKeeper {
+    function updateStateOfDoc(uint8 state) public onlyKeeper {
         docState = state;
         emit UpdateStateOfDoc(docState);
+    }
+
+    function addSigOfParty(address acct, uint32 execDate) public onlyKeeper {
+        sigDate[acct] = execDate;
+        _signers.addValue(acct);
+        emit AddSigOfParty(acct, execDate);
+    }
+
+    function removeSigOfParty(address acct) public onlyKeeper {
+        require(sigDate[acct] > 0, "party NOT signed");
+
+        sigDate[acct] = 0;
+        _signers.removeByValue(acct);
+
+        emit RemoveSigOfParty(acct);
     }
 
     function acceptDoc(uint32 _sigDate)

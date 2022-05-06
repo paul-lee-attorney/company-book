@@ -32,6 +32,11 @@ interface ITagAlong {
         view
         returns (bool);
 
+    function isRightholder(address dragerAddr, address followerAddr)
+        external
+        view
+        returns (bool);
+
     function followers(uint16 drager) external view returns (uint16[]);
 
     // ################

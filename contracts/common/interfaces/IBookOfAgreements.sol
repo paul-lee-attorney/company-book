@@ -17,6 +17,23 @@ interface IBookOfAgreements {
 
     function submitDoc(address body, bytes32 docHash) external;
 
+    function submitIA(
+        address ia,
+        uint32 submitDate,
+        bytes32 docHash,
+        address submitter
+    ) external;
+
+    function addAlongDeal(
+        address ia,
+        bytes32 rule,
+        bytes32 shareNumber,
+        uint256 parValue,
+        uint256 paidPar
+    ) external;
+
+    function updateStateOfDoc(address body, uint8 newState) external;
+
     // function setPointer(address body) external;
 
     //##################

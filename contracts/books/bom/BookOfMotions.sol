@@ -37,7 +37,7 @@ contract BookOfMotions is EnumsRepo, BOHSetting, BOASetting, BOSSetting {
         mapping(address => bool) voted;
         mapping(address => uint256) voteAmt;
         uint256 sumOfVoteAmt;
-        uint8 state; //动议状态 0-提案 1-提交 2-通过 3-否决(无代价) 4-否决（需购买）
+        uint8 state; // 0-pending 1-proposed  2-passed 3-rejected(no need to buy) 4-rejected (against need to buy) 5-suspend
     }
 
     // ia => Motion
@@ -70,6 +70,10 @@ contract BookOfMotions is EnumsRepo, BOHSetting, BOASetting, BOSSetting {
     event TurnOverVote(address indexed ia, address voter, uint256 voteAmt);
 
     event VoteCounting(address indexed ia, uint8 result);
+
+    event SuspendVoting(address indexed ia);
+
+    event ResumeVoting(address indexed ia);
 
     //####################
     //##    modifier    ##
@@ -137,7 +141,7 @@ contract BookOfMotions is EnumsRepo, BOHSetting, BOASetting, BOSSetting {
         onlyKeeper
         notProposed(ia)
     {
-        require(_boa.isRegistered(ia), "Agreement NOT REGISTERED");
+        require(_boa.isSubmitted(ia), "Agreement NOT submitted");
 
         bytes32 rule = getSHA().votingRules(_agrmtCal.typeOfIA(ia));
 
@@ -173,6 +177,8 @@ contract BookOfMotions is EnumsRepo, BOHSetting, BOASetting, BOSSetting {
         notPartyOfIA(ia)
         currentDate(sigDate)
     {
+        require(_boa.isSubmitted(ia), "Agreement NOT submitted");
+
         address sender = msg.sender;
 
         Motion storage motion = _motions[ia];
@@ -199,6 +205,8 @@ contract BookOfMotions is EnumsRepo, BOHSetting, BOASetting, BOSSetting {
         beforeExpire(ia)
         currentDate(sigDate)
     {
+        require(_boa.isSubmitted(ia), "Agreement NOT submitted");
+
         address sender = msg.sender;
 
         Motion storage motion = _motions[ia];
@@ -255,6 +263,8 @@ contract BookOfMotions is EnumsRepo, BOHSetting, BOASetting, BOSSetting {
         onlyProposed(ia)
         onlyOnVoting(ia)
     {
+        require(_boa.isSubmitted(ia), "Agreement NOT submitted");
+
         Motion storage motion = _motions[ia];
 
         require(now + 15 minutes > motion.votingDeadline, "voting NOT end");
@@ -331,6 +341,18 @@ contract BookOfMotions is EnumsRepo, BOHSetting, BOASetting, BOSSetting {
 
         parValue = ((orgParValue * ratio) / 10000);
         paidPar = ((orgPaidPar * ratio) / 10000);
+    }
+
+    function suspendVoting(address ia) external onlyProposed(ia) onlyKeeper {
+        require(_motions[ia].state == 1, "NOT a proposed motion");
+        _motions[ia].state = 5;
+        emit SuspendVoting(ia);
+    }
+
+    function resumeVoting(address ia) external onlyProposed(ia) onlyKeeper {
+        require(_motions[ia].state == 5, "NOT a suspend motion");
+        _motions[ia].state = 1;
+        emit ResumeVoting(ia);
     }
 
     //##################

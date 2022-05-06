@@ -30,6 +30,14 @@ interface IAgreement {
         uint256 closingDate
     ) external;
 
+    function createAlongDeal(
+        bytes32 shareNumber,
+        uint16 ssn,
+        uint256 parValue,
+        uint256 paidPar,
+        uint32 createDate
+    ) external;
+
     function finalizeIA() external;
 
     function clearDealCP(

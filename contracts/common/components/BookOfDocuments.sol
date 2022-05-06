@@ -28,7 +28,7 @@ contract BookOfDocuments is CloneFactory, BOSSetting {
         bytes32 sn;
         uint32 submitDate;
         bytes32 docHash;
-        uint8 state; // 0-draft 1-submitted 2-closed/effective 3-terminated/revoked
+        uint8 state; // 0-draft 1-submitted 2-suspend 3-closed/effective 4-terminated/revoked
     }
 
     // struct snInfo {
@@ -70,7 +70,7 @@ contract BookOfDocuments is CloneFactory, BOSSetting {
 
     event SubmitDoc(bytes32 indexed sn, address submittor);
 
-    // event SetPointer(bytes32 indexed pointer, address body);
+    event UpdateStateOfDoc(address indexed ia, uint8 newState);
 
     //####################
     //##    modifier    ##
@@ -190,6 +190,18 @@ contract BookOfDocuments is CloneFactory, BOSSetting {
         doc.state = 1;
 
         emit SubmitDoc(doc.sn, submitter);
+    }
+
+    function updateSateOfDoc(address body, uint8 newState)
+        public
+        onlyKeeper
+        onlyRegistered(body)
+    {
+        Doc storage doc = _docs[body];
+
+        doc.state = newState;
+
+        emit UpdateStateOfDoc(body, newState);
     }
 
     //##################

@@ -37,7 +37,7 @@ contract Agreement is BOSSetting, SigPage {
         uint256 parValue;
         uint256 paidPar;
         uint32 closingDate;
-        uint8 state; // 0-pending 1-cleared 2-closed 3-revoked
+        uint8 state; // 0-drafting 1-cleared 2-closed 3-revoked
         bytes32 hashLock;
     }
 
@@ -56,6 +56,8 @@ contract Agreement is BOSSetting, SigPage {
     //##################
 
     event CreateDeal(bytes32 indexed sn);
+
+    event CreateAlongDeal(bytes32 indexed sn);
 
     event UpdateDeal(
         bytes32 indexed sn,
@@ -186,6 +188,54 @@ contract Agreement is BOSSetting, SigPage {
         deal.closingDate = closingDate;
 
         emit UpdateDeal(deal.sn, unitPrice, parValue, paidPar, closingDate);
+    }
+
+    function createAlongDeal(
+        bytes32 shareNumber,
+        uint16 ssn,
+        uint256 parValue,
+        uint256 paidPar,
+        uint32 execDate
+    ) external onlyKeeper currentDate(execDate) {
+        require(_bos.isShare(shareNumber.short()), "shareNumber not exist");
+
+        Deal storage orgDeal = _deals[ssn];
+
+        counterOfDeals++;
+
+        bytes32 sn = _createSN(
+            shareNumber.class(),
+            orgDeal.sn.typeOfDeal(),
+            counterOfDeals,
+            orgDeal.sn.buyerOfDeal(),
+            orgDeal.sn.groupOfBuyer(),
+            shareNumber
+        );
+
+        Deal storage addDeal = _deals[counterOfDeals];
+
+        addDeal.sn = sn;
+        addDeal.shareNumber = shareNumber;
+
+        addDeal.unitPrice = orgDeal.unitPrice;
+        addDeal.closingDate = orgDeal.closingDate;
+
+        addDeal.parValue = parValue;
+        addDeal.paidPar = paidPar;
+
+        _dealsList.push(sn);
+        isDeal[counterOfDeals] = true;
+
+        // add seller to party and sign the IA
+        address seller = shareNumber.shareholder();
+        addPartyToDoc(seller);
+        addSigOfParty(seller, execDate);
+
+        // remove buyer signature from IA
+        removeSigOfParty(orgDeal.sn.buyerOfDeal());
+        updateStateOfDoc(1);
+
+        emit CreateAlongDeal(sn);
     }
 
     function delDeal(uint16 ssn) external dealExist(ssn) attorneyOrKeeper {

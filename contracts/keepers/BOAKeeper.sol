@@ -9,6 +9,8 @@ import "../common/interfaces/IAgreement.sol";
 import "../common/interfaces/ISigPage.sol";
 import "../common/interfaces/IBookSetting.sol";
 
+import "../books/boh/interfaces/ITagAlong.sol";
+
 import "../common/config/BOMSetting.sol";
 import "../common/config/BOASetting.sol";
 import "../common/config/BOSSetting.sol";
@@ -98,6 +100,58 @@ contract BOAKeeper is
         IAdminSetting(body).abandonAdmin();
     }
 
+    function execTagAlong(
+        address ia,
+        bytes32 sn,
+        bytes32 shareNumber,
+        uint256 parValue,
+        uint256 paidPar,
+        uint32 execDate
+    ) external {
+        require(
+            _bom.votingDeadline(ia) >= now - 15 minutes,
+            "MISSED voting deadline"
+        );
+
+        address seller = shareNumber.shareholder();
+        require(msg.sender == seller, "msg.sender NOT shareholder");
+        require(!ISigPage(ia).isParty(seller), "Already signed the IA");
+
+        address drager = IAgreement(ia)
+            .shareNumberOfDeal(sn.sequenceOfDeal())
+            .shareholder();
+
+        address ta = getSHA().getTerm(uint8(TermTitle.TAG_ALONG));
+
+        require(ITagAlong(ta).isTriggered(ia, sn), "TagAlong NOT triggered");
+
+        require(
+            ITagAlong(ta).isRightholder(drager, seller),
+            "msg.sender is NOT seller of TagAlong"
+        );
+
+        // test quota of alongDeal and update mock results
+        _boa.addAlongDeal(
+            ia,
+            ITagAlong(ta).tagRule(_bos.groupNo(drager)),
+            shareNumber,
+            parValue,
+            paidPar
+        );
+
+        // suspend voting procedure
+        _bom.suspendVoting(ia);
+
+        // add in along deal
+        IAgreement(ia).createAlongDeal(
+            shareNumber,
+            sn.sequenceOfDeal(),
+            parValue,
+            paidPar,
+            execDate
+        );
+    }
+
     function pushToCoffer(
         bytes32 sn,
         address ia,
@@ -105,6 +159,8 @@ contract BOAKeeper is
         uint256 closingDate
     ) external {
         require(_bom.isPassed(ia), "Motion NOT passed");
+
+        require(_boa.isSubmitted(ia), "Agreement NOT in submitted state");
 
         address sender = msg.sender;
 
@@ -152,7 +208,8 @@ contract BOAKeeper is
         string hashKey
     ) external currentDate(closingDate) {
         //校验ia是否注册;
-        require(_boa.isRegistered(ia), "协议  未注册");
+        // require(_boa.isRegistered(ia), "协议  未注册");
+        require(_boa.isSubmitted(ia), "Agreement NOT in submitted state");
 
         (
             ,
@@ -167,7 +224,7 @@ contract BOAKeeper is
         // address buyer = sn.buyerOfDeal();
 
         //交易发起人为买方;
-        require(sn.buyerOfDeal() == msg.sender, "仅 买方  可调用");
+        require(sn.buyerOfDeal() == msg.sender, "msg.sender is NOT buyer");
 
         //验证hashKey, 执行Deal
         IAgreement(ia).closeDeal(sn.sequenceOfDeal(), hashKey);
@@ -209,6 +266,7 @@ contract BOAKeeper is
         string hashKey
     ) external {
         require(_boa.isRegistered(ia), "IA NOT registered");
+        // require(_boa.isSubmitted(ia), "Agreement NOT in submitted state");
 
         address sender = msg.sender;
         require(

@@ -5,25 +5,6 @@
 pragma solidity ^0.4.24;
 
 interface IBookOfMotions {
-    //##############
-    //##  Event   ##
-    //##############
-
-    event ProposeMotion(
-        address indexed ia,
-        uint256 votingDeadline,
-        address proposedBy
-    );
-
-    event Vote(
-        address indexed ia,
-        address voter,
-        bool support,
-        uint256 voteAmt
-    );
-
-    event VoteCounting(address indexed ia, uint8 docType, uint8 result);
-
     //##################
     //##    写接口    ##
     //##################
@@ -42,6 +23,10 @@ interface IBookOfMotions {
         uint32 exerciseDate,
         address agianstVoter
     ) external returns (uint256 parValue, uint256 paidPar);
+
+    function suspendVoting(address ia) external;
+
+    function resumeVoting(address ia) external;
 
     //##################
     //##    读接口    ##

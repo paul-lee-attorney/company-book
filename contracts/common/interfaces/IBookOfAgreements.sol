@@ -32,6 +32,12 @@ interface IBookOfAgreements {
         uint256 paidPar
     ) external;
 
+    function acceptAlongDeal(
+        address ia,
+        address drager,
+        bytes32 sn
+    ) external;
+
     function updateStateOfDoc(address body, uint8 newState) external;
 
     // function setPointer(address body) external;
@@ -54,14 +60,16 @@ interface IBookOfAgreements {
 
     function docsList() external view returns (bytes32[]);
 
-    function getDoc(bytes32 sn)
+    function getDoc(address body)
         external
         view
         returns (
-            address body,
-            bytes32 docHash,
-            uint8 state
+            bytes32 sn,
+            uint32 submitDate,
+            bytes32 docHash
         );
+
+    function stateOfDoc(address body) external view returns (uint8);
 
     function groupsConcerned(address ia) external view returns (uint16[]);
 

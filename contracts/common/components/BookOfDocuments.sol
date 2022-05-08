@@ -231,8 +231,7 @@ contract BookOfDocuments is CloneFactory, BOSSetting {
         returns (
             bytes32 sn,
             uint32 submitDate,
-            bytes32 docHash,
-            uint8 state
+            bytes32 docHash
         )
     {
         Doc storage doc = _docs[body];
@@ -240,6 +239,14 @@ contract BookOfDocuments is CloneFactory, BOSSetting {
         sn = doc.sn;
         submitDate = doc.submitDate;
         docHash = doc.docHash;
-        state = doc.state;
+    }
+
+    function stateOfDoc(address body)
+        external
+        view
+        onlyRegistered(body)
+        returns (uint8)
+    {
+        return _docs[body].state;
     }
 }

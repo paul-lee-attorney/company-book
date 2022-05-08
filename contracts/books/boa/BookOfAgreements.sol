@@ -5,25 +5,26 @@
 pragma solidity ^0.4.24;
 
 import "../../common/components/BookOfDocuments.sol";
+import "../../common/components/EnumsRepo.sol";
 
 import "../../common/config/BOHSetting.sol";
 
-// import "../../common/lib/ArrayUtils.sol";
 import "../../common/lib/serialNumber/VotingRuleParser.sol";
 import "../../common/lib/serialNumber/DealSNParser.sol";
 import "../../common/lib/serialNumber/ShareSNParser.sol";
-import "../../common/lib/serialNumber/TagRuleParser.sol";
+import "../../common/lib/serialNumber/LinkRuleParser.sol";
 
+import "../../common/interfaces/ISigPage.sol";
 import "../../common/interfaces/IAgreement.sol";
 import "../../common/interfaces/IAgreementCalculator.sol";
 
-contract BookOfAgreements is BookOfDocuments, BOHSetting {
+import "../boh/interfaces/IAlong.sol";
+
+contract BookOfAgreements is EnumsRepo, BookOfDocuments, BOHSetting {
     using VotingRuleParser for bytes32;
     using DealSNParser for bytes32;
     using ShareSNParser for bytes32;
-    using TagRuleParser for bytes32;
-
-    // using ArrayUtils for uint16[];
+    using LinkRuleParser for bytes32;
 
     IAgreementCalculator private _agrmtCal;
 
@@ -83,6 +84,8 @@ contract BookOfAgreements is BookOfDocuments, BOHSetting {
         uint256 parValue,
         uint256 paidPar
     );
+
+    event AcceptAlongDeal(address ia, address drager, bytes32 sn);
 
     //##################
     //##    写接口    ##
@@ -223,20 +226,20 @@ contract BookOfAgreements is BookOfDocuments, BOHSetting {
         uint256 parValue,
         uint256 paidPar
     ) external onlyKeeper {
-        uint16 drager = rule.dragerOfTag();
+        uint16 drager = rule.dragerOfLink();
         uint16 follower = _bos.groupNo(shareNumber.shareholder());
 
         Amt storage fAmt = _mockResults[ia][follower];
 
         if (!isConcernedGroup[ia][follower]) {
-            fAmt.orgAmt = rule.basedOnParOfTag()
+            fAmt.orgAmt = rule.basedOnParOfLink()
                 ? _bosCal.parOfGroup(follower)
                 : _bosCal.paidOfGroup(follower);
             isConcernedGroup[ia][follower] = true;
             groupsConcerned[ia].push(follower);
         }
 
-        if (rule.basedOnParOfTag()) {
+        if (rule.basedOnParOfLink()) {
             require(
                 fAmt.orgAmt >= (fAmt.selAmt + parValue),
                 "parValue over flow"
@@ -250,12 +253,12 @@ contract BookOfAgreements is BookOfDocuments, BOHSetting {
             fAmt.selAmt += paidPar;
         }
 
-        if (rule.proRataOfTag()) {
+        if (rule.proRataOfLink()) {
             Amt storage dAmt = _mockResults[ia][drager];
 
             require(
-                (dAmt.selAmt - dAmt.buyAmt) >=
-                    (fAmt.selAmt * dAmt.orgAmt) / fAmt.orgAmt,
+                dAmt.selAmt >=
+                    (fAmt.selAmt * dAmt.orgAmt) / fAmt.orgAmt + dAmt.buyAmt,
                 "sell amount over flow"
             );
         }
@@ -265,6 +268,32 @@ contract BookOfAgreements is BookOfDocuments, BOHSetting {
         updateSateOfDoc(ia, 2);
 
         emit AddAlongDeal(ia, follower, shareNumber, parValue, paidPar);
+    }
+
+    function acceptAlongDeal(
+        address ia,
+        address drager,
+        bytes32 sn
+    ) external onlyKeeper {
+        uint16 buyerGroup = _bos.groupNo(sn.buyerOfDeal());
+        address ta = getSHA().getTerm(uint8(TermTitle.TAG_ALONG));
+
+        bytes32 rule = IAlong(ta).linkRule(_bos.groupNo(drager));
+
+        (, , uint256 parValue, uint256 paidPar, , , ) = IAgreement(ia).getDeal(
+            sn.sequenceOfDeal()
+        );
+
+        Amt storage bAmt = _mockResults[ia][buyerGroup];
+
+        if (rule.basedOnParOfLink()) bAmt.buyAmt += parValue;
+        else bAmt.buyAmt += paidPar;
+
+        bAmt.rstAmt = bAmt.orgAmt + bAmt.buyAmt - bAmt.selAmt;
+
+        if (ISigPage(ia).docState() == 2) updateSateOfDoc(ia, 1);
+
+        emit AcceptAlongDeal(ia, drager, sn);
     }
 
     //##################

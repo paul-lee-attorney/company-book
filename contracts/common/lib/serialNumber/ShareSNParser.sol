@@ -9,8 +9,8 @@ library ShareSNParser {
         return uint16(bytes2(shareNumber << 8));
     }
 
-    function issueDate(bytes32 shareNumber) internal pure returns (uint256) {
-        return uint256(bytes4(shareNumber << 24));
+    function issueDate(bytes32 shareNumber) internal pure returns (uint32) {
+        return uint32(bytes4(shareNumber << 24));
     }
 
     function short(bytes32 shareNumber) internal pure returns (bytes6) {

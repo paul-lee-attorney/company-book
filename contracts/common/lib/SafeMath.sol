@@ -23,31 +23,48 @@ library SafeMath {
         return c;
     }
 
-    function add(uint a, uint b) internal pure returns (uint) {
-        uint c = a + b;
+    function add(uint256 a, uint256 b) internal pure returns (uint256) {
+        uint256 c = a + b;
         require(c >= a, "SafeMath: addition overflow");
         return c;
     }
 
-    function sub(uint a, uint b) internal pure returns (uint) {
+    function sub(uint256 a, uint256 b) internal pure returns (uint256) {
         require(b <= a, "SafeMathForUint256: subtraction overflow");
-        uint c = a - b;
+        uint256 c = a - b;
         return c;
     }
 
-    function mul(uint a, uint b) internal pure returns (uint) {
+    function mul(uint256 a, uint256 b) internal pure returns (uint256) {
         if (a == 0 || b == 0) {
             return 0;
         }
 
-        uint c = a * b;
+        uint256 c = a * b;
         require(c / a == b, "SafeMathForUint256: multiplication overflow");
         return c;
     }
 
-    function div(uint a, uint b) internal pure returns (uint) {
+    function div(uint256 a, uint256 b) internal pure returns (uint256) {
         require(b > 0, "SafeMathForUint256: division by zero");
-        uint c = a / b;
+        uint256 c = a / b;
         return c;
+    }
+
+    function soeOfDeal(
+        uint256 dealPrice,
+        uint256 issuePrice,
+        uint32 closingDate,
+        uint32 issueDateOfShare
+    ) internal pure returns (uint256 soe) {
+        require(dealPrice > issuePrice, "NEGATIVE selling price");
+        require(closingDate > issueDateOfShare, "NEGATIVE holding period");
+
+        uint256 deltaPrice = dealPrice - issuePrice;
+        uint32 deltaDate = closingDate - issueDateOfShare;
+
+        soe =
+            (deltaPrice * 365000000) /
+            (issuePrice * (uint256(deltaDate) / 864));
     }
 }

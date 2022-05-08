@@ -22,7 +22,7 @@ contract Agreement is BOSSetting, SigPage {
 
     /* struct sn{
         uint8 class; 1
-        uint8 typeOfDeal; 1   // 1-CI 2-ST(to 3rd) 3-ST(internal)
+        uint8 typeOfDeal; 1   // 1-CI 2-ST(to 3rd) 3-ST(internal) 4-TagAlong 5-DragAlong
         uint16 sequence; 2
         address buyer; 20
         uint16 group; 2
@@ -196,7 +196,7 @@ contract Agreement is BOSSetting, SigPage {
         uint256 parValue,
         uint256 paidPar,
         uint32 execDate
-    ) external onlyKeeper currentDate(execDate) {
+    ) external onlyKeeper {
         require(_bos.isShare(shareNumber.short()), "shareNumber not exist");
 
         Deal storage orgDeal = _deals[ssn];
@@ -205,7 +205,7 @@ contract Agreement is BOSSetting, SigPage {
 
         bytes32 sn = _createSN(
             shareNumber.class(),
-            orgDeal.sn.typeOfDeal(),
+            4, // 4-TagAlong,
             counterOfDeals,
             orgDeal.sn.buyerOfDeal(),
             orgDeal.sn.groupOfBuyer(),

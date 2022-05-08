@@ -131,6 +131,10 @@ contract SigPage is DraftSetting {
         _signers.push(sender);
         emit SignDoc(sender, _sigDate);
 
+        _checkCompletionOfSig();
+    }
+
+    function _checkCompletionOfSig() private {
         if (qtyOfParties == uint8(_signers.length)) {
             docState = 2;
             emit UpdateStateOfDoc(docState);
@@ -167,6 +171,8 @@ contract SigPage is DraftSetting {
         sigDate[sender] = _sigDate;
         _signers.push(sender);
         emit SignDoc(sender, _sigDate);
+
+        _checkCompletionOfSig();
     }
 
     //####################

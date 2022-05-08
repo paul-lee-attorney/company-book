@@ -9,7 +9,7 @@ import "../common/interfaces/IAgreement.sol";
 import "../common/interfaces/ISigPage.sol";
 import "../common/interfaces/IBookSetting.sol";
 
-import "../books/boh/interfaces/ITagAlong.sol";
+import "../books/boh/interfaces/IAlong.sol";
 
 import "../common/config/BOMSetting.sol";
 import "../common/config/BOASetting.sol";
@@ -108,39 +108,91 @@ contract BOAKeeper is
         uint256 paidPar,
         uint32 execDate
     ) external {
+        address rightholder = shareNumber.shareholder();
+
+        address term = getSHA().getTerm(uint8(TermTitle.TAG_ALONG));
+
+        _execAlongRight(
+            rightholder,
+            term,
+            ia,
+            sn,
+            shareNumber,
+            parValue,
+            paidPar,
+            execDate
+        );
+    }
+
+    function execDragAlong(
+        address ia,
+        bytes32 sn,
+        bytes32 shareNumber,
+        uint256 parValue,
+        uint256 paidPar,
+        uint32 execDate
+    ) external {
+        address rightholder = IAgreement(ia)
+            .shareNumberOfDeal(sn.sequenceOfDeal())
+            .shareholder();
+
+        address term = getSHA().getTerm(uint8(TermTitle.DRAG_ALONG));
+
+        _execAlongRight(
+            rightholder,
+            term,
+            ia,
+            sn,
+            shareNumber,
+            parValue,
+            paidPar,
+            execDate
+        );
+    }
+
+    function _execAlongRight(
+        address rightholder,
+        address term,
+        address ia,
+        bytes32 sn,
+        bytes32 shareNumber,
+        uint256 parValue,
+        uint256 paidPar,
+        uint32 execDate
+    ) private currentDate(execDate) {
         require(
-            _bom.votingDeadline(ia) >= now - 15 minutes,
+            !_bom.isProposed(ia) || _bom.votingDeadline(ia) >= now - 15 minutes,
             "MISSED voting deadline"
         );
 
         address seller = shareNumber.shareholder();
-        require(msg.sender == seller, "msg.sender NOT shareholder");
-        require(!ISigPage(ia).isParty(seller), "Already signed the IA");
 
         address drager = IAgreement(ia)
             .shareNumberOfDeal(sn.sequenceOfDeal())
             .shareholder();
 
-        address ta = getSHA().getTerm(uint8(TermTitle.TAG_ALONG));
+        require(msg.sender == rightholder, "msg.sender NOT rightholder");
 
-        require(ITagAlong(ta).isTriggered(ia, sn), "TagAlong NOT triggered");
+        require(IAlong(term).isTriggered(ia, sn), "TagAlong NOT triggered");
+
+        require(IAlong(term).isLinked(drager, seller), "NOT linked");
 
         require(
-            ITagAlong(ta).isRightholder(drager, seller),
-            "msg.sender is NOT seller of TagAlong"
+            IAlong(term).priceCheck(ia, sn, shareNumber),
+            "price NOT satisfied"
         );
 
         // test quota of alongDeal and update mock results
         _boa.addAlongDeal(
             ia,
-            ITagAlong(ta).tagRule(_bos.groupNo(drager)),
+            IAlong(term).linkRule(_bos.groupNo(drager)),
             shareNumber,
             parValue,
             paidPar
         );
 
         // suspend voting procedure
-        _bom.suspendVoting(ia);
+        if (_bom.isProposed(ia)) _bom.suspendVoting(ia);
 
         // add in along deal
         IAgreement(ia).createAlongDeal(
@@ -150,6 +202,28 @@ contract BOAKeeper is
             paidPar,
             execDate
         );
+    }
+
+    function acceptTagAlong(
+        address ia,
+        address drager,
+        bytes32 sn
+    ) external {
+        require(
+            _bom.votingDeadline(ia) >= now - 15 minutes,
+            "MISSED voting deadline"
+        );
+
+        require(msg.sender == sn.buyerOfDeal(), "msg.sender NOT buyer");
+
+        require(
+            ISigPage(ia).sigDate(sn.buyerOfDeal()) > 0,
+            "pls SIGN the along deal first"
+        );
+
+        _boa.acceptAlongDeal(ia, drager, sn);
+
+        if (_boa.stateOfDoc(ia) == 1) _bom.resumeVoting(ia);
     }
 
     function pushToCoffer(

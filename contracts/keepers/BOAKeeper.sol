@@ -204,7 +204,7 @@ contract BOAKeeper is
         );
     }
 
-    function acceptTagAlong(
+    function acceptAlongDeal(
         address ia,
         address drager,
         bytes32 sn

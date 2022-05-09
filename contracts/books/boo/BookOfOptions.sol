@@ -4,6 +4,8 @@
 
 pragma solidity ^0.4.24;
 
+import "../boh/interfaces/IOptions.sol";
+
 import "../../common/config/BOSSetting.sol";
 
 import "../../common/lib/ArrayUtils.sol";
@@ -13,14 +15,16 @@ import "../../common/lib/serialNumber/OptionSNParser.sol";
 
 contract BookOfOptions is BOSSetting {
     using ArrayUtils for bytes32[];
+    using ArrayUtils for address[];
     using SNFactory for bytes;
-    // using SNFactory for bytes32;
     using ShareSNParser for bytes32;
     using OptionSNParser for bytes32;
 
     struct Option {
         bytes32 sn;
         address rightholder;
+        mapping(address => bool) isObligor;
+        address[] obligors;
         uint32 closingDate;
         uint256 parValue;
         uint256 paidPar;
@@ -32,23 +36,38 @@ contract BookOfOptions is BOSSetting {
     }
 
     // bytes32 snInfo{
-    //      uint8 typeOfOpt; //0-call; 1-put
-    //      uint16 counterOfOptions;
-    //      uint32 triggerDate;
-    //      uint8 exerciseDays;
-    //      uint8 closingDays;
-    //      address obligor;
-    //      uint24 price; // IRR or other key rate to calculate price.
+    //      uint8 typeOfOpt; 0  //0-call(price); 1-put(price); 2-call(roe); 3-pub(roe); 4-call(price) & cnds; 5-put(price) & cnds; 6-call(roe) & cnds; 7-put(roe) & cnds;
+    //      uint16 counterOfOptions; 1, 2
+    //      uint32 triggerDate; 3, 4
+    //      uint8 exerciseDays; 7, 1
+    //      uint8 closingDays; 8, 1
+    //      uint32 rate; 9, 4 // Price, ROE, IRR or other key rate to deduce price.
+    //      uint32 parValue; 13, 4
+    //      uint32 paidPar; 17, 4
+    //      uint8 logicOperator; 21, 1 // 0-not applicable; 1-and; 2-or; ...
+    //      uint8 compareOperator_1; 22, 1 // 0-not applicable; 1-bigger; 2-smaller; 3-bigger or equal; 4-smaller or equal; ...
+    //      uint32 para_1; 23, 4
+    //      uint8 compareOperator_2; 27, 1 // 0-not applicable; 1-bigger; 2-smaller; 3-bigger or equal; 4-smaller or equal; ...
+    //      uint32 para_2; 28, 4
     // }
 
     // ssn => Option
     mapping(bytes6 => Option) private _options;
 
     // bytes32 future {
-    //     uint48 shortShareNumber; 0-5
-    //     uint104 parValue; 6-18
-    //     uint104 paidPar; 19-31
+    //     bytes6 shortShareNumber; 0-5
+    //     uint64 parValue; 6-13
+    //     uint64 paidPar; 14-21
     // }
+
+    struct OracleData {
+        uint256 data_1;
+        uint256 data_2;
+    }
+
+    // uint16 public counterOfData;
+
+    OracleData private _oracles;
 
     // ssn => futures
     mapping(bytes6 => bytes32[]) public futures;
@@ -74,9 +93,16 @@ contract BookOfOptions is BOSSetting {
     event CreateOpt(
         bytes32 indexed sn,
         address rightholder,
+        address obligor,
         uint256 parValue,
         uint256 paidPar
     );
+
+    event RegisterOpt(bytes32 indexed sn);
+
+    event AddObligorIntoOpt(bytes32 sn, address obligor);
+
+    event RemoveObligorFromOpt(bytes32 sn, address obligor);
 
     // event SetState(bytes32 indexed sn, uint8 state);
 
@@ -89,6 +115,8 @@ contract BookOfOptions is BOSSetting {
     event ExecOpt(bytes32 indexed sn, uint32 exerciseDate);
 
     event RevokeOpt(bytes32 indexed sn);
+
+    event UpdateOracle(uint256 data_1, uint256 data_2);
 
     event AddFuture(
         bytes32 indexed sn,
@@ -122,9 +150,8 @@ contract BookOfOptions is BOSSetting {
         uint32 triggerDate,
         uint8 exerciseDays,
         uint8 closingDays,
-        address obligor,
-        uint256 price
-    ) private pure returns (bytes32 sn) {
+        uint256 rate
+    ) public pure returns (bytes32 sn) {
         bytes memory _sn = new bytes(32);
 
         _sn[0] = bytes1(typeOfOpt);
@@ -132,8 +159,7 @@ contract BookOfOptions is BOSSetting {
         _sn = _sn.dateToSN(3, triggerDate);
         _sn[7] = bytes1(exerciseDays);
         _sn[8] = bytes1(closingDays);
-        _sn = _sn.addrToSN(9, obligor);
-        _sn = _sn.intToSN(29, price, 3);
+        _sn = _sn.dateToSN(9, uint32(rate));
 
         sn = _sn.bytesToBytes32();
     }
@@ -145,13 +171,13 @@ contract BookOfOptions is BOSSetting {
         uint32 triggerDate,
         uint8 exerciseDays,
         uint8 closingDays,
-        uint256 price,
+        uint256 rate,
         uint256 parValue,
         uint256 paidPar
     ) external onlyKeeper returns (bytes32 sn) {
-        require(typeOfOpt < 2, "typeOfOpt overflow");
+        require(typeOfOpt < 4, "typeOfOpt overflow");
         require(triggerDate >= now - 15 minutes, "triggerDate NOT future");
-        require(price > 0, "price is ZERO");
+        require(rate > 0, "rate is ZERO");
         require(paidPar > 0, "ZERO paidPar");
         require(parValue >= paidPar, "INSUFFICIENT parValue");
         require(exerciseDays > 0, "ZERO exerciseDays");
@@ -165,8 +191,7 @@ contract BookOfOptions is BOSSetting {
             triggerDate,
             exerciseDays,
             closingDays,
-            obligor,
-            price
+            rate
         );
 
         bytes6 ssn = sn.shortOfOpt();
@@ -175,6 +200,8 @@ contract BookOfOptions is BOSSetting {
 
         opt.sn = sn;
         opt.rightholder = rightholder;
+        opt.isObligor[obligor] = true;
+        opt.obligors.push(obligor);
         opt.parValue = paidPar;
         opt.parValue = parValue;
         opt.paidPar = paidPar;
@@ -183,14 +210,92 @@ contract BookOfOptions is BOSSetting {
         isOption[ssn] = true;
         _snList.push(sn);
 
-        emit CreateOpt(sn, rightholder, parValue, paidPar);
+        emit CreateOpt(sn, rightholder, obligor, parValue, paidPar);
     }
 
-    // function setState(bytes6 ssn, uint8 state) external onlyKeeper {
-    //     Option storage opt = _options[ssn];
-    //     opt.state = state;
-    //     emit SetState(opt.sn, state);
-    // }
+    function addObligorIntoOpt(bytes6 ssn, address obligor)
+        public
+        onlyKeeper
+        optionExist(ssn)
+    {
+        Option storage opt = _options[ssn];
+
+        require(!opt.isObligor[obligor], "obligor ALREADY registered");
+
+        opt.isObligor[obligor] = true;
+        opt.obligors.push(obligor);
+
+        emit AddObligorIntoOpt(opt.sn, obligor);
+    }
+
+    function removeObligorFromOpt(bytes6 ssn, address obligor)
+        external
+        onlyKeeper
+        optionExist(ssn)
+    {
+        Option storage opt = _options[ssn];
+
+        require(opt.isObligor[obligor], "obligor NOT registered");
+
+        delete opt.isObligor[obligor];
+        opt.obligors.removeByValue(obligor);
+
+        emit RemoveObligorFromOpt(opt.sn, obligor);
+    }
+
+    function _replaceSequence(bytes32 orgSN, uint16 sequence)
+        private
+        pure
+        returns (bytes32 sn)
+    {
+        bytes memory _sn = new bytes(32);
+
+        _sn = _sn.bytes32ToSN(0, orgSN, 0, 32);
+        _sn = _sn.sequenceToSN(1, sequence);
+
+        sn = _sn.bytesToBytes32();
+    }
+
+    function registerOption(address opts) external onlyKeeper {
+        bytes32[] memory snList = IOptions(opts).snList();
+        uint256 len = snList.length;
+
+        for (uint256 i = 0; i < len; i++) {
+            uint16 ssn = snList[i].sequenceOfOpt();
+            if (!IOptions(opts).isOption(ssn)) continue;
+
+            counterOfOptions++;
+
+            bytes32 sn = _replaceSequence(snList[i], counterOfOptions);
+
+            Option storage opt = _options[sn.shortOfOpt()];
+
+            opt.sn = sn;
+            isOption[sn.shortOfOpt()] = true;
+            _snList.push(sn);
+
+            opt.rightholder = IOptions(opts).rightholder(ssn);
+
+            address[] memory obligors = IOptions(opts).obligors(ssn);
+            for (uint256 j = 0; j < obligors.length; j++) {
+                opt.isObligor[obligors[j]] = true;
+                opt.obligors.push(obligors[j]);
+            }
+
+            opt.parValue = sn.parValueOfOpt();
+            opt.paidPar = sn.paidParOfOpt();
+            opt.state = 1;
+
+            emit RegisterOpt(sn);
+        }
+    }
+
+    function updateOracle(uint256 d1, uint256 d2) external onlyKeeper {
+        _oracles.data_1 = d1;
+        _oracles.data_2 = d2;
+
+        emit UpdateOracle(d1, d2);
+    }
 
     function execOption(bytes6 ssn, uint32 exerciseDate)
         external
@@ -206,11 +311,19 @@ contract BookOfOptions is BOSSetting {
         uint8 closingDays = sn.closingDaysOfOpt();
 
         require(opt.state == 1, "option's state is NOT correct");
-        require(
-            exerciseDate >= triggerDate &&
+        require(exerciseDate >= triggerDate, "NOT reached TriggerDate");
+
+        if (exerciseDays > 0)
+            require(
                 exerciseDate <= triggerDate + exerciseDays * 86400,
-            "NOT in exercise period"
-        );
+                "NOT in exercise period"
+            );
+
+        if (sn.typeOfOpt() > 3)
+            require(
+                sn.checkConditions(_oracles.data_1, _oracles.data_2),
+                "conditions NOT satisfied"
+            );
 
         opt.closingDate = exerciseDate + closingDays * 86400;
         opt.state = 2;
@@ -226,8 +339,8 @@ contract BookOfOptions is BOSSetting {
         bytes memory _ft = new bytes(32);
 
         _ft = _ft.bytes32ToSN(0, shareNumber, 1, 6);
-        _ft = _ft.intToSN(6, parValue, 13);
-        _ft = _ft.intToSN(19, paidPar, 13);
+        _ft = _ft.intToSN(6, uint64(parValue), 8);
+        _ft = _ft.intToSN(14, uint64(paidPar), 8);
 
         ft = _ft.bytesToBytes32();
     }
@@ -246,7 +359,7 @@ contract BookOfOptions is BOSSetting {
         bytes32 sn = opt.sn;
 
         uint8 typeOfOpt = sn.typeOfOpt();
-        address obligor = sn.obligorOfOpt();
+        // address[] obligors = opt.obligors;
 
         bytes6 shortOfShare = shareNumber.short();
 
@@ -257,7 +370,11 @@ contract BookOfOptions is BOSSetting {
                 opt.rightholder == shareNumber.shareholder(),
                 "WRONG shareholder"
             );
-        else require(obligor == shareNumber.shareholder(), "WRONG sharehoder");
+        else
+            require(
+                opt.isObligor[shareNumber.shareholder()],
+                "WRONG sharehoder"
+            );
 
         require(
             opt.parValue >= opt.futurePar + parValue,
@@ -315,12 +432,15 @@ contract BookOfOptions is BOSSetting {
 
         bytes32 sn = opt.sn;
         uint8 typeOfOpt = sn.typeOfOpt();
-        address obligor = sn.obligorOfOpt();
+        // address obligor = sn.obligorOfOpt();
 
         // bytes6 shortOfShare = shareNumber.short();
 
         if (typeOfOpt == 1)
-            require(obligor == shareNumber.shareholder(), "WRONG shareholder");
+            require(
+                opt.isObligor[shareNumber.shareholder()],
+                "WRONG shareholder"
+            );
         else
             require(
                 opt.rightholder == shareNumber.shareholder(),
@@ -414,11 +534,20 @@ contract BookOfOptions is BOSSetting {
         state = opt.state;
     }
 
+    function isObligor(bytes6 ssn, address acct) external view returns (bool) {
+        return _options[ssn].isObligor[acct];
+    }
+
     function stateOfOption(bytes6 ssn) external view returns (uint8) {
         return _options[ssn].state;
     }
 
     function snList() external view returns (bytes32[] list) {
         list = _snList;
+    }
+
+    function oracles() external view returns (uint256 d1, uint256 d2) {
+        d1 = _oracles.data_1;
+        d2 = _oracles.data_2;
     }
 }

@@ -25,20 +25,7 @@ library PledgeSNParser {
         return bytes6(sn << 48);
     }
 
-    function debtor(bytes32 sn) internal pure returns (address) {
+    function pledgor(bytes32 sn) internal pure returns (address) {
         return address(uint160(sn));
-    }
-
-    function pledgor(bytes32 sn, bytes32[] memory sharesList)
-        internal
-        pure
-        returns (address)
-    {
-        uint256 len = sharesList.length;
-        for (uint256 i = 0; i < len; i++)
-            if (bytes6(sharesList[i] << 8) == bytes6(sn))
-                return address(bytes20(sharesList[i] << 56));
-
-        return address(0);
     }
 }

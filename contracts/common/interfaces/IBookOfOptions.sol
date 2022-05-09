@@ -39,6 +39,12 @@ interface IBookOfOptions {
         uint256 paidPar
     ) external;
 
+    function addObligorIntoOpt(bytes6 ssn, address obligor) external;
+
+    function removeObligorFromOpt(bytes6 ssn, address obligor) external;
+
+    function registerOption(address opts) external;
+
     function setState(bytes32 sn, uint8 state) external;
 
     function execOption(bytes32 sn, uint32 exerciseDate) external;
@@ -84,6 +90,8 @@ interface IBookOfOptions {
             bytes32 hashLock,
             uint8 state
         );
+
+    function isObligor(bytes6 ssn, address acct) external view returns (bool);
 
     function stateOfOption(bytes6 ssn) external view returns (uint8);
 }

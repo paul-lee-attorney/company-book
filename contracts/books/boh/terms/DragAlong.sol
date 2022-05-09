@@ -278,7 +278,7 @@ contract DragAlong is BOSSetting, BOASetting, DraftSetting {
         uint32 issueDate = shareNumber.issueDate();
 
         if (
-            dealPrice.soeOfDeal(issuePrice, closingDate, issueDate) >=
+            dealPrice.roeOfDeal(issuePrice, closingDate, issueDate) >=
             rule.roeOfLink()
         ) return true;
 

@@ -4,17 +4,25 @@
 
 pragma solidity ^0.4.24;
 
+import "../common/components/EnumsRepo.sol";
+
 import "../common/config/BOSSetting.sol";
 import "../common/config/BOHSetting.sol";
 import "../common/config/BOMSetting.sol";
+import "../common/config/BOOSetting.sol";
 
 import "../common/interfaces/IAdminSetting.sol";
 import "../common/interfaces/IShareholdersAgreement.sol";
 import "../common/interfaces/IBookSetting.sol";
-// import "../common/interfaces/IBOMSetting.sol";
 import "../common/interfaces/ISigPage.sol";
 
-contract BOHKeeper is BOSSetting, BOHSetting, BOMSetting {
+contract BOHKeeper is
+    EnumsRepo,
+    BOSSetting,
+    BOHSetting,
+    BOMSetting,
+    BOOSetting
+{
     address[15] public termsTemplate;
 
     constructor(address bookeeper) public {
@@ -90,8 +98,12 @@ contract BOHKeeper is BOSSetting, BOHSetting, BOMSetting {
         beEstablished(body)
     {
         _boh.submitSHA(body, docHash);
-
         IAdminSetting(body).abandonAdmin();
+
+        if (IShareholdersAgreement(body).hasTitle(uint8(TermTitle.OPTIONS)))
+            _boo.registerOption(
+                IShareholdersAgreement(body).getTerm(uint8(TermTitle.OPTIONS))
+            );
     }
 
     function effectiveSHA(address body) external onlyPartyOf(body) {

@@ -51,19 +51,19 @@ library SafeMath {
         return c;
     }
 
-    function soeOfDeal(
+    function roeOfDeal(
         uint256 dealPrice,
         uint256 issuePrice,
         uint32 closingDate,
         uint32 issueDateOfShare
-    ) internal pure returns (uint256 soe) {
+    ) internal pure returns (uint256 roe) {
         require(dealPrice > issuePrice, "NEGATIVE selling price");
         require(closingDate > issueDateOfShare, "NEGATIVE holding period");
 
         uint256 deltaPrice = dealPrice - issuePrice;
         uint32 deltaDate = closingDate - issueDateOfShare;
 
-        soe =
+        roe =
             (deltaPrice * 365000000) /
             (issuePrice * (uint256(deltaDate) / 864));
     }

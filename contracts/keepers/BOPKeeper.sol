@@ -62,7 +62,7 @@ contract BOPKeeper is BOSSetting, BOPSetting {
             require(msg.sender == orgCreditor, "NOT creditor");
             _bos.increaseCleanPar(shortShareNumber, orgPledgedPar - pledgedPar);
         } else if (pledgedPar > orgPledgedPar) {
-            require(msg.sender == sn.pledgor(_bos.snList()), "NOT pledgor");
+            require(msg.sender == sn.pledgor(), "NOT pledgor");
             _bos.decreaseCleanPar(shortShareNumber, pledgedPar - orgPledgedPar);
         }
 

@@ -6,7 +6,6 @@ pragma solidity ^0.4.24;
 
 import "../common/config/AdminSetting.sol";
 
-// import "../common/config/BOSSetting.sol";
 import "../common/config/BOHSetting.sol";
 import "../common/config/BOASetting.sol";
 import "../common/config/BOMSetting.sol";
@@ -26,8 +25,6 @@ import "../common/interfaces/IAgreement.sol";
 import "../common/interfaces/IAdminSetting.sol";
 import "../common/interfaces/ISigPage.sol";
 
-// import "../books/boa/AgreementCalculator.sol";
-
 import "../common/components/EnumsRepo.sol";
 
 contract BOOKeeper is
@@ -41,9 +38,9 @@ contract BOOKeeper is
 {
     using SafeMath for uint256;
     using ShareSNParser for bytes32;
+    using OptionSNParser for bytes32;
     using PledgeSNParser for bytes32;
     using DealSNParser for bytes32;
-    using OptionSNParser for bytes32;
     using VotingRuleParser for bytes32;
 
     address[15] public termsTemplate;
@@ -108,7 +105,7 @@ contract BOOKeeper is
         if (sn.typeOfOpt() > 0) {
             (, address rightholder, , , , , ) = _boo.getOption(sn.shortOfOpt());
             require(seller == rightholder, "NOT seller");
-        } else require(seller == sn.obligorOfOpt(), "NOT seller");
+        } else require(_boo.isObligor(sn.shortOfOpt(), seller), "NOT seller");
 
         _;
     }
@@ -117,7 +114,7 @@ contract BOOKeeper is
         address buyer = msg.sender;
 
         if (sn.typeOfOpt() > 0)
-            require(buyer == sn.obligorOfOpt(), "NOT buyer");
+            require(_boo.isObligor(sn.shortOfOpt(), buyer), "NOT buyer");
         else {
             (, address rightholder, , , , , ) = _boo.getOption(sn.shortOfOpt());
             require(buyer == rightholder, "NOT buyer");
@@ -129,6 +126,42 @@ contract BOOKeeper is
     // ##################
     // ##    Option    ##
     // ##################
+
+    function createOption(
+        uint8 typeOfOpt,
+        address rightholder,
+        uint32 triggerDate,
+        uint8 exerciseDays,
+        uint8 closingDays,
+        uint256 rate,
+        uint256 parValue,
+        uint256 paidPar
+    ) external {
+        address obligor = msg.sender;
+        _boo.createOption(
+            typeOfOpt,
+            rightholder,
+            obligor,
+            triggerDate,
+            exerciseDays,
+            closingDays,
+            rate,
+            parValue,
+            paidPar
+        );
+    }
+
+    function joinOptionAsObligor(bytes32 sn) external {
+        address obligor = msg.sender;
+        _boo.addObligorIntoOpt(sn.shortOfOpt(), obligor);
+    }
+
+    function releaseObligorFromOption(bytes32 sn, address obligor)
+        external
+        onlyRightholder(sn)
+    {
+        _boo.removeObligorFromOpt(sn.shortOfOpt(), obligor);
+    }
 
     function execOption(bytes32 sn, uint32 exerciseDate)
         external
@@ -180,7 +213,7 @@ contract BOOKeeper is
         uint32 closingDate
     ) external onlyBuyer(sn) {
         address buyer = msg.sender;
-        uint256 price = sn.priceOfOpt();
+        uint256 price = sn.rateOfOpt();
 
         _boo.closeOption(sn.shortOfOpt(), hashKey, closingDate);
 

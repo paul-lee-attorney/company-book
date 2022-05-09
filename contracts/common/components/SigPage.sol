@@ -183,11 +183,11 @@ contract SigPage is DraftSetting {
         return _signers;
     }
 
-    // function isEstablished() external view returns (bool) {
-    //     return docState == 2;
-    // }
+    function isEstablished() external view returns (bool) {
+        return docState == 2;
+    }
 
-    // function signedBy(address acct) external view returns (bool) {
-    //     return sigDate[acct] > 0;
-    // }
+    function signedBy(address acct) external view returns (bool) {
+        return sigDate[acct] > 0;
+    }
 }

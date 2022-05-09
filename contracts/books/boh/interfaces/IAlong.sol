@@ -51,5 +51,5 @@ interface IAlong {
         address ia,
         bytes32 sn,
         bytes32 shareNumber
-    ) public view returns (bool);
+    ) external view returns (bool);
 }

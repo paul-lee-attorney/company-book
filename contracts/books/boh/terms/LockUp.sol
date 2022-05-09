@@ -145,7 +145,7 @@ contract LockUp is BOSSetting, BOMSetting, DraftSetting {
         return false;
     }
 
-    function _isExempted(bytes6 ssn, address[] consentParties)
+    function _isExempted(bytes6 ssn, address[] agreedParties)
         private
         view
         returns (bool)
@@ -154,14 +154,14 @@ contract LockUp is BOSSetting, BOMSetting, DraftSetting {
 
         Locker storage locker = _lockers[ssn];
 
-        if (locker.keyHolders.length > consentParties.length) {
+        if (locker.keyHolders.length > agreedParties.length) {
             return false;
         } else {
             bool flag;
             for (uint256 j = 0; j < locker.keyHolders.length; j++) {
                 flag = false;
-                for (uint256 k = 0; k < consentParties.length; k++) {
-                    if (locker.keyHolders[j] == consentParties[k]) {
+                for (uint256 k = 0; k < agreedParties.length; k++) {
+                    if (locker.keyHolders[j] == agreedParties[k]) {
                         flag = true;
                         break;
                     }
@@ -181,8 +181,21 @@ contract LockUp is BOSSetting, BOMSetting, DraftSetting {
     {
         (address[] memory consentParties, ) = _bom.getYea(ia);
 
+        address[] memory signers = ISigPage(ia).signers();
+
+        uint256 len = consentParties.length + signers.length;
+
+        address[] memory agreedParties = new address[](len);
+
+        uint256 i;
+
+        for (i = 0; i < consentParties.length; i++)
+            agreedParties[i] = consentParties[i];
+        for (i = 0; i < signers.length; i++)
+            agreedParties[len - 1 - i] = signers[i];
+
         bytes6 ssn = sn.shortShareNumberOfDeal();
 
-        return _isExempted(ssn, consentParties);
+        return _isExempted(ssn, agreedParties);
     }
 }

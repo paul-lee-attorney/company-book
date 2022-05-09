@@ -26,6 +26,7 @@ contract BookOfPledges is BOSSetting {
         bytes32 sn; //质押编号
         uint256 pledgedPar; // 出质票面额（数量）
         address creditor; //质权人、债权人
+        address debtor;
         uint256 guaranteedAmt; //担保金额
     }
 
@@ -33,7 +34,7 @@ contract BookOfPledges is BOSSetting {
     //     bytes6 shortOfShare; 6
     //     uint16 sequence; 2
     //     uint32 createDate; 4
-    //     address debtor; 20
+    //     address pledgor; 20
     // }
 
     // ssn => Pledge
@@ -90,14 +91,14 @@ contract BookOfPledges is BOSSetting {
         bytes6 shortOfShare,
         uint16 sequence,
         uint32 createDate,
-        address debtor
+        address pledgor
     ) private pure returns (bytes32) {
         bytes memory _sn = new bytes(32);
 
         _sn = _sn.shortToSN(0, shortOfShare);
         _sn = _sn.sequenceToSN(6, sequence);
         _sn = _sn.dateToSN(8, createDate);
-        _sn = _sn.addrToSN(12, debtor);
+        _sn = _sn.addrToSN(12, pledgor);
 
         return _sn.bytesToBytes32();
     }
@@ -123,7 +124,7 @@ contract BookOfPledges is BOSSetting {
             shareNumber.short(),
             counterOfPledges,
             createDate,
-            debtor
+            shareNumber.shareholder()
         );
 
         bytes6 ssn = sn.shortOfPledge();
@@ -133,6 +134,7 @@ contract BookOfPledges is BOSSetting {
         pld.sn = sn;
         pld.pledgedPar = pledgedPar;
         pld.creditor = creditor;
+        pld.debtor = debtor;
         pld.guaranteedAmt = guaranteedAmt;
 
         isPledge[ssn] = true;
@@ -187,6 +189,7 @@ contract BookOfPledges is BOSSetting {
             bytes32 sn,
             uint256 pledgedPar,
             address creditor,
+            address debtor,
             uint256 guaranteedAmt
         )
     {
@@ -195,6 +198,7 @@ contract BookOfPledges is BOSSetting {
         sn = pld.sn;
         pledgedPar = pld.pledgedPar;
         creditor = pld.creditor;
+        debtor = pld.debtor;
         guaranteedAmt = pld.guaranteedAmt;
     }
 }

@@ -258,4 +258,44 @@ library ArrayUtils {
             array.push(value);
         }
     }
+
+    function combine(address[] arrA, address[] arrB)
+        internal
+        pure
+        returns (address[])
+    {
+        uint256 lenA = arrA.length;
+        uint256 lenB = arrB.length;
+        uint256 i;
+
+        address[] memory arrC = new address[](lenA + lenB);
+
+        for (i = 0; i < lenA; i++) arrC[i] = arrA[i];
+        for (i = 0; i < lenB; i++) arrC[lenA + i] = arrB[i];
+
+        return arrC;
+    }
+
+    function fullyCoveredBy(address[] arrA, address[] arrB)
+        internal
+        pure
+        returns (bool)
+    {
+        uint256 lenA = arrA.length;
+        uint256 lenB = arrB.length;
+        bool flag;
+
+        for (uint256 i = 0; i < lenA; i++) {
+            flag = false;
+            for (uint256 j = 0; j < lenB; j++) {
+                if (arrB[j] == arrA[i]) {
+                    flag = true;
+                    break;
+                }
+            }
+            if (!flag) return false;
+        }
+
+        return true;
+    }
 }

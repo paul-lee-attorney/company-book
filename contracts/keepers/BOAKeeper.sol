@@ -9,7 +9,8 @@ import "../common/interfaces/IAgreement.sol";
 import "../common/interfaces/ISigPage.sol";
 import "../common/interfaces/IBookSetting.sol";
 
-import "../books/boh/interfaces/IAlong.sol";
+import "../books/boh/interfaces/IAlongs.sol";
+import "../books/boh/interfaces/IFirstRefusal.sol";
 
 import "../common/config/BOMSetting.sol";
 import "../common/config/BOASetting.sol";
@@ -18,6 +19,7 @@ import "../common/config/BOHSetting.sol";
 
 import "../common/lib/serialNumber/DealSNParser.sol";
 import "../common/lib/serialNumber/ShareSNParser.sol";
+import "../common/lib/serialNumber/VotingRuleParser.sol";
 
 import "../common/components/EnumsRepo.sol";
 
@@ -30,6 +32,7 @@ contract BOAKeeper is
 {
     using DealSNParser for bytes32;
     using ShareSNParser for bytes32;
+    using VotingRuleParser for bytes32;
 
     TermTitle[] private _termsForCapitalIncrease = [
         TermTitle.ANTI_DILUTION,
@@ -173,19 +176,19 @@ contract BOAKeeper is
 
         require(msg.sender == rightholder, "msg.sender NOT rightholder");
 
-        require(IAlong(term).isTriggered(ia, sn), "TagAlong NOT triggered");
+        require(IAlongs(term).isTriggered(ia, sn), "TagAlong NOT triggered");
 
-        require(IAlong(term).isLinked(drager, seller), "NOT linked");
+        require(IAlongs(term).isLinked(drager, seller), "NOT linked");
 
         require(
-            IAlong(term).priceCheck(ia, sn, shareNumber),
+            IAlongs(term).priceCheck(ia, sn, shareNumber),
             "price NOT satisfied"
         );
 
         // test quota of alongDeal and update mock results
         _boa.addAlongDeal(
             ia,
-            IAlong(term).linkRule(_bos.groupNo(drager)),
+            IAlongs(term).linkRule(_bos.groupNo(drager)),
             shareNumber,
             parValue,
             paidPar
@@ -224,6 +227,65 @@ contract BOAKeeper is
         _boa.acceptAlongDeal(ia, drager, sn);
 
         if (_boa.stateOfDoc(ia) == 1) _bom.resumeVoting(ia);
+    }
+
+    function execFirstRefusal(
+        address ia,
+        bytes32 sn,
+        uint32 execDate
+    ) external currentDate(execDate) {
+        require(
+            !_bom.isProposed(ia) || _bom.votingDeadline(ia) >= execDate,
+            "MISSED voting deadline"
+        );
+
+        address sender = msg.sender;
+        require(
+            _bom.isVoted(ia, sender),
+            "first refusal reqeuster shall not cast vote"
+        );
+
+        address term = getSHA().getTerm(uint8(TermTitle.FIRST_REFUSAL));
+        require(
+            IFirstRefusal(term).isRightholder(sn.typeOfDeal(), sender),
+            "NOT msg sender"
+        );
+
+        bool basedOnPar = getSHA()
+            .votingRules(sn.typeOfDeal())
+            .basedOnParValue();
+
+        IAgreement(ia).recordFRRequest(
+            sn.sequenceOfDeal(),
+            sender,
+            basedOnPar,
+            execDate
+        );
+
+        _bom.suspendVoting(ia);
+    }
+
+    function acceptFirstRefusalRequest(
+        address ia,
+        bytes32 sn,
+        uint32 acceptDate
+    ) external currentDate(acceptDate) {
+        require(
+            _bom.votingDeadline(ia) >= acceptDate,
+            "MISSED voting deadline"
+        );
+
+        address sender = msg.sender;
+
+        require(
+            sender ==
+                IAgreement(ia)
+                    .shareNumberOfDeal(sn.sequenceOfDeal())
+                    .shareholder(),
+            "not seller of Deal"
+        );
+
+        IAgreement(ia).acceptFR(sn.sequenceOfDeal(), sender, acceptDate);
     }
 
     function pushToCoffer(

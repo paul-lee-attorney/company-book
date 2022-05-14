@@ -4,7 +4,7 @@
 
 pragma solidity ^0.4.24;
 
-interface IAlong {
+interface IAlongs {
     function createTag(
         uint16 drager,
         uint8 triggerType,

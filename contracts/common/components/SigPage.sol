@@ -153,7 +153,7 @@ contract SigPage is DraftSetting {
     }
 
     function removeSigOfParty(address acct) public onlyKeeper {
-        require(sigDate[acct] > 0, "party NOT signed");
+        // require(sigDate[acct] > 0, "party NOT signed");
 
         sigDate[acct] = 0;
         _signers.removeByValue(acct);
@@ -162,7 +162,7 @@ contract SigPage is DraftSetting {
     }
 
     function acceptDoc(uint32 _sigDate)
-        external
+        public
         onlyParty
         notSigned
         currentDate(_sigDate)

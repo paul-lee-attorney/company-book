@@ -18,7 +18,7 @@ import "../../common/interfaces/ISigPage.sol";
 import "../../common/interfaces/IAgreement.sol";
 import "../../common/interfaces/IAgreementCalculator.sol";
 
-import "../boh/interfaces/IAlong.sol";
+import "../boh/interfaces/IAlongs.sol";
 
 contract BookOfAgreements is EnumsRepo, BookOfDocuments, BOHSetting {
     using VotingRuleParser for bytes32;
@@ -278,7 +278,7 @@ contract BookOfAgreements is EnumsRepo, BookOfDocuments, BOHSetting {
         uint16 buyerGroup = _bos.groupNo(sn.buyerOfDeal());
         address ta = getSHA().getTerm(uint8(TermTitle.TAG_ALONG));
 
-        bytes32 rule = IAlong(ta).linkRule(_bos.groupNo(drager));
+        bytes32 rule = IAlongs(ta).linkRule(_bos.groupNo(drager));
 
         (, , uint256 parValue, uint256 paidPar, , , ) = IAgreement(ia).getDeal(
             sn.sequenceOfDeal()

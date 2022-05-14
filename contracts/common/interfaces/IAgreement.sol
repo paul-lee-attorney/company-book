@@ -9,6 +9,19 @@ interface IAgreement {
     //##    写接口    ##
     //##################
 
+    function recordFRRequest(
+        uint16 ssn,
+        address acct,
+        bool basedOnPar,
+        uint32 execDate
+    ) external;
+
+    function acceptFR(
+        uint16 ssn,
+        address acct,
+        uint32 acceptDate
+    ) external;
+
     function createDeal(
         uint8 typeOfDeal,
         bytes32 shareNumber,
@@ -62,6 +75,14 @@ interface IAgreement {
     //  ######################
     //  ##     查询接口     ##
     //  ######################
+
+    function isRequestedForFR(uint16 ssn) external returns (bool);
+
+    function isRequester(uint16 ssn, address acct) external view returns (bool);
+
+    function requesters(uint16 ssn) external view returns (address[]);
+
+    function frNoticesList() external view returns (uint16[]);
 
     function isDeal(uint16 ssn) external view returns (bool);
 

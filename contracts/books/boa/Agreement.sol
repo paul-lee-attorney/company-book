@@ -22,7 +22,7 @@ contract Agreement is BOSSetting, SigPage {
 
     /* struct sn{
         uint8 class; 1
-        uint8 typeOfDeal; 1   // 1-CI 2-ST(to 3rd) 3-ST(internal) 4-TagAlong 5-DragAlong
+        uint8 typeOfDeal; 1   // 1-CI 2-ST(to 3rd) 3-ST(internal) 4-TagAlong 5-DragAlong 6-FirstRefusal
         uint16 sequence; 2
         address buyer; 20
         uint16 group; 2
@@ -42,12 +42,12 @@ contract Agreement is BOSSetting, SigPage {
     }
 
     // sequence => Deal
-    mapping(uint16 => Deal) private _deals;
+    mapping(uint16 => Deal) internal _deals;
 
     // sequence => exist?
     mapping(uint16 => bool) public isDeal;
 
-    bytes32[] private _dealsList;
+    bytes32[] internal _dealsList;
 
     uint16 public counterOfDeals;
 
@@ -55,9 +55,11 @@ contract Agreement is BOSSetting, SigPage {
     //##    Event     ##
     //##################
 
-    event CreateDeal(bytes32 indexed sn);
+    event CreateDeal(bytes32 indexed sn, bytes32 shareNumber);
 
     event CreateAlongDeal(bytes32 indexed sn);
+
+    event AddFirstRefusalBuyer(bytes32 indexed sn, address buyer);
 
     event UpdateDeal(
         bytes32 indexed sn,
@@ -105,7 +107,7 @@ contract Agreement is BOSSetting, SigPage {
         address buyer,
         uint16 group,
         bytes32 shareNumber
-    ) private pure returns (bytes32) {
+    ) internal pure returns (bytes32) {
         bytes memory _sn = new bytes(32);
 
         _sn[0] = bytes1(class);
@@ -123,7 +125,7 @@ contract Agreement is BOSSetting, SigPage {
         uint8 class,
         address buyer,
         uint16 group
-    ) external onlyAttorney {
+    ) public attorneyOrKeeper returns (bytes32) {
         require(buyer != address(0), "buyer is ZERO address");
         require(group > 0, "ZERO group");
 
@@ -166,7 +168,9 @@ contract Agreement is BOSSetting, SigPage {
         _dealsList.push(sn);
         isDeal[counterOfDeals] = true;
 
-        emit CreateDeal(sn);
+        emit CreateDeal(sn, shareNumber);
+
+        return sn;
     }
 
     function updateDeal(
@@ -175,7 +179,7 @@ contract Agreement is BOSSetting, SigPage {
         uint256 parValue,
         uint256 paidPar,
         uint32 closingDate
-    ) external dealExist(ssn) onlyAttorney {
+    ) public dealExist(ssn) attorneyOrKeeper {
         require(parValue > 0, "parValue is ZERO");
         require(parValue >= paidPar, "paidPar overflow");
         require(closingDate > now + 15 minutes, "closingDate shall be future");
@@ -237,6 +241,27 @@ contract Agreement is BOSSetting, SigPage {
 
         emit CreateAlongDeal(sn);
     }
+
+    // function addFirstRefusalBuyer(
+    //     uint16 ssn,
+    //     address buyer,
+    //     uint32 execDate
+    // ) external onlyKeeper {
+    //     Deal storage deal = _deals[ssn];
+
+    //     if (!deal.isFRBuyer[buyer]) {
+    //         deal.isFRBuyer[buyer] = true;
+    //         deal.frBuyers.push(buyer);
+
+    //         addPartyToDoc(buyer);
+    //         addSigOfParty(buyer, execDate);
+
+    //         removeSigOfParty(deal.shareNumber.shareholder());
+    //         updateStateOfDoc(1);
+
+    //         emit AddFirstRefusalBuyer(deal.sn, buyer);
+    //     }
+    // }
 
     function delDeal(uint16 ssn) external dealExist(ssn) attorneyOrKeeper {
         Deal storage deal = _deals[ssn];

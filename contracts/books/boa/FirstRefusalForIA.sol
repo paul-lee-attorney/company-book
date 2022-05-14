@@ -74,8 +74,8 @@ contract FirstRefusalForIA is AlongsForIA {
         notice.basedOnPar = basedOnPar;
 
         uint256 weight = basedOnPar
-            ? _bosCal.parInHand(acct)
-            : _bosCal.paidInHand(acct);
+            ? _bos.parInHand(acct)
+            : _bos.paidInHand(acct);
         require(weight > 0, "first refusal request has ZERO weight");
         notice.totalAmt += weight;
 
@@ -109,8 +109,8 @@ contract FirstRefusalForIA is AlongsForIA {
 
         for (uint256 i = 0; i < len; i++) {
             uint256 weight = notice.basedOnPar
-                ? _bosCal.parInHand(requesters[i])
-                : _bosCal.paidInHand(requesters[i]);
+                ? _bos.parInHand(requesters[i])
+                : _bos.paidInHand(requesters[i]);
 
             counterOfDeals++;
 

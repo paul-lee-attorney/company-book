@@ -13,11 +13,16 @@ contract MembersRepo is GroupsRepo {
     using ArrayUtils for address[];
     using ShareSNParser for bytes32;
 
+    struct Member {
+        bytes32[] sharesInHand;
+        uint256 parInHand;
+        uint256 paidInHand;
+    }
+
     mapping(address => bool) public isMember;
 
-    mapping(address => bytes32[]) public sharesInHand;
+    mapping(address => Member) internal _members;
 
-    // 股东名册
     address[] private _membersList;
 
     uint8 public maxQtyOfMembers;
@@ -27,9 +32,26 @@ contract MembersRepo is GroupsRepo {
     //##################
 
     event SetMaxQtyOfMembers(uint8 max);
+
     event AddMember(address indexed acct, uint256 qtyOfMembers);
+
     event RemoveMember(address indexed acct, uint256 qtyOfMembers);
-    event SetGroupNo(address acct, uint8 groupNo);
+
+    event AddShareToMember(bytes32 indexed sn, address acct);
+
+    event RemoveShareFromMember(bytes32 indexed sn, address acct);
+
+    event IncreaseAmountToMember(
+        address indexed acct,
+        uint256 parValue,
+        uint256 paidPar
+    );
+
+    event DecreaseAmountFromMember(
+        address indexed acct,
+        uint256 parValue,
+        uint256 paidPar
+    );
 
     //##################
     //##    修饰器    ##s
@@ -59,9 +81,7 @@ contract MembersRepo is GroupsRepo {
     }
 
     function _addMember(address acct) internal {
-        (bool exist, ) = _membersList.firstIndexOf(acct);
-
-        if (!exist) {
+        if (!isMember[acct]) {
             require(
                 _membersList.length < maxQtyOfMembers,
                 "Qty of Members overflow"
@@ -76,7 +96,10 @@ contract MembersRepo is GroupsRepo {
 
     function _removeMember(address acct) internal {
         _membersList.removeByValue(acct);
-        isMember[acct] = false;
+
+        delete _members[acct];
+
+        delete isMember[acct];
 
         if (groupNo[acct] > 0) removeMemberFromGroup(acct, groupNo[acct]);
 
@@ -88,7 +111,12 @@ contract MembersRepo is GroupsRepo {
         shareExist(ssn)
         memberExist(acct)
     {
-        sharesInHand[acct].push(_shares[ssn].shareNumber);
+        Share storage share = _shares[ssn];
+
+        _increaseAmountToMember(acct, share.parValue, share.paidPar);
+        _members[acct].sharesInHand.push(share.shareNumber);
+
+        emit AddShareToMember(share.shareNumber, acct);
     }
 
     function _removeShareFromMember(bytes6 ssn, address acct)
@@ -96,33 +124,58 @@ contract MembersRepo is GroupsRepo {
         shareExist(ssn)
         memberExist(acct)
     {
-        sharesInHand[acct].removeByValue(_shares[ssn].shareNumber);
+        Member storage member = _members[acct];
+        Share storage share = _shares[ssn];
+
+        member.sharesInHand.removeByValue(share.shareNumber);
+
+        if (member.sharesInHand.length == 0) _removeMember(acct);
+        else _decreaseAmountFromMember(acct, share.parValue, share.paidPar);
+
+        emit RemoveShareFromMember(share.shareNumber, acct);
     }
 
-    function _updateMembersList(address acct) internal {
-        uint256 len = _snList.length;
-        bool flag;
+    function _increaseAmountToMember(
+        address acct,
+        uint256 parValue,
+        uint256 paidPar
+    ) internal {
+        Member storage member = _members[acct];
+        member.parInHand += parValue;
+        member.paidInHand += paidPar;
 
-        for (uint256 i = 0; i < len; i++) {
-            if (acct == _snList[i].shareholder()) {
-                flag = true;
-                break;
-            }
-        }
-
-        if (!flag) _removeMember(acct);
+        emit IncreaseAmountToMember(acct, parValue, paidPar);
     }
 
-    function setGroupNo(address acct, uint8 group) external onlyKeeper {
-        require(group > 0, "ZERO group");
-        require(group <= counterOfGroups + 1, "group OVER FLOW");
+    function _decreaseAmountFromMember(
+        address acct,
+        uint256 parValue,
+        uint256 paidPar
+    ) internal {
+        Member storage member = _members[acct];
 
-        if (group > counterOfGroups) counterOfGroups = group;
+        require(member.parInHand >= parValue, "parValue over flow");
+        require(member.paidInHand >= paidPar, "paidPar over flow");
 
-        groupNo[acct] = group;
+        member.parInHand -= parValue;
+        member.paidInHand -= paidPar;
 
-        emit SetGroupNo(acct, group);
+        emit DecreaseAmountFromMember(acct, parValue, paidPar);
     }
+
+    // function _updateMembersList(address acct) internal {
+    //     uint256 len = _snList.length;
+    //     bool flag;
+
+    //     for (uint256 i = 0; i < len; i++) {
+    //         if (acct == _snList[i].shareholder()) {
+    //             flag = true;
+    //             break;
+    //         }
+    //     }
+
+    //     if (!flag) _removeMember(acct);
+    // }
 
     //##################
     //##   查询接口   ##
@@ -130,5 +183,32 @@ contract MembersRepo is GroupsRepo {
 
     function membersList() external view returns (address[]) {
         return _membersList;
+    }
+
+    function parInHand(address acct)
+        external
+        view
+        memberExist(acct)
+        returns (uint256)
+    {
+        return _members[acct].parInHand;
+    }
+
+    function paidInHand(address acct)
+        external
+        view
+        memberExist(acct)
+        returns (uint256)
+    {
+        return _members[acct].paidInHand;
+    }
+
+    function sharesInHand(address acct)
+        external
+        view
+        memberExist(acct)
+        returns (bytes32[])
+    {
+        return _members[acct].sharesInHand;
     }
 }

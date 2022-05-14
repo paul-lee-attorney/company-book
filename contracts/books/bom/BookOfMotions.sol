@@ -162,9 +162,9 @@ contract BookOfMotions is EnumsRepo, BOHSetting, BOASetting, BOSSetting {
         returns (uint256 amount)
     {
         if (_motions[ia].votingRule.basedOnParValue()) {
-            amount = _bosCal.parInHand(sender);
+            amount = _bos.parInHand(sender);
         } else {
-            amount = _bosCal.paidInHand(sender);
+            amount = _bos.paidInHand(sender);
         }
     }
 
@@ -241,9 +241,9 @@ contract BookOfMotions is EnumsRepo, BOHSetting, BOASetting, BOSSetting {
             uint256 i;
             for (i = 0; i < totalHead; i++) {
                 if (motion.votingRule.basedOnParValue()) {
-                    totalAmt += _bosCal.parInHand(others[i]);
+                    totalAmt += _bos.parInHand(others[i]);
                 } else {
-                    totalAmt += _bosCal.paidInHand(others[i]);
+                    totalAmt += _bos.paidInHand(others[i]);
                 }
             }
 

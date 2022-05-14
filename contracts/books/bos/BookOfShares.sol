@@ -112,6 +112,12 @@ contract BookOfShares is MembersRepo {
         // 增加“股票”项下实缴出资金额
         _payInCapital(ssn, amount, paidInDate);
 
+        _increaseAmountToMember(
+            _shares[ssn].shareNumber.shareholder(),
+            0,
+            amount
+        );
+
         // 增加公司的“实缴出资”总额
         _capIncrease(0, amount);
     }
@@ -206,6 +212,11 @@ contract BookOfShares is MembersRepo {
         } else {
             // 仅调低认缴和实缴金额，保留原股票
             _subAmountFromShare(ssn, parValue, paidPar);
+            _decreaseAmountFromMember(
+                _shares[ssn].shareNumber.shareholder(),
+                parValue,
+                paidPar
+            );
         }
     }
 

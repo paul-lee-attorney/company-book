@@ -101,6 +101,10 @@ interface IBookOfShares {
 
     function sharesInHand(address acct) external view returns (bytes32[]);
 
+    function parInHand(address acct) external view returns (uint256);
+
+    function paidInHand(address acct) external view returns (uint256);
+
     function maxQtyOfMembers() external view returns (uint8);
 
     function membersList() external view returns (address[]);

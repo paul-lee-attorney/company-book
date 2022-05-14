@@ -46,34 +46,34 @@ contract BOSCalculator is BOSSetting {
         return shares;
     }
 
-    function parInHand(address acct)
-        public
-        view
-        memberExist(acct)
-        returns (uint256 parValue)
-    {
-        bytes32[] memory list = _bos.sharesInHand(acct);
-        uint256 len = list.length;
-        for (uint256 i = 0; i < len; i++) {
-            (, uint256 par, , , , , ) = _bos.getShare(list[i].short());
-            parValue += par;
-        }
-    }
+    // function parInHand(address acct)
+    //     public
+    //     view
+    //     memberExist(acct)
+    //     returns (uint256 parValue)
+    // {
+    //     bytes32[] memory list = _bos.sharesInHand(acct);
+    //     uint256 len = list.length;
+    //     for (uint256 i = 0; i < len; i++) {
+    //         (, uint256 par, , , , , ) = _bos.getShare(list[i].short());
+    //         parValue += par;
+    //     }
+    // }
 
-    function paidInHand(address acct)
-        public
-        view
-        memberExist(acct)
-        returns (uint256 paidPar)
-    {
-        bytes32[] memory list = _bos.sharesInHand(acct);
+    // function paidInHand(address acct)
+    //     public
+    //     view
+    //     memberExist(acct)
+    //     returns (uint256 paidPar)
+    // {
+    //     bytes32[] memory list = _bos.sharesInHand(acct);
 
-        uint256 len = list.length;
-        for (uint256 i = 0; i < len; i++) {
-            (, , uint256 paid, , , , ) = _bos.getShare(list[i].short());
-            paidPar += paid;
-        }
-    }
+    //     uint256 len = list.length;
+    //     for (uint256 i = 0; i < len; i++) {
+    //         (, , uint256 paid, , , , ) = _bos.getShare(list[i].short());
+    //         paidPar += paid;
+    //     }
+    // }
 
     function parOfGroup(uint16 group) public view returns (uint256 parValue) {
         require(_bos.isGroup(group), "GROUP not exist");
@@ -82,7 +82,8 @@ contract BOSCalculator is BOSSetting {
 
         uint256 len = members.length;
 
-        for (uint256 i = 0; i < len; i++) parValue += parInHand(members[i]);
+        for (uint256 i = 0; i < len; i++)
+            parValue += _bos.parInHand(members[i]);
     }
 
     function paidOfGroup(uint16 group) public view returns (uint256 paidPar) {
@@ -92,7 +93,8 @@ contract BOSCalculator is BOSSetting {
 
         uint256 len = members.length;
 
-        for (uint256 i = 0; i < len; i++) paidPar += paidInHand(members[i]);
+        for (uint256 i = 0; i < len; i++)
+            paidPar += _bos.paidInHand(members[i]);
     }
 
     function updateController(bool basedOnPar) external onlyKeeper {

@@ -4,7 +4,9 @@
 
 pragma solidity ^0.4.24;
 
-import "../common/config/BOHSetting.sol";
+import "../books/boa/interfaces/IAgreement.sol";
+
+import "../common/config/SHASetting.sol";
 import "../common/config/BOASetting.sol";
 import "../common/config/BOMSetting.sol";
 import "../common/config/BOOSetting.sol";
@@ -15,8 +17,7 @@ import "../common/lib/serialNumber/DealSNParser.sol";
 import "../common/lib/serialNumber/VotingRuleParser.sol";
 import "../common/lib/serialNumber/OptionSNParser.sol";
 
-import "../common/interfaces/IAgreement.sol";
-import "../common/interfaces/ISigPage.sol";
+import "../common/components/interfaces/ISigPage.sol";
 
 // import "../books/boh/interfaces/IVotingRules.sol";
 
@@ -27,7 +28,7 @@ import "../common/components/EnumsRepo.sol";
 contract BOMKeeper is
     BOASetting,
     BOMSetting,
-    BOHSetting,
+    SHASetting,
     BOOSetting,
     EnumsRepo
 {

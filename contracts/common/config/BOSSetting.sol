@@ -4,8 +4,8 @@
 
 pragma solidity ^0.4.24;
 
-import "../interfaces/IBookOfShares.sol";
-import "../interfaces/IBOSCalculator.sol";
+import "../../books/bos/interfaces/IBookOfShares.sol";
+import "../../books/bos/interfaces/IBOSCalculator.sol";
 
 import "./AdminSetting.sol";
 

@@ -5,12 +5,13 @@
 
 pragma solidity ^0.4.24;
 
+import "../../boa/interfaces/IAgreement.sol";
+
 import "../../../common/config/BOMSetting.sol";
 
 import "./DragAlong.sol";
 
-import "../../../common/interfaces/IAgreement.sol";
-import "../../../common/interfaces/ISigPage.sol";
+import "../../../common/components/interfaces/ISigPage.sol";
 
 contract TagAlong is BOMSetting, DragAlong {
     // struct linkRule {

@@ -4,8 +4,8 @@
 
 pragma solidity ^0.4.24;
 
-import "../interfaces/IBookOfAgreements.sol";
-import "../interfaces/IAgreementCalculator.sol";
+import "../../books/boa/interfaces/IBookOfAgreements.sol";
+import "../../books/boa/interfaces/IAgreementCalculator.sol";
 
 import "../config/AdminSetting.sol";
 

@@ -4,12 +4,12 @@
 
 pragma solidity ^0.4.24;
 
-import "../interfaces/IShareholdersAgreement.sol";
-import "../interfaces/IBookOfSHA.sol";
+import "../../books/boh/interfaces/IShareholdersAgreement.sol";
+import "../../books/boh/interfaces/IBookOfSHA.sol";
 
 import "../config/AdminSetting.sol";
 
-contract BOHSetting is AdminSetting {
+contract SHASetting is AdminSetting {
     IBookOfSHA internal _boh;
 
     event SetBOH(address boh);
@@ -19,11 +19,7 @@ contract BOHSetting is AdminSetting {
         emit SetBOH(boh);
     }
 
-    // function getBOH() public view returns (IBookOfDocuments) {
-    //     return _boh;
-    // }
-
-    function getSHA() internal view returns (IShareholdersAgreement) {
+    function _getSHA() internal view returns (IShareholdersAgreement) {
         return IShareholdersAgreement(_boh.pointer());
     }
 }

@@ -5,9 +5,10 @@
 
 pragma solidity ^0.4.24;
 
-import "../../common/interfaces/IAdminSetting.sol";
-import "../../common/interfaces/IDraftSetting.sol";
-import "../../common/interfaces/IBookSetting.sol";
+import "../../common/config/interfaces/IAdminSetting.sol";
+
+import "../../common/config/interfaces/IDraftSetting.sol";
+import "../../common/config/interfaces/IBookSetting.sol";
 
 import "../../common/lib/ArrayUtils.sol";
 
@@ -15,7 +16,7 @@ import "../../common/components/SigPage.sol";
 import "../../common/components/EnumsRepo.sol";
 import "../../common/components/CloneFactory.sol";
 
-import "../../common/config/BOHSetting.sol";
+import "../../common/config/SHASetting.sol";
 import "../../common/config/BOSSetting.sol";
 import "../../common/config/BOMSetting.sol";
 
@@ -29,7 +30,7 @@ contract ShareholdersAgreement is
     VotingRules,
     BOSSetting,
     BOMSetting,
-    BOHSetting,
+    SHASetting,
     SigPage
 {
     using ArrayUtils for address[];

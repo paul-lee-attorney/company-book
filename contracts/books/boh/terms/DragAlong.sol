@@ -5,6 +5,8 @@
 
 pragma solidity ^0.4.24;
 
+import "../../boa/interfaces/IAgreement.sol";
+
 import "../../../common/config/BOSSetting.sol";
 import "../../../common/config/BOASetting.sol";
 import "../../../common/config/DraftSetting.sol";
@@ -16,8 +18,6 @@ import "../../../common/lib/serialNumber/ShareSNParser.sol";
 import "../../../common/lib/serialNumber/DealSNParser.sol";
 import "../../../common/lib/serialNumber/LinkRuleParser.sol";
 import "../../../common/lib/serialNumber/SNFactory.sol";
-
-import "../../../common/interfaces/IAgreement.sol";
 
 contract DragAlong is BOSSetting, BOASetting, DraftSetting {
     using ArrayUtils for address[];

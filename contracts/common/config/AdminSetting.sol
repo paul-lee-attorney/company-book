@@ -13,7 +13,11 @@ contract AdminSetting {
 
     address private _backupKeeper;
 
+    address internal _msgSender;
+
     mapping(address => bool) private _keepers;
+
+    mapping(address => bool) private _users;
 
     // ##################
     // ##   Event      ##
@@ -34,6 +38,10 @@ contract AdminSetting {
     event AppointSubKeeper(address indexed subKeeper);
 
     event RemoveSubKeeper(address indexed subKeeper);
+
+    event GrantUser(address indexed granter, address indexed user);
+
+    event RevokeUser(address indexed user);
 
     // ##################
     // ##   修饰器     ##
@@ -59,6 +67,11 @@ contract AdminSetting {
 
     modifier onlyGeneralKeeper() {
         require(msg.sender == _generalKeeper, "NOT a keeper");
+        _;
+    }
+
+    modifier onlyUser() {
+        require(_users[msg.sender], "not a USER");
         _;
     }
 
@@ -123,9 +136,22 @@ contract AdminSetting {
     }
 
     function removeSubKeeper(address addr) external onlyGeneralKeeper {
-        require(msg.sender == _generalKeeper, "NOT bookeeper");
-        _keepers[addr] = false;
-        emit AppointSubKeeper(addr);
+        delete _keepers[addr];
+        emit RemoveSubKeeper(addr);
+    }
+
+    function grantUser(address acct) external onlyUser {
+        _users[acct] = true;
+        emit GrantUser(msg.sender, acct);
+    }
+
+    function revokeUser(address acct) external onlyAdmin {
+        delete _users[acct];
+        emit RevokeUser(acct);
+    }
+
+    function setMsgSender(address acct) external onlyGeneralKeeper {
+        _msgSender = acct;
     }
 
     // ##################
@@ -151,4 +177,8 @@ contract AdminSetting {
     function isKeeper(address acct) public view returns (bool) {
         return _keepers[acct];
     }
+
+    // function _msgSender() internal view returns (address) {
+    //     return _msgSender;
+    // }
 }

@@ -4,23 +4,23 @@
 
 pragma solidity ^0.4.24;
 
+import "../boa/interfaces/IAgreement.sol";
+
 // import "../../common/config/BOSSetting.sol";
 import "../../common/config/BOASetting.sol";
-import "../../common/config/BOHSetting.sol";
+import "../../common/config/SHASetting.sol";
 import "../../common/config/BOSSetting.sol";
 
 import "../../common/lib/ArrayUtils.sol";
 import "../../common/lib/serialNumber/VotingRuleParser.sol";
 import "../../common/lib/serialNumber/DealSNParser.sol";
 
-// import "../../common/interfaces/IBookOfMotions.sol";
-import "../../common/interfaces/ISigPage.sol";
-import "../../common/interfaces/IAgreement.sol";
-import "../../common/interfaces/IAdminSetting.sol";
+import "../../common/components/interfaces/ISigPage.sol";
+import "../../common/config/interfaces/IAdminSetting.sol";
 
 import "../../common/components/EnumsRepo.sol";
 
-contract BookOfMotions is EnumsRepo, BOHSetting, BOASetting, BOSSetting {
+contract BookOfMotions is EnumsRepo, SHASetting, BOASetting, BOSSetting {
     using ArrayUtils for address[];
     using VotingRuleParser for bytes32;
     using DealSNParser for bytes32;
@@ -143,7 +143,7 @@ contract BookOfMotions is EnumsRepo, BOHSetting, BOASetting, BOSSetting {
     {
         require(_boa.isSubmitted(ia), "Agreement NOT submitted");
 
-        bytes32 rule = getSHA().votingRules(_agrmtCal.typeOfIA(ia));
+        bytes32 rule = _getSHA().votingRules(_agrmtCal.typeOfIA(ia));
 
         Motion storage motion = _motions[ia];
 

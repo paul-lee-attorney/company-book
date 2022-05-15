@@ -4,8 +4,9 @@
 
 pragma solidity ^0.4.24;
 
-import "../../common/interfaces/IAgreement.sol";
-import "../../common/interfaces/ISigPage.sol";
+import "./interfaces/IAgreement.sol";
+
+import "../../common/components/interfaces/ISigPage.sol";
 import "../../common/config/BOSSetting.sol";
 import "../../common/lib/serialNumber/DealSNParser.sol";
 import "../../common/lib/serialNumber/ShareSNParser.sol";

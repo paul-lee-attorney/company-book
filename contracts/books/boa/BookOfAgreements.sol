@@ -4,23 +4,24 @@
 
 pragma solidity ^0.4.24;
 
+import "./interfaces/IAgreement.sol";
+import "./interfaces/IAgreementCalculator.sol";
+
+import "../boh/terms/interfaces/IAlongs.sol";
+
 import "../../common/components/BookOfDocuments.sol";
 import "../../common/components/EnumsRepo.sol";
 
-import "../../common/config/BOHSetting.sol";
+import "../../common/config/SHASetting.sol";
 
 import "../../common/lib/serialNumber/VotingRuleParser.sol";
 import "../../common/lib/serialNumber/DealSNParser.sol";
 import "../../common/lib/serialNumber/ShareSNParser.sol";
 import "../../common/lib/serialNumber/LinkRuleParser.sol";
 
-import "../../common/interfaces/ISigPage.sol";
-import "../../common/interfaces/IAgreement.sol";
-import "../../common/interfaces/IAgreementCalculator.sol";
+import "../../common/components/interfaces/ISigPage.sol";
 
-import "../boh/interfaces/IAlongs.sol";
-
-contract BookOfAgreements is EnumsRepo, BookOfDocuments, BOHSetting {
+contract BookOfAgreements is EnumsRepo, BookOfDocuments, SHASetting {
     using VotingRuleParser for bytes32;
     using DealSNParser for bytes32;
     using ShareSNParser for bytes32;
@@ -103,7 +104,7 @@ contract BookOfAgreements is EnumsRepo, BookOfDocuments, BOHSetting {
         address submitter
     ) external onlyKeeper {
         submitDoc(ia, submitDate, docHash, submitter);
-        bool basedOnPar = getSHA()
+        bool basedOnPar = _getSHA()
             .votingRules(_agrmtCal.typeOfIA(ia))
             .basedOnParValue();
         _mockDeals(ia, basedOnPar);
@@ -276,7 +277,7 @@ contract BookOfAgreements is EnumsRepo, BookOfDocuments, BOHSetting {
         bytes32 sn
     ) external onlyKeeper {
         uint16 buyerGroup = _bos.groupNo(sn.buyerOfDeal());
-        address ta = getSHA().getTerm(uint8(TermTitle.TAG_ALONG));
+        address ta = _getSHA().getTerm(uint8(TermTitle.TAG_ALONG));
 
         bytes32 rule = IAlongs(ta).linkRule(_bos.groupNo(drager));
 

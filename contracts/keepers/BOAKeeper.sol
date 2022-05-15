@@ -4,18 +4,19 @@
 
 pragma solidity ^0.4.24;
 
-import "../common/interfaces/IAdminSetting.sol";
-import "../common/interfaces/IAgreement.sol";
-import "../common/interfaces/ISigPage.sol";
-import "../common/interfaces/IBookSetting.sol";
+import "../books/boa/interfaces/IAgreement.sol";
 
-import "../books/boh/interfaces/IAlongs.sol";
-import "../books/boh/interfaces/IFirstRefusal.sol";
+import "../common/config/interfaces/IAdminSetting.sol";
+import "../common/components/interfaces/ISigPage.sol";
+import "../common/config/interfaces/IBookSetting.sol";
+
+import "../books/boh/terms/interfaces/IAlongs.sol";
+import "../books/boh/terms/interfaces/IFirstRefusal.sol";
 
 import "../common/config/BOMSetting.sol";
 import "../common/config/BOASetting.sol";
 import "../common/config/BOSSetting.sol";
-import "../common/config/BOHSetting.sol";
+import "../common/config/SHASetting.sol";
 
 import "../common/lib/serialNumber/DealSNParser.sol";
 import "../common/lib/serialNumber/ShareSNParser.sol";
@@ -26,7 +27,7 @@ import "../common/components/EnumsRepo.sol";
 contract BOAKeeper is
     EnumsRepo,
     BOASetting,
-    BOHSetting,
+    SHASetting,
     BOMSetting,
     BOSSetting
 {
@@ -36,7 +37,7 @@ contract BOAKeeper is
 
     TermTitle[] private _termsForCapitalIncrease = [
         TermTitle.ANTI_DILUTION,
-        TermTitle.PRE_EMPTIVE
+        TermTitle.FIRST_REFUSAL
     ];
 
     TermTitle[] private _termsForShareTransfer = [
@@ -75,12 +76,10 @@ contract BOAKeeper is
     // ##   Agreement   ##
     // ###################
 
-    function createIA(uint8 docType)
-        external
-        onlyMember
-        returns (address body)
-    {
-        body = _boa.createDoc(docType);
+    function createIA(uint8 docType) external onlyGeneralKeeper {
+        require(_bos.isMember(_msgSender), "msgSender not MEMBER");
+
+        address body = _boa.createDoc(docType);
 
         IAdminSetting(body).init(msg.sender, this);
         IBookSetting(body).setBOS(address(_bos));
@@ -113,7 +112,7 @@ contract BOAKeeper is
     ) external {
         address rightholder = shareNumber.shareholder();
 
-        address term = getSHA().getTerm(uint8(TermTitle.TAG_ALONG));
+        address term = _getSHA().getTerm(uint8(TermTitle.TAG_ALONG));
 
         _execAlongRight(
             rightholder,
@@ -139,7 +138,7 @@ contract BOAKeeper is
             .shareNumberOfDeal(sn.sequenceOfDeal())
             .shareholder();
 
-        address term = getSHA().getTerm(uint8(TermTitle.DRAG_ALONG));
+        address term = _getSHA().getTerm(uint8(TermTitle.DRAG_ALONG));
 
         _execAlongRight(
             rightholder,
@@ -164,7 +163,7 @@ contract BOAKeeper is
         uint32 execDate
     ) private currentDate(execDate) {
         require(
-            !_bom.isProposed(ia) || _bom.votingDeadline(ia) >= now - 15 minutes,
+            !_bom.isProposed(ia) || _bom.votingDeadline(ia) >= execDate,
             "MISSED voting deadline"
         );
 
@@ -245,13 +244,13 @@ contract BOAKeeper is
             "first refusal reqeuster shall not cast vote"
         );
 
-        address term = getSHA().getTerm(uint8(TermTitle.FIRST_REFUSAL));
+        address term = _getSHA().getTerm(uint8(TermTitle.FIRST_REFUSAL));
         require(
             IFirstRefusal(term).isRightholder(sn.typeOfDeal(), sender),
             "NOT msg sender"
         );
 
-        bool basedOnPar = getSHA()
+        bool basedOnPar = _getSHA()
             .votingRules(sn.typeOfDeal())
             .basedOnParValue();
 
@@ -330,9 +329,9 @@ contract BOAKeeper is
     ) private {
         uint256 len = terms.length;
         for (uint256 i = 0; i < len; i++)
-            if (getSHA().hasTitle(uint8(terms[i])))
+            if (_getSHA().hasTitle(uint8(terms[i])))
                 require(
-                    getSHA().termIsExempted(uint8(terms[i]), ia, sn),
+                    _getSHA().termIsExempted(uint8(terms[i]), ia, sn),
                     "SHA check failed"
                 );
     }

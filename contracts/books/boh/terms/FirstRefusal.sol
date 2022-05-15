@@ -4,6 +4,8 @@
 
 pragma solidity ^0.4.24;
 
+import "../../boa/interfaces/IAgreement.sol";
+
 import "../../../common/config/BOSSetting.sol";
 import "../../../common/config/BOMSetting.sol";
 import "../../../common/config/DraftSetting.sol";
@@ -13,8 +15,7 @@ import "../../../common/lib/serialNumber/SNFactory.sol";
 import "../../../common/lib/serialNumber/FRRuleParser.sol";
 import "../../../common/lib/serialNumber/DealSNParser.sol";
 
-import "../../../common/interfaces/IAgreement.sol";
-import "../../../common/interfaces/ISigPage.sol";
+import "../../../common/components/interfaces/ISigPage.sol";
 
 // import "../../../common/interfaces/IMotion.sol";
 

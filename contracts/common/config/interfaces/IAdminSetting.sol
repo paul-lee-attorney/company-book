@@ -23,6 +23,10 @@ interface IAdminSetting {
 
     function appointSubKeeper(address addr) external;
 
+    function removeSubKeeper(address addr) external;
+
+    function setMsgSender(address acct) external;
+
     // ##################
     // ##   查询端口   ##
     // ##################
@@ -36,4 +40,6 @@ interface IAdminSetting {
     function getBackupKeeper() external view returns (address);
 
     function isKeeper(address acct) external view returns (bool);
+
+    function msgSender() external view returns (address);
 }

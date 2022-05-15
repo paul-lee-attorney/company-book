@@ -4,9 +4,11 @@
 
 pragma solidity ^0.4.24;
 
+import "../books/boa/interfaces/IAgreement.sol";
+
 import "../common/config/AdminSetting.sol";
 
-import "../common/config/BOHSetting.sol";
+import "../common/config/SHASetting.sol";
 import "../common/config/BOASetting.sol";
 import "../common/config/BOMSetting.sol";
 import "../common/config/BOPSetting.sol";
@@ -20,17 +22,16 @@ import "../common/lib/serialNumber/DealSNParser.sol";
 import "../common/lib/serialNumber/OptionSNParser.sol";
 import "../common/lib/serialNumber/VotingRuleParser.sol";
 
-import "../common/interfaces/IBookSetting.sol";
-import "../common/interfaces/IAgreement.sol";
-import "../common/interfaces/IAdminSetting.sol";
-import "../common/interfaces/ISigPage.sol";
+import "../common/config/interfaces/IBookSetting.sol";
+import "../common/config/interfaces/IAdminSetting.sol";
+import "../common/components/interfaces/ISigPage.sol";
 
 import "../common/components/EnumsRepo.sol";
 
 contract BOOKeeper is
     EnumsRepo,
     BOASetting,
-    BOHSetting,
+    SHASetting,
     BOMSetting,
     BOPSetting,
     BOOSetting,

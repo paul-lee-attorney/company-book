@@ -4,7 +4,7 @@
 
 pragma solidity ^0.4.24;
 
-import "../boh/interfaces/IOptions.sol";
+import "../boh/terms/interfaces/IOptions.sol";
 
 import "../../common/config/BOSSetting.sol";
 

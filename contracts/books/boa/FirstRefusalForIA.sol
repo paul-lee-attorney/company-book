@@ -5,9 +5,9 @@
 
 pragma solidity ^0.4.24;
 
-import "./AlongsForIA.sol";
+import "./Agreement.sol";
 
-contract FirstRefusalForIA is AlongsForIA {
+contract FirstRefusalForIA is Agreement {
     struct FRNotice {
         mapping(address => bool) isRequester;
         address[] requesters;

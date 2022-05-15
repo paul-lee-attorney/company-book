@@ -15,6 +15,7 @@ contract AgreementCalculator is BOSSetting {
     using DealSNParser for bytes32;
     using ShareSNParser for bytes32;
     using ArrayUtils for uint16[];
+    using ArrayUtils for address[];
 
     function parToSell(address ia, address acct)
         public
@@ -113,22 +114,7 @@ contract AgreementCalculator is BOSSetting {
     function otherMembers(address ia) external view returns (address[]) {
         address[] memory signers = ISigPage(ia).signers();
         address[] memory members = _bos.membersList();
-        address[] storage others;
 
-        uint256 lenSigners = signers.length;
-        uint256 lenMembers = members.length;
-
-        for (uint256 i = 0; i < lenMembers; i++) {
-            bool flag = false;
-            for (uint256 j = 0; j < lenSigners; j++) {
-                if (members[i] == signers[j]) {
-                    flag = true;
-                    break;
-                }
-            }
-            if (!flag) others.push(members[i]);
-        }
-
-        return others;
+        return members.minus(signers);
     }
 }

@@ -276,6 +276,30 @@ library ArrayUtils {
         return arrC;
     }
 
+    function minus(address[] arrA, address[] arrB)
+        internal
+        view
+        returns (address[])
+    {
+        uint256 lenA = arrA.length;
+        uint256 lenB = arrB.length;
+
+        address[] storage arrC;
+
+        for (uint256 i = 0; i < lenA; i++) {
+            bool flag = false;
+            for (uint256 j = 0; j < lenB; j++) {
+                if (arrB[j] == arrA[i]) {
+                    flag = true;
+                    break;
+                }
+            }
+            if (!flag) arrC.push(arrA[i]);
+        }
+
+        return arrC;
+    }
+
     function fullyCoveredBy(address[] arrA, address[] arrB)
         internal
         pure

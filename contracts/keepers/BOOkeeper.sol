@@ -29,6 +29,8 @@ import "../common/components/interfaces/ISigPage.sol";
 
 import "../common/components/EnumsRepo.sol";
 
+import "../common/utils/Context.sol";
+
 contract BOOKeeper is
     EnumsRepo,
     BOASetting,
@@ -36,7 +38,8 @@ contract BOOKeeper is
     BOMSetting,
     BOPSetting,
     BOOSetting,
-    BOSSetting
+    BOSSetting,
+    Context
 {
     using SafeMath for uint256;
     using ShareSNParser for bytes32;
@@ -84,42 +87,44 @@ contract BOOKeeper is
 
     modifier onlyAdminOf(address body) {
         require(
-            IAdminSetting(body).getAdmin() == msg.sender,
+            IAdminSetting(body).getAdmin() == _msgSender,
             "NOT Admin of Doc"
         );
         _;
     }
 
     modifier onlyPartyOf(address body) {
-        require(ISigPage(body).isParty(msg.sender), "NOT Party of Doc");
+        require(ISigPage(body).isParty(_msgSender), "NOT Party of Doc");
         _;
     }
 
     modifier onlyRightholder(bytes32 sn) {
         (, address rightholder, , , , , ) = _boo.getOption(sn.shortOfOpt());
-        require(msg.sender == rightholder, "NOT rightholder");
+        require(_msgSender == rightholder, "NOT rightholder");
         _;
     }
 
     modifier onlySeller(bytes32 sn) {
-        address seller = msg.sender;
-
         if (sn.typeOfOpt() > 0) {
             (, address rightholder, , , , , ) = _boo.getOption(sn.shortOfOpt());
-            require(seller == rightholder, "NOT seller");
-        } else require(_boo.isObligor(sn.shortOfOpt(), seller), "NOT seller");
-
+            require(_msgSender == rightholder, "msgSender NOT rightholder");
+        } else
+            require(
+                _boo.isObligor(sn.shortOfOpt(), _msgSender),
+                "msgSender NOT seller"
+            );
         _;
     }
 
     modifier onlyBuyer(bytes32 sn) {
-        address buyer = msg.sender;
-
         if (sn.typeOfOpt() > 0)
-            require(_boo.isObligor(sn.shortOfOpt(), buyer), "NOT buyer");
+            require(
+                _boo.isObligor(sn.shortOfOpt(), _msgSender),
+                "_msgSender NOT obligor"
+            );
         else {
             (, address rightholder, , , , , ) = _boo.getOption(sn.shortOfOpt());
-            require(buyer == rightholder, "NOT buyer");
+            require(_msgSender == rightholder, "_msgSender NOT rightholder");
         }
 
         _;
@@ -138,12 +143,11 @@ contract BOOKeeper is
         uint256 rate,
         uint256 parValue,
         uint256 paidPar
-    ) external {
-        address obligor = msg.sender;
+    ) external onlyDirectKeeper {
         _boo.createOption(
             typeOfOpt,
             rightholder,
-            obligor,
+            _msgSender,
             triggerDate,
             exerciseDays,
             closingDays,
@@ -151,24 +155,32 @@ contract BOOKeeper is
             parValue,
             paidPar
         );
+
+        _clearMsgSender();
     }
 
-    function joinOptionAsObligor(bytes32 sn) external {
-        address obligor = msg.sender;
-        _boo.addObligorIntoOpt(sn.shortOfOpt(), obligor);
+    function joinOptionAsObligor(bytes32 sn) external onlyDirectKeeper {
+        _boo.addObligorIntoOpt(sn.shortOfOpt(), _msgSender);
+        _clearMsgSender();
     }
 
     function releaseObligorFromOption(bytes32 sn, address obligor)
         external
+        onlyDirectKeeper
         onlyRightholder(sn)
     {
+        _clearMsgSender();
+
         _boo.removeObligorFromOpt(sn.shortOfOpt(), obligor);
     }
 
     function execOption(bytes32 sn, uint32 exerciseDate)
         external
+        onlyDirectKeeper
         onlyRightholder(sn)
     {
+        _clearMsgSender();
+
         _boo.execOption(sn.shortOfOpt(), exerciseDate);
     }
 
@@ -176,12 +188,20 @@ contract BOOKeeper is
         bytes32 sn,
         bytes32 shareNumber,
         uint256 paidPar
-    ) external onlyRightholder(sn) {
+    ) external onlyDirectKeeper onlyRightholder(sn) {
+        _clearMsgSender();
+
         _bos.decreaseCleanPar(shareNumber.short(), paidPar);
         _boo.addFuture(sn.shortOfOpt(), shareNumber, paidPar, paidPar);
     }
 
-    function removeFuture(bytes32 sn, bytes32 ft) external onlyRightholder(sn) {
+    function removeFuture(bytes32 sn, bytes32 ft)
+        external
+        onlyDirectKeeper
+        onlyRightholder(sn)
+    {
+        _clearMsgSender();
+
         _boo.removeFuture(sn.shortOfOpt(), ft);
         _bos.increaseCleanPar(ft.shortShareNumberOfFt(), ft.paidParOfFt());
     }
@@ -190,12 +210,20 @@ contract BOOKeeper is
         bytes32 sn,
         bytes32 shareNumber,
         uint256 paidPar
-    ) external onlySeller(sn) {
+    ) external onlyDirectKeeper onlySeller(sn) {
+        _clearMsgSender();
+
         _bos.decreaseCleanPar(shareNumber.short(), paidPar);
         _boo.requestPledge(sn.shortOfOpt(), shareNumber, paidPar);
     }
 
-    function lockOption(bytes32 sn, bytes32 hashLock) external onlySeller(sn) {
+    function lockOption(bytes32 sn, bytes32 hashLock)
+        external
+        onlyDirectKeeper
+        onlySeller(sn)
+    {
+        _clearMsgSender();
+
         _boo.lockOption(sn.shortOfOpt(), hashLock);
     }
 
@@ -213,8 +241,7 @@ contract BOOKeeper is
         bytes32 sn,
         string hashKey,
         uint32 closingDate
-    ) external onlyBuyer(sn) {
-        address buyer = msg.sender;
+    ) external onlyDirectKeeper onlyBuyer(sn) {
         uint256 price = sn.rateOfOpt();
 
         _boo.closeOption(sn.shortOfOpt(), hashKey, closingDate);
@@ -228,26 +255,37 @@ contract BOOKeeper is
                 fts[i].shortShareNumberOfFt(),
                 fts[i].parValueOfFt(),
                 fts[i].paidParOfFt(),
-                buyer,
+                _msgSender,
                 closingDate,
                 price
             );
         }
+
+        _clearMsgSender();
 
         _recoverCleanPar(_boo.pledges(sn.shortOfOpt()));
     }
 
     function revokeOption(bytes32 sn, uint32 revokeDate)
         external
+        onlyDirectKeeper
         onlyRightholder(sn)
     {
+        _clearMsgSender();
+
         _boo.revokeOption(sn.shortOfOpt(), revokeDate);
 
         if (sn.typeOfOpt() > 0) _recoverCleanPar(_boo.futures(sn.shortOfOpt()));
         else _recoverCleanPar(_boo.pledges(sn.shortOfOpt()));
     }
 
-    function releasePledges(bytes32 sn) external onlyRightholder(sn) {
+    function releasePledges(bytes32 sn)
+        external
+        onlyDirectKeeper
+        onlyRightholder(sn)
+    {
+        _clearMsgSender();
+
         (, , , , , , uint8 state) = _boo.getOption(sn.shortOfOpt());
 
         require(state == 6, "option NOT revoked");

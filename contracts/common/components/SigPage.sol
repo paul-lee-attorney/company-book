@@ -1,5 +1,6 @@
 /*
  * Copyright 2021-2022 LI LI of JINGTIAN & GONGCHENG.
+ * All Rights Reserved.
  * */
 
 pragma solidity ^0.4.24;
@@ -93,7 +94,7 @@ contract SigPage is DraftSetting {
     }
 
     function addPartyToDoc(address acct) public attorneyOrKeeper {
-        // require(msg.sender == getAttorney() || msg.sender == getGK());
+        // require(msg.sender == getAttorney() || msg.sender == getKeeper());
 
         if (!isParty[acct]) {
             isParty[acct] = true;
@@ -103,7 +104,7 @@ contract SigPage is DraftSetting {
     }
 
     function removePartyFromDoc(address acct) public attorneyOrKeeper {
-        // require(msg.sender == getAttorney() || msg.sender == getGK());
+        // require(msg.sender == getAttorney() || msg.sender == getKeeper());
 
         if (isParty[acct]) {
             delete isParty[acct];

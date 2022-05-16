@@ -1,15 +1,16 @@
 /*
- * Copyright 2021 LI LI of JINGTIAN & GONGCHENG.
+ * Copyright 2021-2022 LI LI of JINGTIAN & GONGCHENG.
+ * All Rights Reserved.
  * */
 
 pragma solidity ^0.4.24;
 
 import "../../common/components/BookOfDocuments.sol";
-import "../../common/components/BookOfTerms.sol";
+// import "../../common/components/BookOfTerms.sol";
 
 import "./interfaces/IShareholdersAgreement.sol";
 
-contract BookOfSHA is BookOfTerms, BookOfDocuments {
+contract BookOfSHA is BookOfDocuments {
     address public pointer;
 
     constructor(
@@ -36,11 +37,11 @@ contract BookOfSHA is BookOfTerms, BookOfDocuments {
     ) external onlyKeeper {
         submitDoc(body, submitDate, docHash, submitter);
 
-        address[] memory terms = IShareholdersAgreement(body).terms();
+        // address[] memory terms = IShareholdersAgreement(body).terms();
 
-        for (uint256 i = 0; i < terms.length; i++) {
-            _addTermToRegistry(terms[i]);
-        }
+        // for (uint256 i = 0; i < terms.length; i++) {
+        //     _addTermToRegistry(terms[i]);
+        // }
     }
 
     function changePointer(address body)

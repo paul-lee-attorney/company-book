@@ -1,5 +1,6 @@
 /*
- * Copyright 2021 LI LI of JINGTIAN & GONGCHENG.
+ * Copyright 2021-2022 LI LI of JINGTIAN & GONGCHENG.
+ * All Rights Reserved.
  * */
 
 pragma solidity ^0.4.24;
@@ -31,7 +32,7 @@ contract EnumsRepo {
         ANTI_DILUTION,
         PRE_EMPTIVE,
         FIRST_REFUSAL,
-        GROUP_UPDATE,
+        GROUPS_UPDATE,
         DRAG_ALONG,
         TAG_ALONG,
         OPTIONS,

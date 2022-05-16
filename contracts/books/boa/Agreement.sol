@@ -125,7 +125,7 @@ contract Agreement is BOSSetting, SigPage {
         uint8 class,
         address buyer,
         uint16 group
-    ) public attorneyOrKeeper returns (bytes32) {
+    ) external onlyAttorney returns (bytes32) {
         require(buyer != address(0), "buyer is ZERO address");
         require(group > 0, "ZERO group");
 
@@ -179,7 +179,7 @@ contract Agreement is BOSSetting, SigPage {
         uint256 parValue,
         uint256 paidPar,
         uint32 closingDate
-    ) public dealExist(ssn) attorneyOrKeeper {
+    ) external dealExist(ssn) onlyAttorney {
         require(parValue > 0, "parValue is ZERO");
         require(parValue >= paidPar, "paidPar overflow");
         require(closingDate > now + 15 minutes, "closingDate shall be future");
@@ -194,76 +194,7 @@ contract Agreement is BOSSetting, SigPage {
         emit UpdateDeal(deal.sn, unitPrice, parValue, paidPar, closingDate);
     }
 
-    function createAlongDeal(
-        bytes32 shareNumber,
-        uint16 ssn,
-        uint256 parValue,
-        uint256 paidPar,
-        uint32 execDate
-    ) external onlyKeeper {
-        require(_bos.isShare(shareNumber.short()), "shareNumber not exist");
-
-        Deal storage orgDeal = _deals[ssn];
-
-        counterOfDeals++;
-
-        bytes32 sn = _createSN(
-            shareNumber.class(),
-            4, // 4-TagAlong,
-            counterOfDeals,
-            orgDeal.sn.buyerOfDeal(),
-            orgDeal.sn.groupOfBuyer(),
-            shareNumber
-        );
-
-        Deal storage addDeal = _deals[counterOfDeals];
-
-        addDeal.sn = sn;
-        addDeal.shareNumber = shareNumber;
-
-        addDeal.unitPrice = orgDeal.unitPrice;
-        addDeal.closingDate = orgDeal.closingDate;
-
-        addDeal.parValue = parValue;
-        addDeal.paidPar = paidPar;
-
-        _dealsList.push(sn);
-        isDeal[counterOfDeals] = true;
-
-        // add seller to party and sign the IA
-        address seller = shareNumber.shareholder();
-        addPartyToDoc(seller);
-        addSigOfParty(seller, execDate);
-
-        // remove buyer signature from IA
-        removeSigOfParty(orgDeal.sn.buyerOfDeal());
-        updateStateOfDoc(1);
-
-        emit CreateAlongDeal(sn);
-    }
-
-    // function addFirstRefusalBuyer(
-    //     uint16 ssn,
-    //     address buyer,
-    //     uint32 execDate
-    // ) external onlyKeeper {
-    //     Deal storage deal = _deals[ssn];
-
-    //     if (!deal.isFRBuyer[buyer]) {
-    //         deal.isFRBuyer[buyer] = true;
-    //         deal.frBuyers.push(buyer);
-
-    //         addPartyToDoc(buyer);
-    //         addSigOfParty(buyer, execDate);
-
-    //         removeSigOfParty(deal.shareNumber.shareholder());
-    //         updateStateOfDoc(1);
-
-    //         emit AddFirstRefusalBuyer(deal.sn, buyer);
-    //     }
-    // }
-
-    function delDeal(uint16 ssn) external dealExist(ssn) attorneyOrKeeper {
+    function delDeal(uint16 ssn) external dealExist(ssn) onlyAttorney {
         Deal storage deal = _deals[ssn];
 
         bytes32 sn = deal.sn;
@@ -279,6 +210,10 @@ contract Agreement is BOSSetting, SigPage {
         isDeal[ssn] = false;
 
         emit DelDeal(sn);
+    }
+
+    function kill() external onlyDirectKeeper {
+        selfdestruct(getKeeper());
     }
 
     function clearDealCP(

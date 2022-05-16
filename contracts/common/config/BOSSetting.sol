@@ -1,5 +1,6 @@
 /*
- * Copyright 2021 LI LI of JINGTIAN & GONGCHENG.
+ * Copyright 2021-2022 LI LI of JINGTIAN & GONGCHENG.
+ * All Rights Reserved.
  * */
 
 pragma solidity ^0.4.24;
@@ -29,7 +30,9 @@ contract BOSSetting is AdminSetting {
     modifier onlyStakeholders() {
         address sender = msg.sender;
         require(
-            sender == getAdmin() || sender == getGK() || _bos.isMember(sender),
+            sender == getAdmin() ||
+                sender == getKeeper() ||
+                _bos.isMember(sender),
             "NOT Stakeholders"
         );
         _;
@@ -40,12 +43,12 @@ contract BOSSetting is AdminSetting {
         _;
     }
 
-    function setBOS(address bos) external onlyKeeper {
+    function setBOS(address bos) external onlyDirectKeeper {
         _bos = IBookOfShares(bos);
         emit SetBOS(bos);
     }
 
-    function setBOSCal(address cal) external onlyKeeper {
+    function setBOSCal(address cal) external onlyDirectKeeper {
         _bosCal = IBOSCalculator(cal);
         emit SetBOSCal(cal);
     }

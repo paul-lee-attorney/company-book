@@ -1,5 +1,6 @@
 /*
- * Copyright 2021 LI LI of JINGTIAN & GONGCHENG.
+ * Copyright 2021-2022 LI LI of JINGTIAN & GONGCHENG.
+ * All Rights Reserved.
  * */
 
 pragma solidity ^0.4.24;
@@ -7,7 +8,7 @@ pragma solidity ^0.4.24;
 import "../AntiDilution.sol";
 
 interface IAntiDilution {
-    function setBenchmark(uint8 class, uint price) external;
+    function setBenchmark(uint8 class, uint256 price) external;
 
     function delBenchmark(uint8 class) external;
 
@@ -26,7 +27,7 @@ interface IAntiDilution {
         view
         returns (
             uint8 rank,
-            uint price,
+            uint256 price,
             address[] obligors
         );
 }

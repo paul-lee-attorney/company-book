@@ -1,5 +1,6 @@
 /*
- * Copyright 2021 LI LI of JINGTIAN & GONGCHENG.
+ * Copyright 2021-2022 LI LI of JINGTIAN & GONGCHENG.
+ * All Rights Reserved.
  * */
 
 pragma solidity ^0.4.24;
@@ -13,7 +14,7 @@ contract BOPSetting is AdminSetting {
 
     event SetBOP(address bop);
 
-    function setBOP(address bop) external onlyKeeper {
+    function setBOP(address bop) external onlyDirectKeeper {
         _bop = IBookOfPledges(bop);
         emit SetBOP(bop);
     }

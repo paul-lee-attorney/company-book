@@ -1,5 +1,6 @@
 /*
- * Copyright 2021 LI LI of JINGTIAN & GONGCHENG.
+ * Copyright 2021-2022 LI LI of JINGTIAN & GONGCHENG.
+ * All Rights Reserved.
  * */
 
 pragma solidity ^0.4.24;
@@ -14,7 +15,7 @@ contract SHASetting is AdminSetting {
 
     event SetBOH(address boh);
 
-    function setBOH(address boh) external onlyKeeper {
+    function setBOH(address boh) external onlyDirectKeeper {
         _boh = IBookOfSHA(boh);
         emit SetBOH(boh);
     }

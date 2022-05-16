@@ -1,5 +1,6 @@
 /*
- * Copyright 2021 LI LI of JINGTIAN & GONGCHENG.
+ * Copyright 2021-2022 LI LI of JINGTIAN & GONGCHENG.
+ * All Rights Reserved.
  * */
 
 pragma solidity ^0.4.24;
@@ -13,7 +14,7 @@ contract BOMSetting is AdminSetting {
 
     event SetBOM(address bom);
 
-    function setBOM(address bom) external onlyKeeper {
+    function setBOM(address bom) external onlyDirectKeeper {
         _bom = IBookOfMotions(bom);
         emit SetBOM(bom);
     }

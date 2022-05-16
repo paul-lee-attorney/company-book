@@ -14,7 +14,11 @@ interface IBOAKeeper {
 
     function removeIA(address body) external;
 
-    function submitIA(address body, bytes32 docHash) external;
+    function submitIA(
+        address body,
+        uint32 submitDate,
+        bytes32 docHash
+    ) external;
 
     function execTagAlong(
         address ia,
@@ -53,22 +57,22 @@ interface IBOAKeeper {
     ) external;
 
     function pushToCoffer(
-        bytes32 sn,
         address ia,
+        bytes32 sn,
         bytes32 hashLock,
         uint256 closingDate
     ) external;
 
     function closeDeal(
-        bytes32 sn,
         address ia,
+        bytes32 sn,
         uint32 closingDate,
         string hashKey
     ) external;
 
     function revokeDeal(
-        bytes32 sn,
         address ia,
+        bytes32 sn,
         string hashKey
     ) external;
 }

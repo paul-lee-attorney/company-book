@@ -1,5 +1,6 @@
 /*
- * Copyright 2021 LI LI of JINGTIAN & GONGCHENG.
+ * Copyright 2021-2022 LI LI of JINGTIAN & GONGCHENG.
+ * All Rights Reserved.
  * */
 
 pragma solidity ^0.4.24;
@@ -110,7 +111,7 @@ contract AntiDilution is BOSSetting, BOMSetting, DraftSetting {
         onlyAttorney
         onlyMarked(class)
     {
-        ISigPage(getGK()).isParty(obligor);
+        ISigPage(getKeeper()).isParty(obligor);
 
         (bool exist, ) = obligors[classToMark[class]].firstIndexOf(obligor);
 

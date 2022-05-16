@@ -1,5 +1,6 @@
 /*
- * Copyright 2021 LI LI of JINGTIAN & GONGCHENG.
+ * Copyright 2021-2022 LI LI of JINGTIAN & GONGCHENG.
+ * All Rights Reserved.
  * */
 
 pragma solidity ^0.4.24;
@@ -16,12 +17,12 @@ contract BOASetting is AdminSetting {
     event SetBOA(address boa);
     event SetAgrmtCalculator(address cal);
 
-    function setBOA(address boa) external onlyKeeper {
+    function setBOA(address boa) external onlyDirectKeeper {
         _boa = IBookOfAgreements(boa);
         emit SetBOA(boa);
     }
 
-    function setBOACal(address cal) external onlyKeeper {
+    function setAgrmtCal(address cal) external onlyDirectKeeper {
         _agrmtCal = IAgreementCalculator(cal);
         emit SetAgrmtCalculator(cal);
     }

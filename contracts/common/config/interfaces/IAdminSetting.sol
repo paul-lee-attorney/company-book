@@ -1,5 +1,6 @@
 /*
- * Copyright 2021 LI LI of JINGTIAN & GONGCHENG.
+ * Copyright 2021-2022 LI LI of JINGTIAN & GONGCHENG.
+ * All Rights Reserved.
  * */
 
 pragma solidity ^0.4.24;
@@ -21,11 +22,13 @@ interface IAdminSetting {
 
     function takeoverBookeeper() external;
 
-    function appointSubKeeper(address addr) external;
+    function grantKeeper(address addr) external;
 
-    function removeSubKeeper(address addr) external;
+    function revokeKeeper(address addr) external;
 
-    function setMsgSender(address acct) external;
+    function grantReader(address addr) external;
+
+    function revokeReader(address addr) external;
 
     // ##################
     // ##   查询端口   ##
@@ -35,11 +38,15 @@ interface IAdminSetting {
 
     function getBackupAdmin() external view returns (address);
 
-    function getGK() external view returns (address);
+    function getKeeper() external view returns (address);
 
     function getBackupKeeper() external view returns (address);
 
     function isKeeper(address acct) external view returns (bool);
 
-    function msgSender() external view returns (address);
+    function keepers() external view returns (address[]);
+
+    function isReader(address acct) external view returns (bool);
+
+    function readers() external view returns (address[]);
 }

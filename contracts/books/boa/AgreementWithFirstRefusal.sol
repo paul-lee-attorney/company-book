@@ -7,7 +7,7 @@ pragma solidity ^0.4.24;
 
 import "./Agreement.sol";
 
-contract FirstRefusalForIA is Agreement {
+contract AgreementWithFirstRefusal is Agreement {
     struct FRNotice {
         mapping(address => bool) isRequester;
         address[] requesters;

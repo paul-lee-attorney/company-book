@@ -92,7 +92,7 @@ contract BookOfAgreements is EnumsRepo, BookOfDocuments, SHASetting {
     //##    写接口    ##
     //##################
 
-    function setAgreementCalculator(address cal) external onlyKeeper {
+    function setAgreementCalculator(address cal) external onlyDirectKeeper {
         _agrmtCal = IAgreementCalculator(cal);
         emit SetAgreementCalculator(cal);
     }
@@ -102,7 +102,7 @@ contract BookOfAgreements is EnumsRepo, BookOfDocuments, SHASetting {
         uint32 submitDate,
         bytes32 docHash,
         address submitter
-    ) external onlyKeeper {
+    ) external onlyDirectKeeper {
         submitDoc(ia, submitDate, docHash, submitter);
         bool basedOnPar = _getSHA()
             .votingRules(_agrmtCal.typeOfIA(ia))

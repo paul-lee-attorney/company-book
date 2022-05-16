@@ -1,5 +1,6 @@
 /*
- * Copyright 2021 LI LI of JINGTIAN & GONGCHENG.
+ * Copyright 2021-2022 LI LI of JINGTIAN & GONGCHENG.
+ * All Rights Reserved.
  * */
 
 pragma solidity ^0.4.24;
@@ -12,6 +13,7 @@ import "../../../common/config/DraftSetting.sol";
 
 contract GroupsUpdate is BOSSetting, DraftSetting {
     using SNFactory for bytes;
+    using SNFactory for bytes32;
     using ArrayUtils for bytes32[];
 
     bytes32[] private _orders;
@@ -51,7 +53,7 @@ contract GroupsUpdate is BOSSetting, DraftSetting {
         bool addMember = true;
 
         bytes32 order = _createOrder(addMember, acct, groupNo);
-        _orders.push(order);
+        order.insertToQue(_orders);
 
         emit AddMemberOrder(acct, groupNo);
     }
@@ -67,7 +69,7 @@ contract GroupsUpdate is BOSSetting, DraftSetting {
         bool addMember = false;
 
         bytes32 order = _createOrder(addMember, acct, groupNo);
-        _orders.push(order);
+        order.insertToQue(_orders);
 
         emit RemoveMemberOrder(acct, groupNo);
     }

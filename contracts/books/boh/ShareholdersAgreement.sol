@@ -16,7 +16,6 @@ import "../../common/components/SigPage.sol";
 import "../../common/components/EnumsRepo.sol";
 import "../../common/components/CloneFactory.sol";
 
-import "../../common/config/SHASetting.sol";
 import "../../common/config/BOSSetting.sol";
 import "../../common/config/BOMSetting.sol";
 
@@ -28,9 +27,8 @@ contract ShareholdersAgreement is
     EnumsRepo,
     CloneFactory,
     VotingRules,
-    BOSSetting,
     BOMSetting,
-    SHASetting,
+    BOSSetting,
     SigPage
 {
     using ArrayUtils for address[];
@@ -102,7 +100,10 @@ contract ShareholdersAgreement is
             title == uint8(TermTitle.ANTI_DILUTION) ||
             title == uint8(TermTitle.LOCK_UP) ||
             title == uint8(TermTitle.TAG_ALONG) ||
-            title == uint8(TermTitle.VOTING_RULES)
+            title == uint8(TermTitle.DRAG_ALONG) ||
+            title == uint8(TermTitle.OPTIONS) ||
+            title == uint8(TermTitle.FIRST_REFUSAL) ||
+            title == uint8(TermTitle.GROUPS_UPDATE)
         ) {
             tempOfTitle[title] = tempAdd;
 
@@ -158,6 +159,10 @@ contract ShareholdersAgreement is
         for (uint256 i = 0; i < _terms.length; i++) {
             IDraftSetting(_terms[i]).lockContents();
         }
+    }
+
+    function kill() onlyDirectKeeper {
+        selfdestruct(getKeeper());
     }
 
     //##################

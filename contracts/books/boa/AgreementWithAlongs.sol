@@ -5,9 +5,9 @@
 
 pragma solidity ^0.4.24;
 
-import "./FirstRefusalForIA.sol";
+import "./AgreementWithFirstRefusal.sol";
 
-contract AlongsForIA is FirstRefusalForIA {
+contract AgreementWithAlongs is AgreementWithFirstRefusal {
     //##################
     //##    Event     ##
     //##################

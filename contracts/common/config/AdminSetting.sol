@@ -1,23 +1,28 @@
 /*
- * Copyright 2021 LI LI of JINGTIAN & GONGCHENG.
+ * Copyright 2021-2022 LI LI of JINGTIAN & GONGCHENG.
+ * All Rights Reserved.
  * */
 
 pragma solidity ^0.4.24;
 
+import "../lib/ArrayUtils.sol";
+
 contract AdminSetting {
+    using ArrayUtils for address[];
+
     address private _admin;
 
     address private _backupAdmin;
 
-    address private _generalKeeper;
+    address private _directKeeper;
 
     address private _backupKeeper;
 
-    address internal _msgSender;
+    mapping(address => bool) private _isKeeper;
+    address[] private _keepers;
 
-    mapping(address => bool) private _keepers;
-
-    mapping(address => bool) private _users;
+    mapping(address => bool) private _isReader;
+    address[] private _readers;
 
     // ##################
     // ##   Event      ##
@@ -35,13 +40,13 @@ contract AdminSetting {
 
     event TakeoverBookeeper(address indexed backupKeeper);
 
-    event AppointSubKeeper(address indexed subKeeper);
+    event GrantKeeper(address indexed subKeeper);
 
-    event RemoveSubKeeper(address indexed subKeeper);
+    event RevokeKeeper(address indexed subKeeper);
 
-    event GrantUser(address indexed granter, address indexed user);
+    event GrantReader(address indexed granter, address indexed reader);
 
-    event RevokeUser(address indexed user);
+    event RevokeReader(address indexed reader);
 
     // ##################
     // ##   修饰器     ##
@@ -49,41 +54,41 @@ contract AdminSetting {
 
     modifier adminOrKeeper() {
         require(
-            _keepers[msg.sender] || msg.sender == _admin,
-            "NOT bookeeper or admin"
+            _isKeeper[msg.sender] || msg.sender == _admin,
+            "not KEEPER or ADMIN"
         );
         _;
     }
 
     modifier onlyAdmin() {
-        require(msg.sender == _admin, "NOT Admin");
+        require(msg.sender == _admin, "not ADMIN");
         _;
     }
 
     modifier onlyKeeper() {
-        require(_keepers[msg.sender], "NOT a keeper");
+        require(_isKeeper[msg.sender], "not KEEPER");
         _;
     }
 
-    modifier onlyGeneralKeeper() {
-        require(msg.sender == _generalKeeper, "NOT a keeper");
+    modifier onlyDirectKeeper() {
+        require(msg.sender == _directKeeper, "not GeneralKeeper");
         _;
     }
 
-    modifier onlyUser() {
-        require(_users[msg.sender], "not a USER");
+    modifier onlyReader() {
+        require(_isReader[msg.sender], "not READER");
         _;
     }
 
-    modifier onceOnly(address add) {
-        require(add == address(0), "role has been set already");
+    modifier onceOnly(address addr) {
+        require(addr == address(0), "already set");
         _;
     }
 
     modifier currentDate(uint256 date) {
         require(
             date >= now - 15 minutes && date <= now + 15 minutes,
-            "NOT a current date"
+            "not a current date"
         );
         _;
     }
@@ -95,10 +100,20 @@ contract AdminSetting {
     function init(address admin, address bookeeper)
         public
         onceOnly(_admin)
-        onceOnly(_generalKeeper)
+        onceOnly(_directKeeper)
     {
         _admin = admin;
-        _generalKeeper = bookeeper;
+        _directKeeper = bookeeper;
+
+        _isKeeper[bookeeper] = true;
+        _keepers.push(bookeeper);
+
+        _isReader[bookeeper] = true;
+        _readers.push(bookeeper);
+
+        _isReader[admin] = true;
+        _readers.push(admin);
+
         emit Init(admin, bookeeper);
     }
 
@@ -108,50 +123,66 @@ contract AdminSetting {
     }
 
     function takeoverAdmin() external {
-        require(msg.sender == _backupAdmin, "NOT backup admin");
+        require(msg.sender == _backupAdmin, "not backup admin");
         _admin = msg.sender;
         emit TakeoverAdmin(_admin);
     }
 
-    function abandonAdmin() external onlyKeeper {
+    function abandonAdmin() external onlyDirectKeeper {
         _admin = address(0);
         _backupAdmin = address(0);
         emit AbandonAdmin();
     }
 
-    function setBackupKeeper(address newKeeper) external onlyGeneralKeeper {
+    function setBackupKeeper(address newKeeper) external onlyDirectKeeper {
         _backupKeeper = newKeeper;
         emit SetBackupKeeper(newKeeper);
     }
 
     function takeoverBookeeper() external {
-        require(msg.sender == _backupKeeper, "NOT bookeeper");
-        _generalKeeper = _backupKeeper;
+        require(msg.sender == _backupKeeper, "not backup keeper");
+        _directKeeper = _backupKeeper;
         emit TakeoverBookeeper(_backupKeeper);
     }
 
-    function appointSubKeeper(address addr) external onlyGeneralKeeper {
-        _keepers[addr] = true;
-        emit AppointSubKeeper(addr);
+    function grantKeeper(address addr) external onlyDirectKeeper {
+        require(!_isKeeper[addr], "already grant KEEPER");
+
+        _isKeeper[addr] = true;
+        _keepers.push(addr);
+
+        grantReader(addr);
+
+        emit GrantKeeper(addr);
     }
 
-    function removeSubKeeper(address addr) external onlyGeneralKeeper {
-        delete _keepers[addr];
-        emit RemoveSubKeeper(addr);
+    function revokeKeeper(address addr) external onlyDirectKeeper {
+        require(_isKeeper[addr], "not a KEEPER");
+
+        delete _isKeeper[addr];
+        _keepers.removeByValue(addr);
+
+        revokeReader(addr);
+
+        emit RevokeKeeper(addr);
     }
 
-    function grantUser(address acct) external onlyUser {
-        _users[acct] = true;
-        emit GrantUser(msg.sender, acct);
+    function grantReader(address acct) public onlyReader {
+        require(!_isReader[acct], "already grant as READER");
+
+        _isReader[acct] = true;
+        _readers.push(acct);
+
+        emit GrantReader(msg.sender, acct);
     }
 
-    function revokeUser(address acct) external onlyAdmin {
-        delete _users[acct];
-        emit RevokeUser(acct);
-    }
+    function revokeReader(address acct) public onlyKeeper {
+        require(_isReader[acct], "not a READER");
 
-    function setMsgSender(address acct) external onlyGeneralKeeper {
-        _msgSender = acct;
+        delete _isReader[acct];
+        _readers.removeByValue(acct);
+
+        emit RevokeReader(acct);
     }
 
     // ##################
@@ -166,8 +197,8 @@ contract AdminSetting {
         return _backupAdmin;
     }
 
-    function getGK() public view returns (address) {
-        return _generalKeeper;
+    function getKeeper() public view returns (address) {
+        return _directKeeper;
     }
 
     function getBackupKeeper() public view returns (address) {
@@ -175,10 +206,18 @@ contract AdminSetting {
     }
 
     function isKeeper(address acct) public view returns (bool) {
-        return _keepers[acct];
+        return _isKeeper[acct];
     }
 
-    // function _msgSender() internal view returns (address) {
-    //     return _msgSender;
-    // }
+    function keepers() public view returns (address[]) {
+        return _keepers;
+    }
+
+    function isReader(address acct) public view returns (bool) {
+        return _isReader[acct];
+    }
+
+    function readers() public view returns (address[]) {
+        return _readers;
+    }
 }

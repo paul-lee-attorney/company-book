@@ -1,5 +1,6 @@
 /*
- * Copyright 2021 LI LI of JINGTIAN & GONGCHENG.
+ * Copyright 2021-2022 LI LI of JINGTIAN & GONGCHENG.
+ * All Rights Reserved.
  * */
 
 pragma solidity ^0.4.24;
@@ -18,10 +19,6 @@ import "../common/lib/serialNumber/VotingRuleParser.sol";
 import "../common/lib/serialNumber/OptionSNParser.sol";
 
 import "../common/components/interfaces/ISigPage.sol";
-
-// import "../books/boh/interfaces/IVotingRules.sol";
-
-// import "../books/boa/AgreementCalculator.sol";
 
 import "../common/components/EnumsRepo.sol";
 

@@ -1,33 +1,41 @@
 /*
- * Copyright 2021 LI LI of JINGTIAN & GONGCHENG.
+ * Copyright 2021-2022 LI LI of JINGTIAN & GONGCHENG.
+ * All Rights Reserved.
  * */
 
 pragma solidity ^0.4.24;
 
 import "../books/boh/interfaces/IShareholdersAgreement.sol";
+import "../books/boh/terms/interfaces/IGroupsUpdate.sol";
 
 import "../common/components/EnumsRepo.sol";
+import "../common/components/interfaces/ISigPage.sol";
 
-import "../common/config/BOSSetting.sol";
-import "../common/config/SHASetting.sol";
 import "../common/config/BOMSetting.sol";
 import "../common/config/BOOSetting.sol";
-
+import "../common/config/BOSSetting.sol";
+import "../common/config/SHASetting.sol";
 import "../common/config/interfaces/IAdminSetting.sol";
 import "../common/config/interfaces/IBookSetting.sol";
-import "../common/components/interfaces/ISigPage.sol";
+
+import "../common/lib/serialNumber/GroupsOrderParser.sol";
+
+import "../common/utils/Context.sol";
 
 contract BOHKeeper is
     EnumsRepo,
     BOSSetting,
     SHASetting,
     BOMSetting,
-    BOOSetting
+    BOOSetting,
+    Context
 {
+    using GroupsOrderParser for bytes32;
+
     address[15] public termsTemplate;
 
     constructor(address bookeeper) public {
-        init(msg.sender, bookeeper);
+        init(_msgSender, bookeeper);
     }
 
     // ################
@@ -52,14 +60,14 @@ contract BOHKeeper is
 
     modifier onlyAdminOf(address body) {
         require(
-            IAdminSetting(body).getAdmin() == msg.sender,
+            IAdminSetting(body).getAdmin() == _msgSender,
             "NOT Admin of Doc"
         );
         _;
     }
 
     modifier onlyPartyOf(address body) {
-        require(ISigPage(body).isParty(msg.sender), "NOT Party of Doc");
+        require(ISigPage(body).isParty(_msgSender), "NOT Party of Doc");
         _;
     }
 
@@ -67,54 +75,104 @@ contract BOHKeeper is
     // ##   SHA   ##
     // #############
 
-    function addTermTemplate(uint8 title, address add) external onlyAdmin {
+    function addTermTemplate(uint8 title, address add)
+        external
+        onlyDirectKeeper
+    {
+        require(_msgSender == getAdmin(), "not ADMIN");
+        _clearMsgSender();
+
         termsTemplate[title] = add;
         emit AddTemplate(title, add);
     }
 
-    function createSHA(uint8 docType)
-        external
-        onlyMember
-        returns (address body)
-    {
-        body = _boh.createDoc(docType);
+    function createSHA(uint8 docType) external onlyDirectKeeper {
+        require(_bos.isMember(_msgSender), "not MEMBER");
+        address body = _boh.createDoc(docType);
 
-        IAdminSetting(body).init(msg.sender, this);
+        IAdminSetting(body).init(_msgSender, this);
+        _clearMsgSender();
+
         IShareholdersAgreement(body).setTermsTemplate(termsTemplate);
-        IBookSetting(body).setBOS(address(_bos));
         IBookSetting(body).setBOM(address(_bom));
+        IBookSetting(body).setBOS(address(_bos));
+        IBookSetting(body).setBOSCal(address(_bosCal));
+
+        address[] memory bookeepers = keepers();
+        uint256 len = bookeepers.length;
+        for (uint256 i = 0; i < len; i++) {
+            IAdminSetting(body).grantKeeper(bookeepers[i]);
+        }
     }
 
     function removeSHA(address body)
         external
+        onlyDirectKeeper
         onlyAdminOf(body)
         notEstablished(body)
     {
+        _clearMsgSender();
+
         _boh.removeDoc(body);
+        IShareholdersAgreement(body).kill();
     }
 
     function submitSHA(address body, bytes32 docHash)
         external
+        onlyDirectKeeper
         onlyAdminOf(body)
         beEstablished(body)
     {
+        _clearMsgSender();
+
         _boh.submitSHA(body, docHash);
         IAdminSetting(body).abandonAdmin();
-
-        if (IShareholdersAgreement(body).hasTitle(uint8(TermTitle.OPTIONS)))
-            _boo.registerOption(
-                IShareholdersAgreement(body).getTerm(uint8(TermTitle.OPTIONS))
-            );
     }
 
-    function effectiveSHA(address body) external onlyPartyOf(body) {
+    function effectiveSHA(address body)
+        external
+        onlyDirectKeeper
+        onlyPartyOf(body)
+    {
+        _clearMsgSender();
+
         require(_boh.isSubmitted(body), "SHA not submitted yet");
-        // 将之前有效的SHA，撤销其效力
+
         if (_boh.pointer() != address(0))
             ISigPage(_boh.pointer()).updateStateOfDoc(5);
 
         _boh.changePointer(body);
 
         ISigPage(body).updateStateOfDoc(4);
+
+        if (IShareholdersAgreement(body).hasTitle(uint8(TermTitle.OPTIONS)))
+            _boo.registerOption(
+                IShareholdersAgreement(body).getTerm(uint8(TermTitle.OPTIONS))
+            );
+
+        if (
+            IShareholdersAgreement(body).hasTitle(
+                uint8(TermTitle.GROUPS_UPDATE)
+            )
+        ) {
+            bytes32[] memory guo = IGroupsUpdate(
+                IShareholdersAgreement(body).getTerm(
+                    uint8(TermTitle.GROUPS_UPDATE)
+                )
+            ).orders();
+            uint256 len = guo.length;
+            for (uint256 i = 0; i < len; i++) {
+                if (guo[i].addMemberOfGUO())
+                    _bos.addMemberToGroup(
+                        guo[i].memberAddrOfGUO(),
+                        guo[i].groupNoOfGUO()
+                    );
+                else
+                    _bos.removeMemberFromGroup(
+                        guo[i].memberAddrOfGUO(),
+                        guo[i].groupNoOfGUO()
+                    );
+            }
+        }
     }
 }

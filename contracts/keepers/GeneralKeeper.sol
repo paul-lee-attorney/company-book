@@ -6,8 +6,8 @@
 pragma solidity ^0.4.24;
 
 import "../common/config/AdminSetting.sol";
-
 import "../common/config/interfaces/IAdminSetting.sol";
+import "../common/utils/interfaces/IContext.sol";
 
 import "./interfaces/IBOAKeeper.sol";
 import "./interfaces/IBOHKeeper.sol";
@@ -44,27 +44,27 @@ contract GeneralKeeper is AdminSetting {
     // ##   AdminSetting   ##
     // ######################
 
-    function setBOAKeeper(address keeper) external onlyGeneralKeeper {
+    function setBOAKeeper(address keeper) external onlyDirectKeeper {
         _BOAKeeper = IBOAKeeper(keeper);
         emit SetBOAKeeper(keeper);
     }
 
-    function setBOHKeeper(address keeper) external onlyGeneralKeeper {
+    function setBOHKeeper(address keeper) external onlyDirectKeeper {
         _BOHKeeper = IBOHKeeper(keeper);
         emit SetBOHKeeper(keeper);
     }
 
-    function setBOMKeeper(address keeper) external onlyGeneralKeeper {
+    function setBOMKeeper(address keeper) external onlyDirectKeeper {
         _BOMKeeper = IBOMKeeper(keeper);
         emit SetBOMKeeper(keeper);
     }
 
-    function setBOOKeeper(address keeper) external onlyGeneralKeeper {
+    function setBOOKeeper(address keeper) external onlyDirectKeeper {
         _BOOKeeper = IBOOKeeper(keeper);
         emit SetBOOKeeper(keeper);
     }
 
-    function setBOPKeeper(address keeper) external onlyGeneralKeeper {
+    function setBOPKeeper(address keeper) external onlyDirectKeeper {
         _BOPKeeper = IBOPKeeper(keeper);
         emit SetBOPKeeper(keeper);
     }
@@ -74,18 +74,22 @@ contract GeneralKeeper is AdminSetting {
     // ###################
 
     function createIA(uint8 docType) external {
-        IAdminSetting(_BOAKeeper).setMsgSender(msg.sender);
+        IContext(_BOAKeeper).setMsgSender(msg.sender);
         _BOAKeeper.createIA(docType);
     }
 
     function removeIA(address body) external {
-        IAdminSetting(_BOAKeeper).setMsgSender(msg.sender);
+        IContext(_BOAKeeper).setMsgSender(msg.sender);
         _BOAKeeper.removeIA(body);
     }
 
-    function submitIA(address body, bytes32 docHash) external {
-        IAdminSetting(_BOAKeeper).setMsgSender(msg.sender);
-        _BOAKeeper.submitIA(body, docHash);
+    function submitIA(
+        address body,
+        uint32 submitDate,
+        bytes32 docHash
+    ) external {
+        IContext(_BOAKeeper).setMsgSender(msg.sender);
+        _BOAKeeper.submitIA(body, submitDate, docHash);
     }
 
     function execTagAlong(
@@ -96,7 +100,7 @@ contract GeneralKeeper is AdminSetting {
         uint256 paidPar,
         uint32 execDate
     ) external {
-        IAdminSetting(_BOAKeeper).setMsgSender(msg.sender);
+        IContext(_BOAKeeper).setMsgSender(msg.sender);
         _BOAKeeper.execTagAlong(
             ia,
             sn,
@@ -115,7 +119,7 @@ contract GeneralKeeper is AdminSetting {
         uint256 paidPar,
         uint32 execDate
     ) external {
-        IAdminSetting(_BOAKeeper).setMsgSender(msg.sender);
+        IContext(_BOAKeeper).setMsgSender(msg.sender);
         _BOAKeeper.execDragAlong(
             ia,
             sn,
@@ -131,7 +135,7 @@ contract GeneralKeeper is AdminSetting {
         address drager,
         bytes32 sn
     ) external {
-        IAdminSetting(_BOAKeeper).setMsgSender(msg.sender);
+        IContext(_BOAKeeper).setMsgSender(msg.sender);
         _BOAKeeper.acceptAlongDeal(ia, drager, sn);
     }
 
@@ -140,7 +144,7 @@ contract GeneralKeeper is AdminSetting {
         bytes32 sn,
         uint32 execDate
     ) external {
-        IAdminSetting(_BOAKeeper).setMsgSender(msg.sender);
+        IContext(_BOAKeeper).setMsgSender(msg.sender);
         _BOAKeeper.execFirstRefusal(ia, sn, execDate);
     }
 
@@ -149,37 +153,37 @@ contract GeneralKeeper is AdminSetting {
         bytes32 sn,
         uint32 acceptDate
     ) external {
-        IAdminSetting(_BOAKeeper).setMsgSender(msg.sender);
+        IContext(_BOAKeeper).setMsgSender(msg.sender);
         _BOAKeeper.acceptFirstRefusalRequest(ia, sn, acceptDate);
     }
 
     function pushToCoffer(
-        bytes32 sn,
         address ia,
+        bytes32 sn,
         bytes32 hashLock,
         uint256 closingDate
     ) external {
-        IAdminSetting(_BOAKeeper).setMsgSender(msg.sender);
-        _BOAKeeper.pushToCoffer(sn, ia, hashLock, closingDate);
+        IContext(_BOAKeeper).setMsgSender(msg.sender);
+        _BOAKeeper.pushToCoffer(ia, sn, hashLock, closingDate);
     }
 
     function closeDeal(
-        bytes32 sn,
         address ia,
+        bytes32 sn,
         uint32 closingDate,
         string hashKey
     ) external {
-        IAdminSetting(_BOAKeeper).setMsgSender(msg.sender);
-        _BOAKeeper.closeDeal(sn, ia, closingDate, hashKey);
+        IContext(_BOAKeeper).setMsgSender(msg.sender);
+        _BOAKeeper.closeDeal(ia, sn, closingDate, hashKey);
     }
 
     function revokeDeal(
-        bytes32 sn,
         address ia,
+        bytes32 sn,
         string hashKey
     ) external {
-        IAdminSetting(_BOAKeeper).setMsgSender(msg.sender);
-        _BOAKeeper.revokeDeal(sn, ia, hashKey);
+        IContext(_BOAKeeper).setMsgSender(msg.sender);
+        _BOAKeeper.revokeDeal(ia, sn, hashKey);
     }
 
     // ##################
@@ -187,27 +191,27 @@ contract GeneralKeeper is AdminSetting {
     // ##################
 
     function addTermTemplate(uint8 title, address addr) external {
-        IAdminSetting(_BOHKeeper).setMsgSender(msg.sender);
+        IContext(_BOHKeeper).setMsgSender(msg.sender);
         _BOHKeeper.addTermTemplate(title, addr);
     }
 
-    function createSHA(uint8 docType) external returns (address body) {
-        IAdminSetting(_BOHKeeper).setMsgSender(msg.sender);
-        body = _BOHKeeper.createSHA(docType);
+    function createSHA(uint8 docType) external {
+        IContext(_BOHKeeper).setMsgSender(msg.sender);
+        _BOHKeeper.createSHA(docType);
     }
 
     function removeSHA(address body) external {
-        IAdminSetting(_BOHKeeper).setMsgSender(msg.sender);
+        IContext(_BOHKeeper).setMsgSender(msg.sender);
         _BOHKeeper.removeSHA(body);
     }
 
     function submitSHA(address body, bytes32 docHash) external {
-        IAdminSetting(_BOHKeeper).setMsgSender(msg.sender);
+        IContext(_BOHKeeper).setMsgSender(msg.sender);
         _BOHKeeper.submitSHA(body, docHash);
     }
 
     function effectiveSHA(address body) external {
-        IAdminSetting(_BOHKeeper).setMsgSender(msg.sender);
+        IContext(_BOHKeeper).setMsgSender(msg.sender);
         _BOHKeeper.effectiveSHA(body);
     }
 
@@ -216,12 +220,12 @@ contract GeneralKeeper is AdminSetting {
     // ###################
 
     function proposeMotion(address ia, uint32 proposeDate) external {
-        IAdminSetting(_BOMKeeper).setMsgSender(msg.sender);
+        IContext(_BOMKeeper).setMsgSender(msg.sender);
         _BOMKeeper.proposeMotion(ia, proposeDate);
     }
 
     function voteCounting(address ia) external {
-        IAdminSetting(_BOMKeeper).setMsgSender(msg.sender);
+        IContext(_BOMKeeper).setMsgSender(msg.sender);
         _BOMKeeper.voteCounting(ia);
     }
 
@@ -231,7 +235,7 @@ contract GeneralKeeper is AdminSetting {
         uint32 exerciseDate,
         address againstVoter
     ) external {
-        IAdminSetting(_BOMKeeper).setMsgSender(msg.sender);
+        IContext(_BOMKeeper).setMsgSender(msg.sender);
         _BOMKeeper.requestToBuy(ia, sn, exerciseDate, againstVoter);
     }
 
@@ -240,7 +244,7 @@ contract GeneralKeeper is AdminSetting {
     // #################
 
     function termsTemplate(uint256 index) external returns (address) {
-        IAdminSetting(_BOOKeeper).setMsgSender(msg.sender);
+        IContext(_BOOKeeper).setMsgSender(msg.sender);
         _BOOKeeper.termsTemplate(index);
     }
 
@@ -254,7 +258,7 @@ contract GeneralKeeper is AdminSetting {
         uint256 parValue,
         uint256 paidPar
     ) external {
-        IAdminSetting(_BOOKeeper).setMsgSender(msg.sender);
+        IContext(_BOOKeeper).setMsgSender(msg.sender);
         _BOOKeeper.createOption(
             typeOfOpt,
             rightholder,
@@ -268,17 +272,17 @@ contract GeneralKeeper is AdminSetting {
     }
 
     function joinOptionAsObligor(bytes32 sn) external {
-        IAdminSetting(_BOOKeeper).setMsgSender(msg.sender);
+        IContext(_BOOKeeper).setMsgSender(msg.sender);
         _BOOKeeper.joinOptionAsObligor(sn);
     }
 
     function releaseObligorFromOption(bytes32 sn, address obligor) external {
-        IAdminSetting(_BOOKeeper).setMsgSender(msg.sender);
+        IContext(_BOOKeeper).setMsgSender(msg.sender);
         _BOOKeeper.releaseObligorFromOption(sn, obligor);
     }
 
     function execOption(bytes32 sn, uint32 exerciseDate) external {
-        IAdminSetting(_BOOKeeper).setMsgSender(msg.sender);
+        IContext(_BOOKeeper).setMsgSender(msg.sender);
         _BOOKeeper.execOption(sn, exerciseDate);
     }
 
@@ -287,12 +291,12 @@ contract GeneralKeeper is AdminSetting {
         bytes32 shareNumber,
         uint256 paidPar
     ) external {
-        IAdminSetting(_BOOKeeper).setMsgSender(msg.sender);
+        IContext(_BOOKeeper).setMsgSender(msg.sender);
         _BOOKeeper.addFuture(sn, shareNumber, paidPar);
     }
 
     function removeFuture(bytes32 sn, bytes32 ft) external {
-        IAdminSetting(_BOOKeeper).setMsgSender(msg.sender);
+        IContext(_BOOKeeper).setMsgSender(msg.sender);
         _BOOKeeper.removeFuture(sn, ft);
     }
 
@@ -301,12 +305,12 @@ contract GeneralKeeper is AdminSetting {
         bytes32 shareNumber,
         uint256 paidPar
     ) external {
-        IAdminSetting(_BOOKeeper).setMsgSender(msg.sender);
+        IContext(_BOOKeeper).setMsgSender(msg.sender);
         _BOOKeeper.requestPledge(sn, shareNumber, paidPar);
     }
 
     function lockOption(bytes32 sn, bytes32 hashLock) external {
-        IAdminSetting(_BOOKeeper).setMsgSender(msg.sender);
+        IContext(_BOOKeeper).setMsgSender(msg.sender);
         _BOOKeeper.lockOption(sn, hashLock);
     }
 
@@ -315,17 +319,17 @@ contract GeneralKeeper is AdminSetting {
         string hashKey,
         uint32 closingDate
     ) external {
-        IAdminSetting(_BOOKeeper).setMsgSender(msg.sender);
+        IContext(_BOOKeeper).setMsgSender(msg.sender);
         _BOOKeeper.closeOption(sn, hashKey, closingDate);
     }
 
     function revokeOption(bytes32 sn, uint32 revokeDate) external {
-        IAdminSetting(_BOOKeeper).setMsgSender(msg.sender);
+        IContext(_BOOKeeper).setMsgSender(msg.sender);
         _BOOKeeper.revokeOption(sn, revokeDate);
     }
 
     function releasePledges(bytes32 sn) external {
-        IAdminSetting(_BOOKeeper).setMsgSender(msg.sender);
+        IContext(_BOOKeeper).setMsgSender(msg.sender);
         _BOOKeeper.releasePledges(sn);
     }
 
@@ -341,7 +345,7 @@ contract GeneralKeeper is AdminSetting {
         address debtor,
         uint256 guaranteedAmt
     ) external {
-        IAdminSetting(_BOPKeeper).setMsgSender(msg.sender);
+        IContext(_BOPKeeper).setMsgSender(msg.sender);
         _BOPKeeper.createPledge(
             createDate,
             shareNumber,
@@ -358,12 +362,12 @@ contract GeneralKeeper is AdminSetting {
         uint256 pledgedPar,
         uint256 guaranteedAmt
     ) external {
-        IAdminSetting(_BOPKeeper).setMsgSender(msg.sender);
+        IContext(_BOPKeeper).setMsgSender(msg.sender);
         _BOPKeeper.updatePledge(sn, creditor, pledgedPar, guaranteedAmt);
     }
 
     function delPledge(bytes32 sn) external {
-        IAdminSetting(_BOPKeeper).setMsgSender(msg.sender);
+        IContext(_BOPKeeper).setMsgSender(msg.sender);
         _BOPKeeper.delPledge(sn);
     }
 }

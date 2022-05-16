@@ -1,5 +1,6 @@
 /*
- * Copyright 2021 LI LI of JINGTIAN & GONGCHENG.
+ * Copyright 2021-2022 LI LI of JINGTIAN & GONGCHENG.
+ * All Rights Reserved.
  * */
 
 pragma solidity ^0.4.24;
@@ -42,6 +43,8 @@ interface IAgreement {
         uint256 paidInAmount,
         uint256 closingDate
     ) external;
+
+    function kill() external;
 
     function createAlongDeal(
         bytes32 shareNumber,

@@ -15,8 +15,9 @@ import "../common/config/BOMSetting.sol";
 import "../common/config/BOOSetting.sol";
 import "../common/config/BOSSetting.sol";
 import "../common/config/SHASetting.sol";
-import "../common/config/interfaces/IAdminSetting.sol";
+import "../common/config/interfaces/IAccessControl.sol";
 import "../common/config/interfaces/IBookSetting.sol";
+import "../common/config/interfaces/IRoles.sol";
 
 import "../common/lib/serialNumber/GroupsOrderParser.sol";
 
@@ -60,7 +61,7 @@ contract BOHKeeper is
 
     modifier onlyAdminOf(address body) {
         require(
-            IAdminSetting(body).getAdmin() == _msgSender,
+            IAccessControl(body).getOwner() == _msgSender,
             "NOT Admin of Doc"
         );
         _;
@@ -79,7 +80,7 @@ contract BOHKeeper is
         external
         onlyDirectKeeper
     {
-        require(_msgSender == getAdmin(), "not ADMIN");
+        require(_msgSender == getOwner(), "not ADMIN");
         _clearMsgSender();
 
         termsTemplate[title] = add;
@@ -90,7 +91,7 @@ contract BOHKeeper is
         require(_bos.isMember(_msgSender), "not MEMBER");
         address body = _boh.createDoc(docType);
 
-        IAdminSetting(body).init(_msgSender, this);
+        IAccessControl(body).init(_msgSender, this);
         _clearMsgSender();
 
         IShareholdersAgreement(body).setTermsTemplate(termsTemplate);
@@ -98,10 +99,10 @@ contract BOHKeeper is
         IBookSetting(body).setBOS(address(_bos));
         IBookSetting(body).setBOSCal(address(_bosCal));
 
-        address[] memory bookeepers = keepers();
-        uint256 len = bookeepers.length;
+        address[] memory keepers = members(_KEEPERS);
+        uint256 len = keepers.length;
         for (uint256 i = 0; i < len; i++) {
-            IAdminSetting(body).grantKeeper(bookeepers[i]);
+            IRoles(body).grantRole(_KEEPERS, keepers[i]);
         }
     }
 
@@ -124,9 +125,9 @@ contract BOHKeeper is
         beEstablished(body)
     {
         _clearMsgSender();
-
         _boh.submitSHA(body, docHash);
-        IAdminSetting(body).abandonAdmin();
+
+        // IAccessControl(body).abandonAdmin();
     }
 
     function effectiveSHA(address body)

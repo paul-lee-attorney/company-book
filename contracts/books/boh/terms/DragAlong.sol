@@ -9,7 +9,7 @@ import "../../boa/interfaces/IAgreement.sol";
 
 import "../../../common/config/BOSSetting.sol";
 import "../../../common/config/BOASetting.sol";
-import "../../../common/config/DraftSetting.sol";
+import "../../../common/config/DraftControl.sol";
 
 import "../../../common/lib/ArrayUtils.sol";
 import "../../../common/lib/SafeMath.sol";
@@ -19,7 +19,7 @@ import "../../../common/lib/serialNumber/DealSNParser.sol";
 import "../../../common/lib/serialNumber/LinkRuleParser.sol";
 import "../../../common/lib/serialNumber/SNFactory.sol";
 
-contract DragAlong is BOSSetting, BOASetting, DraftSetting {
+contract DragAlong is BOSSetting, BOASetting, DraftControl {
     using ArrayUtils for address[];
     using ArrayUtils for uint16[];
     using SafeMath for uint256;

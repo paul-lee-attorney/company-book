@@ -9,7 +9,7 @@ import "../../boa/interfaces/IAgreement.sol";
 
 import "../../../common/config/BOSSetting.sol";
 import "../../../common/config/BOMSetting.sol";
-import "../../../common/config/DraftSetting.sol";
+import "../../../common/config/DraftControl.sol";
 
 import "../../../common/lib/ArrayUtils.sol";
 import "../../../common/lib/serialNumber/SNFactory.sol";
@@ -20,7 +20,7 @@ import "../../../common/components/interfaces/ISigPage.sol";
 
 // import "../../../common/interfaces/IMotion.sol";
 
-contract FirstRefusal is BOSSetting, BOMSetting, DraftSetting {
+contract FirstRefusal is BOSSetting, BOMSetting, DraftControl {
     // using ArrayUtils for uint256[];
     using ArrayUtils for address[];
     using SNFactory for bytes;

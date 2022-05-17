@@ -76,7 +76,7 @@ contract MembersRepo is GroupsRepo {
         maxQtyOfMembers = max;
     }
 
-    function setMaxQtyOfMembers(uint8 max) external onlyAdmin {
+    function setMaxQtyOfMembers(uint8 max) external onlyOwner {
         maxQtyOfMembers = max;
         emit SetMaxQtyOfMembers(max);
     }

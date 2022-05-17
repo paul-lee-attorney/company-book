@@ -5,7 +5,8 @@
 
 pragma solidity ^0.4.24;
 
-import "../common/config/interfaces/IAdminSetting.sol";
+import "../common/config/interfaces/IRoles.sol";
+import "../common/config/interfaces/IAccessControl.sol";
 import "../common/config/interfaces/IBookSetting.sol";
 import "../common/components/interfaces/ISigPage.sol";
 import "../common/components/EnumsRepo.sol";
@@ -67,7 +68,7 @@ contract BOAKeeper is
 
     modifier onlyAdminOf(address body) {
         require(
-            IAdminSetting(body).getAdmin() == _msgSender,
+            IAccessControl(body).getOwner() == _msgSender,
             "NOT Admin of Doc"
         );
         _;
@@ -82,16 +83,16 @@ contract BOAKeeper is
 
         address body = _boa.createDoc(docType);
 
-        IAdminSetting(body).init(_msgSender, this);
+        IAccessControl(body).init(_msgSender, this);
         _clearMsgSender();
 
         IBookSetting(body).setBOS(address(_bos));
         IBookSetting(body).setAgrmtCal(address(_agrmtCal));
 
-        address[] memory bookeepers = keepers();
-        uint256 len = bookeepers.length;
+        address[] memory keepers = members(_KEEPERS);
+        uint256 len = keepers.length;
         for (uint256 i = 0; i < len; i++) {
-            IAdminSetting(body).grantKeeper(bookeepers[i]);
+            IRoles(body).grantRole(_KEEPERS, keepers[i]);
         }
     }
 
@@ -115,7 +116,7 @@ contract BOAKeeper is
         _boa.submitIA(body, submitDate, docHash, _msgSender);
         _clearMsgSender();
 
-        IAdminSetting(body).abandonAdmin();
+        // IAccessControl(body).abandonAdmin();
     }
 
     function execTagAlong(
@@ -336,7 +337,7 @@ contract BOAKeeper is
             );
             _bos.decreaseCleanPar(sn.shortShareNumberOfDeal(), parValue);
         } else {
-            require(_msgSender == getKeeper(), "NOT GeneralKeeper");
+            require(_msgSender == getDirectKeeper(), "NOT GeneralKeeper");
             _checkSHA(_termsForCapitalIncrease, ia, sn);
         }
 

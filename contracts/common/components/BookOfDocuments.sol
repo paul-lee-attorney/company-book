@@ -118,7 +118,7 @@ contract BookOfDocuments is CloneFactory, BOSSetting {
         sn = _sn.bytesToBytes32();
     }
 
-    function setTemplate(address body) external onlyAdmin {
+    function setTemplate(address body) external onlyOwner {
         template = body;
         emit SetTemplate(body);
     }

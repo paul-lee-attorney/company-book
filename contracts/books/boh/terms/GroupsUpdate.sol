@@ -9,9 +9,9 @@ import "../../../common/lib/ArrayUtils.sol";
 import "../../../common/lib/serialNumber/SNFactory.sol";
 
 import "../../../common/config/BOSSetting.sol";
-import "../../../common/config/DraftSetting.sol";
+import "../../../common/config/DraftControl.sol";
 
-contract GroupsUpdate is BOSSetting, DraftSetting {
+contract GroupsUpdate is BOSSetting, DraftControl {
     using SNFactory for bytes;
     using SNFactory for bytes32;
     using ArrayUtils for bytes32[];

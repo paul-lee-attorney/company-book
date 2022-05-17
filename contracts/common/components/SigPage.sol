@@ -7,9 +7,9 @@ pragma solidity ^0.4.24;
 
 import "../../common/lib/ArrayUtils.sol";
 
-import "../config/DraftSetting.sol";
+import "../config/DraftControl.sol";
 
-contract SigPage is DraftSetting {
+contract SigPage is DraftControl {
     using ArrayUtils for address[];
 
     // 0-pending 1-finalized 2-signed
@@ -94,7 +94,7 @@ contract SigPage is DraftSetting {
     }
 
     function addPartyToDoc(address acct) public attorneyOrKeeper {
-        // require(msg.sender == getAttorney() || msg.sender == getKeeper());
+        // require(msg.sender == getAttorney() || msg.sender == getDirectKeeper());
 
         if (!isParty[acct]) {
             isParty[acct] = true;
@@ -104,7 +104,7 @@ contract SigPage is DraftSetting {
     }
 
     function removePartyFromDoc(address acct) public attorneyOrKeeper {
-        // require(msg.sender == getAttorney() || msg.sender == getKeeper());
+        // require(msg.sender == getAttorney() || msg.sender == getDirectKeeper());
 
         if (isParty[acct]) {
             delete isParty[acct];
@@ -113,9 +113,17 @@ contract SigPage is DraftSetting {
         }
     }
 
-    function circulateDoc() external onlyAdmin onlyForDraft {
+    function circulateDoc() external onlyGC onlyForDraft {
+        require(
+            _primaryKey(_OWNER) == address(0) &&
+                _backupKey(_OWNER) == address(0)
+        );
+
         docState = 1;
-        lockContents();
+
+        abandonRole(_ATTORNEYS);
+        quitPosition(_GENERAL_COUNSEL);
+
         emit UpdateStateOfDoc(docState);
     }
 

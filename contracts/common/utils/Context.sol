@@ -5,9 +5,9 @@
 
 pragma solidity ^0.4.24;
 
-import "../config/AdminSetting.sol";
+import "../config/AccessControl.sol";
 
-contract Context is AdminSetting {
+contract Context is AccessControl {
     address internal _msgSender;
 
     function setMsgSender(address acct) external onlyDirectKeeper {

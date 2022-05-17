@@ -6,13 +6,13 @@
 pragma solidity ^0.4.24;
 
 import "../../../common/config/BOSSetting.sol";
-import "../../../common/config/DraftSetting.sol";
+import "../../../common/config/DraftControl.sol";
 
 import "../../../common/lib/ArrayUtils.sol";
 import "../../../common/lib/serialNumber/SNFactory.sol";
 import "../../../common/lib/serialNumber/OptionSNParser.sol";
 
-contract Options is BOSSetting, DraftSetting {
+contract Options is BOSSetting, DraftControl {
     using ArrayUtils for bytes32[];
     using ArrayUtils for address[];
     using SNFactory for bytes;

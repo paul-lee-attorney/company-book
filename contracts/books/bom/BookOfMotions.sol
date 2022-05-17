@@ -17,7 +17,7 @@ import "../../common/lib/serialNumber/VotingRuleParser.sol";
 import "../../common/lib/serialNumber/DealSNParser.sol";
 
 import "../../common/components/interfaces/ISigPage.sol";
-import "../../common/config/interfaces/IAdminSetting.sol";
+import "../../common/config/interfaces/IAccessControl.sol";
 
 import "../../common/components/EnumsRepo.sol";
 
@@ -82,7 +82,7 @@ contract BookOfMotions is EnumsRepo, SHASetting, BOASetting, BOSSetting {
 
     modifier onlyAdminOf(address body) {
         require(
-            IAdminSetting(body).getAdmin() == msg.sender,
+            IAccessControl(body).getOwner() == msg.sender,
             "NOT Admin of DOC"
         );
         _;

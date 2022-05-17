@@ -8,9 +8,9 @@ pragma solidity ^0.4.24;
 import "../../books/bos/interfaces/IBookOfShares.sol";
 import "../../books/bos/interfaces/IBOSCalculator.sol";
 
-import "./AdminSetting.sol";
+import "./AccessControl.sol";
 
-contract BOSSetting is AdminSetting {
+contract BOSSetting is AccessControl {
     IBookOfShares internal _bos;
     IBOSCalculator internal _bosCal;
 
@@ -30,8 +30,8 @@ contract BOSSetting is AdminSetting {
     modifier onlyStakeholders() {
         address sender = msg.sender;
         require(
-            sender == getAdmin() ||
-                sender == getKeeper() ||
+            sender == getOwner() ||
+                sender == getDirectKeeper() ||
                 _bos.isMember(sender),
             "NOT Stakeholders"
         );

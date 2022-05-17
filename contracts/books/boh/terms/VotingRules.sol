@@ -5,11 +5,11 @@
 
 pragma solidity ^0.4.24;
 
-import "../../../common/config/DraftSetting.sol";
+import "../../../common/config/DraftControl.sol";
 
 import "../../../common/lib/serialNumber/SNFactory.sol";
 
-contract VotingRules is DraftSetting {
+contract VotingRules is DraftControl {
     using SNFactory for bytes;
 
     // struct snInfo {

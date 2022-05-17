@@ -8,9 +8,9 @@ pragma solidity ^0.4.24;
 import "../../books/boh/interfaces/IShareholdersAgreement.sol";
 import "../../books/boh/interfaces/IBookOfSHA.sol";
 
-import "../config/AdminSetting.sol";
+import "../config/AccessControl.sol";
 
-contract SHASetting is AdminSetting {
+contract SHASetting is AccessControl {
     IBookOfSHA internal _boh;
 
     event SetBOH(address boh);

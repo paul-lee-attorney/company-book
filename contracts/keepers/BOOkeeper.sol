@@ -7,7 +7,7 @@ pragma solidity ^0.4.24;
 
 import "../books/boa/interfaces/IAgreement.sol";
 
-import "../common/config/AdminSetting.sol";
+import "../common/config/AccessControl.sol";
 
 import "../common/config/SHASetting.sol";
 import "../common/config/BOASetting.sol";
@@ -24,7 +24,7 @@ import "../common/lib/serialNumber/OptionSNParser.sol";
 import "../common/lib/serialNumber/VotingRuleParser.sol";
 
 import "../common/config/interfaces/IBookSetting.sol";
-import "../common/config/interfaces/IAdminSetting.sol";
+import "../common/config/interfaces/IAccessControl.sol";
 import "../common/components/interfaces/ISigPage.sol";
 
 import "../common/components/EnumsRepo.sol";
@@ -87,7 +87,7 @@ contract BOOKeeper is
 
     modifier onlyAdminOf(address body) {
         require(
-            IAdminSetting(body).getAdmin() == _msgSender,
+            IAccessControl(body).getOwner() == _msgSender,
             "NOT Admin of Doc"
         );
         _;

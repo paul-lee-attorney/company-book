@@ -9,7 +9,7 @@ import "../../boa/interfaces/IAgreement.sol";
 
 import "../../../common/config/BOSSetting.sol";
 import "../../../common/config/BOMSetting.sol";
-import "../../../common/config/DraftSetting.sol";
+import "../../../common/config/DraftControl.sol";
 
 import "../../../common/lib/ArrayUtils.sol";
 import "../../../common/lib/SafeMath.sol";
@@ -18,7 +18,7 @@ import "../../../common/lib/serialNumber/DealSNParser.sol";
 
 import "../../../common/components/interfaces/ISigPage.sol";
 
-contract AntiDilution is BOSSetting, BOMSetting, DraftSetting {
+contract AntiDilution is BOSSetting, BOMSetting, DraftControl {
     using SNFactory for bytes;
     using ArrayUtils for address[];
     using ArrayUtils for bytes32[];
@@ -111,7 +111,7 @@ contract AntiDilution is BOSSetting, BOMSetting, DraftSetting {
         onlyAttorney
         onlyMarked(class)
     {
-        ISigPage(getKeeper()).isParty(obligor);
+        ISigPage(getDirectKeeper()).isParty(obligor);
 
         (bool exist, ) = obligors[classToMark[class]].firstIndexOf(obligor);
 

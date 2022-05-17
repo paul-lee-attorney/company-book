@@ -10,9 +10,9 @@ import "../../common/lib/ArrayUtils.sol";
 import "../../common/lib/serialNumber/SNFactory.sol";
 import "../../common/lib/serialNumber/ShareSNParser.sol";
 
-import "../../common/config/AdminSetting.sol";
+import "../../common/config/AccessControl.sol";
 
-contract SharesRepo is AdminSetting {
+contract SharesRepo is AccessControl {
     using SNFactory for bytes;
     using SNFactory for bytes32;
     using ShareSNParser for bytes32;

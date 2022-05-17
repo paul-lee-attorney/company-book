@@ -8,9 +8,9 @@ pragma solidity ^0.4.24;
 import "../../books/boa/interfaces/IBookOfAgreements.sol";
 import "../../books/boa/interfaces/IAgreementCalculator.sol";
 
-import "../config/AdminSetting.sol";
+import "../config/AccessControl.sol";
 
-contract BOASetting is AdminSetting {
+contract BOASetting is AccessControl {
     IBookOfAgreements internal _boa;
     IAgreementCalculator internal _agrmtCal;
 

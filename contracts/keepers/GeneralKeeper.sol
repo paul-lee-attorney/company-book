@@ -5,8 +5,8 @@
 
 pragma solidity ^0.4.24;
 
-import "../common/config/AdminSetting.sol";
-import "../common/config/interfaces/IAdminSetting.sol";
+import "../common/config/AccessControl.sol";
+import "../common/config/interfaces/IAccessControl.sol";
 import "../common/utils/interfaces/IContext.sol";
 
 import "./interfaces/IBOAKeeper.sol";
@@ -15,7 +15,7 @@ import "./interfaces/IBOMKeeper.sol";
 import "./interfaces/IBOOKeeper.sol";
 import "./interfaces/IBOPKeeper.sol";
 
-contract GeneralKeeper is AdminSetting {
+contract GeneralKeeper is AccessControl {
     IBOAKeeper private _BOAKeeper;
     IBOHKeeper private _BOHKeeper;
     IBOMKeeper private _BOMKeeper;
@@ -41,7 +41,7 @@ contract GeneralKeeper is AdminSetting {
     event SetBOPKeeper(address keeper);
 
     // ######################
-    // ##   AdminSetting   ##
+    // ##   AccessControl   ##
     // ######################
 
     function setBOAKeeper(address keeper) external onlyDirectKeeper {

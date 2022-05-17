@@ -7,9 +7,9 @@ pragma solidity ^0.4.24;
 
 import "../../books/bom/interfaces/IBookOfMotions.sol";
 
-import "../config/AdminSetting.sol";
+import "../config/AccessControl.sol";
 
-contract BOMSetting is AdminSetting {
+contract BOMSetting is AccessControl {
     IBookOfMotions internal _bom;
 
     event SetBOM(address bom);

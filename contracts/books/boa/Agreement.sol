@@ -213,7 +213,7 @@ contract Agreement is BOSSetting, SigPage {
     }
 
     function kill() external onlyDirectKeeper {
-        selfdestruct(getKeeper());
+        selfdestruct(getDirectKeeper());
     }
 
     function clearDealCP(

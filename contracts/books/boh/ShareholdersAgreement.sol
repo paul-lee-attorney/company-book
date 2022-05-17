@@ -5,9 +5,9 @@
 
 pragma solidity ^0.4.24;
 
-import "../../common/config/interfaces/IAdminSetting.sol";
+import "../../common/config/interfaces/IAccessControl.sol";
 
-import "../../common/config/interfaces/IDraftSetting.sol";
+import "../../common/config/interfaces/IDraftControl.sol";
 import "../../common/config/interfaces/IBookSetting.sol";
 
 import "../../common/lib/ArrayUtils.sol";
@@ -113,7 +113,7 @@ contract ShareholdersAgreement is
 
     function removeTemplate(uint8 title)
         external
-        onlyAdmin
+        onlyOwner
         tempReadyFor(title)
     {
         tempOfTitle[title] = address(0);
@@ -128,7 +128,7 @@ contract ShareholdersAgreement is
         returns (address body)
     {
         body = createClone(tempOfTitle[title]);
-        IAdminSetting(body).init(msg.sender, this);
+        IAccessControl(body).init(msg.sender, this);
         IBookSetting(body).setBOS(address(_bos));
 
         if (title != uint8(TermTitle.VOTING_RULES))
@@ -157,12 +157,12 @@ contract ShareholdersAgreement is
 
     function finalizeSHA() external onlyAttorney {
         for (uint256 i = 0; i < _terms.length; i++) {
-            IDraftSetting(_terms[i]).lockContents();
+            IDraftControl(_terms[i]).lockContents();
         }
     }
 
     function kill() onlyDirectKeeper {
-        selfdestruct(getKeeper());
+        selfdestruct(getDirectKeeper());
     }
 
     //##################

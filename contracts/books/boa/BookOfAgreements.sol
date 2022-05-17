@@ -88,11 +88,11 @@ contract BookOfAgreements is EnumsRepo, BookOfDocuments, SHASetting {
 
     event AcceptAlongDeal(address ia, address drager, bytes32 sn);
 
-    //##################
-    //##    写接口    ##
-    //##################
+    //#################
+    //##  Write I/O  ##
+    //#################
 
-    function setAgreementCalculator(address cal) external onlyDirectKeeper {
+    function setAgreementCalculator(address cal) external onlyOwner {
         _agrmtCal = IAgreementCalculator(cal);
         emit SetAgreementCalculator(cal);
     }

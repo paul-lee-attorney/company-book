@@ -7,9 +7,9 @@ pragma solidity ^0.4.24;
 
 import "../../books/boo/interfaces/IBookOfOptions.sol";
 
-import "../config/AdminSetting.sol";
+import "../config/AccessControl.sol";
 
-contract BOOSetting is AdminSetting {
+contract BOOSetting is AccessControl {
     IBookOfOptions internal _boo;
 
     event SetBOO(address boo);

@@ -12,13 +12,13 @@ interface IDraftControl {
 
     function setGeneralCounsel(address gc) external;
 
-    function lockContents() external;
+    // function lockContents() external;
 
     // ##################
     // ##   查询端口   ##
     // ##################
 
-    function getOwner() external view returns (address);
+    function GENERAL_COUNSEL() external returns (bytes32);
 
-    function getDirectKeeper() external view returns (address);
+    function getGC() external view returns (address);
 }

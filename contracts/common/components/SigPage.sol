@@ -94,8 +94,6 @@ contract SigPage is DraftControl {
     }
 
     function addPartyToDoc(address acct) public attorneyOrKeeper {
-        // require(msg.sender == getAttorney() || msg.sender == getDirectKeeper());
-
         if (!isParty[acct]) {
             isParty[acct] = true;
             qtyOfParties++;
@@ -104,8 +102,6 @@ contract SigPage is DraftControl {
     }
 
     function removePartyFromDoc(address acct) public attorneyOrKeeper {
-        // require(msg.sender == getAttorney() || msg.sender == getDirectKeeper());
-
         if (isParty[acct]) {
             delete isParty[acct];
             qtyOfParties--;
@@ -115,14 +111,13 @@ contract SigPage is DraftControl {
 
     function circulateDoc() external onlyGC onlyForDraft {
         require(
-            _primaryKey(_OWNER) == address(0) &&
-                _backupKey(_OWNER) == address(0)
+            primaryKey(OWNER) == address(0) && backupKey(OWNER) == address(0)
         );
 
         docState = 1;
 
-        abandonRole(_ATTORNEYS);
-        quitPosition(_GENERAL_COUNSEL);
+        abandonRole(ATTORNEYS);
+        quitPosition(GENERAL_COUNSEL);
 
         emit UpdateStateOfDoc(docState);
     }

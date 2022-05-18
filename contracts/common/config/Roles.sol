@@ -62,6 +62,7 @@ contract Roles is KeyPerson {
         if (!hasRole(role, account)) {
             _roles[role].isMember[account] = true;
             _roles[role].members.push(account);
+
             emit RoleGranted(role, account, msg.sender);
         }
     }
@@ -81,6 +82,7 @@ contract Roles is KeyPerson {
         delete _roles[role];
     }
 
+    // very important API for role admin setting, which shall be only exposed to AccessControl func.
     function _setRoleAdmin(bytes32 role, bytes32 admin) internal {
         require(getRoleAdmin(role) == bytes32(0), "already set role admin");
 

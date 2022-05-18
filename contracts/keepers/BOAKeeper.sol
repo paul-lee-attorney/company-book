@@ -89,10 +89,10 @@ contract BOAKeeper is
         IBookSetting(body).setBOS(address(_bos));
         IBookSetting(body).setAgrmtCal(address(_agrmtCal));
 
-        address[] memory keepers = members(_KEEPERS);
+        address[] memory keepers = members(KEEPERS);
         uint256 len = keepers.length;
         for (uint256 i = 0; i < len; i++) {
-            IRoles(body).grantRole(_KEEPERS, keepers[i]);
+            IRoles(body).grantRole(KEEPERS, keepers[i]);
         }
     }
 

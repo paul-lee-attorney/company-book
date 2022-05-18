@@ -8,9 +8,9 @@ pragma solidity ^0.4.24;
 import "./AccessControl.sol";
 
 contract DraftControl is AccessControl {
-    bytes32 internal constant _GENERAL_COUNSEL = bytes32("GeneralCounsel");
+    bytes32 public constant GENERAL_COUNSEL = bytes32("GeneralCounsel");
 
-    bytes32 internal constant _ATTORNEYS = bytes32("Attorneys");
+    bytes32 public constant ATTORNEYS = bytes32("Attorneys");
 
     // ##################
     // ##   Event      ##
@@ -26,21 +26,19 @@ contract DraftControl is AccessControl {
 
     modifier onlyGC() {
         require(
-            msg.sender == _primaryKey(_GENERAL_COUNSEL),
+            msg.sender == primaryKey(GENERAL_COUNSEL),
             "not general counsel"
         );
         _;
     }
 
     modifier onlyAttorney() {
-        require(hasRole(_ATTORNEYS, msg.sender), "not attorney");
+        require(hasRole(ATTORNEYS, msg.sender), "not attorney");
         _;
     }
 
     modifier attorneyOrKeeper() {
-        require(
-            hasRole(_ATTORNEYS, msg.sender) || hasRole(_KEEPERS, msg.sender)
-        );
+        require(hasRole(ATTORNEYS, msg.sender) || hasRole(KEEPERS, msg.sender));
         _;
     }
 
@@ -49,23 +47,17 @@ contract DraftControl is AccessControl {
     // ##################
 
     function setGeneralCounsel(address gc) external onlyOwner {
-        _setPrimaryKey(_GENERAL_COUNSEL, gc);
-        _setRoleAdmin(_ATTORNEYS, _GENERAL_COUNSEL);
+        _setPrimaryKey(GENERAL_COUNSEL, gc);
+        _setRoleAdmin(ATTORNEYS, GENERAL_COUNSEL);
 
         emit SetGeneralCounsel(gc);
     }
-
-    // function lockContents() external onlyGC {
-    //     _abandonRole(_ATTORNEYS);
-    //     _quitPositon(_GENERAL_COUNSEL);
-    //     emit LockContents();
-    // }
 
     // ##################
     // ##   查询端口   ##
     // ##################
 
     function getGC() public view keeperOrUser returns (address) {
-        return _primaryKey(_GENERAL_COUNSEL);
+        return primaryKey(GENERAL_COUNSEL);
     }
 }

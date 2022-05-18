@@ -8,18 +8,14 @@ pragma solidity ^0.4.24;
 import "./Roles.sol";
 import "./KeyPerson.sol";
 
-import "../lib/ArrayUtils.sol";
-
 contract AccessControl is Roles {
-    using ArrayUtils for address[];
+    bytes32 public constant OWNER = bytes32("Owner");
 
-    bytes32 internal constant _OWNER = bytes32("Owner");
+    bytes32 public constant DIRECT_KEEPER = bytes32("DirectKeeper");
 
-    bytes32 internal constant _DIRECT_KEEPER = bytes32("DirectKeeper");
+    bytes32 public constant KEEPERS = bytes32("Keepers");
 
-    bytes32 internal constant _KEEPERS = bytes32("Keepers");
-
-    bytes32 internal constant _USERS = bytes32("Users");
+    bytes32 public constant USERS = bytes32("Users");
 
     // ##################
     // ##   Event      ##
@@ -34,32 +30,32 @@ contract AccessControl is Roles {
     // ##################
 
     modifier onlyOwner() {
-        require(msg.sender == _primaryKey(_OWNER), "not owner");
+        require(msg.sender == primaryKey(OWNER), "not owner");
         _;
     }
 
     modifier onlyDirectKeeper() {
-        require(msg.sender == _primaryKey(_DIRECT_KEEPER), "not direct keeper");
+        require(msg.sender == primaryKey(DIRECT_KEEPER), "not direct keeper");
         _;
     }
 
     modifier onlyKeeper() {
-        require(hasRole(_KEEPERS, msg.sender), "not Keeper");
+        require(hasRole(KEEPERS, msg.sender), "not Keeper");
         _;
     }
 
     modifier ownerOrDirectKeeper() {
         require(
-            msg.sender == _primaryKey(_OWNER) ||
-                msg.sender == _primaryKey(_DIRECT_KEEPER)
+            msg.sender == primaryKey(OWNER) ||
+                msg.sender == primaryKey(DIRECT_KEEPER)
         );
         _;
     }
 
     modifier keeperOrUser() {
         require(
-            hasRole(_KEEPERS, msg.sender) || hasRole(_USERS, msg.sender),
-            "not KEEPER or _OWNER"
+            hasRole(KEEPERS, msg.sender) || hasRole(USERS, msg.sender),
+            "not KEEPER or OWNER"
         );
         _;
     }
@@ -77,28 +73,23 @@ contract AccessControl is Roles {
     // ##################
 
     function init(address owner, address directKeeper) public {
-        _setPrimaryKey(_OWNER, owner);
-        _setPrimaryKey(_DIRECT_KEEPER, directKeeper);
-        _setRoleAdmin(_KEEPERS, _DIRECT_KEEPER);
-        _setRoleAdmin(_USERS, _OWNER);
+        _setPrimaryKey(OWNER, owner);
+        _setPrimaryKey(DIRECT_KEEPER, directKeeper);
+        _setRoleAdmin(KEEPERS, DIRECT_KEEPER);
+        _setRoleAdmin(USERS, OWNER);
 
         emit Init(owner, directKeeper);
     }
-
-    // function abandonOwnership() external onlyOwner {
-    //     _quitPositon(_OWNER);
-    //     emit AbandonOwnership();
-    // }
 
     // ##################
     // ##   查询端口   ##
     // ##################
 
     function getOwner() public view keeperOrUser returns (address) {
-        return _primaryKey(_OWNER);
+        return primaryKey(OWNER);
     }
 
     function getDirectKeeper() public view keeperOrUser returns (address) {
-        return _primaryKey(_DIRECT_KEEPER);
+        return primaryKey(DIRECT_KEEPER);
     }
 }

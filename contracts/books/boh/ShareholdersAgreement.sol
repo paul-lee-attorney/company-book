@@ -123,12 +123,13 @@ contract ShareholdersAgreement is
 
     function createTerm(uint8 title)
         external
-        onlyAttorney
+        onlyGC
         tempReadyFor(title)
         returns (address body)
     {
         body = createClone(tempOfTitle[title]);
         IAccessControl(body).init(msg.sender, this);
+
         IBookSetting(body).setBOS(address(_bos));
 
         if (title != uint8(TermTitle.VOTING_RULES))
@@ -155,11 +156,11 @@ contract ShareholdersAgreement is
         emit RemoveTerm(title);
     }
 
-    function finalizeSHA() external onlyAttorney {
-        for (uint256 i = 0; i < _terms.length; i++) {
-            IDraftControl(_terms[i]).lockContents();
-        }
-    }
+    // function finalizeSHA() external onlyGC {
+    //     for (uint256 i = 0; i < _terms.length; i++) {
+    //         IDraftControl(_terms[i]).lockContents();
+    //     }
+    // }
 
     function kill() onlyDirectKeeper {
         selfdestruct(getDirectKeeper());

@@ -6,11 +6,13 @@
 pragma solidity ^0.4.24;
 
 import "../../common/lib/ArrayUtils.sol";
+import "../../common/lib/UserGroup.sol";
 
 import "../config/DraftControl.sol";
 
 contract SigPage is DraftControl {
     using ArrayUtils for address[];
+    using UserGroup for UserGroup.Group;
 
     // 0-pending 1-finalized 2-signed
     uint8 public docState;
@@ -19,8 +21,10 @@ contract SigPage is DraftControl {
 
     uint32 public closingDeadline;
 
-    mapping(address => bool) public isParty;
-    uint8 public qtyOfParties;
+    UserGroup.Group internal _docParties;
+
+    // mapping(address => bool) public isParty;
+    // uint8 public qtyOfParties;
 
     mapping(address => uint32) public sigDate;
     address[] private _signers;
@@ -55,7 +59,7 @@ contract SigPage is DraftControl {
     }
 
     modifier onlyParty() {
-        require(isParty[msg.sender], "msg.sender NOT Party");
+        require(_docParties.isMember(msg.sender), "msg.sender NOT a party");
         _;
     }
 
@@ -94,24 +98,17 @@ contract SigPage is DraftControl {
     }
 
     function addPartyToDoc(address acct) public attorneyOrKeeper {
-        if (!isParty[acct]) {
-            isParty[acct] = true;
-            qtyOfParties++;
-            emit AddParty(acct);
-        }
+        if (_docParties.addMember(acct)) emit AddParty(acct);
     }
 
     function removePartyFromDoc(address acct) public attorneyOrKeeper {
-        if (isParty[acct]) {
-            delete isParty[acct];
-            qtyOfParties--;
-            emit RemoveParty(acct);
-        }
+        if (_docParties.removeMember(acct)) emit RemoveParty(acct);
     }
 
     function circulateDoc() external onlyGC onlyForDraft {
         require(
-            primaryKey(OWNER) == address(0) && backupKey(OWNER) == address(0)
+            primaryKey(OWNER) == address(0) && backupKey(OWNER) == address(0),
+            "ownership not be abandoned"
         );
 
         docState = 1;
@@ -139,7 +136,7 @@ contract SigPage is DraftControl {
     }
 
     function _checkCompletionOfSig() private {
-        if (qtyOfParties == uint8(_signers.length)) {
+        if (_docParties.qtyOfMembers() == uint8(_signers.length)) {
             docState = 2;
             emit UpdateStateOfDoc(docState);
         }

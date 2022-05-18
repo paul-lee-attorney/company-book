@@ -86,7 +86,7 @@ contract AgreementWithFirstRefusal is Agreement {
             removeSigOfParty(_deals[ssn].shareNumber.shareholder());
         }
 
-        if (!isParty[acct]) {
+        if (!_docParties.isMember(acct)) {
             addPartyToDoc(acct);
             addSigOfParty(acct, execDate);
         }

@@ -6,20 +6,20 @@
 pragma solidity ^0.4.24;
 
 import "../../common/lib/ArrayUtils.sol";
-import "../../common/lib/serialNumber/ShareSNParser.sol";
+import "../../common/lib/SNParser.sol";
 
 import "./SharesRepo.sol";
 
 contract GroupsRepo is SharesRepo {
-    using ArrayUtils for address[];
     using ArrayUtils for uint16[];
-    using ShareSNParser for bytes32;
+    using ArrayUtils for uint32[];
+    using SNParser for bytes32;
 
     mapping(uint16 => bool) public isGroup;
 
-    mapping(uint16 => address[]) public membersOfGroup;
+    mapping(uint16 => uint32[]) public membersOfGroup;
 
-    mapping(address => uint16) public groupNo;
+    mapping(uint32 => uint16) public groupNo;
 
     uint16[] internal _groupsList;
 
@@ -30,8 +30,8 @@ contract GroupsRepo is SharesRepo {
     //##################
     //##    Event    ##
     //##################
-    event AddMemberToGroup(address acct, uint16 groupNo);
-    event RemoveMemberFromGroup(address acct, uint16 groupNo);
+    event AddMemberToGroup(uint32 acct, uint16 groupNo);
+    event RemoveMemberFromGroup(uint32 acct, uint16 groupNo);
     event SetController(uint16 groupNo);
 
     //##################
@@ -47,7 +47,7 @@ contract GroupsRepo is SharesRepo {
     //##    写接口    ##
     //##################
 
-    function addMemberToGroup(address acct, uint16 group) public onlyKeeper {
+    function addMemberToGroup(uint32 acct, uint16 group) public onlyKeeper {
         require(group > 0, "ZERO group");
         require(group <= counterOfGroups + 1, "group OVER FLOW");
         require(groupNo[acct] == 0, "belongs to another group");
@@ -65,7 +65,7 @@ contract GroupsRepo is SharesRepo {
         emit AddMemberToGroup(acct, group);
     }
 
-    function removeMemberFromGroup(address acct, uint16 group)
+    function removeMemberFromGroup(uint32 acct, uint16 group)
         public
         groupExist(group)
         onlyKeeper

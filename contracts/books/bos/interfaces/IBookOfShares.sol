@@ -7,7 +7,7 @@ pragma solidity ^0.4.24;
 
 interface IBookOfShares {
     function issueShare(
-        address shareholder,
+        uint32 shareholder,
         uint8 class,
         uint256 parValue,
         uint256 paidInAmount,
@@ -26,7 +26,7 @@ interface IBookOfShares {
         bytes32 shareNumber,
         uint256 parValue,
         uint256 paidInAmount,
-        address to,
+        uint32 to,
         uint256 closingDate,
         uint256 unitPrice
     ) external;
@@ -45,9 +45,9 @@ interface IBookOfShares {
 
     function decreaseCleanPar(bytes6 ssn, uint256 parValue) external;
 
-    function addMemberToGroup(address acct, uint16 group) external;
+    function addMemberToGroup(uint32 acct, uint16 group) external;
 
-    function removeMemberFromGroup(address acct, uint16 group) external;
+    function removeMemberFromGroup(uint32 acct, uint16 group) external;
 
     function setController(uint16 group) external;
 
@@ -86,9 +86,9 @@ interface IBookOfShares {
 
     function isGroup(uint16 group) external view returns (bool);
 
-    function membersOfGroup(uint16 group) external view returns (address[]);
+    function membersOfGroup(uint16 group) external view returns (uint32[]);
 
-    function groupNo(address acct) external view returns (uint16);
+    function groupNo(uint32 acct) external view returns (uint16);
 
     function counterOfGroups() external view returns (uint16);
 
@@ -98,15 +98,15 @@ interface IBookOfShares {
 
     // ========== MembersRepo ==============
 
-    function isMember(address acct) external view returns (bool);
+    function isMember(uint32 acct) external view returns (bool);
 
-    function sharesInHand(address acct) external view returns (bytes32[]);
+    function sharesInHand(uint32 acct) external view returns (bytes32[]);
 
-    function parInHand(address acct) external view returns (uint256);
+    function parInHand(uint32 acct) external view returns (uint256);
 
-    function paidInHand(address acct) external view returns (uint256);
+    function paidInHand(uint32 acct) external view returns (uint256);
 
     function maxQtyOfMembers() external view returns (uint8);
 
-    function membersList() external view returns (address[]);
+    function membersList() external view returns (uint32[]);
 }

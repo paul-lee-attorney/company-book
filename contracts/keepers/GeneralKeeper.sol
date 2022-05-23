@@ -5,8 +5,8 @@
 
 pragma solidity ^0.4.24;
 
-import "../common/config/AccessControl.sol";
-import "../common/config/interfaces/IAccessControl.sol";
+import "../common/access/AccessControl.sol";
+import "../common/access/interfaces/IAccessControl.sol";
 import "../common/utils/interfaces/IContext.sol";
 
 import "./interfaces/IBOAKeeper.sol";
@@ -22,9 +22,9 @@ contract GeneralKeeper is AccessControl {
     IBOOKeeper private _BOOKeeper;
     IBOPKeeper private _BOPKeeper;
 
-    constructor(address bookeeper) public {
-        init(msg.sender, bookeeper);
-    }
+    // constructor(uint32 bookeeper) public {
+    //     init(msg.sender, bookeeper);
+    // }
 
     // ###############
     // ##   Event   ##
@@ -132,7 +132,7 @@ contract GeneralKeeper is AccessControl {
 
     function acceptAlongDeal(
         address ia,
-        address drager,
+        uint32 drager,
         bytes32 sn
     ) external {
         IContext(_BOAKeeper).setMsgSender(msg.sender);
@@ -233,7 +233,7 @@ contract GeneralKeeper is AccessControl {
         address ia,
         bytes32 sn,
         uint32 exerciseDate,
-        address againstVoter
+        uint32 againstVoter
     ) external {
         IContext(_BOMKeeper).setMsgSender(msg.sender);
         _BOMKeeper.requestToBuy(ia, sn, exerciseDate, againstVoter);
@@ -250,7 +250,7 @@ contract GeneralKeeper is AccessControl {
 
     function createOption(
         uint8 typeOfOpt,
-        address rightholder,
+        uint32 rightholder,
         uint32 triggerDate,
         uint8 exerciseDays,
         uint8 closingDays,
@@ -276,7 +276,7 @@ contract GeneralKeeper is AccessControl {
         _BOOKeeper.joinOptionAsObligor(sn);
     }
 
-    function releaseObligorFromOption(bytes32 sn, address obligor) external {
+    function releaseObligorFromOption(bytes32 sn, uint32 obligor) external {
         IContext(_BOOKeeper).setMsgSender(msg.sender);
         _BOOKeeper.releaseObligorFromOption(sn, obligor);
     }
@@ -341,8 +341,8 @@ contract GeneralKeeper is AccessControl {
         uint32 createDate,
         bytes32 shareNumber,
         uint256 pledgedPar,
-        address creditor,
-        address debtor,
+        uint32 creditor,
+        uint32 debtor,
         uint256 guaranteedAmt
     ) external {
         IContext(_BOPKeeper).setMsgSender(msg.sender);
@@ -358,7 +358,7 @@ contract GeneralKeeper is AccessControl {
 
     function updatePledge(
         bytes32 sn,
-        address creditor,
+        uint32 creditor,
         uint256 pledgedPar,
         uint256 guaranteedAmt
     ) external {

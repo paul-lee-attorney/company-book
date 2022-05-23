@@ -11,15 +11,15 @@ import "../books/boh/terms/interfaces/IGroupsUpdate.sol";
 import "../common/components/EnumsRepo.sol";
 import "../common/components/interfaces/ISigPage.sol";
 
-import "../common/config/BOMSetting.sol";
-import "../common/config/BOOSetting.sol";
-import "../common/config/BOSSetting.sol";
-import "../common/config/SHASetting.sol";
-import "../common/config/interfaces/IAccessControl.sol";
-import "../common/config/interfaces/IBookSetting.sol";
-import "../common/config/interfaces/IRoles.sol";
+import "../common/ruting/BOMSetting.sol";
+import "../common/ruting/BOOSetting.sol";
+import "../common/ruting/BOSSetting.sol";
+import "../common/ruting/SHASetting.sol";
+import "../common/access/interfaces/IAccessControl.sol";
+import "../common/ruting/interfaces/IBookSetting.sol";
+import "../common/access/interfaces/IRoles.sol";
 
-import "../common/lib/serialNumber/GroupsOrderParser.sol";
+import "../common/lib/SNParser.sol";
 
 import "../common/utils/Context.sol";
 
@@ -31,13 +31,13 @@ contract BOHKeeper is
     BOOSetting,
     Context
 {
-    using GroupsOrderParser for bytes32;
+    using SNParser for bytes32;
 
     address[15] public termsTemplate;
 
-    constructor(address bookeeper) public {
-        init(msg.sender, bookeeper);
-    }
+    // constructor(address bookeeper, address usersList) public {
+    //     init(msg.sender, bookeeper);
+    // }
 
     // ################
     // ##   Events   ##
@@ -61,14 +61,14 @@ contract BOHKeeper is
 
     modifier onlyAdminOf(address body) {
         require(
-            IAccessControl(body).getOwner() == _msgSender,
+            IAccessControl(body).getOwner() == _bridgedMsgSender,
             "NOT Admin of Doc"
         );
         _;
     }
 
     modifier onlyPartyOf(address body) {
-        require(ISigPage(body).isParty(_msgSender), "NOT Party of Doc");
+        require(ISigPage(body).isParty(_bridgedMsgSender), "NOT Party of Doc");
         _;
     }
 
@@ -80,7 +80,7 @@ contract BOHKeeper is
         external
         onlyDirectKeeper
     {
-        require(_msgSender == getOwner(), "not ADMIN");
+        require(_bridgedMsgSender == getOwner(), "not ADMIN");
         _clearMsgSender();
 
         termsTemplate[title] = add;
@@ -88,10 +88,14 @@ contract BOHKeeper is
     }
 
     function createSHA(uint8 docType) external onlyDirectKeeper {
-        require(_bos.isMember(_msgSender), "not MEMBER");
+        require(_bos.isMember(_bridgedMsgSender), "not MEMBER");
         address body = _boh.createDoc(docType);
 
-        IAccessControl(body).init(_msgSender, this);
+        IAccessControl(body).init(
+            _rc.userNo(_bridgedMsgSender),
+            _rc.userNo(this),
+            address(_rc)
+        );
         _clearMsgSender();
 
         IShareholdersAgreement(body).setTermsTemplate(termsTemplate);
@@ -99,11 +103,7 @@ contract BOHKeeper is
         IBookSetting(body).setBOS(address(_bos));
         IBookSetting(body).setBOSCal(address(_bosCal));
 
-        address[] memory keepers = members(KEEPERS);
-        uint256 len = keepers.length;
-        for (uint256 i = 0; i < len; i++) {
-            IRoles(body).grantRole(KEEPERS, keepers[i]);
-        }
+        _copyRoleTo(body, KEEPERS);
     }
 
     function removeSHA(address body)
@@ -165,12 +165,12 @@ contract BOHKeeper is
             for (uint256 i = 0; i < len; i++) {
                 if (guo[i].addMemberOfGUO())
                     _bos.addMemberToGroup(
-                        guo[i].memberAddrOfGUO(),
+                        guo[i].memberOfGUO(),
                         guo[i].groupNoOfGUO()
                     );
                 else
                     _bos.removeMemberFromGroup(
-                        guo[i].memberAddrOfGUO(),
+                        guo[i].memberOfGUO(),
                         guo[i].groupNoOfGUO()
                     );
             }

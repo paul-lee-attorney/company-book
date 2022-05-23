@@ -7,7 +7,7 @@ pragma solidity ^0.4.24;
 
 import "../../books/bom/interfaces/IBookOfMotions.sol";
 
-import "../config/AccessControl.sol";
+import "../access/AccessControl.sol";
 
 contract BOMSetting is AccessControl {
     IBookOfMotions internal _bom;

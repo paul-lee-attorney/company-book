@@ -7,7 +7,7 @@ pragma solidity ^0.4.24;
 
 import "../../books/boo/interfaces/IBookOfOptions.sol";
 
-import "../config/AccessControl.sol";
+import "../access/AccessControl.sol";
 
 contract BOOSetting is AccessControl {
     IBookOfOptions internal _boo;

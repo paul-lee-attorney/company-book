@@ -7,12 +7,12 @@ pragma solidity ^0.4.24;
 
 import "../../boa/interfaces/IAgreement.sol";
 
-import "../../../common/config/BOSSetting.sol";
-import "../../../common/config/BOMSetting.sol";
-import "../../../common/config/DraftControl.sol";
+import "../../../common/ruting/BOSSetting.sol";
+import "../../../common/ruting/BOMSetting.sol";
+import "../../../common/access/DraftControl.sol";
 
 import "../../../common/lib/ArrayUtils.sol";
-import "../../../common/lib/serialNumber/DealSNParser.sol";
+import "../../../common/lib/SNParser.sol";
 
 import "../../../common/components/interfaces/ISigPage.sol";
 
@@ -20,13 +20,13 @@ import "../../../common/components/interfaces/ISigPage.sol";
 
 contract LockUp is BOSSetting, BOMSetting, DraftControl {
     using ArrayUtils for uint256[];
-    using ArrayUtils for address[];
-    using DealSNParser for bytes32;
+    using ArrayUtils for uint32[];
+    using SNParser for bytes32;
 
     // 股票锁定柜
     struct Locker {
         uint256 dueDate;
-        address[] keyHolders;
+        uint32[] keyHolders;
     }
 
     // 基准日条件未成就时，按“2277-09-19”设定到期日
@@ -44,9 +44,9 @@ contract LockUp is BOSSetting, BOMSetting, DraftControl {
 
     event SetLocker(bytes6 indexed ssn, uint256 dueDate);
 
-    event AddKeyholder(bytes6 indexed ssn, address keyholder);
+    event AddKeyholder(bytes6 indexed ssn, uint32 keyholder);
 
-    event RemoveKeyholder(bytes6 indexed ssn, address keyholder);
+    event RemoveKeyholder(bytes6 indexed ssn, uint32 keyholder);
 
     event DelLocker(bytes6 indexed ssn);
 
@@ -81,7 +81,7 @@ contract LockUp is BOSSetting, BOMSetting, DraftControl {
         emit DelLocker(ssn);
     }
 
-    function addKeyholder(bytes6 ssn, address keyholder)
+    function addKeyholder(bytes6 ssn, uint32 keyholder)
         external
         onlyAttorney
         beLocked(ssn)
@@ -94,7 +94,7 @@ contract LockUp is BOSSetting, BOMSetting, DraftControl {
         }
     }
 
-    function removeKeyholder(bytes6 ssn, address keyholder)
+    function removeKeyholder(bytes6 ssn, uint32 keyholder)
         external
         onlyAttorney
         beLocked(ssn)
@@ -115,7 +115,7 @@ contract LockUp is BOSSetting, BOMSetting, DraftControl {
         public
         view
         beLocked(ssn)
-        returns (uint256 dueDate, address[] keyHolders)
+        returns (uint256 dueDate, uint32[] keyHolders)
     {
         dueDate = _lockers[ssn].dueDate;
         keyHolders = _lockers[ssn].keyHolders;
@@ -147,7 +147,7 @@ contract LockUp is BOSSetting, BOMSetting, DraftControl {
         return false;
     }
 
-    function _isExempted(bytes6 ssn, address[] agreedParties)
+    function _isExempted(bytes6 ssn, uint32[] agreedParties)
         private
         view
         returns (bool)
@@ -181,13 +181,13 @@ contract LockUp is BOSSetting, BOMSetting, DraftControl {
         onlyKeeper
         returns (bool)
     {
-        (address[] memory consentParties, ) = _bom.getYea(ia);
+        (uint32[] memory consentParties, ) = _bom.getYea(ia);
 
-        address[] memory signers = ISigPage(ia).signers();
+        uint32[] memory signers = ISigPage(ia).signers();
 
         uint256 len = consentParties.length + signers.length;
 
-        address[] memory agreedParties = new address[](len);
+        uint32[] memory agreedParties = new uint32[](len);
 
         uint256 i;
 

@@ -5,20 +5,20 @@
 
 pragma solidity ^0.4.24;
 
-interface IAccessControl {
+interface IDraftControl {
     // ##################
     // ##    写端口    ##
     // ##################
 
-    function init(address owner, address directKeeper) external;
+    function setGeneralCounsel(address gc) external;
 
-    // function abandonOwnership() external;
+    function lockContents() external;
 
     // ##################
     // ##   查询端口   ##
     // ##################
 
-    function getOwner() external view returns (address);
+    function ATTORNEYS() external returns (bytes32);
 
-    function getDirectKeeper() external view returns (address);
+    function getGC() external view returns (uint32);
 }

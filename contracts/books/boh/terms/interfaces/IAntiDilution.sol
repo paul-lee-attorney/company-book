@@ -12,9 +12,9 @@ interface IAntiDilution {
 
     function delBenchmark(uint8 class) external;
 
-    function addObligor(uint8 class, address obligor) external;
+    function addObligor(uint8 class, uint32 obligor) external;
 
-    function removeObligor(uint8 class, address obligor) external;
+    function removeObligor(uint8 class, uint32 obligor) external;
 
     // ################
     // ##  查询接口  ##
@@ -28,6 +28,6 @@ interface IAntiDilution {
         returns (
             uint8 rank,
             uint256 price,
-            address[] obligors
+            uint32[] obligors
         );
 }

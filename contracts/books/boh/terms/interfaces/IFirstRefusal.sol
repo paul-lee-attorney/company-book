@@ -15,9 +15,9 @@ contract IFirstRefusal {
 
     function delFirstRefusal(uint8 typeOfDeal) external;
 
-    function addRightholder(uint8 typeOfDeal, address rightholder) external;
+    function addRightholder(uint8 typeOfDeal, uint32 rightholder) external;
 
-    function removeRightholder(uint8 typeOfDeal, address acct) external;
+    function removeRightholder(uint8 typeOfDeal, uint32 acct) external;
 
     // ################
     // ##  查询接口  ##
@@ -25,12 +25,12 @@ contract IFirstRefusal {
 
     function ruleOfFR(uint8 typeOfDeal) public view returns (bytes32);
 
-    function isRightholder(uint8 typeOfDeal, address acct)
+    function isRightholder(uint8 typeOfDeal, uint32 acct)
         public
         view
         returns (bool);
 
-    function rightholders(uint8 typeOfDeal) public view returns (address[]);
+    function rightholders(uint8 typeOfDeal) public view returns (uint32[]);
 
     // ################
     // ##  Term接口  ##

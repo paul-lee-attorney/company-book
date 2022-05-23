@@ -5,9 +5,9 @@
 
 pragma solidity ^0.4.24;
 
-import "../../../common/config/DraftControl.sol";
+import "../../../common/access/DraftControl.sol";
 
-import "../../../common/lib/serialNumber/SNFactory.sol";
+import "../../../common/lib/SNFactory.sol";
 
 contract VotingRules is DraftControl {
     using SNFactory for bytes;

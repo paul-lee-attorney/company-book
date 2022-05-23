@@ -5,14 +5,16 @@
 
 pragma solidity ^0.4.24;
 
+import "../../common/lib/UserGroup.sol";
 import "../../common/lib/ArrayUtils.sol";
-import "../../common/lib/serialNumber/ShareSNParser.sol";
+import "../../common/lib/SNParser.sol";
 
 import "./GroupsRepo.sol";
 
 contract MembersRepo is GroupsRepo {
-    using ArrayUtils for address[];
-    using ShareSNParser for bytes32;
+    using ArrayUtils for uint32[];
+    using SNParser for bytes32;
+    using UserGroup for UserGroup.Group;
 
     struct Member {
         bytes32[] sharesInHand;
@@ -20,11 +22,13 @@ contract MembersRepo is GroupsRepo {
         uint256 paidInHand;
     }
 
-    mapping(address => bool) public isMember;
+    UserGroup.Group private _shareholders;
 
-    mapping(address => Member) internal _members;
+    // mapping(uint32 => bool) public isMember;
 
-    address[] private _membersList;
+    mapping(uint32 => Member) internal _members;
+
+    // uint32[] private _membersList;
 
     uint8 public maxQtyOfMembers;
 
@@ -34,22 +38,22 @@ contract MembersRepo is GroupsRepo {
 
     event SetMaxQtyOfMembers(uint8 max);
 
-    event AddMember(address indexed acct, uint256 qtyOfMembers);
+    event AddMember(uint32 indexed acct, uint256 qtyOfMembers);
 
-    event RemoveMember(address indexed acct, uint256 qtyOfMembers);
+    event RemoveMember(uint32 indexed acct, uint256 qtyOfMembers);
 
-    event AddShareToMember(bytes32 indexed sn, address acct);
+    event AddShareToMember(bytes32 indexed sn, uint32 acct);
 
-    event RemoveShareFromMember(bytes32 indexed sn, address acct);
+    event RemoveShareFromMember(bytes32 indexed sn, uint32 acct);
 
     event IncreaseAmountToMember(
-        address indexed acct,
+        uint32 indexed acct,
         uint256 parValue,
         uint256 paidPar
     );
 
     event DecreaseAmountFromMember(
-        address indexed acct,
+        uint32 indexed acct,
         uint256 parValue,
         uint256 paidPar
     );
@@ -59,12 +63,12 @@ contract MembersRepo is GroupsRepo {
     //##################
 
     modifier onlyMember() {
-        require(isMember[msg.sender], "NOT Member");
+        require(_shareholders.isMember(_msgSender()), "NOT Member");
         _;
     }
 
-    modifier memberExist(address acct) {
-        require(isMember[acct], "Acct is NOT Member");
+    modifier memberExist(uint32 acct) {
+        require(_shareholders.isMember(acct), "Acct is NOT Member");
         _;
     }
 
@@ -81,33 +85,25 @@ contract MembersRepo is GroupsRepo {
         emit SetMaxQtyOfMembers(max);
     }
 
-    function _addMember(address acct) internal {
-        if (!isMember[acct]) {
-            require(
-                _membersList.length < maxQtyOfMembers,
-                "Qty of Members overflow"
-            );
+    function _addMember(uint32 acct) internal {
+        require(
+            _shareholders.qtyOfMembers() < maxQtyOfMembers,
+            "Qty of Members overflow"
+        );
 
-            _membersList.push(acct);
-            isMember[acct] = true;
+        if (_shareholders.addMember(acct))
+            emit AddMember(acct, _shareholders.qtyOfMembers());
+    }
 
-            emit AddMember(acct, _membersList.length);
+    function _removeMember(uint32 acct) internal {
+        if (_shareholders.removeMember(acct)) {
+            delete _members[acct];
+            if (groupNo[acct] > 0) removeMemberFromGroup(acct, groupNo[acct]);
+            emit RemoveMember(acct, _shareholders.qtyOfMembers());
         }
     }
 
-    function _removeMember(address acct) internal {
-        _membersList.removeByValue(acct);
-
-        delete _members[acct];
-
-        delete isMember[acct];
-
-        if (groupNo[acct] > 0) removeMemberFromGroup(acct, groupNo[acct]);
-
-        emit RemoveMember(acct, _membersList.length);
-    }
-
-    function _addShareToMember(bytes6 ssn, address acct)
+    function _addShareToMember(bytes6 ssn, uint32 acct)
         internal
         shareExist(ssn)
         memberExist(acct)
@@ -120,7 +116,7 @@ contract MembersRepo is GroupsRepo {
         emit AddShareToMember(share.shareNumber, acct);
     }
 
-    function _removeShareFromMember(bytes6 ssn, address acct)
+    function _removeShareFromMember(bytes6 ssn, uint32 acct)
         internal
         shareExist(ssn)
         memberExist(acct)
@@ -137,7 +133,7 @@ contract MembersRepo is GroupsRepo {
     }
 
     function _increaseAmountToMember(
-        address acct,
+        uint32 acct,
         uint256 parValue,
         uint256 paidPar
     ) internal {
@@ -149,7 +145,7 @@ contract MembersRepo is GroupsRepo {
     }
 
     function _decreaseAmountFromMember(
-        address acct,
+        uint32 acct,
         uint256 parValue,
         uint256 paidPar
     ) internal {
@@ -164,29 +160,19 @@ contract MembersRepo is GroupsRepo {
         emit DecreaseAmountFromMember(acct, parValue, paidPar);
     }
 
-    // function _updateMembersList(address acct) internal {
-    //     uint256 len = _snList.length;
-    //     bool flag;
-
-    //     for (uint256 i = 0; i < len; i++) {
-    //         if (acct == _snList[i].shareholder()) {
-    //             flag = true;
-    //             break;
-    //         }
-    //     }
-
-    //     if (!flag) _removeMember(acct);
-    // }
-
     //##################
     //##   查询接口   ##
     //##################
 
-    function membersList() external view returns (address[]) {
-        return _membersList;
+    function isMember(uint32 acct) public returns (bool) {
+        return _shareholders.isMember(acct);
     }
 
-    function parInHand(address acct)
+    function membersList() external view returns (uint32[]) {
+        return _shareholders.getMembers();
+    }
+
+    function parInHand(uint32 acct)
         external
         view
         memberExist(acct)
@@ -195,7 +181,7 @@ contract MembersRepo is GroupsRepo {
         return _members[acct].parInHand;
     }
 
-    function paidInHand(address acct)
+    function paidInHand(uint32 acct)
         external
         view
         memberExist(acct)
@@ -204,7 +190,7 @@ contract MembersRepo is GroupsRepo {
         return _members[acct].paidInHand;
     }
 
-    function sharesInHand(address acct)
+    function sharesInHand(uint32 acct)
         external
         view
         memberExist(acct)

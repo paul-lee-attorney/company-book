@@ -5,21 +5,19 @@
 
 pragma solidity ^0.4.24;
 
-import "../common/config/BOSSetting.sol";
-import "../common/config/BOPSetting.sol";
+import "../common/ruting/BOSSetting.sol";
+import "../common/ruting/BOPSetting.sol";
 
-import "../common/lib/serialNumber/ShareSNParser.sol";
-import "../common/lib/serialNumber/PledgeSNParser.sol";
+import "../common/lib/SNParser.sol";
 
 import "../common/utils/Context.sol";
 
 contract BOPKeeper is BOSSetting, BOPSetting, Context {
-    using ShareSNParser for bytes32;
-    using PledgeSNParser for bytes32;
+    using SNParser for bytes32;
 
-    constructor(address bookeeper) public {
-        init(msg.sender, bookeeper);
-    }
+    // constructor(address bookeeper) public {
+    //     init(msg.sender, bookeeper);
+    // }
 
     // ################
     // ##   Pledge   ##
@@ -29,11 +27,14 @@ contract BOPKeeper is BOSSetting, BOPSetting, Context {
         uint32 createDate,
         bytes32 shareNumber,
         uint256 pledgedPar,
-        address creditor,
-        address debtor,
+        uint32 creditor,
+        uint32 debtor,
         uint256 guaranteedAmt
     ) external onlyDirectKeeper currentDate(createDate) {
-        require(shareNumber.shareholder() == _msgSender, "NOT shareholder");
+        require(
+            shareNumber.shareholder() == _bridgedMsgSender,
+            "NOT shareholder"
+        );
 
         _clearMsgSender();
 
@@ -51,7 +52,7 @@ contract BOPKeeper is BOSSetting, BOPSetting, Context {
 
     function updatePledge(
         bytes32 sn,
-        address creditor,
+        uint32 creditor,
         uint256 pledgedPar,
         uint256 guaranteedAmt
     ) external onlyDirectKeeper {
@@ -59,15 +60,15 @@ contract BOPKeeper is BOSSetting, BOPSetting, Context {
 
         bytes6 shortShareNumber = sn.shortShareNumberOfPledge();
 
-        (, uint256 orgPledgedPar, address orgCreditor, ) = _bop.getPledge(
+        (, uint256 orgPledgedPar, uint32 orgCreditor, ) = _bop.getPledge(
             sn.shortOfPledge()
         );
 
         if (pledgedPar < orgPledgedPar) {
-            require(_msgSender == orgCreditor, "NOT creditor");
+            require(_bridgedMsgSender == orgCreditor, "NOT creditor");
             _bos.increaseCleanPar(shortShareNumber, orgPledgedPar - pledgedPar);
         } else if (pledgedPar > orgPledgedPar) {
-            require(_msgSender == sn.pledgor(), "NOT pledgor");
+            require(_bridgedMsgSender == sn.pledgorOfPledge(), "NOT pledgor");
             _bos.decreaseCleanPar(shortShareNumber, pledgedPar - orgPledgedPar);
         }
 
@@ -82,11 +83,11 @@ contract BOPKeeper is BOSSetting, BOPSetting, Context {
     }
 
     function delPledge(bytes32 sn) external onlyDirectKeeper {
-        (, uint256 pledgedPar, address creditor, ) = _bop.getPledge(
+        (, uint256 pledgedPar, uint32 creditor, ) = _bop.getPledge(
             sn.shortOfPledge()
         );
 
-        require(_msgSender == creditor, "NOT creditor");
+        require(_bridgedMsgSender == creditor, "NOT creditor");
 
         _clearMsgSender();
 

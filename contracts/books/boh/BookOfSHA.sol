@@ -6,18 +6,17 @@
 pragma solidity ^0.4.24;
 
 import "../../common/components/BookOfDocuments.sol";
-// import "../../common/components/BookOfTerms.sol";
 
 import "./interfaces/IShareholdersAgreement.sol";
 
 contract BookOfSHA is BookOfDocuments {
     address public pointer;
 
-    constructor(
-        string _bookName,
-        address _admin,
-        address _bookeeper
-    ) public BookOfDocuments(_bookName, _admin, _bookeeper) {}
+    // constructor(
+    //     string _bookName,
+    //     uint32 _owner,
+    //     uint32 _bookeeper
+    // ) public BookOfDocuments(_bookName, _admin, _bookeeper, _rc) {}
 
     //##############
     //##  Event   ##
@@ -33,7 +32,7 @@ contract BookOfSHA is BookOfDocuments {
         address body,
         uint32 submitDate,
         bytes32 docHash,
-        address submitter
+        uint32 submitter
     ) external onlyKeeper {
         submitDoc(body, submitDate, docHash, submitter);
 

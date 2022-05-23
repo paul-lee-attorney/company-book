@@ -5,9 +5,9 @@
 
 pragma solidity ^0.4.24;
 
-import "../common/config/interfaces/IRoles.sol";
-import "../common/config/interfaces/IAccessControl.sol";
-import "../common/config/interfaces/IBookSetting.sol";
+import "../common/access/interfaces/IRoles.sol";
+import "../common/access/interfaces/IAccessControl.sol";
+
 import "../common/components/interfaces/ISigPage.sol";
 import "../common/components/EnumsRepo.sol";
 import "../common/utils/Context.sol";
@@ -16,14 +16,13 @@ import "../books/boa/interfaces/IAgreement.sol";
 import "../books/boh/terms/interfaces/IAlongs.sol";
 import "../books/boh/terms/interfaces/IFirstRefusal.sol";
 
-import "../common/config/BOASetting.sol";
-import "../common/config/BOMSetting.sol";
-import "../common/config/BOSSetting.sol";
-import "../common/config/SHASetting.sol";
+import "../common/ruting/interfaces/IBookSetting.sol";
+import "../common/ruting/BOASetting.sol";
+import "../common/ruting/BOMSetting.sol";
+import "../common/ruting/BOSSetting.sol";
+import "../common/ruting/SHASetting.sol";
 
-import "../common/lib/serialNumber/DealSNParser.sol";
-import "../common/lib/serialNumber/ShareSNParser.sol";
-import "../common/lib/serialNumber/VotingRuleParser.sol";
+import "../common/lib/SNParser.sol";
 
 contract BOAKeeper is
     EnumsRepo,
@@ -33,9 +32,7 @@ contract BOAKeeper is
     BOSSetting,
     Context
 {
-    using DealSNParser for bytes32;
-    using ShareSNParser for bytes32;
-    using VotingRuleParser for bytes32;
+    using SNParser for bytes32;
 
     TermTitle[] private _termsForCapitalIncrease = [
         TermTitle.ANTI_DILUTION,
@@ -48,9 +45,9 @@ contract BOAKeeper is
         TermTitle.TAG_ALONG
     ];
 
-    constructor(address bookeeper) public {
-        init(msg.sender, bookeeper);
-    }
+    // constructor(address bookeeper) public {
+    //     init(msg.sender, bookeeper);
+    // }
 
     // ##################
     // ##   Modifier   ##
@@ -66,9 +63,9 @@ contract BOAKeeper is
         _;
     }
 
-    modifier onlyAdminOf(address body) {
+    modifier onlyOwnerOf(address body) {
         require(
-            IAccessControl(body).getOwner() == _msgSender,
+            IAccessControl(body).getOwner() == _bridgedMsgSender,
             "NOT Admin of Doc"
         );
         _;
@@ -79,27 +76,27 @@ contract BOAKeeper is
     // ###################
 
     function createIA(uint8 docType) external onlyDirectKeeper {
-        require(_bos.isMember(_msgSender), "msgSender not MEMBER");
+        require(_bos.isMember(_bridgedMsgSender), "msgSender not MEMBER");
 
         address body = _boa.createDoc(docType);
 
-        IAccessControl(body).init(_msgSender, this);
+        IAccessControl(body).init(
+            _rc.userNo(_bridgedMsgSender),
+            _rc.userNo(this),
+            address(_rc)
+        );
         _clearMsgSender();
 
         IBookSetting(body).setBOS(address(_bos));
         IBookSetting(body).setAgrmtCal(address(_agrmtCal));
 
-        address[] memory keepers = members(KEEPERS);
-        uint256 len = keepers.length;
-        for (uint256 i = 0; i < len; i++) {
-            IRoles(body).grantRole(KEEPERS, keepers[i]);
-        }
+        _copyRoleTo(body, KEEPERS);
     }
 
     function removeIA(address body)
         external
         onlyDirectKeeper
-        onlyAdminOf(body)
+        onlyOwnerOf(body)
         notEstablished(body)
     {
         _clearMsgSender();
@@ -112,11 +109,11 @@ contract BOAKeeper is
         address body,
         uint32 submitDate,
         bytes32 docHash
-    ) external onlyDirectKeeper onlyAdminOf(body) beEstablished(body) {
-        _boa.submitIA(body, submitDate, docHash, _msgSender);
+    ) external onlyDirectKeeper onlyOwnerOf(body) beEstablished(body) {
+        _boa.submitIA(body, submitDate, docHash, _bridgedMsgSender);
         _clearMsgSender();
 
-        // IAccessControl(body).abandonAdmin();
+        IAccessControl(body).abandonOwnership();
     }
 
     function execTagAlong(
@@ -127,7 +124,7 @@ contract BOAKeeper is
         uint256 paidPar,
         uint32 execDate
     ) external onlyDirectKeeper {
-        address rightholder = shareNumber.shareholder();
+        uint32 rightholder = shareNumber.shareholder();
 
         address term = _getSHA().getTerm(uint8(TermTitle.TAG_ALONG));
 
@@ -153,7 +150,7 @@ contract BOAKeeper is
         uint256 paidPar,
         uint32 execDate
     ) external onlyDirectKeeper {
-        address rightholder = IAgreement(ia)
+        uint32 rightholder = IAgreement(ia)
             .shareNumberOfDeal(sn.sequenceOfDeal())
             .shareholder();
 
@@ -174,7 +171,7 @@ contract BOAKeeper is
     }
 
     function _execAlongRight(
-        address rightholder,
+        uint32 rightholder,
         address term,
         address ia,
         bytes32 sn,
@@ -188,13 +185,16 @@ contract BOAKeeper is
             "MISSED voting deadline"
         );
 
-        address seller = shareNumber.shareholder();
+        uint32 seller = shareNumber.shareholder();
 
-        address drager = IAgreement(ia)
+        uint32 drager = IAgreement(ia)
             .shareNumberOfDeal(sn.sequenceOfDeal())
             .shareholder();
 
-        require(_msgSender == rightholder, "_msgSender NOT rightholder");
+        require(
+            _bridgedMsgSender == rightholder,
+            "_bridgedMsgSender NOT rightholder"
+        );
 
         require(IAlongs(term).isTriggered(ia, sn), "TagAlong NOT triggered");
 
@@ -229,7 +229,7 @@ contract BOAKeeper is
 
     function acceptAlongDeal(
         address ia,
-        address drager,
+        uint32 drager,
         bytes32 sn
     ) external onlyDirectKeeper {
         require(
@@ -237,7 +237,10 @@ contract BOAKeeper is
             "MISSED voting deadline"
         );
 
-        require(_msgSender == sn.buyerOfDeal(), "_msgSender NOT buyer");
+        require(
+            _bridgedMsgSender == sn.buyerOfDeal(),
+            "_bridgedMsgSender NOT buyer"
+        );
 
         _clearMsgSender();
 
@@ -262,23 +265,26 @@ contract BOAKeeper is
         );
 
         require(
-            _bom.isVoted(ia, _msgSender),
+            _bom.isVoted(ia, _bridgedMsgSender),
             "first refusal reqeuster shall not cast vote"
         );
 
         address term = _getSHA().getTerm(uint8(TermTitle.FIRST_REFUSAL));
         require(
-            IFirstRefusal(term).isRightholder(sn.typeOfDeal(), _msgSender),
+            IFirstRefusal(term).isRightholder(
+                sn.typeOfDeal(),
+                _bridgedMsgSender
+            ),
             "NOT first refusal rightholder"
         );
 
         bool basedOnPar = _getSHA()
             .votingRules(sn.typeOfDeal())
-            .basedOnParValue();
+            .basedOnParOfVR();
 
         IAgreement(ia).recordFRRequest(
             sn.sequenceOfDeal(),
-            _msgSender,
+            _bridgedMsgSender,
             basedOnPar,
             execDate
         );
@@ -299,14 +305,18 @@ contract BOAKeeper is
         );
 
         require(
-            _msgSender ==
+            _bridgedMsgSender ==
                 IAgreement(ia)
                     .shareNumberOfDeal(sn.sequenceOfDeal())
                     .shareholder(),
             "not seller of Deal"
         );
 
-        IAgreement(ia).acceptFR(sn.sequenceOfDeal(), _msgSender, acceptDate);
+        IAgreement(ia).acceptFR(
+            sn.sequenceOfDeal(),
+            _bridgedMsgSender,
+            acceptDate
+        );
 
         _clearMsgSender();
     }
@@ -323,7 +333,7 @@ contract BOAKeeper is
 
         if (sn.typeOfDeal() > 1) {
             require(
-                _msgSender ==
+                _bridgedMsgSender ==
                     IAgreement(ia)
                         .shareNumberOfDeal(sn.sequenceOfDeal())
                         .shareholder(),
@@ -337,7 +347,10 @@ contract BOAKeeper is
             );
             _bos.decreaseCleanPar(sn.shortShareNumberOfDeal(), parValue);
         } else {
-            require(_msgSender == getDirectKeeper(), "NOT GeneralKeeper");
+            require(
+                _bridgedMsgSender == getDirectKeeper(),
+                "NOT GeneralKeeper"
+            );
             _checkSHA(_termsForCapitalIncrease, ia, sn);
         }
 
@@ -379,14 +392,19 @@ contract BOAKeeper is
         ) = IAgreement(ia).getDeal(sn.sequenceOfDeal());
 
         //交易发起人为买方;
-        require(sn.buyerOfDeal() == _msgSender, "_msgSender is NOT buyer");
+        require(
+            sn.buyerOfDeal() == _bridgedMsgSender,
+            "_bridgedMsgSender is NOT buyer"
+        );
 
         _clearMsgSender();
 
         //验证hashKey, 执行Deal
         IAgreement(ia).closeDeal(sn.sequenceOfDeal(), hashKey);
 
-        bytes32 shareNumber = sn.shareNumberOfDeal(_bos.snList());
+        bytes32 shareNumber = IAgreement(ia).shareNumberOfDeal(
+            sn.sequenceOfDeal()
+        );
 
         //释放Share的质押标记(若需)，执行交易
         if (shareNumber > bytes32(0)) {
@@ -426,7 +444,7 @@ contract BOAKeeper is
 
         require(
             (sn.typeOfDeal() == 1) ||
-                _msgSender ==
+                _bridgedMsgSender ==
                 IAgreement(ia)
                     .shareNumberOfDeal(sn.sequenceOfDeal())
                     .shareholder(),

@@ -15,9 +15,9 @@ library SNFactory {
         bytes sn,
         uint8 pointer,
         uint256 input,
-        uint8 len
+        uint256 len
     ) internal pure returns (bytes) {
-        for (uint8 i = 0; i < len; i++)
+        for (uint256 i = 0; i < len; i++)
             sn[i + pointer] = bytes1(uint8(input >> ((len - 1 - i) * 8)));
 
         return sn;

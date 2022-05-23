@@ -5,24 +5,28 @@
 
 pragma solidity ^0.4.24;
 
-import "../../../common/config/BOSSetting.sol";
-import "../../../common/config/DraftControl.sol";
+import "../../../common/ruting/BOSSetting.sol";
+import "../../../common/access/DraftControl.sol";
 
 import "../../../common/lib/ArrayUtils.sol";
-import "../../../common/lib/serialNumber/SNFactory.sol";
-import "../../../common/lib/serialNumber/OptionSNParser.sol";
+import "../../../common/lib/UserGroup.sol";
+
+import "../../../common/lib/SNFactory.sol";
+import "../../../common/lib/SNParser.sol";
 
 contract Options is BOSSetting, DraftControl {
     using ArrayUtils for bytes32[];
-    using ArrayUtils for address[];
+    using ArrayUtils for uint32[];
     using SNFactory for bytes;
-    using OptionSNParser for bytes32;
+    using SNParser for bytes32;
+    using UserGroup for UserGroup.Group;
 
     struct Option {
         bytes32 sn;
-        address rightholder;
-        mapping(address => bool) isObligor;
-        address[] obligors;
+        uint32 rightholder;
+        UserGroup.Group obligors;
+        // mapping(address => bool) isObligor;
+        // address[] obligors;
     }
 
     // bytes32 snInfo{
@@ -55,11 +59,11 @@ contract Options is BOSSetting, DraftControl {
     // ##   Event    ##
     // ################
 
-    event CreateOpt(bytes32 indexed sn, address rightholder, address obligor);
+    event CreateOpt(bytes32 indexed sn, uint32 rightholder, uint32 obligor);
 
-    event AddObligorIntoOpt(bytes32 sn, address obligor);
+    event AddObligorIntoOpt(bytes32 sn, uint32 obligor);
 
-    event RemoveObligorFromOpt(bytes32 sn, address obligor);
+    event RemoveObligorFromOpt(bytes32 sn, uint32 obligor);
 
     event DelOpt(bytes32 indexed sn);
 
@@ -104,8 +108,8 @@ contract Options is BOSSetting, DraftControl {
 
     function createOption(
         uint8 typeOfOpt,
-        address rightholder,
-        address obligor,
+        uint32 rightholder,
+        uint32 obligor,
         uint32 triggerDate,
         uint8 exerciseDays,
         uint8 closingDays,
@@ -138,8 +142,11 @@ contract Options is BOSSetting, DraftControl {
 
         opt.sn = sn;
         opt.rightholder = rightholder;
-        opt.isObligor[obligor] = true;
-        opt.obligors.push(obligor);
+
+        opt.obligors.addMember(obligor);
+
+        // opt.isObligor[obligor] = true;
+        // opt.obligors.push(obligor);
 
         isOption[counterOfOptions] = true;
         _snList.push(sn);
@@ -196,34 +203,32 @@ contract Options is BOSSetting, DraftControl {
         emit AddConditions(sn);
     }
 
-    function addObligorIntoOpt(uint16 sequence, address obligor)
+    function addObligorIntoOpt(uint16 sequence, uint32 obligor)
         external
         onlyAttorney
         optionExist(sequence)
     {
         Option storage opt = _options[sequence];
 
-        require(!opt.isObligor[obligor], "obligor ALREADY registered");
-
-        opt.isObligor[obligor] = true;
-        opt.obligors.push(obligor);
-
+        require(opt.obligors.addMember(obligor), "obligor ALREADY registered");
         emit AddObligorIntoOpt(opt.sn, obligor);
+
+        // opt.isObligor[obligor] = true;
+        // opt.obligors.push(obligor);
     }
 
-    function removeObligorFromOpt(uint16 sequence, address obligor)
+    function removeObligorFromOpt(uint16 sequence, uint32 obligor)
         external
         onlyAttorney
         optionExist(sequence)
     {
         Option storage opt = _options[sequence];
 
-        require(opt.isObligor[obligor], "obligor NOT registered");
-
-        delete opt.isObligor[obligor];
-        opt.obligors.removeByValue(obligor);
-
+        require(opt.obligors.removeMember(obligor), "obligor NOT registered");
         emit RemoveObligorFromOpt(opt.sn, obligor);
+
+        // delete opt.isObligor[obligor];
+        // opt.obligors.removeByValue(obligor);
     }
 
     function delOption(uint16 sequence)
@@ -255,25 +260,25 @@ contract Options is BOSSetting, DraftControl {
         return _options[sequence].sn;
     }
 
-    function isObligor(uint16 sequence, address acct)
+    function isObligor(uint16 sequence, uint32 acct)
         external
         view
         optionExist(sequence)
         returns (bool)
     {
-        return _options[sequence].isObligor[acct];
+        return _options[sequence].obligors.isMember(acct);
     }
 
-    function obligors(uint16 sequence)
+    function getObligors(uint16 sequence)
         external
         view
         optionExist(sequence)
-        returns (address[])
+        returns (uint32[])
     {
-        return _options[sequence].obligors;
+        return _options[sequence].obligors.getMembers();
     }
 
-    function isRightholder(uint16 sequence, address acct)
+    function isRightholder(uint16 sequence, uint32 acct)
         external
         view
         optionExist(sequence)
@@ -286,7 +291,7 @@ contract Options is BOSSetting, DraftControl {
         external
         view
         optionExist(sequence)
-        returns (address)
+        returns (uint32)
     {
         return _options[sequence].rightholder;
     }

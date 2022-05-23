@@ -7,14 +7,14 @@ pragma solidity ^0.4.24;
 
 import "../../boa/interfaces/IAgreement.sol";
 
-import "../../../common/config/BOSSetting.sol";
-import "../../../common/config/BOMSetting.sol";
-import "../../../common/config/DraftControl.sol";
+import "../../../common/ruting/BOSSetting.sol";
+import "../../../common/ruting/BOMSetting.sol";
+import "../../../common/access/DraftControl.sol";
 
 import "../../../common/lib/ArrayUtils.sol";
-import "../../../common/lib/serialNumber/SNFactory.sol";
-import "../../../common/lib/serialNumber/FRRuleParser.sol";
-import "../../../common/lib/serialNumber/DealSNParser.sol";
+import "../../../common/lib/UserGroup.sol";
+import "../../../common/lib/SNFactory.sol";
+import "../../../common/lib/SNParser.sol";
 
 import "../../../common/components/interfaces/ISigPage.sol";
 
@@ -22,15 +22,16 @@ import "../../../common/components/interfaces/ISigPage.sol";
 
 contract FirstRefusal is BOSSetting, BOMSetting, DraftControl {
     // using ArrayUtils for uint256[];
-    using ArrayUtils for address[];
+    using ArrayUtils for uint32[];
     using SNFactory for bytes;
-    using FRRuleParser for bytes32;
-    using DealSNParser for bytes32;
+    using SNParser for bytes32;
+    using UserGroup for UserGroup.Group;
 
     struct FR {
         bytes32 rule;
-        mapping(address => bool) isRightholder;
-        address[] rightholders;
+        UserGroup.Group rightholders;
+        // mapping(address => bool) isRightholder;
+        // address[] rightholders;
     }
 
     // struct ruleInfo {
@@ -41,7 +42,7 @@ contract FirstRefusal is BOSSetting, BOMSetting, DraftControl {
     // }
 
     // typeOfDeal => FR : right of first refusal
-    mapping(uint8 => FR) public FRs;
+    mapping(uint8 => FR) private _firstRefusals;
 
     // typeOfDeal => bool
     mapping(uint8 => bool) public isSubject;
@@ -52,9 +53,9 @@ contract FirstRefusal is BOSSetting, BOMSetting, DraftControl {
 
     event SetFirstRefusal(uint8 indexed typeOfDeal, bytes32 rule);
 
-    event AddRightholder(uint8 indexed typeOfDeal, address rightholder);
+    event AddRightholder(uint8 indexed typeOfDeal, uint32 rightholder);
 
-    event RemoveRightholder(uint8 indexed typeOfDeal, address rightholder);
+    event RemoveRightholder(uint8 indexed typeOfDeal, uint32 rightholder);
 
     event DelFirstRefusal(uint8 indexed typeOfDeal);
 
@@ -102,7 +103,7 @@ contract FirstRefusal is BOSSetting, BOMSetting, DraftControl {
             basedOnPar
         );
 
-        FRs[typeOfDeal].rule = rule;
+        _firstRefusals[typeOfDeal].rule = rule;
         isSubject[typeOfDeal] = true;
 
         emit SetFirstRefusal(typeOfDeal, rule);
@@ -113,43 +114,36 @@ contract FirstRefusal is BOSSetting, BOMSetting, DraftControl {
         onlyAttorney
         beRestricted(typeOfDeal)
     {
-        delete FRs[typeOfDeal];
+        delete _firstRefusals[typeOfDeal];
         delete isSubject[typeOfDeal];
 
         emit DelFirstRefusal(typeOfDeal);
     }
 
-    function addRightholder(uint8 typeOfDeal, address rightholder)
+    function addRightholder(uint8 typeOfDeal, uint32 rightholder)
         external
         onlyAttorney
         beRestricted(typeOfDeal)
     {
-        FR storage fr = FRs[typeOfDeal];
+        FR storage fr = _firstRefusals[typeOfDeal];
 
         bytes32 rule = fr.rule;
 
         require(!rule.membersEqualOfFR(), "Members' right are equal");
 
-        fr.isRightholder[rightholder] = true;
-        fr.rightholders.push(rightholder);
-
-        emit AddRightholder(typeOfDeal, rightholder);
+        if (fr.rightholders.addMember(rightholder))
+            emit AddRightholder(typeOfDeal, rightholder);
     }
 
-    function removeRightholder(uint8 typeOfDeal, address acct)
+    function removeRightholder(uint8 typeOfDeal, uint32 acct)
         external
         onlyAttorney
         beRestricted(typeOfDeal)
     {
-        FR storage fr = FRs[typeOfDeal];
+        FR storage fr = _firstRefusals[typeOfDeal];
 
-        require(fr.isRightholder[acct], "NOT a rightholder");
-
-        delete fr.isRightholder[acct];
-
-        fr.rightholders.removeByValue(acct);
-
-        emit RemoveRightholder(typeOfDeal, acct);
+        if (fr.rightholders.removeMember(acct))
+            emit RemoveRightholder(typeOfDeal, acct);
     }
 
     // ################
@@ -162,31 +156,31 @@ contract FirstRefusal is BOSSetting, BOMSetting, DraftControl {
         beRestricted(typeOfDeal)
         returns (bytes32)
     {
-        return FRs[typeOfDeal].rule;
+        return _firstRefusals[typeOfDeal].rule;
     }
 
-    function isRightholder(uint8 typeOfDeal, address acct)
+    function isRightholder(uint8 typeOfDeal, uint32 acct)
         public
         view
         beRestricted(typeOfDeal)
         returns (bool)
     {
-        FR storage fr = FRs[typeOfDeal];
+        FR storage fr = _firstRefusals[typeOfDeal];
 
         if (fr.rule.membersEqualOfFR()) return _bos.isMember(acct);
-        else return fr.isRightholder[acct];
+        else return fr.rightholders.isMember(acct);
     }
 
     function rightholders(uint8 typeOfDeal)
         public
         view
         beRestricted(typeOfDeal)
-        returns (address[])
+        returns (uint32[])
     {
-        FR storage fr = FRs[typeOfDeal];
+        FR storage fr = _firstRefusals[typeOfDeal];
 
         if (fr.rule.membersEqualOfFR()) return _bos.membersList();
-        else return fr.rightholders;
+        else return fr.rightholders.getMembers();
     }
 
     // ################
@@ -211,19 +205,21 @@ contract FirstRefusal is BOSSetting, BOMSetting, DraftControl {
         returns (bool)
     {
         if (!isTriggered(ia, sn)) return true;
+        bytes32 rule = _firstRefusals[sn.typeOfDeal()].rule;
 
-        bytes32 rule = FRs[sn.typeOfDeal()].rule;
+        (uint32[] memory consentParties, ) = _bom.getYea(ia);
 
-        (address[] memory consentParties, ) = _bom.getYea(ia);
+        uint32[] memory signers = ISigPage(ia).signers();
 
-        address[] memory signers = ISigPage(ia).signers();
-
-        address[] memory agreedParties = consentParties.combine(signers);
+        uint32[] memory agreedParties = consentParties.combine(signers);
 
         if (rule.membersEqualOfFR())
             return _bos.membersList().fullyCoveredBy(agreedParties);
         else
             return
-                FRs[sn.typeOfDeal()].rightholders.fullyCoveredBy(agreedParties);
+                _firstRefusals[sn.typeOfDeal()]
+                    .rightholders
+                    .getMembers()
+                    .fullyCoveredBy(agreedParties);
     }
 }

@@ -14,7 +14,7 @@ interface IBOOKeeper {
 
     function createOption(
         uint8 typeOfOpt,
-        address rightholder,
+        uint32 rightholder,
         uint32 triggerDate,
         uint8 exerciseDays,
         uint8 closingDays,
@@ -25,7 +25,7 @@ interface IBOOKeeper {
 
     function joinOptionAsObligor(bytes32 sn) external;
 
-    function releaseObligorFromOption(bytes32 sn, address obligor) external;
+    function releaseObligorFromOption(bytes32 sn, uint32 obligor) external;
 
     function execOption(bytes32 sn, uint32 exerciseDate) external;
 

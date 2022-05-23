@@ -12,22 +12,30 @@ interface IAgreement {
 
     function recordFRRequest(
         uint16 ssn,
-        address acct,
+        uint32 acct,
         bool basedOnPar,
         uint32 execDate
     ) external;
 
     function acceptFR(
         uint16 ssn,
-        address acct,
+        uint32 acct,
         uint32 acceptDate
+    ) external;
+
+    function createAlongDeal(
+        bytes32 shareNumber,
+        uint16 ssn,
+        uint256 parValue,
+        uint256 paidPar,
+        uint32 createDate
     ) external;
 
     function createDeal(
         uint8 typeOfDeal,
         bytes32 shareNumber,
         uint8 class,
-        address buyer,
+        uint32 buyer,
         uint256 unitPrice,
         uint256 parValue,
         uint256 paidInAmount,
@@ -46,14 +54,6 @@ interface IAgreement {
 
     function kill() external;
 
-    function createAlongDeal(
-        bytes32 shareNumber,
-        uint16 ssn,
-        uint256 parValue,
-        uint256 paidPar,
-        uint32 createDate
-    ) external;
-
     function finalizeIA() external;
 
     function clearDealCP(
@@ -66,7 +66,7 @@ interface IAgreement {
 
     function splitDeal(
         uint16 ssn,
-        address buyer,
+        uint32 buyer,
         uint256 parValue,
         uint256 paidPar
     ) external;
@@ -79,13 +79,13 @@ interface IAgreement {
     //  ##     查询接口     ##
     //  ######################
 
-    function isRequestedForFR(uint16 ssn) external returns (bool);
+    function isExecParty(uint16 ssn, uint32 acct) external view returns (bool);
 
-    function isRequester(uint16 ssn, address acct) external view returns (bool);
+    function execParties(uint16 ssn) external view returns (uint32[]);
 
-    function requesters(uint16 ssn) external view returns (address[]);
+    function isSubjectDeal(uint16 ssn) external returns (bool);
 
-    function frNoticesList() external view returns (uint16[]);
+    function subjectDeals() external view returns (uint16[]);
 
     function isDeal(uint16 ssn) external view returns (bool);
 

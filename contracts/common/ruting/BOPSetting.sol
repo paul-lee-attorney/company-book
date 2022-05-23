@@ -7,7 +7,7 @@ pragma solidity ^0.4.24;
 
 import "../../books/bop/interfaces/IBookOfPledges.sol";
 
-import "../config/AccessControl.sol";
+import "../access/AccessControl.sol";
 
 contract BOPSetting is AccessControl {
     IBookOfPledges internal _bop;

@@ -7,7 +7,7 @@ pragma solidity ^0.4.24;
 
 import "../../boa/interfaces/IAgreement.sol";
 
-import "../../../common/config/BOMSetting.sol";
+import "../../../common/ruting/BOMSetting.sol";
 
 import "./DragAlong.sol";
 
@@ -42,14 +42,14 @@ contract TagAlong is BOMSetting, DragAlong {
 
         if (!isTriggered(ia, sn)) return true;
 
-        (address[] memory consentParties, ) = _bom.getYea(ia);
+        (uint32[] memory consentParties, ) = _bom.getYea(ia);
 
         uint256 i;
 
         for (i = 0; i < consentParties.length; i++)
             _exemptedGroups[_bos.groupNo(consentParties[i])] = true;
 
-        address[] memory signers = ISigPage(ia).signers();
+        uint32[] memory signers = ISigPage(ia).signers();
 
         for (i = 0; i < signers.length; i++)
             _exemptedGroups[_bos.groupNo(signers[i])] = true;

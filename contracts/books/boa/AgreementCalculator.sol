@@ -7,18 +7,16 @@ pragma solidity ^0.4.24;
 import "./interfaces/IAgreement.sol";
 
 import "../../common/components/interfaces/ISigPage.sol";
-import "../../common/config/BOSSetting.sol";
-import "../../common/lib/serialNumber/DealSNParser.sol";
-import "../../common/lib/serialNumber/ShareSNParser.sol";
+import "../../common/ruting/BOSSetting.sol";
+import "../../common/lib/SNParser.sol";
 import "../../common/lib/ArrayUtils.sol";
 
 contract AgreementCalculator is BOSSetting {
-    using DealSNParser for bytes32;
-    using ShareSNParser for bytes32;
+    using SNParser for bytes32;
     using ArrayUtils for uint16[];
-    using ArrayUtils for address[];
+    using ArrayUtils for uint32[];
 
-    function parToSell(address ia, address acct)
+    function parToSell(address ia, uint32 acct)
         public
         view
         returns (uint256 output)
@@ -42,7 +40,7 @@ contract AgreementCalculator is BOSSetting {
         }
     }
 
-    function paidToSell(address ia, address acct)
+    function paidToSell(address ia, uint32 acct)
         public
         view
         returns (uint256 output)
@@ -65,7 +63,7 @@ contract AgreementCalculator is BOSSetting {
             }
     }
 
-    function parToBuy(address ia, address acct)
+    function parToBuy(address ia, uint32 acct)
         internal
         view
         returns (uint256 output)
@@ -81,7 +79,7 @@ contract AgreementCalculator is BOSSetting {
             }
     }
 
-    function paidToBuy(address ia, address acct)
+    function paidToBuy(address ia, uint32 acct)
         internal
         view
         returns (uint256 output)
@@ -112,9 +110,9 @@ contract AgreementCalculator is BOSSetting {
         output = sumOfSignal == 3 ? signal[2] == 0 ? 7 : 3 : sumOfSignal;
     }
 
-    function otherMembers(address ia) external view returns (address[]) {
-        address[] memory signers = ISigPage(ia).signers();
-        address[] memory members = _bos.membersList();
+    function otherMembers(address ia) external view returns (uint32[]) {
+        uint32[] memory signers = ISigPage(ia).signers();
+        uint32[] memory members = _bos.membersList();
 
         return members.minus(signers);
     }

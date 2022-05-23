@@ -7,15 +7,15 @@ pragma solidity ^0.4.24;
 
 import "../../common/lib/SafeMath.sol";
 import "../../common/lib/ArrayUtils.sol";
-import "../../common/lib/serialNumber/SNFactory.sol";
-import "../../common/lib/serialNumber/ShareSNParser.sol";
+import "../../common/lib/SNFactory.sol";
+import "../../common/lib/SNParser.sol";
 
-import "../../common/config/AccessControl.sol";
+import "../../common/access/AccessControl.sol";
 
 contract SharesRepo is AccessControl {
     using SNFactory for bytes;
     using SNFactory for bytes32;
-    using ShareSNParser for bytes32;
+    using SNParser for bytes32;
     using SafeMath for uint256;
     using ArrayUtils for uint256[];
     using ArrayUtils for address[];
@@ -37,7 +37,7 @@ contract SharesRepo is AccessControl {
     //     uint8 class; //股份类别（投资轮次）
     //     uint16 sequence; //顺序编码
     //     uint32 issueDate; //发行日期
-    //     address shareholder; //股东地址
+    //     uint32 shareholder; //股东编号
     //     bytes5 preSN; //来源股票编号索引（sequence + issueDate(前24位, 精度误差256秒))
     // }
 
@@ -130,7 +130,7 @@ contract SharesRepo is AccessControl {
         uint8 class,
         uint16 sequenceNumber,
         uint32 issueDate,
-        address shareholder,
+        uint32 shareholder,
         bytes6 preSN
     ) internal pure returns (bytes32 sn) {
         bytes memory _sn = new bytes(32);
@@ -138,8 +138,8 @@ contract SharesRepo is AccessControl {
         _sn[0] = bytes1(class);
         _sn = _sn.sequenceToSN(1, sequenceNumber);
         _sn = _sn.dateToSN(3, issueDate);
-        _sn = _sn.addrToSN(7, shareholder);
-        _sn = _sn.bytes32ToSN(27, bytes32(preSN), 0, 5); // sequenceNumber 2 + issueDate 3
+        _sn = _sn.dateToSN(7, shareholder);
+        _sn = _sn.bytes32ToSN(11, bytes32(preSN), 0, 6);
 
         sn = _sn.bytesToBytes32();
     }

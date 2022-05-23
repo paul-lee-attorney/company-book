@@ -7,36 +7,34 @@ pragma solidity ^0.4.24;
 
 import "../boa/interfaces/IAgreement.sol";
 
-// import "../../common/config/BOSSetting.sol";
-import "../../common/config/BOASetting.sol";
-import "../../common/config/SHASetting.sol";
-import "../../common/config/BOSSetting.sol";
+// import "../../common/ruting/BOSSetting.sol";
+import "../../common/ruting/BOASetting.sol";
+import "../../common/ruting/SHASetting.sol";
+import "../../common/ruting/BOSSetting.sol";
 
 import "../../common/lib/ArrayUtils.sol";
-import "../../common/lib/serialNumber/VotingRuleParser.sol";
-import "../../common/lib/serialNumber/DealSNParser.sol";
+import "../../common/lib/SNParser.sol";
 
 import "../../common/components/interfaces/ISigPage.sol";
-import "../../common/config/interfaces/IAccessControl.sol";
+import "../../common/access/interfaces/IAccessControl.sol";
 
 import "../../common/components/EnumsRepo.sol";
 
 contract BookOfMotions is EnumsRepo, SHASetting, BOASetting, BOSSetting {
-    using ArrayUtils for address[];
-    using VotingRuleParser for bytes32;
-    using DealSNParser for bytes32;
+    using ArrayUtils for uint32[];
+    using SNParser for bytes32;
 
     struct Motion {
         bytes32 votingRule;
         uint32 votingDeadline;
         mapping(address => uint32) sigOfYea;
-        address[] membersOfYea;
+        uint32[] membersOfYea;
         uint256 supportPar;
         mapping(address => uint32) sigOfNay;
-        address[] membersOfNay;
+        uint32[] membersOfNay;
         uint256 againstPar;
-        mapping(address => bool) voted;
-        mapping(address => uint256) voteAmt;
+        mapping(uint32 => bool) voted;
+        mapping(uint32 => uint256) voteAmt;
         uint256 sumOfVoteAmt;
         uint8 state; // 0-pending 1-proposed  2-passed 3-rejected(no need to buy) 4-rejected (against need to buy) 5-suspend
     }
@@ -47,9 +45,9 @@ contract BookOfMotions is EnumsRepo, SHASetting, BOASetting, BOSSetting {
     // ia => bool
     mapping(address => bool) public isProposed;
 
-    constructor(address bookeeper) public {
-        init(msg.sender, bookeeper);
-    }
+    // constructor(address bookeeper) public {
+    //     init(msg.sender, bookeeper);
+    // }
 
     //##############
     //##  Event   ##
@@ -58,17 +56,12 @@ contract BookOfMotions is EnumsRepo, SHASetting, BOASetting, BOSSetting {
     event ProposeMotion(
         address indexed ia,
         uint32 votingDeadline,
-        address proposedBy
+        uint32 proposedBy
     );
 
-    event Vote(
-        address indexed ia,
-        address voter,
-        bool support,
-        uint256 voteAmt
-    );
+    event Vote(address indexed ia, uint32 voter, bool support, uint256 voteAmt);
 
-    event TurnOverVote(address indexed ia, address voter, uint256 voteAmt);
+    event TurnOverVote(address indexed ia, uint32 voter, uint256 voteAmt);
 
     event VoteCounting(address indexed ia, uint8 result);
 
@@ -82,7 +75,7 @@ contract BookOfMotions is EnumsRepo, SHASetting, BOASetting, BOSSetting {
 
     modifier onlyAdminOf(address body) {
         require(
-            IAccessControl(body).getOwner() == msg.sender,
+            IAccessControl(body).getOwner() == _msgSender(),
             "NOT Admin of DOC"
         );
         _;
@@ -114,22 +107,22 @@ contract BookOfMotions is EnumsRepo, SHASetting, BOASetting, BOSSetting {
     }
 
     modifier onlyVotedTo(address ia) {
-        require(_motions[ia].voted[msg.sender], "NOT voted for the IA");
+        require(_motions[ia].voted[_msgSender()], "NOT voted for the IA");
         _;
     }
 
     modifier notVotedTo(address ia) {
-        require(!_motions[ia].voted[msg.sender], "HAVE voted for the IA");
+        require(!_motions[ia].voted[_msgSender()], "HAVE voted for the IA");
         _;
     }
 
     modifier onlyPartyOfIA(address ia) {
-        require(ISigPage(ia).isParty(msg.sender), "NOT a Party to the IA");
+        require(ISigPage(ia).isParty(_msgSender()), "NOT a Party to the IA");
         _;
     }
 
     modifier notPartyOfIA(address ia) {
-        require(!ISigPage(ia).isParty(msg.sender), "Party shall AVOID");
+        require(!ISigPage(ia).isParty(_msgSender()), "Party shall AVOID");
         _;
     }
 
@@ -137,11 +130,11 @@ contract BookOfMotions is EnumsRepo, SHASetting, BOASetting, BOSSetting {
     //##    写接口    ##
     //##################
 
-    function proposeMotion(address ia, uint32 proposeDate)
-        external
-        onlyKeeper
-        notProposed(ia)
-    {
+    function proposeMotion(
+        address ia,
+        uint32 proposeDate,
+        uint32 submitter
+    ) external onlyKeeper notProposed(ia) {
         require(_boa.isSubmitted(ia), "Agreement NOT submitted");
 
         bytes32 rule = _getSHA().votingRules(_agrmtCal.typeOfIA(ia));
@@ -149,20 +142,23 @@ contract BookOfMotions is EnumsRepo, SHASetting, BOASetting, BOSSetting {
         Motion storage motion = _motions[ia];
 
         motion.votingRule = rule;
-        motion.votingDeadline = proposeDate + uint32(rule.votingDays()) * 86400;
+        motion.votingDeadline =
+            proposeDate +
+            uint32(rule.votingDaysOfVR()) *
+            86400;
         motion.state = 1;
 
         isProposed[ia] = true;
 
-        emit ProposeMotion(ia, motion.votingDeadline, tx.origin);
+        emit ProposeMotion(ia, motion.votingDeadline, submitter);
     }
 
-    function _getVoteAmount(address ia, address sender)
+    function _getVoteAmount(address ia, uint32 sender)
         private
         view
         returns (uint256 amount)
     {
-        if (_motions[ia].votingRule.basedOnParValue()) {
+        if (_motions[ia].votingRule.basedOnParOfVR()) {
             amount = _bos.parInHand(sender);
         } else {
             amount = _bos.paidInHand(sender);
@@ -180,11 +176,11 @@ contract BookOfMotions is EnumsRepo, SHASetting, BOASetting, BOSSetting {
     {
         require(_boa.isSubmitted(ia), "Agreement NOT submitted");
 
-        address sender = msg.sender;
+        uint32 sender = _msgSender();
 
         Motion storage motion = _motions[ia];
 
-        motion.sigOfYea[sender] = sigDate;
+        motion.sigOfYea[msg.sender] = sigDate;
         motion.membersOfYea.push(sender);
 
         uint256 voteAmt = _getVoteAmount(ia, sender);
@@ -208,11 +204,11 @@ contract BookOfMotions is EnumsRepo, SHASetting, BOASetting, BOSSetting {
     {
         require(_boa.isSubmitted(ia), "Agreement NOT submitted");
 
-        address sender = msg.sender;
+        uint32 sender = _msgSender();
 
         Motion storage motion = _motions[ia];
 
-        motion.sigOfNay[sender] = sigDate;
+        motion.sigOfNay[msg.sender] = sigDate;
         motion.membersOfNay.push(sender);
 
         uint256 voteAmt = _getVoteAmount(ia, sender);
@@ -231,24 +227,24 @@ contract BookOfMotions is EnumsRepo, SHASetting, BOASetting, BOSSetting {
     {
         Motion storage motion = _motions[ia];
 
-        if (motion.votingRule.onlyAttendance()) {
+        if (motion.votingRule.onlyAttendanceOfVR()) {
             totalHead = motion.membersOfYea.length + motion.membersOfNay.length;
             totalAmt = motion.sumOfVoteAmt;
         } else {
-            address[] memory others = _agrmtCal.otherMembers(ia);
+            uint32[] memory others = _agrmtCal.otherMembers(ia);
 
             totalHead = others.length;
 
             uint256 i;
             for (i = 0; i < totalHead; i++) {
-                if (motion.votingRule.basedOnParValue()) {
+                if (motion.votingRule.basedOnParOfVR()) {
                     totalAmt += _bos.parInHand(others[i]);
                 } else {
                     totalAmt += _bos.paidInHand(others[i]);
                 }
             }
 
-            if (motion.votingRule.impliedConsent()) {
+            if (motion.votingRule.impliedConsentOfVR()) {
                 motion.supportPar += (totalAmt - motion.sumOfVoteAmt);
 
                 for (i = 0; i < totalHead; i++)
@@ -272,28 +268,30 @@ contract BookOfMotions is EnumsRepo, SHASetting, BOASetting, BOSSetting {
 
         (uint256 totalHead, uint256 totalAmt) = _getParas(ia);
 
-        bool flag1 = motion.votingRule.ratioHead() > 0
+        bool flag1 = motion.votingRule.ratioHeadOfVR() > 0
             ? totalHead > 0
                 ? (motion.membersOfYea.length * 10000) / totalHead >=
-                    motion.votingRule.ratioHead()
+                    motion.votingRule.ratioHeadOfVR()
                 : false
             : true;
 
-        bool flag2 = motion.votingRule.ratioAmount() > 0
+        bool flag2 = motion.votingRule.ratioAmountOfVR() > 0
             ? totalAmt > 0
                 ? (motion.supportPar * 10000) / totalAmt >=
-                    motion.votingRule.ratioAmount()
+                    motion.votingRule.ratioAmountOfVR()
                 : false
             : true;
 
-        motion.state = flag1 && flag2 ? 2 : motion.votingRule.againstShallBuy()
+        motion.state = flag1 && flag2
+            ? 2
+            : motion.votingRule.againstShallBuyOfVR()
             ? 4
             : 3;
 
         emit VoteCounting(ia, motion.state);
     }
 
-    function _ratioOfNay(address ia, address againstVoter)
+    function _ratioOfNay(address ia, uint32 againstVoter)
         private
         view
         returns (uint256)
@@ -310,7 +308,7 @@ contract BookOfMotions is EnumsRepo, SHASetting, BOASetting, BOSSetting {
         address ia,
         bytes32 sn,
         uint32 exerciseDate,
-        address againstVoter
+        uint32 againstVoter
     )
         external
         view
@@ -335,7 +333,7 @@ contract BookOfMotions is EnumsRepo, SHASetting, BOASetting, BOSSetting {
         require(
             exerciseDate <
                 _motions[ia].votingDeadline +
-                    uint32(_motions[ia].votingRule.execDaysForPutOpt()) *
+                    uint32(_motions[ia].votingRule.execDaysForPutOptOfVR()) *
                     86400,
             "MISSED execute deadline"
         );
@@ -382,18 +380,18 @@ contract BookOfMotions is EnumsRepo, SHASetting, BOASetting, BOSSetting {
         return _motions[ia].state;
     }
 
-    function votedYea(address ia, address acct) external view returns (bool) {
+    function votedYea(address ia, uint32 acct) external view returns (bool) {
         return _motions[ia].sigOfYea[acct] > 0;
     }
 
-    function votedNay(address ia, address acct) external view returns (bool) {
+    function votedNay(address ia, uint32 acct) external view returns (bool) {
         return _motions[ia].sigOfNay[acct] > 0;
     }
 
     function getYea(address ia)
         external
         view
-        returns (address[] membersOfYea, uint256 supportPar)
+        returns (uint32[] membersOfYea, uint256 supportPar)
     {
         membersOfYea = _motions[ia].membersOfYea;
         supportPar = _motions[ia].supportPar;
@@ -402,7 +400,7 @@ contract BookOfMotions is EnumsRepo, SHASetting, BOASetting, BOSSetting {
     function getNay(address ia)
         external
         view
-        returns (address[] membersOfNay, uint256 againstPar)
+        returns (uint32[] membersOfNay, uint256 againstPar)
     {
         membersOfNay = _motions[ia].membersOfNay;
         againstPar = _motions[ia].againstPar;
@@ -412,11 +410,11 @@ contract BookOfMotions is EnumsRepo, SHASetting, BOASetting, BOSSetting {
         return _motions[ia].sumOfVoteAmt;
     }
 
-    function isVoted(address ia, address acct) public view returns (bool) {
+    function isVoted(address ia, uint32 acct) public view returns (bool) {
         return _motions[ia].voted[acct];
     }
 
-    function getVote(address ia, address acct)
+    function getVote(address ia, uint32 acct)
         external
         view
         returns (

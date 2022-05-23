@@ -5,19 +5,19 @@
 
 pragma solidity ^0.4.24;
 
-import "../lib/serialNumber/SNFactory.sol";
-import "../lib/serialNumber/DocSNParser.sol";
+import "../lib/SNFactory.sol";
+import "../lib/SNParser.sol";
 import "../lib/SafeMath.sol";
 import "../lib/ArrayUtils.sol";
 
-import "../config/BOSSetting.sol";
+import "../ruting/BOSSetting.sol";
 
-import "./CloneFactory.sol";
+import "../utils/CloneFactory.sol";
 
 contract BookOfDocuments is CloneFactory, BOSSetting {
     using SNFactory for bytes;
     using SNFactory for bytes32;
-    using DocSNParser for bytes32;
+    using SNParser for bytes32;
     // using SafeMath for uint256;
     using ArrayUtils for bytes32[];
 
@@ -35,7 +35,7 @@ contract BookOfDocuments is CloneFactory, BOSSetting {
     //     uint8 docType;           1
     //     uint16 sequence;         2
     //     uint32 createDate;       4
-    //     address creator;         20
+    //     uint32 creator;         4
     //     bytes5 addrSuffixOfDoc;  5
     // }
 
@@ -51,11 +51,12 @@ contract BookOfDocuments is CloneFactory, BOSSetting {
 
     constructor(
         string _bookName,
-        address _admin,
-        address _bookeeper
+        uint32 _owner,
+        uint32 _bookeeper,
+        address _rc
     ) public {
         bookName = _bookName;
-        init(_admin, _bookeeper);
+        init(_owner, _bookeeper, _rc);
     }
 
     //##############
@@ -104,7 +105,7 @@ contract BookOfDocuments is CloneFactory, BOSSetting {
         uint8 docType,
         uint16 sequence,
         uint32 createDate,
-        address creator,
+        uint32 creator,
         address body
     ) private pure returns (bytes32 sn) {
         bytes memory _sn = new bytes(32);
@@ -112,8 +113,8 @@ contract BookOfDocuments is CloneFactory, BOSSetting {
         _sn[0] = bytes1(docType);
         _sn = _sn.sequenceToSN(1, sequence);
         _sn = _sn.dateToSN(3, createDate);
-        _sn = _sn.addrToSN(7, creator);
-        _sn = _sn.bytes32ToSN(27, bytes32(body), 15, 5);
+        _sn = _sn.dateToSN(7, creator);
+        _sn = _sn.addrToSN(11, body);
 
         sn = _sn.bytesToBytes32();
     }
@@ -126,7 +127,7 @@ contract BookOfDocuments is CloneFactory, BOSSetting {
     function createDoc(
         uint8 docType,
         uint32 createDate,
-        address creator
+        uint32 creator
     )
         external
         onlyDirectKeeper

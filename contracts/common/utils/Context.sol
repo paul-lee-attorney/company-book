@@ -5,16 +5,16 @@
 
 pragma solidity ^0.4.24;
 
-import "../config/AccessControl.sol";
+import "../access/AccessControl.sol";
 
 contract Context is AccessControl {
-    address internal _msgSender;
+    uint32 internal _bridgedMsgSender;
 
     function setMsgSender(address acct) external onlyDirectKeeper {
-        _msgSender = acct;
+        _bridgedMsgSender = _rc.userNo(acct);
     }
 
     function _clearMsgSender() internal {
-        _msgSender = address(0);
+        _bridgedMsgSender = 0;
     }
 }

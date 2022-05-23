@@ -5,19 +5,19 @@
 
 pragma solidity ^0.4.24;
 
-import "../../common/config/interfaces/IAccessControl.sol";
+import "../../common/access/interfaces/IAccessControl.sol";
+import "../../common/access/interfaces/IDraftControl.sol";
+import "../../common/ruting/interfaces/IBookSetting.sol";
 
-import "../../common/config/interfaces/IDraftControl.sol";
-import "../../common/config/interfaces/IBookSetting.sol";
+import "../../common/ruting/BOSSetting.sol";
+import "../../common/ruting/BOMSetting.sol";
 
 import "../../common/lib/ArrayUtils.sol";
+import "../../common/lib/AddrBook.sol";
 
 import "../../common/components/SigPage.sol";
 import "../../common/components/EnumsRepo.sol";
-import "../../common/components/CloneFactory.sol";
-
-import "../../common/config/BOSSetting.sol";
-import "../../common/config/BOMSetting.sol";
+import "../../common/utils/CloneFactory.sol";
 
 import "./interfaces/ITerm.sol";
 
@@ -33,6 +33,7 @@ contract ShareholdersAgreement is
 {
     using ArrayUtils for address[];
     using ArrayUtils for uint8[];
+    using AddrBook for AddrBook.Book;
 
     // title => template address
     mapping(uint8 => address) public tempOfTitle;
@@ -43,10 +44,13 @@ contract ShareholdersAgreement is
     // body => title
     mapping(address => uint8) private _bodyToTitle;
 
-    // body => bool
-    mapping(address => bool) public registered;
+    // bodys
+    AddrBook.Book private _terms;
 
-    address[] private _terms;
+    // // body => bool
+    // mapping(address => bool) public registered;
+
+    // address[] private _terms;
 
     //##############
     //##  Event   ##
@@ -60,11 +64,7 @@ contract ShareholdersAgreement is
 
     event RemoveTemplate(uint8 indexed title);
 
-    event CreateTerm(
-        uint8 indexed title,
-        address indexed body,
-        address creator
-    );
+    event CreateTerm(uint8 indexed title, address indexed body, uint32 creator);
 
     event RemoveTerm(uint8 indexed title);
 
@@ -123,44 +123,57 @@ contract ShareholdersAgreement is
 
     function createTerm(uint8 title)
         external
-        onlyGC
+        onlyAttorney
         tempReadyFor(title)
         returns (address body)
     {
         body = createClone(tempOfTitle[title]);
-        IAccessControl(body).init(msg.sender, this);
+
+        IAccessControl(body).init(
+            _rc.userNo(this),
+            _rc.userNo(this),
+            address(_rc)
+        );
+
+        IDraftControl(body).setGeneralCounsel(_rc.userNo(this));
+
+        _copyRoleTo(body, ATTORNEYS);
 
         IBookSetting(body).setBOS(address(_bos));
-
         if (title != uint8(TermTitle.VOTING_RULES))
             IBookSetting(body).setBOM(address(_bom));
 
         _titleToBody[title] = body;
         _bodyToTitle[body] = title;
 
-        registered[body] = true;
-        _terms.push(body);
+        _terms.addChapter(body);
+        // // registered[body] = true;
+        // _terms.push(body);
 
-        emit CreateTerm(title, body, msg.sender);
+        emit CreateTerm(title, body, _msgSender());
     }
 
     function removeTerm(uint8 title) external onlyAttorney {
         delete _bodyToTitle[_titleToBody[title]];
 
-        delete registered[_titleToBody[title]];
-
-        _terms.removeByValue(_titleToBody[title]);
-
         delete _titleToBody[title];
+
+        // delete registered[_titleToBody[title]];
+        // _terms.removeByValue(_titleToBody[title]);
+
+        _terms.removeChapter(_titleToBody[title]);
 
         emit RemoveTerm(title);
     }
 
-    // function finalizeSHA() external onlyGC {
-    //     for (uint256 i = 0; i < _terms.length; i++) {
-    //         IDraftControl(_terms[i]).lockContents();
-    //     }
-    // }
+    function finalizeSHA() external onlyAttorney {
+        address[] memory clauses = _terms.getChapters();
+        uint256 len = clauses.length;
+
+        for (uint256 i = 0; i < len; i++) {
+            IDraftControl(clauses[i]).lockContents();
+        }
+    }
 
     function kill() onlyDirectKeeper {
         selfdestruct(getDirectKeeper());
@@ -170,8 +183,12 @@ contract ShareholdersAgreement is
     //##    读接口    ##
     //##################
 
+    function isTerm(address addr) external view returns (bool) {
+        return _terms.isChapter(addr);
+    }
+
     function terms() external view returns (address[]) {
-        return _terms;
+        return _terms.getChapters();
     }
 
     function getTerm(uint8 title)

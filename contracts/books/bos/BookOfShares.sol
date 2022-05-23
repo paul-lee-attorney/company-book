@@ -6,6 +6,7 @@
 pragma solidity ^0.4.24;
 
 import "./MembersRepo.sol";
+import "../../common/lib/SNParser.sol";
 
 /// @author 李力@北京市竞天公诚律师事务所
 /// @notice 包括《股权登记簿》和《股东名册》两个组成部分。
@@ -29,7 +30,7 @@ import "./MembersRepo.sol";
 /// 出于后续开发考虑，本系统预留了各类“交易价格”属性，此类信息不建议在公链或许可链等环境下直接以明文披露，
 /// 否则将给相关的利害关系方，造成不可估量的经济损失及负面影响。
 contract BookOfShares is MembersRepo {
-    using ShareSNParser for bytes32;
+    using SNParser for bytes32;
 
     //公司注册号哈希值（统一社会信用号码的“加盐”哈希值）
     bytes32 private _regNumHash;
@@ -37,13 +38,13 @@ contract BookOfShares is MembersRepo {
     /// @notice 初始化 超级管理员 账户地址，设定 公司股东人数上限， 设定 公司注册号哈希值
     /// @param regNumHash - 公司注册号哈希值
     /// @param maxQtyOfMembers - 公司股东人数上限（根据法定最多股东人数设定）
-    constructor(
-        bytes32 regNumHash,
-        uint8 maxQtyOfMembers,
-        address bookeeper
-    ) public MembersRepo(maxQtyOfMembers) {
+    constructor(bytes32 regNumHash, uint8 maxQtyOfMembers)
+        public
+        // address bookeeper
+        MembersRepo(maxQtyOfMembers)
+    {
         _regNumHash = regNumHash;
-        init(msg.sender, bookeeper);
+        // init(msg.sender, bookeeper);
     }
 
     /// @param shareholder - 股东账户地址
@@ -55,7 +56,7 @@ contract BookOfShares is MembersRepo {
     /// @param issuePrice - 发行价格（用于判断“反稀释”等价格相关《股东协议》条款,
     /// 公链应用时，出于保密考虑可设置为“1”）
     function issueShare(
-        address shareholder,
+        uint32 shareholder,
         uint8 class,
         uint256 parValue,
         uint256 paidPar,
@@ -134,13 +135,13 @@ contract BookOfShares is MembersRepo {
         bytes6 ssn,
         uint256 parValue,
         uint256 paidPar,
-        address to,
+        uint32 to,
         uint32 closingDate,
         uint256 unitPrice
     ) external onlyKeeper {
         bytes32 shareNumber = _shares[ssn].shareNumber;
 
-        require(to != address(0), "shareholder address is ZERO");
+        require(to != 0, "shareholder address is ZERO");
         require(closingDate <= now + 15 minutes, "closingDate NOT a PAST time");
         require(
             closingDate > shareNumber.issueDate(),

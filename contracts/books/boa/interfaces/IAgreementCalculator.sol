@@ -6,12 +6,12 @@
 pragma solidity ^0.4.24;
 
 contract IAgreementCalculator {
-    function parToSell(address ia, address acct)
+    function parToSell(address ia, uint32 acct)
         external
         view
         returns (uint256 output);
 
-    function paidToSell(address ia, address acct)
+    function paidToSell(address ia, uint32 acct)
         external
         view
         returns (uint256 output);
@@ -26,12 +26,12 @@ contract IAgreementCalculator {
         view
         returns (uint256 output);
 
-    function parToBuy(address ia, address acct)
+    function parToBuy(address ia, uint32 acct)
         internal
         view
         returns (uint256 output);
 
-    function paidToBuy(address ia, address acct)
+    function paidToBuy(address ia, uint32 acct)
         internal
         view
         returns (uint256 output);
@@ -55,5 +55,5 @@ contract IAgreementCalculator {
 
     function typeOfIA(address ia) external view returns (uint8 output);
 
-    function otherMembers(address ia) external view returns (address[]);
+    function otherMembers(address ia) external view returns (uint32[]);
 }

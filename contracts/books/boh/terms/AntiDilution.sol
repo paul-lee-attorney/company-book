@@ -5,27 +5,30 @@
 
 pragma solidity ^0.4.24;
 
+import "../../../common/lib/UserGroup.sol";
+
 import "../../boa/interfaces/IAgreement.sol";
 
-import "../../../common/config/BOSSetting.sol";
-import "../../../common/config/BOMSetting.sol";
-import "../../../common/config/DraftControl.sol";
+import "../../../common/ruting/BOSSetting.sol";
+import "../../../common/ruting/BOMSetting.sol";
+import "../../../common/access/DraftControl.sol";
 
 import "../../../common/lib/ArrayUtils.sol";
 import "../../../common/lib/SafeMath.sol";
-import "../../../common/lib/serialNumber/SNFactory.sol";
-import "../../../common/lib/serialNumber/DealSNParser.sol";
+import "../../../common/lib/SNFactory.sol";
+import "../../../common/lib/SNParser.sol";
 
 import "../../../common/components/interfaces/ISigPage.sol";
 
 contract AntiDilution is BOSSetting, BOMSetting, DraftControl {
     using SNFactory for bytes;
-    using ArrayUtils for address[];
+    using ArrayUtils for uint32[];
     using ArrayUtils for bytes32[];
-    using DealSNParser for bytes32;
+    using SNParser for bytes32;
+    using UserGroup for UserGroup.Group;
 
-    // benchmark => obligors
-    mapping(bytes32 => address[]) public obligors;
+    // benchmark => _obligors
+    mapping(bytes32 => UserGroup.Group) private _obligors;
 
     // class => bool
     mapping(uint8 => bool) public isMarked;
@@ -43,9 +46,9 @@ contract AntiDilution is BOSSetting, BOMSetting, DraftControl {
 
     event DelBenchmark(uint8 indexed class);
 
-    event AddObligor(uint256 indexed class, address obligor);
+    event AddObligor(uint256 indexed class, uint32 obligor);
 
-    event RemoveObligor(uint256 indexed class, address obligor);
+    event RemoveObligor(uint256 indexed class, uint32 obligor);
 
     // #################
     // ##   修饰器    ##
@@ -97,7 +100,7 @@ contract AntiDilution is BOSSetting, BOMSetting, DraftControl {
     function delBenchmark(uint8 class) external onlyAttorney onlyMarked(class) {
         bytes32 mark = classToMark[class];
 
-        delete obligors[mark];
+        delete _obligors[mark];
         delete isMarked[class];
         delete classToMark[class];
 
@@ -106,32 +109,24 @@ contract AntiDilution is BOSSetting, BOMSetting, DraftControl {
         emit DelBenchmark(class);
     }
 
-    function addObligor(uint8 class, address obligor)
+    function addObligor(uint8 class, uint32 acct)
         external
         onlyAttorney
         onlyMarked(class)
     {
-        ISigPage(getDirectKeeper()).isParty(obligor);
+        // ISigPage(getDirectKeeper()).isParty(acct);
 
-        (bool exist, ) = obligors[classToMark[class]].firstIndexOf(obligor);
-
-        if (!exist) {
-            obligors[classToMark[class]].push(obligor);
-            emit AddObligor(class, obligor);
-        }
+        if (_obligors[classToMark[class]].addMember(acct))
+            emit AddObligor(class, acct);
     }
 
-    function removeObligor(uint8 class, address obligor)
+    function removeObligor(uint8 class, uint32 acct)
         external
         onlyAttorney
         onlyMarked(class)
     {
-        (bool exist, ) = obligors[classToMark[class]].firstIndexOf(obligor);
-
-        if (exist) {
-            obligors[classToMark[class]].removeByValue(obligor);
-            emit RemoveObligor(class, obligor);
-        }
+        if (_obligors[classToMark[class]].removeMember(acct))
+            emit RemoveObligor(class, acct);
     }
 
     // ################
@@ -168,7 +163,7 @@ contract AntiDilution is BOSSetting, BOMSetting, DraftControl {
         else return false;
     }
 
-    function _isExempted(uint256 price, address[] consentParties)
+    function _isExempted(uint256 price, uint32[] consentParties)
         private
         view
         returns (bool)
@@ -178,7 +173,7 @@ contract AntiDilution is BOSSetting, BOMSetting, DraftControl {
         uint8 i = uint8(benchmarks.length);
 
         while (i > 0 && uint256(bytes31(benchmarks[i - 1])) > price) {
-            address[] memory classMember = _bosCal.membersOfClass(
+            uint32[] memory classMember = _bosCal.membersOfClass(
                 uint8(benchmarks[i - 1][31])
             );
 
@@ -211,7 +206,7 @@ contract AntiDilution is BOSSetting, BOMSetting, DraftControl {
     {
         if (!isTriggered(ia, sn)) return true;
 
-        (address[] memory consentParties, ) = _bom.getYea(ia);
+        (uint32[] memory consentParties, ) = _bom.getYea(ia);
 
         (, uint256 unitPrice, , , , , ) = IAgreement(ia).getDeal(
             sn.sequenceOfDeal()

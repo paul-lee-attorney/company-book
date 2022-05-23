@@ -6,10 +6,10 @@
 pragma solidity ^0.4.24;
 
 import "../../../common/lib/ArrayUtils.sol";
-import "../../../common/lib/serialNumber/SNFactory.sol";
+import "../../../common/lib/SNFactory.sol";
 
-import "../../../common/config/BOSSetting.sol";
-import "../../../common/config/DraftControl.sol";
+import "../../../common/ruting/BOSSetting.sol";
+import "../../../common/access/DraftControl.sol";
 
 contract GroupsUpdate is BOSSetting, DraftControl {
     using SNFactory for bytes;
@@ -21,8 +21,8 @@ contract GroupsUpdate is BOSSetting, DraftControl {
     //##################
     //##    Event     ##
     //##################
-    event AddMemberOrder(address acct, uint16 groupNo);
-    event RemoveMemberOrder(address acct, uint16 groupNo);
+    event AddMemberOrder(uint32 acct, uint16 groupNo);
+    event RemoveMemberOrder(uint32 acct, uint16 groupNo);
     event DelOrder(bytes32 order);
 
     //##################
@@ -31,22 +31,19 @@ contract GroupsUpdate is BOSSetting, DraftControl {
 
     function _createOrder(
         bool addMember,
-        address acct,
+        uint32 acct,
         uint16 groupNo
     ) private pure returns (bytes32) {
         bytes memory _sn = new bytes(32);
 
         _sn = _sn.boolToSN(0, addMember);
         _sn = _sn.sequenceToSN(1, groupNo);
-        _sn = _sn.addrToSN(3, acct);
+        _sn = _sn.dateToSN(3, acct);
 
         return _sn.bytesToBytes32();
     }
 
-    function addMemberOrder(address acct, uint16 groupNo)
-        external
-        onlyAttorney
-    {
+    function addMemberOrder(uint32 acct, uint16 groupNo) external onlyAttorney {
         require(groupNo > 0, "ZERO groupNo");
         require(groupNo <= _bos.counterOfGroups() + 1, "groupNo OVER FLOW");
 
@@ -58,7 +55,7 @@ contract GroupsUpdate is BOSSetting, DraftControl {
         emit AddMemberOrder(acct, groupNo);
     }
 
-    function removeMemberOrder(address acct, uint16 groupNo)
+    function removeMemberOrder(uint32 acct, uint16 groupNo)
         external
         memberExist(acct)
         onlyAttorney

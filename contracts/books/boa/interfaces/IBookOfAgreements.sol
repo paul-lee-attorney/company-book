@@ -22,7 +22,7 @@ interface IBookOfAgreements {
         address ia,
         uint32 submitDate,
         bytes32 docHash,
-        address submitter
+        uint32 submitter
     ) external;
 
     function addAlongDeal(
@@ -35,7 +35,7 @@ interface IBookOfAgreements {
 
     function acceptAlongDeal(
         address ia,
-        address drager,
+        uint32 drager,
         bytes32 sn
     ) external;
 

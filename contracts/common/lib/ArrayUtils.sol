@@ -68,6 +68,23 @@ library ArrayUtils {
         return (false, 0);
     }
 
+    function firstIndexOf(uint32[] storage array, uint32 key)
+        internal
+        view
+        returns (bool, uint256)
+    {
+        if (array.length == 0) {
+            return (false, 0);
+        }
+
+        for (uint256 i = 0; i < array.length; i++) {
+            if (array[i] == key) {
+                return (true, i);
+            }
+        }
+        return (false, 0);
+    }
+
     function firstIndexOf(address[] storage array, address key)
         internal
         view
@@ -149,6 +166,16 @@ library ArrayUtils {
         array.length--;
     }
 
+    function removeByIndex(uint32[] storage array, uint256 index) internal {
+        require(index < array.length, "ArrayForUint8: index out of bounds");
+
+        while (index < array.length - 1) {
+            array[index] = array[index + 1];
+            index++;
+        }
+        array.length--;
+    }
+
     function removeByIndex(address[] storage array, uint256 index) internal {
         require(index < array.length, "ArrayForaddress: index out of bounds");
 
@@ -188,6 +215,15 @@ library ArrayUtils {
     }
 
     function removeByValue(uint16[] storage array, uint16 value) internal {
+        uint256 index;
+        bool isIn;
+        (isIn, index) = firstIndexOf(array, value);
+        if (isIn) {
+            removeByIndex(array, index);
+        }
+    }
+
+    function removeByValue(uint32[] storage array, uint32 value) internal {
         uint256 index;
         bool isIn;
         (isIn, index) = firstIndexOf(array, value);
@@ -241,6 +277,15 @@ library ArrayUtils {
         }
     }
 
+    function addValue(uint32[] storage array, uint32 value) internal {
+        uint256 index;
+        bool isIn;
+        (isIn, index) = firstIndexOf(array, value);
+        if (!isIn) {
+            array.push(value);
+        }
+    }
+
     function addValue(address[] storage array, address value) internal {
         uint256 index;
         bool isIn;
@@ -259,16 +304,16 @@ library ArrayUtils {
         }
     }
 
-    function combine(address[] arrA, address[] arrB)
+    function combine(uint32[] arrA, uint32[] arrB)
         internal
         pure
-        returns (address[])
+        returns (uint32[])
     {
         uint256 lenA = arrA.length;
         uint256 lenB = arrB.length;
         uint256 i;
 
-        address[] memory arrC = new address[](lenA + lenB);
+        uint32[] memory arrC = new uint32[](lenA + lenB);
 
         for (i = 0; i < lenA; i++) arrC[i] = arrA[i];
         for (i = 0; i < lenB; i++) arrC[lenA + i] = arrB[i];
@@ -276,15 +321,15 @@ library ArrayUtils {
         return arrC;
     }
 
-    function minus(address[] arrA, address[] arrB)
+    function minus(uint32[] arrA, uint32[] arrB)
         internal
         view
-        returns (address[])
+        returns (uint32[])
     {
         uint256 lenA = arrA.length;
         uint256 lenB = arrB.length;
 
-        address[] storage arrC;
+        uint32[] storage arrC;
 
         for (uint256 i = 0; i < lenA; i++) {
             bool flag = false;
@@ -300,7 +345,7 @@ library ArrayUtils {
         return arrC;
     }
 
-    function fullyCoveredBy(address[] arrA, address[] arrB)
+    function fullyCoveredBy(uint32[] arrA, uint32[] arrB)
         internal
         pure
         returns (bool)

@@ -46,6 +46,8 @@ interface IShareholdersAgreement {
 
     function getTerm(uint8 title) external view returns (address body);
 
+    function isTerm(address addr) external view returns (bool);
+
     function terms() external view returns (address[]);
 
     function tempOfTitle(uint8 title) external view returns (address);

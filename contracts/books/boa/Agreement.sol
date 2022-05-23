@@ -5,28 +5,26 @@
 
 pragma solidity ^0.4.24;
 
-import "../../common/config/BOSSetting.sol";
+import "../../common/ruting/BOSSetting.sol";
 
 import "../../common/lib/ArrayUtils.sol";
-import "../../common/lib/serialNumber/SNFactory.sol";
-import "../../common/lib/serialNumber/DealSNParser.sol";
-import "../../common/lib/serialNumber/ShareSNParser.sol";
+import "../../common/lib/SNFactory.sol";
+import "../../common/lib/SNParser.sol";
 
 import "../../common/components/SigPage.sol";
 
 contract Agreement is BOSSetting, SigPage {
     using SNFactory for bytes;
-    using DealSNParser for bytes32;
-    using ShareSNParser for bytes32;
+    using SNParser for bytes32;
     using ArrayUtils for bytes32[];
 
     /* struct sn{
         uint8 class; 1
         uint8 typeOfDeal; 1   // 1-CI 2-ST(to 3rd) 3-ST(internal) 4-TagAlong 5-DragAlong 6-FirstRefusal
         uint16 sequence; 2
-        address buyer; 20
+        uint32 buyer; 4
         uint16 group; 2
-        uint16 shortShareNumber; 6
+        bytes6 shortShareNumber; 6
     } 
     */
 
@@ -104,7 +102,7 @@ contract Agreement is BOSSetting, SigPage {
         uint8 class,
         uint8 typeOfDeal,
         uint16 sequence,
-        address buyer,
+        uint32 buyer,
         uint16 group,
         bytes32 shareNumber
     ) internal pure returns (bytes32) {
@@ -113,9 +111,9 @@ contract Agreement is BOSSetting, SigPage {
         _sn[0] = bytes1(class);
         _sn[1] = bytes1(typeOfDeal);
         _sn = _sn.sequenceToSN(2, sequence);
-        _sn = _sn.addrToSN(4, buyer);
-        _sn = _sn.sequenceToSN(24, group);
-        _sn = _sn.bytes32ToSN(26, shareNumber, 1, 6);
+        _sn = _sn.dateToSN(4, buyer);
+        _sn = _sn.sequenceToSN(8, group);
+        _sn = _sn.bytes32ToSN(10, shareNumber, 1, 6);
 
         return _sn.bytesToBytes32();
     }
@@ -123,10 +121,10 @@ contract Agreement is BOSSetting, SigPage {
     function createDeal(
         bytes32 shareNumber,
         uint8 class,
-        address buyer,
+        uint32 buyer,
         uint16 group
     ) external onlyAttorney returns (bytes32) {
-        require(buyer != address(0), "buyer is ZERO address");
+        require(buyer != 0, "buyer is ZERO address");
         require(group > 0, "ZERO group");
 
         uint8 typeOfDeal = 1;

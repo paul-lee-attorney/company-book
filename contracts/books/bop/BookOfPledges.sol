@@ -7,26 +7,24 @@ pragma solidity ^0.4.24;
 
 import "../../common/lib/SafeMath.sol";
 import "../../common/lib/ArrayUtils.sol";
-import "../../common/lib/serialNumber/SNFactory.sol";
-import "../../common/lib/serialNumber/ShareSNParser.sol";
-import "../../common/lib/serialNumber/PledgeSNParser.sol";
+import "../../common/lib/SNFactory.sol";
+import "../../common/lib/SNParser.sol";
 
-import "../../common/config/BOSSetting.sol";
+import "../../common/ruting/BOSSetting.sol";
 
 contract BookOfPledges is BOSSetting {
     using SafeMath for uint8;
     using SNFactory for bytes;
     using SNFactory for bytes32;
-    using ShareSNParser for bytes32;
-    using PledgeSNParser for bytes32;
+    using SNParser for bytes32;
     using ArrayUtils for bytes32[];
 
     //Pledge 质权
     struct Pledge {
         bytes32 sn; //质押编号
         uint256 pledgedPar; // 出质票面额（数量）
-        address creditor; //质权人、债权人
-        address debtor;
+        uint32 creditor; //质权人、债权人
+        uint32 debtor;
         uint256 guaranteedAmt; //担保金额
     }
 
@@ -34,7 +32,8 @@ contract BookOfPledges is BOSSetting {
     //     bytes6 shortOfShare; 6
     //     uint16 sequence; 2
     //     uint32 createDate; 4
-    //     address pledgor; 20
+    //     uint32 pledgor; 4
+    //     uint32 debtor; 4
     // }
 
     // ssn => Pledge
@@ -50,8 +49,8 @@ contract BookOfPledges is BOSSetting {
 
     bytes32[] public snList;
 
-    constructor(address bookeeper) public {
-        init(msg.sender, bookeeper);
+    constructor(uint32 bookeeper, address regCenter) public {
+        init(_msgSender(), bookeeper, regCenter);
     }
 
     //##################
@@ -62,7 +61,7 @@ contract BookOfPledges is BOSSetting {
         bytes32 indexed sn,
         bytes32 indexed shareNumber,
         uint256 pledgedPar,
-        address creditor,
+        uint32 creditor,
         uint256 guaranteedAmt
     );
 
@@ -91,14 +90,16 @@ contract BookOfPledges is BOSSetting {
         bytes6 shortOfShare,
         uint16 sequence,
         uint32 createDate,
-        address pledgor
+        uint32 pledgor,
+        uint32 debtor
     ) private pure returns (bytes32) {
         bytes memory _sn = new bytes(32);
 
         _sn = _sn.shortToSN(0, shortOfShare);
         _sn = _sn.sequenceToSN(6, sequence);
         _sn = _sn.dateToSN(8, createDate);
-        _sn = _sn.addrToSN(12, pledgor);
+        _sn = _sn.dateToSN(12, pledgor);
+        _sn = _sn.dateToSN(16, debtor);
 
         return _sn.bytesToBytes32();
     }
@@ -106,8 +107,8 @@ contract BookOfPledges is BOSSetting {
     function createPledge(
         bytes32 shareNumber,
         uint32 createDate,
-        address creditor,
-        address debtor,
+        uint32 creditor,
+        uint32 debtor,
         uint256 pledgedPar,
         uint256 guaranteedAmt
     )
@@ -124,7 +125,8 @@ contract BookOfPledges is BOSSetting {
             shareNumber.short(),
             counterOfPledges,
             createDate,
-            shareNumber.shareholder()
+            shareNumber.shareholder(),
+            debtor
         );
 
         bytes6 ssn = sn.shortOfPledge();
@@ -134,7 +136,7 @@ contract BookOfPledges is BOSSetting {
         pld.sn = sn;
         pld.pledgedPar = pledgedPar;
         pld.creditor = creditor;
-        pld.debtor = debtor;
+        // pld.debtor = debtor;
         pld.guaranteedAmt = guaranteedAmt;
 
         isPledge[ssn] = true;
@@ -162,7 +164,7 @@ contract BookOfPledges is BOSSetting {
 
     function updatePledge(
         bytes6 ssn,
-        address creditor,
+        uint32 creditor,
         uint256 pledgedPar,
         uint256 guaranteedAmt
     ) external onlyKeeper pledgeExist(ssn) {
@@ -188,8 +190,7 @@ contract BookOfPledges is BOSSetting {
         returns (
             bytes32 sn,
             uint256 pledgedPar,
-            address creditor,
-            address debtor,
+            uint32 creditor,
             uint256 guaranteedAmt
         )
     {
@@ -198,7 +199,7 @@ contract BookOfPledges is BOSSetting {
         sn = pld.sn;
         pledgedPar = pld.pledgedPar;
         creditor = pld.creditor;
-        debtor = pld.debtor;
+        // debtor = pld.debtor;
         guaranteedAmt = pld.guaranteedAmt;
     }
 }

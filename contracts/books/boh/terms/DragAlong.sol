@@ -7,26 +7,21 @@ pragma solidity ^0.4.24;
 
 import "../../boa/interfaces/IAgreement.sol";
 
-import "../../../common/config/BOSSetting.sol";
-import "../../../common/config/BOASetting.sol";
-import "../../../common/config/DraftControl.sol";
+import "../../../common/ruting/BOSSetting.sol";
+import "../../../common/ruting/BOASetting.sol";
+import "../../../common/access/DraftControl.sol";
 
 import "../../../common/lib/ArrayUtils.sol";
 import "../../../common/lib/SafeMath.sol";
 
-import "../../../common/lib/serialNumber/ShareSNParser.sol";
-import "../../../common/lib/serialNumber/DealSNParser.sol";
-import "../../../common/lib/serialNumber/LinkRuleParser.sol";
-import "../../../common/lib/serialNumber/SNFactory.sol";
+import "../../../common/lib/SNParser.sol";
+import "../../../common/lib/SNFactory.sol";
 
 contract DragAlong is BOSSetting, BOASetting, DraftControl {
     using ArrayUtils for address[];
     using ArrayUtils for uint16[];
     using SafeMath for uint256;
-    // using SafeMath for uint8;
-    using ShareSNParser for bytes32;
-    using DealSNParser for bytes32;
-    using LinkRuleParser for bytes32;
+    using SNParser for bytes32;
     using SNFactory for bytes;
 
     struct Link {
@@ -60,9 +55,9 @@ contract DragAlong is BOSSetting, BOASetting, DraftControl {
 
     event SetLink(uint16 indexed drager, bytes32 rule);
 
-    event AddFollower(uint16 indexed drager, address follower);
+    event AddFollower(uint16 indexed drager, uint32 follower);
 
-    event RemoveFollower(uint16 indexed drager, address follower);
+    event RemoveFollower(uint16 indexed drager, uint32 follower);
 
     event DelLink(uint16 indexed drager);
 
@@ -187,7 +182,7 @@ contract DragAlong is BOSSetting, BOASetting, DraftControl {
         return _links[drager].isFollower[follower];
     }
 
-    function isLinked(address dragerAddr, address followerAddr)
+    function isLinked(uint32 dragerAddr, uint32 followerAddr)
         external
         view
         onlyKeeper
@@ -222,7 +217,7 @@ contract DragAlong is BOSSetting, BOASetting, DraftControl {
 
         if (sn.typeOfDeal() == 1) return false;
 
-        address seller = IAgreement(ia)
+        uint32 seller = IAgreement(ia)
             .shareNumberOfDeal(sn.sequenceOfDeal())
             .shareholder();
 

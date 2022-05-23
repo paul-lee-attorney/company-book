@@ -7,16 +7,13 @@ pragma solidity ^0.4.24;
 
 import "../books/boa/interfaces/IAgreement.sol";
 
-import "../common/config/BOASetting.sol";
-import "../common/config/BOMSetting.sol";
-import "../common/config/BOOSetting.sol";
-import "../common/config/SHASetting.sol";
+import "../common/ruting/BOASetting.sol";
+import "../common/ruting/BOMSetting.sol";
+import "../common/ruting/BOOSetting.sol";
+import "../common/ruting/SHASetting.sol";
 
 import "../common/lib/SafeMath.sol";
-import "../common/lib/serialNumber/ShareSNParser.sol";
-import "../common/lib/serialNumber/DealSNParser.sol";
-import "../common/lib/serialNumber/VotingRuleParser.sol";
-import "../common/lib/serialNumber/OptionSNParser.sol";
+import "../common/lib/SNParser.sol";
 
 import "../common/components/interfaces/ISigPage.sol";
 
@@ -33,21 +30,18 @@ contract BOMKeeper is
     Context
 {
     using SafeMath for uint256;
-    using ShareSNParser for bytes32;
-    using DealSNParser for bytes32;
-    using OptionSNParser for bytes32;
-    using VotingRuleParser for bytes32;
+    using SNParser for bytes32;
 
-    constructor(address bookeeper) public {
-        init(msg.sender, bookeeper);
-    }
+    // constructor(address bookeeper) public {
+    //     init(msg.sender, bookeeper);
+    // }
 
     // ##################
     // ##   Modifier   ##
     // ##################
 
     modifier onlyPartyOf(address body) {
-        require(ISigPage(body).isParty(_msgSender), "NOT Party of Doc");
+        require(ISigPage(body).isParty(_bridgedMsgSender), "NOT Party of Doc");
         _;
     }
 
@@ -61,8 +55,8 @@ contract BOMKeeper is
         onlyPartyOf(ia)
         currentDate(proposeDate)
     {
+        _bom.proposeMotion(ia, proposeDate, _bridgedMsgSender);
         _clearMsgSender();
-        _bom.proposeMotion(ia, proposeDate);
     }
 
     function voteCounting(address ia)
@@ -78,14 +72,14 @@ contract BOMKeeper is
         address ia,
         bytes32 sn,
         uint32 exerciseDate,
-        address againstVoter
+        uint32 againstVoter
     ) external onlyDirectKeeper currentDate(exerciseDate) {
         bytes32 shareNumber = IAgreement(ia).shareNumberOfDeal(
             sn.sequenceOfDeal()
         );
 
         require(
-            _msgSender == shareNumber.shareholder(),
+            _bridgedMsgSender == shareNumber.shareholder(),
             "NOT Seller of the Deal"
         );
 
@@ -103,7 +97,7 @@ contract BOMKeeper is
 
         bytes32 snOfOpt = _boo.createOption(
             1,
-            _msgSender,
+            _bridgedMsgSender,
             againstVoter,
             exerciseDate,
             1,

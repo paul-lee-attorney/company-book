@@ -7,10 +7,15 @@ pragma solidity ^0.4.24;
 
 import "./Agreement.sol";
 
+import "../../common/lib/UserGroup.sol";
+import "../../common/lib/SequenceList.sol";
+
 contract AgreementWithFirstRefusal is Agreement {
+    using UserGroup for UserGroup.Group;
+    using SequenceList for SequenceList.List;
+
     struct FRNotice {
-        mapping(address => bool) isRequester;
-        address[] requesters;
+        UserGroup.Group execParties;
         bool basedOnPar;
         uint256 totalAmt;
     }
@@ -18,16 +23,14 @@ contract AgreementWithFirstRefusal is Agreement {
     // sequenceOfDeal => FRNotice
     mapping(uint16 => FRNotice) private _frNotices;
 
-    // sequenceOfDeal => bool
-    mapping(uint16 => bool) public isRequestedForFR;
-
-    uint16[] private _frNoticesList;
+    // sequenceOfDeal => bool/list
+    SequenceList.List internal _subjectDeals;
 
     //##################
     //##    Event     ##
     //##################
 
-    event RecordFRNotice(bytes32 indexed sn, address sender, uint32 execDate);
+    event RecordFRNotice(bytes32 indexed sn, uint32 sender, uint32 execDate);
 
     event CreateFRDeal(
         bytes32 indexed sn,
@@ -38,14 +41,14 @@ contract AgreementWithFirstRefusal is Agreement {
         uint32 closingDate
     );
 
-    event AcceptFR(bytes32 indexed sn, address sender);
+    event AcceptFR(bytes32 indexed sn, uint32 sender);
 
     //##################
     //##   Modifier   ##
     //##################
 
-    modifier frNoticeExist(uint16 ssn) {
-        require(isRequestedForFR[ssn], "NOT be requested for FR");
+    modifier subDealExist(uint16 ssn) {
+        require(_subjectDeals.isItem(ssn), "NOT be requested for FR");
         _;
     }
 
@@ -55,7 +58,7 @@ contract AgreementWithFirstRefusal is Agreement {
 
     function recordFRRequest(
         uint16 ssn,
-        address acct,
+        uint32 acct,
         bool basedOnPar,
         uint32 execDate
     ) external onlyKeeper dealExist(ssn) {
@@ -66,10 +69,11 @@ contract AgreementWithFirstRefusal is Agreement {
             deal.shareNumber.shareholder() != acct,
             "FR requester is seller"
         );
-        require(!notice.isRequester[acct], "already recorded this notice");
 
-        notice.isRequester[acct] = true;
-        notice.requesters.push(acct);
+        require(
+            notice.execParties.addMember(acct),
+            "already record the FR notice"
+        );
 
         notice.basedOnPar = basedOnPar;
 
@@ -79,14 +83,10 @@ contract AgreementWithFirstRefusal is Agreement {
         require(weight > 0, "first refusal request has ZERO weight");
         notice.totalAmt += weight;
 
-        if (!isRequestedForFR[ssn]) {
-            isRequestedForFR[ssn] = true;
-            _frNoticesList.push(ssn);
-            // removeSigOfParty(_deals[ssn].sn.buyerOfDeal());
+        if (_subjectDeals.addItem(ssn))
             removeSigOfParty(_deals[ssn].shareNumber.shareholder());
-        }
 
-        if (!_docParties.isMember(acct)) {
+        if (!isParty(acct)) {
             addPartyToDoc(acct);
             addSigOfParty(acct, execDate);
         }
@@ -98,19 +98,19 @@ contract AgreementWithFirstRefusal is Agreement {
 
     function acceptFR(
         uint16 ssn,
-        address acct,
+        uint32 acct,
         uint32 acceptDate
-    ) external frNoticeExist(ssn) {
+    ) external subDealExist(ssn) {
         FRNotice storage notice = _frNotices[ssn];
         Deal storage orgDeal = _deals[ssn];
 
-        address[] memory requesters = notice.requesters;
-        uint256 len = requesters.length;
+        uint32[] memory parties = notice.execParties.getMembers();
+        uint256 len = parties.length;
 
         for (uint256 i = 0; i < len; i++) {
             uint256 weight = notice.basedOnPar
-                ? _bos.parInHand(requesters[i])
-                : _bos.paidInHand(requesters[i]);
+                ? _bos.parInHand(parties[i])
+                : _bos.paidInHand(parties[i]);
 
             counterOfDeals++;
 
@@ -118,8 +118,8 @@ contract AgreementWithFirstRefusal is Agreement {
                 orgDeal.sn.typeOfDeal(),
                 6, // FirstRefusal
                 counterOfDeals,
-                requesters[i],
-                _bos.groupNo(requesters[i]),
+                parties[i],
+                _bos.groupNo(parties[i]),
                 orgDeal.shareNumber
             );
 
@@ -151,25 +151,29 @@ contract AgreementWithFirstRefusal is Agreement {
     //  ##       查询接口              ##
     //  #################################
 
-    function isRequester(uint16 ssn, address acct)
+    function isExecParty(uint16 ssn, uint32 acct)
         external
         view
-        frNoticeExist(ssn)
+        subDealExist(ssn)
         returns (bool)
     {
-        return _frNotices[ssn].isRequester[acct];
+        return _frNotices[ssn].execParties.isMember(acct);
     }
 
-    function requesters(uint16 ssn)
+    function execParties(uint16 ssn)
         external
         view
-        frNoticeExist(ssn)
-        returns (address[])
+        subDealExist(ssn)
+        returns (uint32[])
     {
-        return _frNotices[ssn].requesters;
+        return _frNotices[ssn].execParties.getMembers();
     }
 
-    function frNoticesList() external view returns (uint16[]) {
-        return _frNoticesList;
+    function isSubjectDeal(uint16 ssn) external view returns (bool) {
+        return _subjectDeals.isItem(ssn);
+    }
+
+    function subjectDeals() external view returns (uint16[]) {
+        return _subjectDeals.getItems();
     }
 }

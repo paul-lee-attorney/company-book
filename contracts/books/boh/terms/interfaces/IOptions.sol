@@ -16,8 +16,8 @@ interface IOptions {
 
     function createOption(
         uint8 typeOfOpt,
-        address rightholder,
-        address obligor,
+        uint32 rightholder,
+        uint32 obligor,
         uint32 triggerDate,
         uint8 exerciseDays,
         uint8 closingDays,
@@ -35,9 +35,9 @@ interface IOptions {
         uint32 para_2
     ) external;
 
-    function addObligorIntoOpt(uint16 sequence, address obligor) external;
+    function addObligorIntoOpt(uint16 sequence, uint32 obligor) external;
 
-    function removeObligorFromOpt(uint16 sequence, address obligor) external;
+    function removeObligorFromOpt(uint16 sequence, uint32 obligor) external;
 
     function delOption(uint16 sequence) external;
 
@@ -47,19 +47,19 @@ interface IOptions {
 
     function sn(uint16 sequence) external view returns (bytes32);
 
-    function isObligor(uint16 sequence, address acct)
+    function isObligor(uint16 sequence, uint32 acct)
         external
         view
         returns (bool);
 
-    function obligors(uint16 sequence) external view returns (address[]);
+    function getObligors(uint16 sequence) external view returns (uint32[]);
 
-    function isRightholder(uint16 sequence, address acct)
+    function isRightholder(uint16 sequence, uint32 acct)
         external
         view
         returns (bool);
 
-    function rightholder(uint16 sequence) external view returns (address);
+    function rightholder(uint16 sequence) external view returns (uint32);
 
-    function snList() external view returns (bytes32[] list);
+    function snList() external returns (bytes32[] list);
 }

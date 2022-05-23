@@ -8,7 +8,7 @@ pragma solidity ^0.4.24;
 import "../../books/bos/interfaces/IBookOfShares.sol";
 import "../../books/bos/interfaces/IBOSCalculator.sol";
 
-import "./AccessControl.sol";
+import "../access/AccessControl.sol";
 
 contract BOSSetting is AccessControl {
     IBookOfShares internal _bos;
@@ -18,21 +18,20 @@ contract BOSSetting is AccessControl {
     event SetBOSCal(address cal);
 
     modifier onlyMember() {
-        require(_bos.isMember(msg.sender), "NOT Member");
+        require(_bos.isMember(_msgSender()), "NOT Member");
         _;
     }
 
-    modifier memberExist(address acct) {
+    modifier memberExist(uint32 acct) {
         require(_bos.isMember(acct), "member NOT exist");
         _;
     }
 
     modifier onlyStakeholders() {
-        address sender = msg.sender;
         require(
-            sender == getOwner() ||
-                sender == getDirectKeeper() ||
-                _bos.isMember(sender),
+            _msgSender() == getOwner() ||
+                _msgSender() == getDirectKeeper() ||
+                _bos.isMember(_msgSender()),
             "NOT Stakeholders"
         );
         _;

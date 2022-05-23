@@ -12,20 +12,14 @@ import "../boh/terms/interfaces/IAlongs.sol";
 import "../../common/components/BookOfDocuments.sol";
 import "../../common/components/EnumsRepo.sol";
 
-import "../../common/config/SHASetting.sol";
+import "../../common/ruting/SHASetting.sol";
 
-import "../../common/lib/serialNumber/VotingRuleParser.sol";
-import "../../common/lib/serialNumber/DealSNParser.sol";
-import "../../common/lib/serialNumber/ShareSNParser.sol";
-import "../../common/lib/serialNumber/LinkRuleParser.sol";
+import "../../common/lib/SNParser.sol";
 
 import "../../common/components/interfaces/ISigPage.sol";
 
 contract BookOfAgreements is EnumsRepo, BookOfDocuments, SHASetting {
-    using VotingRuleParser for bytes32;
-    using DealSNParser for bytes32;
-    using ShareSNParser for bytes32;
-    using LinkRuleParser for bytes32;
+    using SNParser for bytes32;
 
     IAgreementCalculator private _agrmtCal;
 
@@ -58,9 +52,10 @@ contract BookOfAgreements is EnumsRepo, BookOfDocuments, SHASetting {
 
     constructor(
         string _bookName,
-        address _admin,
-        address _bookeeper
-    ) public BookOfDocuments(_bookName, _admin, _bookeeper) {}
+        uint32 _owner,
+        uint32 _bookeeper,
+        address _rc
+    ) public BookOfDocuments(_bookName, _owner, _bookeeper, _rc) {}
 
     //##############
     //##  Event   ##
@@ -101,12 +96,12 @@ contract BookOfAgreements is EnumsRepo, BookOfDocuments, SHASetting {
         address ia,
         uint32 submitDate,
         bytes32 docHash,
-        address submitter
+        uint32 submitter
     ) external onlyDirectKeeper {
         submitDoc(ia, submitDate, docHash, submitter);
         bool basedOnPar = _getSHA()
             .votingRules(_agrmtCal.typeOfIA(ia))
-            .basedOnParValue();
+            .basedOnParOfVR();
         _mockDeals(ia, basedOnPar);
         _calculateResult(ia, basedOnPar);
     }
@@ -273,7 +268,7 @@ contract BookOfAgreements is EnumsRepo, BookOfDocuments, SHASetting {
 
     function acceptAlongDeal(
         address ia,
-        address drager,
+        uint32 drager,
         bytes32 sn
     ) external onlyKeeper {
         uint16 buyerGroup = _bos.groupNo(sn.buyerOfDeal());

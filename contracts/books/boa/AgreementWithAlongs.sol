@@ -55,7 +55,7 @@ contract AgreementWithAlongs is AgreementWithFirstRefusal {
         isDeal[counterOfDeals] = true;
 
         // add seller to party and sign the IA
-        address seller = shareNumber.shareholder();
+        uint32 seller = shareNumber.shareholder();
         addPartyToDoc(seller);
         addSigOfParty(seller, execDate);
 

@@ -7,24 +7,20 @@ pragma solidity ^0.4.24;
 
 import "../books/boa/interfaces/IAgreement.sol";
 
-import "../common/config/AccessControl.sol";
+import "../common/access/AccessControl.sol";
 
-import "../common/config/SHASetting.sol";
-import "../common/config/BOASetting.sol";
-import "../common/config/BOMSetting.sol";
-import "../common/config/BOPSetting.sol";
-import "../common/config/BOOSetting.sol";
-import "../common/config/BOSSetting.sol";
+import "../common/ruting/SHASetting.sol";
+import "../common/ruting/BOASetting.sol";
+import "../common/ruting/BOMSetting.sol";
+import "../common/ruting/BOPSetting.sol";
+import "../common/ruting/BOOSetting.sol";
+import "../common/ruting/BOSSetting.sol";
 
 import "../common/lib/SafeMath.sol";
-import "../common/lib/serialNumber/ShareSNParser.sol";
-import "../common/lib/serialNumber/PledgeSNParser.sol";
-import "../common/lib/serialNumber/DealSNParser.sol";
-import "../common/lib/serialNumber/OptionSNParser.sol";
-import "../common/lib/serialNumber/VotingRuleParser.sol";
+import "../common/lib/SNParser.sol";
 
-import "../common/config/interfaces/IBookSetting.sol";
-import "../common/config/interfaces/IAccessControl.sol";
+import "../common/ruting/interfaces/IBookSetting.sol";
+import "../common/access/interfaces/IAccessControl.sol";
 import "../common/components/interfaces/ISigPage.sol";
 
 import "../common/components/EnumsRepo.sol";
@@ -42,11 +38,7 @@ contract BOOKeeper is
     Context
 {
     using SafeMath for uint256;
-    using ShareSNParser for bytes32;
-    using OptionSNParser for bytes32;
-    using PledgeSNParser for bytes32;
-    using DealSNParser for bytes32;
-    using VotingRuleParser for bytes32;
+    using SNParser for bytes32;
 
     address[15] public termsTemplate;
 
@@ -61,9 +53,9 @@ contract BOOKeeper is
         TermTitle.TAG_ALONG
     ];
 
-    constructor(address bookeeper) public {
-        init(msg.sender, bookeeper);
-    }
+    // constructor(address bookeeper) public {
+    //     init(msg.sender, bookeeper);
+    // }
 
     // ################
     // ##   Events   ##
@@ -87,30 +79,33 @@ contract BOOKeeper is
 
     modifier onlyAdminOf(address body) {
         require(
-            IAccessControl(body).getOwner() == _msgSender,
+            IAccessControl(body).getOwner() == _bridgedMsgSender,
             "NOT Admin of Doc"
         );
         _;
     }
 
     modifier onlyPartyOf(address body) {
-        require(ISigPage(body).isParty(_msgSender), "NOT Party of Doc");
+        require(ISigPage(body).isParty(_bridgedMsgSender), "NOT Party of Doc");
         _;
     }
 
     modifier onlyRightholder(bytes32 sn) {
-        (, address rightholder, , , , , ) = _boo.getOption(sn.shortOfOpt());
-        require(_msgSender == rightholder, "NOT rightholder");
+        (, uint32 rightholder, , , , , ) = _boo.getOption(sn.shortOfOpt());
+        require(_bridgedMsgSender == rightholder, "NOT rightholder");
         _;
     }
 
     modifier onlySeller(bytes32 sn) {
         if (sn.typeOfOpt() > 0) {
-            (, address rightholder, , , , , ) = _boo.getOption(sn.shortOfOpt());
-            require(_msgSender == rightholder, "msgSender NOT rightholder");
+            (, uint32 rightholder, , , , , ) = _boo.getOption(sn.shortOfOpt());
+            require(
+                _bridgedMsgSender == rightholder,
+                "msgSender NOT rightholder"
+            );
         } else
             require(
-                _boo.isObligor(sn.shortOfOpt(), _msgSender),
+                _boo.isObligor(sn.shortOfOpt(), _bridgedMsgSender),
                 "msgSender NOT seller"
             );
         _;
@@ -119,12 +114,15 @@ contract BOOKeeper is
     modifier onlyBuyer(bytes32 sn) {
         if (sn.typeOfOpt() > 0)
             require(
-                _boo.isObligor(sn.shortOfOpt(), _msgSender),
-                "_msgSender NOT obligor"
+                _boo.isObligor(sn.shortOfOpt(), _bridgedMsgSender),
+                "_bridgedMsgSender NOT obligor"
             );
         else {
-            (, address rightholder, , , , , ) = _boo.getOption(sn.shortOfOpt());
-            require(_msgSender == rightholder, "_msgSender NOT rightholder");
+            (, uint32 rightholder, , , , , ) = _boo.getOption(sn.shortOfOpt());
+            require(
+                _bridgedMsgSender == rightholder,
+                "_bridgedMsgSender NOT rightholder"
+            );
         }
 
         _;
@@ -136,7 +134,7 @@ contract BOOKeeper is
 
     function createOption(
         uint8 typeOfOpt,
-        address rightholder,
+        uint32 rightholder,
         uint32 triggerDate,
         uint8 exerciseDays,
         uint8 closingDays,
@@ -147,7 +145,7 @@ contract BOOKeeper is
         _boo.createOption(
             typeOfOpt,
             rightholder,
-            _msgSender,
+            _bridgedMsgSender,
             triggerDate,
             exerciseDays,
             closingDays,
@@ -160,11 +158,11 @@ contract BOOKeeper is
     }
 
     function joinOptionAsObligor(bytes32 sn) external onlyDirectKeeper {
-        _boo.addObligorIntoOpt(sn.shortOfOpt(), _msgSender);
+        _boo.addObligorIntoOpt(sn.shortOfOpt(), _bridgedMsgSender);
         _clearMsgSender();
     }
 
-    function releaseObligorFromOption(bytes32 sn, address obligor)
+    function releaseObligorFromOption(bytes32 sn, uint32 obligor)
         external
         onlyDirectKeeper
         onlyRightholder(sn)
@@ -255,7 +253,7 @@ contract BOOKeeper is
                 fts[i].shortShareNumberOfFt(),
                 fts[i].parValueOfFt(),
                 fts[i].paidParOfFt(),
-                _msgSender,
+                _bridgedMsgSender,
                 closingDate,
                 price
             );

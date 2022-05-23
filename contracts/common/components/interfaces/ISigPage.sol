@@ -56,7 +56,7 @@ interface ISigPage {
 
     function sigDate(address acct) external returns (uint256);
 
-    function signers() external returns (address[]);
+    function signers() external returns (uint32[]);
 
     function qtyOfSigners() external returns (uint256);
 }

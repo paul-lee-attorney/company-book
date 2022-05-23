@@ -8,18 +8,18 @@ pragma solidity ^0.4.24;
 import "./ArrayUtils.sol";
 
 library UserGroup {
-    using ArrayUtils for address[];
+    using ArrayUtils for uint32[];
 
     struct Group {
-        mapping(address => bool) isJoined;
-        address[] members;
+        mapping(uint32 => bool) isJoined;
+        uint32[] members;
     }
 
     // ##################
     // ##    写端口    ##
     // ##################
 
-    function addMember(Group storage group, address acct)
+    function addMember(Group storage group, uint32 acct)
         internal
         returns (bool flag)
     {
@@ -30,7 +30,7 @@ library UserGroup {
         } else flag = false;
     }
 
-    function removeMember(Group storage group, address acct)
+    function removeMember(Group storage group, uint32 acct)
         internal
         returns (bool flag)
     {
@@ -45,7 +45,7 @@ library UserGroup {
     // ##   查询端口   ##
     // ##################
 
-    function isMember(Group storage group, address acct)
+    function isMember(Group storage group, uint32 acct)
         internal
         view
         returns (bool)
@@ -57,7 +57,7 @@ library UserGroup {
         return group.members.length;
     }
 
-    function members(Group storage group) internal view returns (address[]) {
+    function getMembers(Group storage group) internal view returns (uint32[]) {
         return group.members;
     }
 }

@@ -12,9 +12,9 @@ contract ILockUp {
 
     function delLocker(uint256 shareNumber) external;
 
-    function addKeyholder(uint256 shareNumber, address keyholder) external;
+    function addKeyholder(uint256 shareNumber, uint32 keyholder) external;
 
-    function removeKeyholder(uint256 shareNumber, address keyholder) external;
+    function removeKeyholder(uint256 shareNumber, uint32 keyholder) external;
 
     // ################
     // ##  查询接口  ##
@@ -25,5 +25,5 @@ contract ILockUp {
     function getLocker(uint256 shareNumber)
         public
         view
-        returns (uint256 dueDate, address[] keyHolders);
+        returns (uint256 dueDate, uint32[] keyHolders);
 }

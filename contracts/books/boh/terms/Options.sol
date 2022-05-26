@@ -275,7 +275,7 @@ contract Options is BOSSetting, DraftControl {
         optionExist(sequence)
         returns (uint32[])
     {
-        return _options[sequence].obligors.getMembers();
+        return _options[sequence].obligors.members();
     }
 
     function isRightholder(uint16 sequence, uint32 acct)

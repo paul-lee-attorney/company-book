@@ -164,12 +164,12 @@ contract MembersRepo is GroupsRepo {
     //##   查询接口   ##
     //##################
 
-    function isMember(uint32 acct) public returns (bool) {
+    function isMember(uint32 acct) public view returns (bool) {
         return _shareholders.isMember(acct);
     }
 
     function membersList() external view returns (uint32[]) {
-        return _shareholders.getMembers();
+        return _shareholders.members();
     }
 
     function parInHand(uint32 acct)

@@ -49,9 +49,9 @@ contract BookOfSHA is BookOfDocuments {
         onlyRegistered(body)
         onlyForSubmitted(body)
     {
-        if (pointer != address(0)) _docs[pointer].state = 3;
+        if (pointer != address(0)) _docs[pointer].state = 4;
 
-        _docs[body].state = 2;
+        _docs[body].state = 3;
         emit ChangePointer(pointer, body);
 
         pointer = body;

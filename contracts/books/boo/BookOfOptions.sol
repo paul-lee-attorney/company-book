@@ -300,12 +300,12 @@ contract BookOfOptions is BOSSetting {
         emit UpdateOracle(d1, d2);
     }
 
-    function execOption(bytes6 ssn, uint32 exerciseDate)
-        external
-        onlyKeeper
-        optionExist(ssn)
-        currentDate(exerciseDate)
-    {
+    function execOption(
+        bytes6 ssn,
+        uint32 caller,
+        uint32 exerciseDate,
+        uint32 sigHash
+    ) external onlyKeeper optionExist(ssn) currentDate(exerciseDate) {
         Option storage opt = _options[ssn];
 
         bytes32 sn = opt.sn;
@@ -542,7 +542,7 @@ contract BookOfOptions is BOSSetting {
     }
 
     function obligors(bytes6 ssn) external view returns (uint32[]) {
-        return _options[ssn].obligors.getMembers();
+        return _options[ssn].obligors.members();
     }
 
     function stateOfOption(bytes6 ssn) external view returns (uint8) {

@@ -33,7 +33,7 @@ interface IBookOfAgreements {
         uint256 paidPar
     ) external;
 
-    function acceptAlongDeal(
+    function acceptTagAlongDeal(
         address ia,
         uint32 drager,
         bytes32 sn

@@ -33,43 +33,53 @@ contract RegCenter {
     event ReplacePrimeKey(uint32 indexed userNo, address newKey);
 
     // ##################
+    // ##    Modifier  ##
+    // ##################
+
+    modifier onlyRegKey(address key) {
+        require(_registeredKeys[key], "not registered key");
+        _;
+    }
+
+    // ##################
     // ##    写端口    ##
     // ##################
 
     function regUser() external {
         require(!_registeredKeys[msg.sender], "already registered");
+        require(counterOfUsers + 1 > counterOfUsers, "counterOfUsers overflow");
 
-        User storage user = _users[counterOfUsers + 1];
+        counterOfUsers++;
 
-        if (user.primeKey == address(0)) {
-            user.primeKey = msg.sender;
+        _users[counterOfUsers].primeKey = msg.sender;
 
-            counterOfUsers++;
+        _registeredKeys[msg.sender] = true;
+        _userNo[msg.sender] = counterOfUsers;
 
-            _registeredKeys[msg.sender] = true;
-            _userNo[msg.sender] = counterOfUsers;
-
-            emit RegUser(counterOfUsers, msg.sender);
-        }
+        emit RegUser(counterOfUsers, msg.sender);
     }
 
     function setBackupKey(uint32 userNo, address backupKey) external {
         require(backupKey != address(0), "zero key");
         require(!_registeredKeys[backupKey], "used key");
+        require(userNo <= counterOfUsers, "userNo overflow");
 
         User storage user = _users[userNo];
 
-        require(msg.sender == user.primeKey, "msg.sender is not primeKey");
+        require(msg.sender == user.primeKey, "wrong primeKey");
 
         user.backupKey = backupKey;
         _registeredKeys[backupKey] = true;
+
         emit SetBackupKey(userNo, backupKey);
     }
 
-    function replacePrimaryKey(uint32 userNo) external {
+    function replacePrimeKey(uint32 userNo) external {
+        require(userNo <= counterOfUsers, "userNo overflow");
+
         User storage user = _users[userNo];
 
-        require(msg.sender == user.primeKey, "msg.sender is not primeKey");
+        require(msg.sender == user.backupKey, "wrong backupKey");
 
         _userNo[user.primeKey] = 0;
         _userNo[user.backupKey] = userNo;
@@ -84,20 +94,22 @@ contract RegCenter {
     // ##   查询端口   ##
     // ##################
 
-    function isUser(address key) public returns (bool) {
+    function isUser(address key) external returns (bool) {
         return checkID(userNo(key), key);
     }
 
-    function checkID(uint32 userNo, address key) public returns (bool) {
-        require(userNo != 0, "zero userNo");
-        require(key != address(0), "zero key");
+    function checkID(uint32 userNo, address key)
+        public
+        onlyRegKey(key)
+        returns (bool)
+    {
+        require(userNo > 0, "zero userNo");
+        require(userNo <= counterOfUsers, "userNo overflow");
 
         return key == _users[userNo].primeKey;
     }
 
-    function userNo(address key) public returns (uint32) {
-        require(key != address(0), "zero key");
-
+    function userNo(address key) public onlyRegKey(key) returns (uint32) {
         return _userNo[key];
     }
 }

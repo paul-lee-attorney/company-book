@@ -7,24 +7,34 @@ pragma solidity ^0.4.24;
 
 import "./AgreementWithFirstRefusal.sol";
 
+import "../../common/lib/UserGroup.sol";
+import "../../common/lib/SigList.sol";
+
 contract AgreementWithAlongs is AgreementWithFirstRefusal {
+    using UserGroup for UserGroup.Group;
+    using SigList for SigList.List;
+
     //##################
     //##    Event     ##
     //##################
 
-    event CreateAlongDeal(bytes32 indexed sn);
+    event CreateTagAlongDeal(bytes32 indexed sn);
+
+    event AcceptAlongDeal(bytes32 indexed sn, uint32 caller);
 
     //##################
     //##    写接口    ##
     //##################
 
-    function createAlongDeal(
+    function createTagAlongDeal(
         bytes32 shareNumber,
         uint16 ssn,
         uint256 parValue,
         uint256 paidPar,
-        uint32 execDate
-    ) external onlyKeeper {
+        uint32 caller,
+        uint32 execDate,
+        bytes32 sigHash
+    ) external onlyDirectKeeper {
         require(_bos.isShare(shareNumber.short()), "shareNumber not exist");
 
         Deal storage orgDeal = _deals[ssn];
@@ -33,11 +43,12 @@ contract AgreementWithAlongs is AgreementWithFirstRefusal {
 
         bytes32 sn = _createSN(
             shareNumber.class(),
-            4, // 4-TagAlong,
+            4, // 4-TagAlongDeal,
             counterOfDeals,
             orgDeal.sn.buyerOfDeal(),
             orgDeal.sn.groupOfBuyer(),
-            shareNumber
+            shareNumber,
+            orgDeal.sn.sequenceOfDeal()
         );
 
         Deal storage addDeal = _deals[counterOfDeals];
@@ -51,18 +62,37 @@ contract AgreementWithAlongs is AgreementWithFirstRefusal {
         addDeal.parValue = parValue;
         addDeal.paidPar = paidPar;
 
+        // set original Deal state to suspend;
+        orgDeal.state += 4;
+
         _dealsList.push(sn);
         isDeal[counterOfDeals] = true;
 
-        // add seller to party and sign the IA
-        uint32 seller = shareNumber.shareholder();
-        addPartyToDoc(seller);
-        addSigOfParty(seller, execDate);
+        // add caller to party and sign the IA
+        addPartyToDoc(caller);
+        _addSigOfParty(caller, execDate, sigHash);
 
-        // remove buyer signature from IA
-        removeSigOfParty(orgDeal.sn.buyerOfDeal());
-        updateStateOfDoc(1);
+        // add buyer to party again;
+        addPartyToDoc(sn.buyerOfDeal());
 
-        emit CreateAlongDeal(sn);
+        // turn off flag of established
+        established = false;
+
+        emit CreateTagAlongDeal(sn);
+    }
+
+    function acceptTagAlongDeal(
+        bytes32 sn,
+        uint32 caller,
+        uint32 sigDate,
+        bytes32 sigHash
+    ) external onlyDirectKeeper {
+        // recover state of original deal to normal
+        if (_deals[sn.preSSNOfDeal()].state >= 4)
+            _deals[sn.preSSNOfDeal()].state -= 4;
+
+        _addSigOfParty(caller, sigDate, sigHash);
+
+        emit AcceptAlongDeal(sn, caller);
     }
 }

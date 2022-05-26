@@ -8,6 +8,8 @@ pragma solidity ^0.4.24;
 import "./AccessControl.sol";
 
 contract DraftControl is AccessControl {
+    bool public finalized;
+
     uint32 private _generalCounsel;
 
     bytes32 public constant ATTORNEYS = bytes32("Attorneys");
@@ -23,6 +25,16 @@ contract DraftControl is AccessControl {
     // ##################
     // ##   修饰器     ##
     // ##################
+
+    modifier onlyPending() {
+        require(!finalized, "Doc is finalized");
+        _;
+    }
+
+    modifier onlyFinalized() {
+        require(finalized, "Doc is still pending");
+        _;
+    }
 
     modifier onlyGC() {
         require(_msgSender() == _generalCounsel, "not general counsel");
@@ -46,7 +58,11 @@ contract DraftControl is AccessControl {
     // ##    写端口    ##
     // ##################
 
-    function setGeneralCounsel(uint32 gc) public ownerOrDirectKeeper {
+    function setGeneralCounsel(uint32 gc)
+        public
+        onlyPending
+        ownerOrDirectKeeper
+    {
         require(_generalCounsel == 0, "already set general counsel");
 
         _generalCounsel = gc;
@@ -55,9 +71,10 @@ contract DraftControl is AccessControl {
         emit SetGeneralCounsel(_generalCounsel);
     }
 
-    function lockContents() public onlyGC {
+    function lockContents() public onlyPending onlyGC {
         abandonRole(ATTORNEYS);
         _generalCounsel = 0;
+        finalized = true;
     }
 
     // ##################

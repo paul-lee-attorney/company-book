@@ -183,7 +183,7 @@ contract DragAlong is BOSSetting, BOASetting, DraftControl {
     }
 
     function isLinked(uint32 dragerAddr, uint32 followerAddr)
-        external
+        public
         view
         onlyKeeper
         returns (bool)
@@ -249,18 +249,26 @@ contract DragAlong is BOSSetting, BOASetting, DraftControl {
     function priceCheck(
         address ia,
         bytes32 sn,
-        bytes32 shareNumber
+        bytes32 shareNumber,
+        uint32 caller
     ) public view onlyKeeper returns (bool) {
+        require(isTriggered(ia, sn), "not triggered");
+
+        uint32 drager = IAgreement(ia)
+            .shareNumberOfDeal(sn.sequenceOfDeal())
+            .shareholder();
+
+        require(caller == drager, "caller is not drager of DragAlong");
+
+        require(
+            isLinked(caller, shareNumber.shareholder()),
+            "caller and target shareholder NOT linked"
+        );
+
         (, uint256 dealPrice, , , uint32 closingDate, , ) = IAgreement(ia)
             .getDeal(sn.sequenceOfDeal());
 
-        bytes32 rule = _links[
-            _bos.groupNo(
-                IAgreement(ia)
-                    .shareNumberOfDeal(sn.sequenceOfDeal())
-                    .shareholder()
-            )
-        ].rule;
+        bytes32 rule = _links[_bos.groupNo(drager)].rule;
 
         if (rule.triggerTypeOfLink() < 2) return true;
 

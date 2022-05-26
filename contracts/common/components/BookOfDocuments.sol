@@ -69,7 +69,7 @@ contract BookOfDocuments is CloneFactory, BOSSetting {
 
     event RemoveDoc(bytes32 indexed sn, address body);
 
-    event SubmitDoc(bytes32 indexed sn, address submittor);
+    event SubmitDoc(bytes32 indexed sn, uint32 submittor);
 
     event UpdateStateOfDoc(address indexed ia, uint8 newState);
 
@@ -176,7 +176,7 @@ contract BookOfDocuments is CloneFactory, BOSSetting {
         address body,
         uint32 submitDate,
         bytes32 docHash,
-        address submitter
+        uint32 submitter
     )
         public
         onlyDirectKeeper

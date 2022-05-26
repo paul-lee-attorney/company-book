@@ -28,16 +28,11 @@ contract BOHKeeper is
     BOSSetting,
     SHASetting,
     BOMSetting,
-    BOOSetting,
-    Context
+    BOOSetting
 {
     using SNParser for bytes32;
 
     address[15] public termsTemplate;
-
-    // constructor(address bookeeper, address usersList) public {
-    //     init(msg.sender, bookeeper);
-    // }
 
     // ################
     // ##   Events   ##
@@ -50,25 +45,22 @@ contract BOHKeeper is
     // ##################
 
     modifier beEstablished(address body) {
-        require(ISigPage(body).isEstablished(), "Doc NOT Established");
+        require(ISigPage(body).established(), "Doc NOT Established");
         _;
     }
 
     modifier notEstablished(address body) {
-        require(!ISigPage(body).isEstablished(), "Doc ALREADY Established");
+        require(!ISigPage(body).established(), "Doc ALREADY Established");
         _;
     }
 
-    modifier onlyAdminOf(address body) {
-        require(
-            IAccessControl(body).getOwner() == _bridgedMsgSender,
-            "NOT Admin of Doc"
-        );
+    modifier onlyOwnerOf(address body, uint32 caller) {
+        require(IAccessControl(body).getOwner() == caller, "not Owner");
         _;
     }
 
-    modifier onlyPartyOf(address body) {
-        require(ISigPage(body).isParty(_bridgedMsgSender), "NOT Party of Doc");
+    modifier onlyPartyOf(address body, uint32 caller) {
+        require(ISigPage(body).isParty(caller), "NOT Party of Doc");
         _;
     }
 
@@ -76,27 +68,26 @@ contract BOHKeeper is
     // ##   SHA   ##
     // #############
 
-    function addTermTemplate(uint8 title, address add)
-        external
-        onlyDirectKeeper
-    {
-        require(_bridgedMsgSender == getOwner(), "not ADMIN");
-        _clearMsgSender();
+    function addTermTemplate(
+        uint8 title,
+        address add,
+        uint32 caller
+    ) external onlyDirectKeeper {
+        require(caller == getOwner(), "caller is not Owner");
 
         termsTemplate[title] = add;
         emit AddTemplate(title, add);
     }
 
-    function createSHA(uint8 docType) external onlyDirectKeeper {
-        require(_bos.isMember(_bridgedMsgSender), "not MEMBER");
+    function createSHA(uint8 docType, uint32 caller) external onlyDirectKeeper {
+        require(_bos.isMember(caller), "not MEMBER");
         address body = _boh.createDoc(docType);
 
         IAccessControl(body).init(
-            _rc.userNo(_bridgedMsgSender),
+            _rc.userNo(caller),
             _rc.userNo(this),
             address(_rc)
         );
-        _clearMsgSender();
 
         IShareholdersAgreement(body).setTermsTemplate(termsTemplate);
         IBookSetting(body).setBOM(address(_bom));
@@ -106,45 +97,34 @@ contract BOHKeeper is
         _copyRoleTo(body, KEEPERS);
     }
 
-    function removeSHA(address body)
+    function removeSHA(address body, uint32 caller)
         external
         onlyDirectKeeper
-        onlyAdminOf(body)
+        onlyOwnerOf(body, caller)
         notEstablished(body)
     {
-        _clearMsgSender();
-
         _boh.removeDoc(body);
         IShareholdersAgreement(body).kill();
     }
 
-    function submitSHA(address body, bytes32 docHash)
-        external
-        onlyDirectKeeper
-        onlyAdminOf(body)
-        beEstablished(body)
-    {
-        _clearMsgSender();
-        _boh.submitSHA(body, docHash);
+    function submitSHA(
+        address body,
+        bytes32 docHash,
+        uint32 caller
+    ) external onlyDirectKeeper onlyOwnerOf(body, caller) beEstablished(body) {
+        _boh.submitSHA(body, docHash, caller);
 
-        // IAccessControl(body).abandonAdmin();
+        IAccessControl(body).abandonOwnership();
     }
 
-    function effectiveSHA(address body)
+    function effectiveSHA(address body, uint32 caller)
         external
         onlyDirectKeeper
-        onlyPartyOf(body)
+        onlyPartyOf(body, caller)
     {
-        _clearMsgSender();
-
         require(_boh.isSubmitted(body), "SHA not submitted yet");
 
-        if (_boh.pointer() != address(0))
-            ISigPage(_boh.pointer()).updateStateOfDoc(5);
-
         _boh.changePointer(body);
-
-        ISigPage(body).updateStateOfDoc(4);
 
         if (IShareholdersAgreement(body).hasTitle(uint8(TermTitle.OPTIONS)))
             _boo.registerOption(

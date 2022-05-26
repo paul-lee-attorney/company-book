@@ -15,10 +15,6 @@ import "../common/utils/Context.sol";
 contract BOPKeeper is BOSSetting, BOPSetting, Context {
     using SNParser for bytes32;
 
-    // constructor(address bookeeper) public {
-    //     init(msg.sender, bookeeper);
-    // }
-
     // ################
     // ##   Pledge   ##
     // ################
@@ -29,14 +25,10 @@ contract BOPKeeper is BOSSetting, BOPSetting, Context {
         uint256 pledgedPar,
         uint32 creditor,
         uint32 debtor,
-        uint256 guaranteedAmt
+        uint256 guaranteedAmt,
+        uint32 caller
     ) external onlyDirectKeeper currentDate(createDate) {
-        require(
-            shareNumber.shareholder() == _bridgedMsgSender,
-            "NOT shareholder"
-        );
-
-        _clearMsgSender();
+        require(shareNumber.shareholder() == caller, "NOT shareholder");
 
         _bos.decreaseCleanPar(shareNumber.short(), pledgedPar);
 
@@ -54,7 +46,8 @@ contract BOPKeeper is BOSSetting, BOPSetting, Context {
         bytes32 sn,
         uint32 creditor,
         uint256 pledgedPar,
-        uint256 guaranteedAmt
+        uint256 guaranteedAmt,
+        uint32 caller
     ) external onlyDirectKeeper {
         require(pledgedPar > 0, "ZERO pledgedPar");
 
@@ -65,14 +58,12 @@ contract BOPKeeper is BOSSetting, BOPSetting, Context {
         );
 
         if (pledgedPar < orgPledgedPar) {
-            require(_bridgedMsgSender == orgCreditor, "NOT creditor");
+            require(caller == orgCreditor, "NOT creditor");
             _bos.increaseCleanPar(shortShareNumber, orgPledgedPar - pledgedPar);
         } else if (pledgedPar > orgPledgedPar) {
-            require(_bridgedMsgSender == sn.pledgorOfPledge(), "NOT pledgor");
+            require(caller == sn.pledgorOfPledge(), "NOT pledgor");
             _bos.decreaseCleanPar(shortShareNumber, pledgedPar - orgPledgedPar);
         }
-
-        _clearMsgSender();
 
         _bop.updatePledge(
             sn.shortOfPledge(),
@@ -82,14 +73,12 @@ contract BOPKeeper is BOSSetting, BOPSetting, Context {
         );
     }
 
-    function delPledge(bytes32 sn) external onlyDirectKeeper {
+    function delPledge(bytes32 sn, uint32 caller) external onlyDirectKeeper {
         (, uint256 pledgedPar, uint32 creditor, ) = _bop.getPledge(
             sn.shortOfPledge()
         );
 
-        require(_bridgedMsgSender == creditor, "NOT creditor");
-
-        _clearMsgSender();
+        require(caller == creditor, "NOT creditor");
 
         _bos.increaseCleanPar(sn.shortShareNumberOfPledge(), pledgedPar);
 

@@ -12,23 +12,34 @@ interface IAgreement {
 
     function recordFRRequest(
         uint16 ssn,
-        uint32 acct,
         bool basedOnPar,
-        uint32 execDate
+        uint32 acct,
+        uint32 execDate,
+        bytes32 sigHash
     ) external;
 
     function acceptFR(
         uint16 ssn,
         uint32 acct,
-        uint32 acceptDate
+        uint32 acceptDate,
+        bytes32 sigHash
     ) external;
 
-    function createAlongDeal(
+    function createTagAlongDeal(
         bytes32 shareNumber,
         uint16 ssn,
         uint256 parValue,
         uint256 paidPar,
-        uint32 createDate
+        uint32 caller,
+        uint32 createDate,
+        bytes32 sigHash
+    ) external;
+
+    function acceptTagAlongDeal(
+        bytes32 sn,
+        uint32 caller,
+        uint32 _sigDate,
+        bytes32 _sigHash
     ) external;
 
     function createDeal(

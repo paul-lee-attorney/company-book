@@ -53,6 +53,10 @@ library SNParser {
         return bytes6(sn << 80);
     }
 
+    function preSSNOfDeal(bytes32 sn) internal pure returns (uint16) {
+        return uint16(bytes2(sn << 128));
+    }
+
     // ======== DocSN ========
 
     function typeOfDoc(bytes32 sn) internal pure returns (uint8) {

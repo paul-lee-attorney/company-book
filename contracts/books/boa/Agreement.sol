@@ -25,6 +25,7 @@ contract Agreement is BOSSetting, SigPage {
         uint32 buyer; 4
         uint16 group; 2
         bytes6 shortShareNumber; 6
+        uint16 preSN; 2
     } 
     */
 
@@ -35,7 +36,7 @@ contract Agreement is BOSSetting, SigPage {
         uint256 parValue;
         uint256 paidPar;
         uint32 closingDate;
-        uint8 state; // 0-drafting 1-cleared 2-closed 3-revoked
+        uint8 state; // 0-drafting 1-cleared 2-closed 3-revoked 4-suspend
         bytes32 hashLock;
     }
 
@@ -104,7 +105,8 @@ contract Agreement is BOSSetting, SigPage {
         uint16 sequence,
         uint32 buyer,
         uint16 group,
-        bytes32 shareNumber
+        bytes32 shareNumber,
+        uint16 preSSN
     ) internal pure returns (bytes32) {
         bytes memory _sn = new bytes(32);
 
@@ -114,6 +116,7 @@ contract Agreement is BOSSetting, SigPage {
         _sn = _sn.dateToSN(4, buyer);
         _sn = _sn.sequenceToSN(8, group);
         _sn = _sn.bytes32ToSN(10, shareNumber, 1, 6);
+        _sn = _sn.sequenceToSN(16, preSSN);
 
         return _sn.bytesToBytes32();
     }
@@ -123,7 +126,7 @@ contract Agreement is BOSSetting, SigPage {
         uint8 class,
         uint32 buyer,
         uint16 group
-    ) external onlyAttorney returns (bytes32) {
+    ) external onlyPending onlyAttorney returns (bytes32) {
         require(buyer != 0, "buyer is ZERO address");
         require(group > 0, "ZERO group");
 
@@ -151,7 +154,8 @@ contract Agreement is BOSSetting, SigPage {
             counterOfDeals,
             buyer,
             group,
-            shareNumber
+            shareNumber,
+            0
         );
 
         Deal storage deal = _deals[counterOfDeals];
@@ -177,7 +181,7 @@ contract Agreement is BOSSetting, SigPage {
         uint256 parValue,
         uint256 paidPar,
         uint32 closingDate
-    ) external dealExist(ssn) onlyAttorney {
+    ) external onlyPending dealExist(ssn) onlyAttorney {
         require(parValue > 0, "parValue is ZERO");
         require(parValue >= paidPar, "paidPar overflow");
         require(closingDate > now + 15 minutes, "closingDate shall be future");
@@ -192,7 +196,12 @@ contract Agreement is BOSSetting, SigPage {
         emit UpdateDeal(deal.sn, unitPrice, parValue, paidPar, closingDate);
     }
 
-    function delDeal(uint16 ssn) external dealExist(ssn) onlyAttorney {
+    function delDeal(uint16 ssn)
+        external
+        onlyPending
+        dealExist(ssn)
+        onlyAttorney
+    {
         Deal storage deal = _deals[ssn];
 
         bytes32 sn = deal.sn;

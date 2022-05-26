@@ -7,8 +7,6 @@ pragma solidity ^0.4.24;
 
 import "./interfaces/IRegCenter.sol";
 
-// import "../access/AccessControl.sol";
-
 contract RegCenterSetting {
     IRegCenter internal _rc;
 
@@ -24,8 +22,9 @@ contract RegCenterSetting {
         _;
     }
 
+    // shall be set up at the creation stage of a contract
     function _setRegCenter(address rc) internal {
-        require(_rc == address(0), "already set usersList");
+        require(_rc == address(0), "already set regCenter");
 
         _rc = IRegCenter(rc);
         emit SetRegCenter(rc);

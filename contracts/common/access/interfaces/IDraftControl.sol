@@ -18,6 +18,8 @@ interface IDraftControl {
     // ##   查询端口   ##
     // ##################
 
+    function finalized() external returns (bool);
+
     function ATTORNEYS() external returns (bytes32);
 
     function getGC() external view returns (uint32);

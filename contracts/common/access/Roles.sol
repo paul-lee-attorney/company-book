@@ -81,7 +81,7 @@ contract Roles is RegCenterSetting {
     }
 
     function _copyRoleTo(address target, bytes32 role) internal {
-        uint32[] memory users = members(role);
+        uint32[] memory users = roleMembers(role);
         uint256 len = users.length;
         for (uint256 i = 0; i < len; i++)
             IRoles(target).grantRole(role, users[i]);
@@ -95,8 +95,8 @@ contract Roles is RegCenterSetting {
         return _roles[role].roleGroup.isMember(acct);
     }
 
-    function members(bytes32 role) public view returns (uint32[]) {
-        return _roles[role].roleGroup.getMembers();
+    function roleMembers(bytes32 role) public view returns (uint32[]) {
+        return _roles[role].roleGroup.members();
     }
 
     function roleAdmin(bytes32 role) public view returns (uint32) {

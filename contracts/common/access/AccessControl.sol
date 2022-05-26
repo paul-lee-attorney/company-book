@@ -91,7 +91,7 @@ contract AccessControl is Roles {
         emit Init(_owner, _directKeeper, _rc);
     }
 
-    function abandonOwnership() public onlyDirectKeeper {
+    function abandonOwnership() public ownerOrDirectKeeper {
         _owner = 0;
         emit AbandonOwnership();
     }

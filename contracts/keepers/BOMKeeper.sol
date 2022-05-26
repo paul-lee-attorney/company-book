@@ -26,22 +26,17 @@ contract BOMKeeper is
     BOASetting,
     BOMSetting,
     SHASetting,
-    BOOSetting,
-    Context
+    BOOSetting
 {
     using SafeMath for uint256;
     using SNParser for bytes32;
-
-    // constructor(address bookeeper) public {
-    //     init(msg.sender, bookeeper);
-    // }
 
     // ##################
     // ##   Modifier   ##
     // ##################
 
-    modifier onlyPartyOf(address body) {
-        require(ISigPage(body).isParty(_bridgedMsgSender), "NOT Party of Doc");
+    modifier onlyPartyOf(address body, uint32 caller) {
+        require(ISigPage(body).isParty(caller), "NOT Party of Doc");
         _;
     }
 
@@ -49,22 +44,24 @@ contract BOMKeeper is
     // ##   Motion   ##
     // ################
 
-    function proposeMotion(address ia, uint32 proposeDate)
+    function proposeMotion(
+        address ia,
+        uint32 proposeDate,
+        uint32 caller
+    )
         external
         onlyDirectKeeper
-        onlyPartyOf(ia)
+        onlyPartyOf(ia, caller)
         currentDate(proposeDate)
     {
-        _bom.proposeMotion(ia, proposeDate, _bridgedMsgSender);
-        _clearMsgSender();
+        _bom.proposeMotion(ia, proposeDate, caller);
     }
 
-    function voteCounting(address ia)
+    function voteCounting(address ia, uint32 caller)
         external
         onlyDirectKeeper
-        onlyPartyOf(ia)
+        onlyPartyOf(ia, caller)
     {
-        _clearMsgSender();
         _bom.voteCounting(ia);
     }
 
@@ -72,16 +69,14 @@ contract BOMKeeper is
         address ia,
         bytes32 sn,
         uint32 exerciseDate,
-        uint32 againstVoter
+        uint32 againstVoter,
+        uint32 caller
     ) external onlyDirectKeeper currentDate(exerciseDate) {
         bytes32 shareNumber = IAgreement(ia).shareNumberOfDeal(
             sn.sequenceOfDeal()
         );
 
-        require(
-            _bridgedMsgSender == shareNumber.shareholder(),
-            "NOT Seller of the Deal"
-        );
+        require(caller == shareNumber.shareholder(), "NOT Seller of the Deal");
 
         (, uint256 unitPrice, , , uint32 closingDate, , ) = IAgreement(ia)
             .getDeal(sn.sequenceOfDeal());
@@ -97,7 +92,7 @@ contract BOMKeeper is
 
         bytes32 snOfOpt = _boo.createOption(
             1,
-            _bridgedMsgSender,
+            caller,
             againstVoter,
             exerciseDate,
             1,
@@ -106,8 +101,6 @@ contract BOMKeeper is
             parValue,
             paidPar
         );
-
-        _clearMsgSender();
 
         _boo.execOption(snOfOpt.shortOfOpt(), exerciseDate);
         _boo.addFuture(snOfOpt.shortOfOpt(), shareNumber, parValue, paidPar);

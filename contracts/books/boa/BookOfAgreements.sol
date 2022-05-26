@@ -221,7 +221,7 @@ contract BookOfAgreements is EnumsRepo, BookOfDocuments, SHASetting {
         bytes32 shareNumber,
         uint256 parValue,
         uint256 paidPar
-    ) external onlyKeeper {
+    ) external onlyDirectKeeper {
         uint16 drager = rule.dragerOfLink();
         uint16 follower = _bos.groupNo(shareNumber.shareholder());
 
@@ -266,7 +266,7 @@ contract BookOfAgreements is EnumsRepo, BookOfDocuments, SHASetting {
         emit AddAlongDeal(ia, follower, shareNumber, parValue, paidPar);
     }
 
-    function acceptAlongDeal(
+    function acceptTagAlongDeal(
         address ia,
         uint32 drager,
         bytes32 sn
@@ -287,7 +287,7 @@ contract BookOfAgreements is EnumsRepo, BookOfDocuments, SHASetting {
 
         bAmt.rstAmt = bAmt.orgAmt + bAmt.buyAmt - bAmt.selAmt;
 
-        if (ISigPage(ia).docState() == 2) updateSateOfDoc(ia, 1);
+        // if (!ISigPage(ia).established()) updateSateOfDoc(ia, 1);
 
         emit AcceptAlongDeal(ia, drager, sn);
     }

@@ -58,9 +58,10 @@ contract AgreementWithFirstRefusal is Agreement {
 
     function recordFRRequest(
         uint16 ssn,
-        uint32 acct,
         bool basedOnPar,
-        uint32 execDate
+        uint32 acct,
+        uint32 execDate,
+        bytes32 sigHash
     ) external onlyKeeper dealExist(ssn) {
         FRNotice storage notice = _frNotices[ssn];
         Deal storage deal = _deals[ssn];
@@ -83,15 +84,14 @@ contract AgreementWithFirstRefusal is Agreement {
         require(weight > 0, "first refusal request has ZERO weight");
         notice.totalAmt += weight;
 
+        // request seller to check and confirm
         if (_subjectDeals.addItem(ssn))
-            removeSigOfParty(_deals[ssn].shareNumber.shareholder());
+            addPartyToDoc(_deals[ssn].shareNumber.shareholder());
 
-        if (!isParty(acct)) {
-            addPartyToDoc(acct);
-            addSigOfParty(acct, execDate);
-        }
+        addPartyToDoc(acct);
+        _addSigOfParty(acct, execDate, sigHash);
 
-        updateStateOfDoc(1);
+        established = false;
 
         emit RecordFRNotice(_deals[ssn].sn, acct, execDate);
     }
@@ -99,12 +99,13 @@ contract AgreementWithFirstRefusal is Agreement {
     function acceptFR(
         uint16 ssn,
         uint32 acct,
-        uint32 acceptDate
+        uint32 acceptDate,
+        bytes32 sigHash
     ) external subDealExist(ssn) {
         FRNotice storage notice = _frNotices[ssn];
         Deal storage orgDeal = _deals[ssn];
 
-        uint32[] memory parties = notice.execParties.getMembers();
+        uint32[] memory parties = notice.execParties.members();
         uint256 len = parties.length;
 
         for (uint256 i = 0; i < len; i++) {
@@ -120,7 +121,8 @@ contract AgreementWithFirstRefusal is Agreement {
                 counterOfDeals,
                 parties[i],
                 _bos.groupNo(parties[i]),
-                orgDeal.shareNumber
+                orgDeal.shareNumber,
+                orgDeal.sn.sequenceOfDeal()
             );
 
             Deal storage frDeal = _deals[counterOfDeals];
@@ -142,7 +144,7 @@ contract AgreementWithFirstRefusal is Agreement {
             );
         }
 
-        acceptDoc(acceptDate);
+        _addSigOfParty(acct, acceptDate, sigHash);
 
         emit AcceptFR(orgDeal.sn, acct);
     }
@@ -166,7 +168,7 @@ contract AgreementWithFirstRefusal is Agreement {
         subDealExist(ssn)
         returns (uint32[])
     {
-        return _frNotices[ssn].execParties.getMembers();
+        return _frNotices[ssn].execParties.members();
     }
 
     function isSubjectDeal(uint16 ssn) external view returns (bool) {

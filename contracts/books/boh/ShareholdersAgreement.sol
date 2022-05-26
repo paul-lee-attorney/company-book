@@ -129,11 +129,7 @@ contract ShareholdersAgreement is
     {
         body = createClone(tempOfTitle[title]);
 
-        IAccessControl(body).init(
-            _rc.userNo(this),
-            _rc.userNo(this),
-            address(_rc)
-        );
+        IAccessControl(body).init(getOwner(), _rc.userNo(this), address(_rc));
 
         IDraftControl(body).setGeneralCounsel(_rc.userNo(this));
 
@@ -166,16 +162,18 @@ contract ShareholdersAgreement is
         emit RemoveTerm(title);
     }
 
-    function finalizeSHA() external onlyAttorney {
+    function finalizeSHA() external onlyGC {
         address[] memory clauses = _terms.getChapters();
         uint256 len = clauses.length;
 
         for (uint256 i = 0; i < len; i++) {
             IDraftControl(clauses[i]).lockContents();
         }
+
+        circulateDoc();
     }
 
-    function kill() onlyDirectKeeper {
+    function kill() external onlyDirectKeeper {
         selfdestruct(getDirectKeeper());
     }
 

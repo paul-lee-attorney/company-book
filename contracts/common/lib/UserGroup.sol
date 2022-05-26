@@ -11,8 +11,10 @@ library UserGroup {
     using ArrayUtils for uint32[];
 
     struct Group {
-        mapping(uint32 => bool) isJoined;
-        uint32[] members;
+        mapping(uint32 => uint16) _counterOfMember;
+        mapping(uint32 => bool) _isJoined;
+        uint32[] _members;
+        uint16 _counter;
     }
 
     // ##################
@@ -23,22 +25,34 @@ library UserGroup {
         internal
         returns (bool flag)
     {
-        if (!group.isJoined[acct]) {
-            group.isJoined[acct] = true;
-            group.members.push(acct);
+        group._counterOfMember[acct]++;
+        group._counter++;
+        if (!group._isJoined[acct]) {
+            group._isJoined[acct] = true;
+            group._members.push(acct);
             flag = true;
-        } else flag = false;
+        }
     }
 
     function removeMember(Group storage group, uint32 acct)
         internal
         returns (bool flag)
     {
-        if (group.isJoined[acct]) {
-            group.isJoined[acct] = false;
-            group.members.removeByValue(acct);
+        if (group._isJoined[acct]) {
+            group._isJoined[acct] = false;
+            group._members.removeByValue(acct);
             flag = true;
-        } else flag = false;
+            group._counter -= group._counterOfMember[acct];
+            group._counterOfMember[acct] = 0;
+        }
+    }
+
+    function resetCounter(Group storage group) internal returns (bool flag) {
+        uint256 len = group._members.length;
+        for (uint256 i = 0; i < len; i++)
+            group._counterOfMember[group._members[i]] = 1;
+
+        group._counter = uint16(group._members.length);
     }
 
     // ##################
@@ -50,14 +64,30 @@ library UserGroup {
         view
         returns (bool)
     {
-        return group.isJoined[acct];
+        return group._isJoined[acct];
+    }
+
+    function counterOfMember(Group storage group, uint32 acct)
+        internal
+        view
+        returns (uint16)
+    {
+        return group._counterOfMember[acct];
     }
 
     function qtyOfMembers(Group storage group) internal view returns (uint256) {
-        return group.members.length;
+        return group._members.length;
     }
 
-    function getMembers(Group storage group) internal view returns (uint32[]) {
-        return group.members;
+    function counterOfMembers(Group storage group)
+        internal
+        view
+        returns (uint16)
+    {
+        return group._counter;
+    }
+
+    function members(Group storage group) internal view returns (uint32[]) {
+        return group._members;
     }
 }

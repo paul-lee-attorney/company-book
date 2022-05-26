@@ -51,6 +51,7 @@ interface IAlongs {
     function priceCheck(
         address ia,
         bytes32 sn,
-        bytes32 shareNumber
+        bytes32 shareNumber,
+        uint32 caller
     ) external view returns (bool);
 }

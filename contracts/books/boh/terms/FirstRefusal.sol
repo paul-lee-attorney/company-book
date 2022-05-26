@@ -180,7 +180,7 @@ contract FirstRefusal is BOSSetting, BOMSetting, DraftControl {
         FR storage fr = _firstRefusals[typeOfDeal];
 
         if (fr.rule.membersEqualOfFR()) return _bos.membersList();
-        else return fr.rightholders.getMembers();
+        else return fr.rightholders.members();
     }
 
     // ################
@@ -219,7 +219,7 @@ contract FirstRefusal is BOSSetting, BOMSetting, DraftControl {
             return
                 _firstRefusals[sn.typeOfDeal()]
                     .rightholders
-                    .getMembers()
+                    .members()
                     .fullyCoveredBy(agreedParties);
     }
 }

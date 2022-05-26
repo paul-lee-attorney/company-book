@@ -7,12 +7,12 @@ pragma solidity ^0.4.24;
 
 import "./AgreementWithFirstRefusal.sol";
 
-import "../../common/lib/UserGroup.sol";
-import "../../common/lib/SigList.sol";
+// import "../../common/lib/UserGroup.sol";
+// import "../../common/lib/SignerGroup.sol";
 
 contract AgreementWithAlongs is AgreementWithFirstRefusal {
-    using UserGroup for UserGroup.Group;
-    using SigList for SigList.List;
+    // using UserGroup for UserGroup.Group;
+    // using SignerGroup for SignerGroup.Group;
 
     //##################
     //##    Event     ##

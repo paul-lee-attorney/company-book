@@ -5,16 +5,15 @@
 
 pragma solidity ^0.4.24;
 
-import "../../common/lib/ArrayUtils.sol";
-import "../../common/lib/UserGroup.sol";
-import "../../common/lib/SigList.sol";
+import "../../common/lib/PartyGroup.sol";
+import "../../common/lib/SignerGroup.sol";
 
 import "../access/DraftControl.sol";
 
 contract SigPage is DraftControl {
-    using ArrayUtils for uint32[];
-    using UserGroup for UserGroup.Group;
-    using SigList for SigList.List;
+    // using ArrayUtils for uint32[];
+    using PartyGroup for PartyGroup.Group;
+    using SignerGroup for SignerGroup.Group;
 
     bool public established;
 
@@ -22,9 +21,9 @@ contract SigPage is DraftControl {
 
     uint32 public closingDeadline;
 
-    UserGroup.Group private _parties;
+    PartyGroup.Group private _parties;
 
-    SigList.List private _signatures;
+    SignerGroup.Group private _signatures;
 
     //####################
     //##     event      ##
@@ -62,7 +61,7 @@ contract SigPage is DraftControl {
     // }
 
     modifier onlyParty() {
-        require(_parties.isMember(_msgSender()), "msg.sender NOT a party");
+        require(_parties.isParty(_msgSender()), "msg.sender NOT a party");
         _;
     }
 
@@ -113,11 +112,11 @@ contract SigPage is DraftControl {
             );
         else revert("cannot add party to a DOC in signing stage");
 
-        if (_parties.addMember(acct)) emit AddParty(acct);
+        if (_parties.addParty(acct)) emit AddParty(acct);
     }
 
     function removePartyFromDoc(uint32 acct) public onlyPending onlyAttorney {
-        if (_parties.removeMember(acct)) emit RemoveParty(acct);
+        if (_parties.removeParty(acct)) emit RemoveParty(acct);
     }
 
     function circulateDoc() public onlyGC onlyPending {
@@ -163,9 +162,9 @@ contract SigPage is DraftControl {
         uint32 sigDate,
         bytes32 sigHash
     ) internal currentDate(sigDate) {
-        require(_parties.isMember(acct), "not a Party");
+        require(_parties.isParty(acct), "not a Party");
         require(
-            _parties.counterOfMember(acct) >= _signatures.counterOfSigner(acct),
+            _parties.counterOfParty(acct) >= _signatures.counterOfSigner(acct),
             "not enough signing blank"
         );
 
@@ -177,7 +176,7 @@ contract SigPage is DraftControl {
     }
 
     function _checkCompletionOfSig() private {
-        if (_parties.counterOfMembers() == _signatures.counterOfSigners()) {
+        if (_parties.counterOfParties() == _signatures.counterOfSigners()) {
             established = true;
             emit DocEstablished();
         }
@@ -188,23 +187,23 @@ contract SigPage is DraftControl {
     //####################
 
     function isParty(uint32 acct) public view returns (bool) {
-        return _parties.isMember(acct);
+        return _parties.isParty(acct);
     }
 
     function parties() external view returns (uint32[]) {
-        return _parties.members();
+        return _parties.parties();
     }
 
     function qtyOfParties() external view returns (uint256) {
-        return _parties.qtyOfMembers();
+        return _parties.qtyOfParties();
     }
 
     function counterOfParty(uint32 acct) external view returns (uint16) {
-        return _parties.counterOfMember(acct);
+        return _parties.counterOfParty(acct);
     }
 
     function counterOfParties() external view returns (uint16) {
-        return _parties.counterOfMembers();
+        return _parties.counterOfParties();
     }
 
     function isSigner(uint32 acct) external view returns (bool) {

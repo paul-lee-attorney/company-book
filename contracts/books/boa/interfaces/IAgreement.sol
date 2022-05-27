@@ -36,7 +36,7 @@ interface IAgreement {
     ) external;
 
     function acceptTagAlongDeal(
-        bytes32 sn,
+        bytes6 ssn,
         uint32 caller,
         uint32 _sigDate,
         bytes32 _sigHash

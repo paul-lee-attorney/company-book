@@ -13,7 +13,7 @@ import "../../common/ruting/BOSSetting.sol";
 import "../../common/ruting/BOMSetting.sol";
 
 import "../../common/lib/ArrayUtils.sol";
-import "../../common/lib/AddrBook.sol";
+import "../../common/lib/AddrGroup.sol";
 
 import "../../common/components/SigPage.sol";
 import "../../common/components/EnumsRepo.sol";
@@ -33,7 +33,7 @@ contract ShareholdersAgreement is
 {
     using ArrayUtils for address[];
     using ArrayUtils for uint8[];
-    using AddrBook for AddrBook.Book;
+    using AddrGroup for AddrGroup.Group;
 
     // title => template address
     mapping(uint8 => address) public tempOfTitle;
@@ -45,7 +45,7 @@ contract ShareholdersAgreement is
     mapping(address => uint8) private _bodyToTitle;
 
     // bodys
-    AddrBook.Book private _terms;
+    AddrGroup.Group private _terms;
 
     // // body => bool
     // mapping(address => bool) public registered;
@@ -142,7 +142,7 @@ contract ShareholdersAgreement is
         _titleToBody[title] = body;
         _bodyToTitle[body] = title;
 
-        _terms.addChapter(body);
+        _terms.addMember(body);
         // // registered[body] = true;
         // _terms.push(body);
 
@@ -157,13 +157,13 @@ contract ShareholdersAgreement is
         // delete registered[_titleToBody[title]];
         // _terms.removeByValue(_titleToBody[title]);
 
-        _terms.removeChapter(_titleToBody[title]);
+        _terms.removeMember(_titleToBody[title]);
 
         emit RemoveTerm(title);
     }
 
     function finalizeSHA() external onlyGC {
-        address[] memory clauses = _terms.getChapters();
+        address[] memory clauses = _terms.members();
         uint256 len = clauses.length;
 
         for (uint256 i = 0; i < len; i++) {
@@ -182,11 +182,11 @@ contract ShareholdersAgreement is
     //##################
 
     function isTerm(address addr) external view returns (bool) {
-        return _terms.isChapter(addr);
+        return _terms.isMember(addr);
     }
 
     function terms() external view returns (address[]) {
-        return _terms.getChapters();
+        return _terms.members();
     }
 
     function getTerm(uint8 title)

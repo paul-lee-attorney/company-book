@@ -7,46 +7,43 @@ pragma solidity ^0.4.24;
 
 import "./ArrayUtils.sol";
 
-library SignerGroup {
+library VoterGroup {
     using ArrayUtils for uint32[];
 
     struct Group {
-        mapping(uint32 => bytes32) _sigHash;
         mapping(uint32 => uint32) _sigDate;
-        mapping(uint32 => uint16) _counterOfSigner;
-        uint16 _counter;
-        uint32[] _signers;
+        mapping(uint32 => bytes32) _sigHash;
+        mapping(uint32 => uint256) _amtOfVoter;
+        uint256 _sumOfAmt;
+        uint32[] _voters;
     }
 
     // ##################
     // ##    写端口    ##
     // ##################
 
-    function addSignature(
+    function addVote(
         Group storage group,
         uint32 acct,
+        uint256 amount,
         uint32 sigDate,
         bytes32 sigHash
     ) internal returns (bool flag) {
-        // require(sigDate > 0, "zero sigDate");
-
         if (group._sigDate[acct] == 0) {
-            group._signers.push(acct);
+            group._sigDate[acct] = sigDate;
+            group._sigHash[acct] = sigHash;
+            group._amtOfVoter[acct] = amount;
+            group._sumOfAmt += amount;
+            group._voters.push(acct);
             flag = true;
         }
-
-        group._counterOfSigner[acct]++;
-        group._counter++;
-
-        group._sigDate[acct] = sigDate;
-        group._sigHash[acct] = sigHash;
     }
 
     // ##################
     // ##   查询端口   ##
     // ##################
 
-    function isSigner(Group storage group, uint32 acct)
+    function isVoter(Group storage group, uint32 acct)
         internal
         view
         returns (bool)
@@ -59,7 +56,7 @@ library SignerGroup {
         view
         returns (uint32)
     {
-        require(group._sigDate[acct] > 0, "not a signer");
+        require(group._sigDate[acct] > 0, "not a voter");
 
         return group._sigDate[acct];
     }
@@ -69,7 +66,7 @@ library SignerGroup {
         view
         returns (bytes32)
     {
-        require(group._sigDate[acct] > 0, "not a signer");
+        require(group._sigDate[acct] > 0, "not a voter");
 
         return group._sigHash[acct];
     }
@@ -79,40 +76,36 @@ library SignerGroup {
         uint32 acct,
         string src
     ) internal view returns (bool) {
-        require(group._sigDate[acct] > 0, "not a signer");
+        require(group._sigDate[acct] > 0, "not a voter");
 
         return group._sigHash[acct] == keccak256(bytes(src));
     }
 
-    function counterOfSigner(Group storage group, uint32 acct)
-        internal
-        view
-        returns (uint16)
-    {
-        return group._counterOfSigner[acct];
+    function qtyOfVoters(Group storage group) internal view returns (uint256) {
+        return group._voters.length;
     }
 
-    function counterOfSigners(Group storage group)
-        internal
-        view
-        returns (uint16)
-    {
-        return group._counter;
-    }
-
-    function qtyOfSigners(Group storage group) internal view returns (uint256) {
-        return group._signers.length;
-    }
-
-    function getSigner(Group storage group, uint256 index)
+    function getVoter(Group storage group, uint256 index)
         internal
         view
         returns (uint32)
     {
-        return group._signers[index];
+        return group._voters[index];
     }
 
-    function signers(Group storage group) internal view returns (uint32[]) {
-        return group._signers;
+    function amtOfVoter(Group storage group, uint32 acct)
+        internal
+        view
+        returns (uint256)
+    {
+        return group._amtOfVoter[acct];
+    }
+
+    function sumOfAmt(Group storage group) internal view returns (uint256) {
+        return group._sumOfAmt;
+    }
+
+    function voters(Group storage group) internal view returns (uint32[]) {
+        return group._voters;
     }
 }

@@ -310,4 +310,22 @@ library SNParser {
     function typeOfVoteOfVR(bytes32 sn) internal pure returns (uint8) {
         return uint8(sn[10]);
     }
+
+    // ======== MotionSN ========
+
+    function submitterOfMotion(bytes32 sn) internal pure returns (uint32) {
+        return uint32(bytes4(sn));
+    }
+
+    function proposeDateOfMotion(bytes32 sn) internal pure returns (uint32) {
+        return uint32(bytes4(sn << 32));
+    }
+
+    function votingDeadlineOfMotion(bytes32 sn) internal pure returns (uint32) {
+        return uint32(bytes4(sn << 64));
+    }
+
+    function iaOfMotion(bytes32 sn) internal pure returns (address) {
+        return address(bytes20(sn << 96));
+    }
 }

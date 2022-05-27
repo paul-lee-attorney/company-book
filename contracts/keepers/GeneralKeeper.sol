@@ -132,7 +132,8 @@ contract GeneralKeeper is AccessControl {
         bytes32 shareNumber,
         uint256 parValue,
         uint256 paidPar,
-        uint32 execDate
+        uint32 execDate,
+        bytes32 sigHash
     ) external {
         _BOAKeeper.execDragAlong(
             ia,
@@ -141,7 +142,8 @@ contract GeneralKeeper is AccessControl {
             parValue,
             paidPar,
             _msgSender(),
-            execDate
+            execDate,
+            sigHash
         );
     }
 
@@ -244,6 +246,24 @@ contract GeneralKeeper is AccessControl {
 
     function proposeMotion(address ia, uint32 proposeDate) external {
         _BOMKeeper.proposeMotion(ia, proposeDate, _msgSender());
+    }
+
+    function supportMotion(
+        address ia,
+        uint32 caller,
+        uint32 sigDate,
+        bytes32 sigHash
+    ) external {
+        _BOMKeeper.supportMotion(ia, _msgSender(), sigDate, sigHash);
+    }
+
+    function againstMotion(
+        address ia,
+        uint32 caller,
+        uint32 sigDate,
+        bytes32 sigHash
+    ) external {
+        _BOMKeeper.againstMotion(ia, _msgSender(), sigDate, sigHash);
     }
 
     function voteCounting(address ia) external {

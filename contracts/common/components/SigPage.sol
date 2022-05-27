@@ -105,12 +105,11 @@ contract SigPage is DraftControl {
                 hasRole(ATTORNEYS, _msgSender()),
                 "only Attorney may add party to a pending DOC"
             );
-        else if (established)
+        else
             require(
                 _msgSender() == getDirectKeeper(),
                 "only DK may add party to an established DOC"
             );
-        else revert("cannot add party to a DOC in signing stage");
 
         if (_parties.addParty(acct)) emit AddParty(acct);
     }
@@ -149,13 +148,13 @@ contract SigPage is DraftControl {
         _addSigOfParty(_msgSender(), _sigDate, _sigHash);
     }
 
-    // function addSigOfParty(
-    //     uint32 acct,
-    //     uint32 _sigDate,
-    //     bytes32 _sigHash
-    // ) external onlyKeeper {
-    //     _addSigOfParty(acct, _sigDate, _sigHash);
-    // }
+    function addSigOfParty(
+        uint32 acct,
+        uint32 _sigDate,
+        bytes32 _sigHash
+    ) external onlyDirectKeeper {
+        _addSigOfParty(acct, _sigDate, _sigHash);
+    }
 
     function _addSigOfParty(
         uint32 acct,

@@ -41,7 +41,8 @@ interface IBOAKeeper {
         uint256 parValue,
         uint256 paidPar,
         uint32 caller,
-        uint32 execDate
+        uint32 execDate,
+        bytes32 sigHash
     ) external;
 
     function acceptTagAlong(

@@ -7,6 +7,7 @@ pragma solidity ^0.4.24;
 
 import "../books/boa/interfaces/IAgreement.sol";
 
+import "../common/ruting/BOSSetting.sol";
 import "../common/ruting/BOASetting.sol";
 import "../common/ruting/BOMSetting.sol";
 import "../common/ruting/BOOSetting.sol";
@@ -26,7 +27,8 @@ contract BOMKeeper is
     BOASetting,
     BOMSetting,
     SHASetting,
-    BOOSetting
+    BOOSetting,
+    BOSSetting
 {
     using SafeMath for uint256;
     using SNParser for bytes32;
@@ -37,6 +39,11 @@ contract BOMKeeper is
 
     modifier onlyPartyOf(address body, uint32 caller) {
         require(ISigPage(body).isParty(caller), "NOT Party of Doc");
+        _;
+    }
+
+    modifier notPartyOf(address body, uint32 caller) {
+        require(!ISigPage(body).isParty(caller), "Party has no voting right");
         _;
     }
 
@@ -55,6 +62,26 @@ contract BOMKeeper is
         currentDate(proposeDate)
     {
         _bom.proposeMotion(ia, proposeDate, caller);
+    }
+
+    function supportMotion(
+        address ia,
+        uint32 caller,
+        uint32 sigDate,
+        bytes32 sigHash
+    ) external onlyDirectKeeper currentDate(sigDate) notPartyOf(ia, caller) {
+        require(_bos.isMember(caller), "not a shareholder");
+        _bom.supportMotion(ia, caller, sigDate, sigHash);
+    }
+
+    function againstMotion(
+        address ia,
+        uint32 caller,
+        uint32 sigDate,
+        bytes32 sigHash
+    ) external onlyDirectKeeper currentDate(sigDate) notPartyOf(ia, caller) {
+        require(_bos.isMember(caller), "not a shareholder");
+        _bom.againstMotion(ia, caller, sigDate, sigHash);
     }
 
     function voteCounting(address ia, uint32 caller)

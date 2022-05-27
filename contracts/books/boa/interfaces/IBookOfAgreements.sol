@@ -30,13 +30,15 @@ interface IBookOfAgreements {
         bytes32 rule,
         bytes32 shareNumber,
         uint256 parValue,
-        uint256 paidPar
+        uint256 paidPar,
+        uint32 execDate
     ) external;
 
     function acceptTagAlongDeal(
         address ia,
         uint32 drager,
-        bytes32 sn
+        bytes32 sn,
+        uint32 sigDate
     ) external;
 
     function updateStateOfDoc(address body, uint8 newState) external;
@@ -46,6 +48,8 @@ interface IBookOfAgreements {
     //##################
     //##    读接口    ##
     //##################
+
+    function passedReview(address ia) external returns (bool);
 
     function bookName() external view returns (string);
 

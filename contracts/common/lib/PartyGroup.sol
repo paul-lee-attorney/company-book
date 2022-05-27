@@ -5,15 +5,16 @@
 
 pragma solidity ^0.4.24;
 
-import "./UserGroup.sol";
+import "./ArrayUtils.sol";
 
 library PartyGroup {
-    using UserGroup for UserGroup.Group;
+    using ArrayUtils for uint32[];
 
     struct Group {
         mapping(uint32 => uint16) _counterOfParty;
         uint16 _counter;
-        UserGroup.Group _parties;
+        mapping(uint32 => bool) _isJoined;
+        uint32[] _parties;
     }
 
     // ##################
@@ -26,26 +27,35 @@ library PartyGroup {
     {
         group._counterOfParty[acct]++;
         group._counter++;
-        flag = group._parties.addMember(acct);
+
+        if (!group._isJoined[acct]) {
+            group._isJoined[acct] = true;
+            group._parties.push(acct);
+            flag = true;
+        }
     }
 
     function removeParty(Group storage group, uint32 acct)
         internal
         returns (bool flag)
     {
-        if (group._parties.removeMember(acct)) {
+        if (group._isJoined[acct]) {
+            group._isJoined[acct] = false;
+            group._parties.removeByValue(acct);
+
             group._counter -= group._counterOfParty[acct];
             group._counterOfParty[acct] = 0;
+
             flag = true;
         }
     }
 
     function resetCounter(Group storage group) internal {
-        uint256 len = group._parties.qtyOfMembers();
+        uint256 len = group._parties.length;
         for (uint256 i = 0; i < len; i++)
-            group._counterOfParty[group._parties.getMember(i)] = 1;
+            group._counterOfParty[group._parties[i]] = 1;
 
-        group._counter = uint16(group._parties.qtyOfMembers());
+        group._counter = uint16(len);
     }
 
     // ##################
@@ -57,7 +67,7 @@ library PartyGroup {
         view
         returns (bool)
     {
-        return group._parties.isMember(acct);
+        return group._isJoined[acct];
     }
 
     function counterOfParty(Group storage group, uint32 acct)
@@ -69,7 +79,7 @@ library PartyGroup {
     }
 
     function qtyOfParties(Group storage group) internal view returns (uint256) {
-        return group._parties.qtyOfMembers();
+        return group._parties.length;
     }
 
     function counterOfParties(Group storage group)
@@ -85,10 +95,10 @@ library PartyGroup {
         view
         returns (uint32)
     {
-        return group._parties.getMember(index);
+        return group._parties[index];
     }
 
     function parties(Group storage group) internal view returns (uint32[]) {
-        return group._parties.members();
+        return group._parties;
     }
 }

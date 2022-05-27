@@ -24,11 +24,11 @@ interface ISigPage {
 
     // function updateStateOfDoc(uint8 state) external;
 
-    // function addSigOfParty(
-    //     address acct,
-    //     uint32 sigDate,
-    //     bytes32 sigHash
-    // ) external;
+    function addSigOfParty(
+        address acct,
+        uint32 sigDate,
+        bytes32 sigHash
+    ) external;
 
     // function removeSigOfParty(address acct) external;
 

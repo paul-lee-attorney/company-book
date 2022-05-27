@@ -16,6 +16,20 @@ interface IBOMKeeper {
         uint32 caller
     ) external;
 
+    function supportMotion(
+        address ia,
+        uint32 caller,
+        uint32 sigDate,
+        bytes32 sigHash
+    ) external;
+
+    function againstMotion(
+        address ia,
+        uint32 caller,
+        uint32 sigDate,
+        bytes32 sigHash
+    ) external;
+
     function voteCounting(address ia, uint32 caller) external;
 
     function requestToBuy(

@@ -23,6 +23,8 @@ contract BookOfAgreements is EnumsRepo, BookOfDocuments, SHASetting {
 
     IAgreementCalculator private _agrmtCal;
 
+    uint32 public constant REVIEW_DAYS = 15;
+
     struct Amt {
         uint256 selAmt;
         uint256 buyAmt;
@@ -50,12 +52,12 @@ contract BookOfAgreements is EnumsRepo, BookOfDocuments, SHASetting {
     // IA address => topGroup
     mapping(address => TopGroup) private _topGroups;
 
-    constructor(
-        string _bookName,
-        uint32 _owner,
-        uint32 _bookeeper,
-        address _rc
-    ) public BookOfDocuments(_bookName, _owner, _bookeeper, _rc) {}
+    // constructor(
+    //     string _bookName,
+    //     uint32 _owner,
+    //     uint32 _bookeeper,
+    //     address _rc
+    // ) public BookOfDocuments(_bookName, _owner, _bookeeper, _rc) {}
 
     //##############
     //##  Event   ##
@@ -82,6 +84,18 @@ contract BookOfAgreements is EnumsRepo, BookOfDocuments, SHASetting {
     );
 
     event AcceptAlongDeal(address ia, address drager, bytes32 sn);
+
+    //#################
+    //##  Modifier   ##
+    //#################
+
+    modifier withinReviewPeriod(address ia, uint32 execDate) {
+        require(
+            execDate <= _docs[ia].submitDate + REVIEW_DAYS * 86400,
+            "missed review period"
+        );
+        _;
+    }
 
     //#################
     //##  Write I/O  ##
@@ -220,8 +234,14 @@ contract BookOfAgreements is EnumsRepo, BookOfDocuments, SHASetting {
         bytes32 rule,
         bytes32 shareNumber,
         uint256 parValue,
-        uint256 paidPar
-    ) external onlyDirectKeeper {
+        uint256 paidPar,
+        uint32 execDate
+    )
+        external
+        onlyDirectKeeper
+        currentDate(execDate)
+        withinReviewPeriod(ia, execDate)
+    {
         uint16 drager = rule.dragerOfLink();
         uint16 follower = _bos.groupNo(shareNumber.shareholder());
 
@@ -269,8 +289,9 @@ contract BookOfAgreements is EnumsRepo, BookOfDocuments, SHASetting {
     function acceptTagAlongDeal(
         address ia,
         uint32 drager,
-        bytes32 sn
-    ) external onlyKeeper {
+        bytes32 sn,
+        uint32 sigDate
+    ) external onlyKeeper withinReviewPeriod(ia, sigDate) {
         uint16 buyerGroup = _bos.groupNo(sn.buyerOfDeal());
         address ta = _getSHA().getTerm(uint8(TermTitle.TAG_ALONG));
 
@@ -295,6 +316,13 @@ contract BookOfAgreements is EnumsRepo, BookOfDocuments, SHASetting {
     //##################
     //##    读接口    ##
     //##################
+
+    function passedReview(address ia) external view returns (bool) {
+        if (_docs[ia].state != 1) return false;
+        else if (_docs[ia].submitDate + REVIEW_DAYS * 86400 > now + 15 minutes)
+            return false;
+        return true;
+    }
 
     function topGroup(address ia)
         external

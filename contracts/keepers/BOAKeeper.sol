@@ -114,7 +114,16 @@ contract BOAKeeper is
         uint32 execDate,
         bytes32 sigHash
     ) external onlyDirectKeeper currentDate(execDate) {
-        _addAlongDeal(false, ia, sn, shareNumber, parValue, paidPar, caller);
+        _addAlongDeal(
+            false,
+            ia,
+            sn,
+            shareNumber,
+            parValue,
+            paidPar,
+            caller,
+            execDate
+        );
 
         // add in along deal
         IAgreement(ia).createTagAlongDeal(
@@ -152,7 +161,7 @@ contract BOAKeeper is
         //     "pls SIGN the along deal first"
         // );
 
-        _boa.acceptTagAlongDeal(ia, drager, sn);
+        _boa.acceptTagAlongDeal(ia, drager, sn, sigDate);
 
         if (_boa.stateOfDoc(ia) == 1) _bom.resumeVoting(ia);
     }
@@ -166,11 +175,26 @@ contract BOAKeeper is
         uint256 parValue,
         uint256 paidPar,
         uint32 caller,
-        uint32 execDate
+        uint32 execDate,
+        bytes32 sigHash
     ) external onlyDirectKeeper {
-        require(!_bom.isProposed(ia), "ia has been proposed for voting");
+        _addAlongDeal(
+            true,
+            ia,
+            sn,
+            shareNumber,
+            parValue,
+            paidPar,
+            caller,
+            execDate
+        );
 
-        _addAlongDeal(true, ia, sn, shareNumber, parValue, paidPar, caller);
+        ISigPage(ia).addPartyToDoc(shareNumber.shareholder());
+        ISigPage(ia).addSigOfParty(
+            shareNumber.shareholder(),
+            execDate,
+            sigHash
+        );
 
         _createOption(ia, sn, shareNumber, parValue, paidPar, execDate);
     }
@@ -182,9 +206,11 @@ contract BOAKeeper is
         bytes32 shareNumber,
         uint256 parValue,
         uint256 paidPar,
-        uint32 caller
+        uint32 caller,
+        uint32 execDate
     ) private {
-        require(!_bom.isProposed(ia), "motion has been proposed");
+        require(_boa.isSubmitted(ia), "ia not submitted");
+        require(!_boa.passedReview(ia), "ia passed review");
 
         uint32 drager = IAgreement(ia)
             .shareNumberOfDeal(sn.sequenceOfDeal())
@@ -221,7 +247,8 @@ contract BOAKeeper is
             IAlongs(term).linkRule(_bos.groupNo(drager)),
             shareNumber,
             parValue,
-            paidPar
+            paidPar,
+            execDate
         );
     }
 

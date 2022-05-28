@@ -43,7 +43,7 @@ contract BookOfMotions is SHASetting, BOASetting, BOSSetting {
     //##  Event   ##
     //##############
 
-    event ProposeMotion(address indexed ia, bytes sn);
+    event ProposeMotion(address indexed ia, bytes32 sn);
 
     event Vote(address indexed ia, uint32 voter, bool support, uint256 voteAmt);
 

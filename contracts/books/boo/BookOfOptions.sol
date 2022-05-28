@@ -25,8 +25,6 @@ contract BookOfOptions is BOSSetting {
     struct Option {
         bytes32 sn;
         uint32 rightholder;
-        // mapping(address => bool) isObligor;
-        // address[] obligors;
         UserGroup.Group obligors;
         uint32 closingDate;
         uint256 parValue;

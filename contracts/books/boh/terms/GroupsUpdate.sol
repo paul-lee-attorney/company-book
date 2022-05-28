@@ -7,13 +7,14 @@ pragma solidity ^0.4.24;
 
 import "../../../common/lib/ArrayUtils.sol";
 import "../../../common/lib/SNFactory.sol";
+import "../../../common/lib/SNParser.sol";
 
 import "../../../common/ruting/BOSSetting.sol";
 import "../../../common/access/DraftControl.sol";
 
 contract GroupsUpdate is BOSSetting, DraftControl {
     using SNFactory for bytes;
-    using SNFactory for bytes32;
+    using SNParser for bytes32;
     using ArrayUtils for bytes32[];
 
     bytes32[] private _orders;

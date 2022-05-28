@@ -15,7 +15,6 @@ import "../../common/ruting/BOSSetting.sol";
 contract BookOfPledges is BOSSetting {
     using SafeMath for uint8;
     using SNFactory for bytes;
-    using SNFactory for bytes32;
     using SNParser for bytes32;
     using ArrayUtils for bytes32[];
 
@@ -24,7 +23,7 @@ contract BookOfPledges is BOSSetting {
         bytes32 sn; //质押编号
         uint256 pledgedPar; // 出质票面额（数量）
         uint32 creditor; //质权人、债权人
-        uint32 debtor;
+        // uint32 debtor;
         uint256 guaranteedAmt; //担保金额
     }
 

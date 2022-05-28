@@ -7,24 +7,18 @@ pragma solidity ^0.4.24;
 
 import "../boa/interfaces/IAgreement.sol";
 
-// import "../../common/ruting/BOSSetting.sol";
 import "../../common/ruting/BOASetting.sol";
 import "../../common/ruting/SHASetting.sol";
 import "../../common/ruting/BOSSetting.sol";
 
-import "../../common/lib/ArrayUtils.sol";
 import "../../common/lib/SNFactory.sol";
 import "../../common/lib/SNParser.sol";
 import "../../common/lib/VoterGroup.sol";
 import "../../common/lib/AddrGroup.sol";
 
 import "../../common/components/interfaces/ISigPage.sol";
-import "../../common/access/interfaces/IAccessControl.sol";
 
-import "../../common/components/EnumsRepo.sol";
-
-contract BookOfMotions is EnumsRepo, SHASetting, BOASetting, BOSSetting {
-    using ArrayUtils for uint32[];
+contract BookOfMotions is SHASetting, BOASetting, BOSSetting {
     using SNFactory for bytes;
     using SNParser for bytes32;
     using VoterGroup for VoterGroup.Group;
@@ -33,41 +27,23 @@ contract BookOfMotions is EnumsRepo, SHASetting, BOASetting, BOSSetting {
     struct Motion {
         bytes32 sn;
         bytes32 votingRule;
-        // uint32 votingDeadline;
-        // mapping(address => uint32) sigOfYea;
-        // uint32[] membersOfYea;
-        // uint256 supportPar;
         VoterGroup.Group supportVoters;
-        // mapping(address => uint32) sigOfNay;
-        // uint32[] membersOfNay;
-        // uint256 againstPar;
         VoterGroup.Group againstVoters;
-        // mapping(uint32 => bool) voted;
-        // mapping(uint32 => uint256) voteAmt;
-        // uint256 sumOfVoteAmt;
-
         VoterGroup.Group allVoters;
-        uint8 state; // 0-pending 1-proposed  2-passed 3-rejected(no need to buy) 4-rejected (against need to buy) 5-suspend
+        uint8 state; // 0-pending 1-proposed  2-passed 3-rejected(no need to buy) 4-rejected (against need to buy)
     }
 
     // ia/sha... => Motion
     mapping(address => Motion) private _motions;
 
-    // // ia => bool
-    // mapping(address => bool) public isProposed;
-
-    // Investment Agreements
+    // Investment Agreements Subject to voting
     AddrGroup.Group private _ias;
 
     //##############
     //##  Event   ##
     //##############
 
-    event ProposeMotion(
-        address indexed ia,
-        uint32 votingDeadline,
-        uint32 proposedBy
-    );
+    event ProposeMotion(address indexed ia, bytes sn);
 
     event Vote(address indexed ia, uint32 voter, bool support, uint256 voteAmt);
 
@@ -127,7 +103,6 @@ contract BookOfMotions is EnumsRepo, SHASetting, BOASetting, BOSSetting {
     ) private pure returns (bytes32 sn) {
         bytes memory _sn = new bytes(32);
 
-        // _sn[0] = bytes1(typeOfMotion);
         _sn = _sn.dateToSN(0, submitter);
         _sn = _sn.dateToSN(4, proposeDate);
         _sn = _sn.dateToSN(8, votingDeadline);
@@ -165,8 +140,7 @@ contract BookOfMotions is EnumsRepo, SHASetting, BOASetting, BOSSetting {
         motion.sn = _createSN(ia, submitter, proposeDate, votingDeadline);
         motion.state = 1;
 
-        if (_ias.addMember(ia))
-            emit ProposeMotion(ia, votingDeadline, submitter);
+        if (_ias.addMember(ia)) emit ProposeMotion(ia, motion.sn);
     }
 
     function _getVoteAmount(address ia, uint32 caller)

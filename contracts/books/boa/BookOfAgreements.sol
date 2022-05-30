@@ -18,12 +18,19 @@ import "../../common/lib/SNParser.sol";
 
 import "../../common/components/interfaces/ISigPage.sol";
 
-contract BookOfAgreements is EnumsRepo, BookOfDocuments, SHASetting {
+contract BookOfAgreements is BookOfDocuments, SHASetting {
     using SNParser for bytes32;
 
     IAgreementCalculator private _agrmtCal;
 
-    uint32 public constant REVIEW_DAYS = 15;
+    enum BOAStates {
+        ZeroPoint,
+        Created,
+        Submitted,
+        Proposed,
+        Voted,
+        Exercised
+    }
 
     struct Amt {
         uint256 selAmt;
@@ -89,14 +96,6 @@ contract BookOfAgreements is EnumsRepo, BookOfDocuments, SHASetting {
     //##  Modifier   ##
     //#################
 
-    modifier withinReviewPeriod(address ia, uint32 execDate) {
-        require(
-            execDate <= _docs[ia].submitDate + REVIEW_DAYS * 86400,
-            "missed review period"
-        );
-        _;
-    }
-
     //#################
     //##  Write I/O  ##
     //#################
@@ -108,11 +107,11 @@ contract BookOfAgreements is EnumsRepo, BookOfDocuments, SHASetting {
 
     function submitIA(
         address ia,
+        uint32 submitter,
         uint32 submitDate,
-        bytes32 docHash,
-        uint32 submitter
+        bytes32 docHash
     ) external onlyDirectKeeper {
-        submitDoc(ia, submitDate, docHash, submitter);
+        submitDoc(ia, submitter, submitDate, docHash);
         bool basedOnPar = _getSHA()
             .votingRules(_agrmtCal.typeOfIA(ia))
             .basedOnParOfVR();
@@ -229,19 +228,35 @@ contract BookOfAgreements is EnumsRepo, BookOfDocuments, SHASetting {
         );
     }
 
+    function proposeIA(
+        address ia,
+        uint32 proposeDate,
+        uint32 caller
+    )
+        public
+        onlyDirectKeeper
+        onlyRegistered(ia)
+        currentDate(proposeDate)
+        onlyForSubmitted(ia)
+    {
+        Doc storage doc = _docs[ia];
+
+        require(doc.reviewDeadline <= proposeDate, "still in review period");
+
+        pushToNextState(ia, proposeDate, caller);
+    }
+
     function addAlongDeal(
         address ia,
         bytes32 rule,
         bytes32 shareNumber,
         uint256 parValue,
         uint256 paidPar,
+        uint32 caller,
         uint32 execDate
-    )
-        external
-        onlyDirectKeeper
-        currentDate(execDate)
-        withinReviewPeriod(ia, execDate)
-    {
+    ) external onlyDirectKeeper currentDate(execDate) {
+        recallDoc(ia, execDate, caller);
+
         uint16 drager = rule.dragerOfLink();
         uint16 follower = _bos.groupNo(shareNumber.shareholder());
 
@@ -281,19 +296,16 @@ contract BookOfAgreements is EnumsRepo, BookOfDocuments, SHASetting {
 
         fAmt.rstAmt = fAmt.orgAmt - fAmt.selAmt;
 
-        updateSateOfDoc(ia, 2);
-
         emit AddAlongDeal(ia, follower, shareNumber, parValue, paidPar);
     }
 
     function acceptTagAlongDeal(
         address ia,
         uint32 drager,
-        bytes32 sn,
-        uint32 sigDate
-    ) external onlyKeeper withinReviewPeriod(ia, sigDate) {
+        bytes32 sn
+    ) external onlyKeeper {
         uint16 buyerGroup = _bos.groupNo(sn.buyerOfDeal());
-        address ta = _getSHA().getTerm(uint8(TermTitle.TAG_ALONG));
+        address ta = _getSHA().getTerm(uint8(EnumsRepo.TermTitle.TAG_ALONG));
 
         bytes32 rule = IAlongs(ta).linkRule(_bos.groupNo(drager));
 
@@ -316,13 +328,6 @@ contract BookOfAgreements is EnumsRepo, BookOfDocuments, SHASetting {
     //##################
     //##    读接口    ##
     //##################
-
-    function passedReview(address ia) external view returns (bool) {
-        if (_docs[ia].state != 1) return false;
-        else if (_docs[ia].submitDate + REVIEW_DAYS * 86400 > now + 15 minutes)
-            return false;
-        return true;
-    }
 
     function topGroup(address ia)
         external

@@ -109,22 +109,29 @@ contract BOHKeeper is
 
     function submitSHA(
         address body,
-        bytes32 docHash,
-        uint32 caller
-    ) external onlyDirectKeeper onlyOwnerOf(body, caller) beEstablished(body) {
-        _boh.submitSHA(body, docHash, caller);
+        uint32 caller,
+        uint32 submitDate,
+        bytes32 docHash
+    )
+        external
+        onlyDirectKeeper
+        onlyOwnerOf(body, caller)
+        beEstablished(body)
+        currentDate(submitDate)
+    {
+        _boh.submitDoc(body, caller, submitDate, docHash);
 
         IAccessControl(body).abandonOwnership();
     }
 
-    function effectiveSHA(address body, uint32 caller)
-        external
-        onlyDirectKeeper
-        onlyPartyOf(body, caller)
-    {
+    function effectiveSHA(
+        address body,
+        uint32 caller,
+        uint32 sigDate
+    ) external onlyDirectKeeper onlyPartyOf(body, caller) {
         require(_boh.isSubmitted(body), "SHA not submitted yet");
 
-        _boh.changePointer(body);
+        _boh.changePointer(body, caller, sigDate);
 
         if (IShareholdersAgreement(body).hasTitle(uint8(TermTitle.OPTIONS)))
             _boo.registerOption(

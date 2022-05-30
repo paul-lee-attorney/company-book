@@ -54,8 +54,6 @@ interface IBOAKeeper {
     ) external;
 
     function acceptDragAlong(
-        address ia,
-        bytes32 sn,
         bytes32 snOfOpt,
         bytes32 shareNumber,
         uint32 caller,

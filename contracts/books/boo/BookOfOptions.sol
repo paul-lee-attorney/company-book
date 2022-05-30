@@ -11,7 +11,6 @@ import "../../common/ruting/BOSSetting.sol";
 
 import "../../common/lib/ArrayUtils.sol";
 import "../../common/lib/UserGroup.sol";
-
 import "../../common/lib/SNFactory.sol";
 import "../../common/lib/SNParser.sol";
 
@@ -37,7 +36,7 @@ contract BookOfOptions is BOSSetting {
     }
 
     // bytes32 snInfo{
-    //      uint8 typeOfOpt; 0  //0-call(price); 1-put(price); 2-call(roe); 3-pub(roe); 4-call(price) & cnds; 5-put(price) & cnds; 6-call(roe) & cnds; 7-put(roe) & cnds;
+    //      uint8 typeOfOpt; 0, 1  //0-call(price); 1-put(price); 2-call(roe); 3-put(roe); 4-call(price) & cnds; 5-put(price) & cnds; 6-call(roe) & cnds; 7-put(roe) & cnds;
     //      uint16 counterOfOptions; 1, 2
     //      uint32 triggerDate; 3, 4
     //      uint8 exerciseDays; 7, 1
@@ -65,8 +64,6 @@ contract BookOfOptions is BOSSetting {
         uint256 data_1;
         uint256 data_2;
     }
-
-    // uint16 public counterOfData;
 
     OracleData private _oracles;
 
@@ -203,9 +200,6 @@ contract BookOfOptions is BOSSetting {
         opt.rightholder = rightholder;
 
         opt.obligors.addMember(obligor);
-        // opt.isObligor[obligor] = true;
-        // opt.obligors.push(obligor);
-        opt.parValue = paidPar;
         opt.parValue = parValue;
         opt.paidPar = paidPar;
         opt.state = 1;

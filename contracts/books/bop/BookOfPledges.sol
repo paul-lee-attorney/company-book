@@ -23,7 +23,6 @@ contract BookOfPledges is BOSSetting {
         bytes32 sn; //质押编号
         uint256 pledgedPar; // 出质票面额（数量）
         uint32 creditor; //质权人、债权人
-        // uint32 debtor;
         uint256 guaranteedAmt; //担保金额
     }
 
@@ -112,7 +111,7 @@ contract BookOfPledges is BOSSetting {
         uint256 guaranteedAmt
     )
         external
-        onlyKeeper
+        onlyDirectKeeper
         shareExist(shareNumber.short())
         currentDate(createDate)
     {
@@ -135,7 +134,6 @@ contract BookOfPledges is BOSSetting {
         pld.sn = sn;
         pld.pledgedPar = pledgedPar;
         pld.creditor = creditor;
-        // pld.debtor = debtor;
         pld.guaranteedAmt = guaranteedAmt;
 
         isPledge[ssn] = true;
@@ -198,7 +196,6 @@ contract BookOfPledges is BOSSetting {
         sn = pld.sn;
         pledgedPar = pld.pledgedPar;
         creditor = pld.creditor;
-        // debtor = pld.debtor;
         guaranteedAmt = pld.guaranteedAmt;
     }
 }

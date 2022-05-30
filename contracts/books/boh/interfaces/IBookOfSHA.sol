@@ -16,15 +16,20 @@ interface IBookOfSHA {
 
     function removeDoc(address body) external;
 
-    function submitSHA(
+    function submitDoc(
         address body,
-        bytes32 docHash,
-        uint32 submitter
+        uint32 submitter,
+        uint32 submitDate,
+        bytes32 docHash
     ) external;
 
     function updateStateOfDoc(address body, uint8 newState) external;
 
-    function changePointer(address body) external;
+    function changePointer(
+        address body,
+        uint32 caller,
+        uint32 sigDate
+    ) external;
 
     //##################
     //##    读接口    ##

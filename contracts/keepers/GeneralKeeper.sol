@@ -157,20 +157,11 @@ contract GeneralKeeper is AccessControl {
     }
 
     function acceptDragAlong(
-        address ia,
-        bytes32 sn,
         bytes32 snOfOpt,
         bytes32 shareNumber,
         uint32 sigDate
     ) external {
-        _BOAKeeper.acceptDragAlong(
-            ia,
-            sn,
-            snOfOpt,
-            shareNumber,
-            _msgSender(),
-            sigDate
-        );
+        _BOAKeeper.acceptDragAlong(snOfOpt, shareNumber, _msgSender(), sigDate);
     }
 
     function execFirstRefusal(
@@ -232,8 +223,12 @@ contract GeneralKeeper is AccessControl {
         _BOHKeeper.removeSHA(body, _msgSender());
     }
 
-    function submitSHA(address body, bytes32 docHash) external {
-        _BOHKeeper.submitSHA(body, docHash, _msgSender());
+    function submitSHA(
+        address body,
+        uint32 submitDate,
+        bytes32 docHash
+    ) external {
+        _BOHKeeper.submitSHA(body, _msgSender(), submitDate, docHash);
     }
 
     function effectiveSHA(address body) external {
@@ -250,7 +245,6 @@ contract GeneralKeeper is AccessControl {
 
     function supportMotion(
         address ia,
-        uint32 caller,
         uint32 sigDate,
         bytes32 sigHash
     ) external {
@@ -259,7 +253,6 @@ contract GeneralKeeper is AccessControl {
 
     function againstMotion(
         address ia,
-        uint32 caller,
         uint32 sigDate,
         bytes32 sigHash
     ) external {

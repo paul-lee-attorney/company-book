@@ -9,6 +9,10 @@ import "../lib/SNFactory.sol";
 import "../lib/SNParser.sol";
 import "../lib/SafeMath.sol";
 import "../lib/ArrayUtils.sol";
+// import "../lib/EnumsRepo.sol";
+import "../lib/Timeline.sol";
+
+import "./interfaces/ISigPage.sol";
 
 import "../ruting/BOSSetting.sol";
 
@@ -16,27 +20,33 @@ import "../utils/CloneFactory.sol";
 
 contract BookOfDocuments is CloneFactory, BOSSetting {
     using SNFactory for bytes;
-    using SNFactory for bytes32;
     using SNParser for bytes32;
-    // using SafeMath for uint256;
+    using Timeline for Timeline.Line;
     using ArrayUtils for bytes32[];
 
     string public bookName;
     address public template;
 
+    enum DocStates {
+        ZeroPoint,
+        Created,
+        Submitted
+    }
+
     struct Doc {
         bytes32 sn;
-        uint32 submitDate;
         bytes32 docHash;
-        uint8 state; // 0-draft 1-submitted 2-suspend 3-closed/effective 4-terminated/revoked
+        uint32 reviewDeadline;
+        Timeline.Line states;
     }
 
     // struct snInfo {
     //     uint8 docType;           1
+    //     uint8 reviewDays;        1
     //     uint16 sequence;         2
     //     uint32 createDate;       4
     //     uint32 creator;         4
-    //     bytes5 addrSuffixOfDoc;  5
+    //     address addrOfDoc;  20
     // }
 
     // addrOfBody => Doc
@@ -65,13 +75,9 @@ contract BookOfDocuments is CloneFactory, BOSSetting {
 
     event SetTemplate(address temp);
 
-    event CreateDoc(bytes32 indexed sn, address body);
+    event UpdateStateOfDoc(bytes32 indexed sn, uint8 state, uint32 caller);
 
-    event RemoveDoc(bytes32 indexed sn, address body);
-
-    event SubmitDoc(bytes32 indexed sn, uint32 submittor);
-
-    event UpdateStateOfDoc(address indexed ia, uint8 newState);
+    event RemoveDoc(bytes32 indexed sn, uint32 caller);
 
     //####################
     //##    modifier    ##
@@ -88,12 +94,18 @@ contract BookOfDocuments is CloneFactory, BOSSetting {
     }
 
     modifier onlyForPending(address body) {
-        require(_docs[body].state == 0, "doc NOT pending");
+        require(
+            _docs[body].states.currentState == uint8(DocStates.Created),
+            "state of doc is not Created"
+        );
         _;
     }
 
     modifier onlyForSubmitted(address body) {
-        require(_docs[body].state == 1, "doc NOT submitted");
+        require(
+            _docs[body].states.currentState == uint8(DocStates.Submitted),
+            "state of doc is not Submitted"
+        );
         _;
     }
 
@@ -101,8 +113,14 @@ contract BookOfDocuments is CloneFactory, BOSSetting {
     //##    写接口    ##
     //##################
 
+    function setTemplate(address body) external onlyOwner {
+        template = body;
+        emit SetTemplate(body);
+    }
+
     function _createSN(
         uint8 docType,
+        uint8 reviewDays,
         uint16 sequence,
         uint32 createDate,
         uint32 creator,
@@ -111,21 +129,18 @@ contract BookOfDocuments is CloneFactory, BOSSetting {
         bytes memory _sn = new bytes(32);
 
         _sn[0] = bytes1(docType);
-        _sn = _sn.sequenceToSN(1, sequence);
-        _sn = _sn.dateToSN(3, createDate);
-        _sn = _sn.dateToSN(7, creator);
-        _sn = _sn.addrToSN(11, body);
+        _sn[1] = bytes1(reviewDays);
+        _sn = _sn.sequenceToSN(2, sequence);
+        _sn = _sn.dateToSN(4, createDate);
+        _sn = _sn.dateToSN(8, creator);
+        _sn = _sn.addrToSN(12, body);
 
         sn = _sn.bytesToBytes32();
     }
 
-    function setTemplate(address body) external onlyOwner {
-        template = body;
-        emit SetTemplate(body);
-    }
-
     function createDoc(
         uint8 docType,
+        uint8 reviewDays,
         uint32 createDate,
         uint32 creator
     )
@@ -141,21 +156,25 @@ contract BookOfDocuments is CloneFactory, BOSSetting {
 
         bytes32 sn = _createSN(
             docType,
+            reviewDays,
             counterOfDocs,
             createDate,
             creator,
             body
         );
 
-        _docs[body].sn = sn;
+        Doc storage doc = _docs[body];
+
+        doc.sn = sn;
+        doc.states.pushToNextState(createDate);
 
         isRegistered[body] = true;
         sn.insertToQue(_docsList);
 
-        emit CreateDoc(sn, body);
+        emit UpdateStateOfDoc(sn, doc.states.currentState, creator);
     }
 
-    function removeDoc(address body)
+    function removeDoc(address body, uint32 caller)
         external
         onlyDirectKeeper
         onlyRegistered(body)
@@ -169,14 +188,14 @@ contract BookOfDocuments is CloneFactory, BOSSetting {
 
         delete isRegistered[body];
 
-        emit RemoveDoc(sn, body);
+        emit RemoveDoc(sn, caller);
     }
 
     function submitDoc(
         address body,
+        uint32 submitter,
         uint32 submitDate,
-        bytes32 docHash,
-        uint32 submitter
+        bytes32 docHash
     )
         public
         onlyDirectKeeper
@@ -184,37 +203,80 @@ contract BookOfDocuments is CloneFactory, BOSSetting {
         onlyForPending(body)
         currentDate(submitDate)
     {
+        require(ISigPage(body).established(), "doc is not established");
+
         Doc storage doc = _docs[body];
 
-        doc.submitDate = submitDate;
         doc.docHash = docHash;
-        doc.state = 1;
+        doc.reviewDeadline = submitDate + doc.sn.reviewDaysOfDoc() * 86400;
+        doc.states.pushToNextState(submitDate);
 
-        emit SubmitDoc(doc.sn, submitter);
+        emit UpdateStateOfDoc(doc.sn, doc.states.currentState, submitter);
     }
 
-    function updateSateOfDoc(address body, uint8 newState)
-        public
-        onlyKeeper
-        onlyRegistered(body)
-    {
+    function recallDoc(
+        address body,
+        uint32 sigDate,
+        uint32 caller
+    ) public onlyDirectKeeper onlyRegistered(body) currentDate(sigDate) {
         Doc storage doc = _docs[body];
 
-        doc.state = newState;
+        if (doc.states.currentState == uint8(DocStates.Submitted)) {
+            require(doc.reviewDeadline >= sigDate, "missed review period");
 
-        emit UpdateStateOfDoc(body, newState);
+            doc.docHash = bytes32(0);
+            doc.reviewDeadline = 0;
+            doc.states.backToPrevState();
+
+            emit UpdateStateOfDoc(doc.sn, doc.states.currentState, caller);
+        } else
+            require(
+                doc.states.currentState == uint8(DocStates.Created),
+                "wrong state of Doc"
+            );
+    }
+
+    function pushToNextState(
+        address body,
+        uint32 sigDate,
+        uint32 caller
+    ) public onlyDirectKeeper onlyRegistered(body) currentDate(sigDate) {
+        Doc storage doc = _docs[body];
+
+        require(
+            doc.states.currentState >= uint8(DocStates.Submitted),
+            "not after Proposed"
+        );
+
+        doc.states.pushToNextState(sigDate);
+
+        emit UpdateStateOfDoc(doc.sn, doc.states.currentState, caller);
     }
 
     //##################
     //##    读接口    ##
     //##################
 
-    // function getTemplate() external view tempReady returns (address) {
-    //     return template;
-    // }
+    function passedReview(address body)
+        external
+        onlyRegistered(body)
+        returns (bool)
+    {
+        Doc storage doc = _docs[body];
 
-    function isSubmitted(address body) external view returns (bool) {
-        return _docs[body].state == 1;
+        if (doc.states.currentState < uint8(DocStates.Submitted)) return false;
+        else if (doc.states.currentState > uint8(DocStates.Submitted))
+            return true;
+        else if (doc.reviewDeadline > now + 15 minutes) return false;
+        else return true;
+    }
+
+    function isSubmitted(address body)
+        external
+        onlyRegistered(body)
+        returns (bool)
+    {
+        return _docs[body].states.currentState >= uint8(DocStates.Submitted);
     }
 
     function qtyOfDocs() external view returns (uint256) {
@@ -229,25 +291,39 @@ contract BookOfDocuments is CloneFactory, BOSSetting {
         external
         view
         onlyRegistered(body)
-        returns (
-            bytes32 sn,
-            uint32 submitDate,
-            bytes32 docHash
-        )
+        returns (bytes32 sn, bytes32 docHash)
     {
         Doc storage doc = _docs[body];
 
         sn = doc.sn;
-        submitDate = doc.submitDate;
         docHash = doc.docHash;
     }
 
-    function stateOfDoc(address body)
+    function currentState(address body)
         external
         view
         onlyRegistered(body)
         returns (uint8)
     {
-        return _docs[body].state;
+        return _docs[body].states.currentState;
+    }
+
+    function startDateOf(address body, uint8 state)
+        external
+        view
+        onlyRegistered(body)
+        returns (uint32)
+    {
+        require(state <= _docs[body].states.currentState, "state overflow");
+        return _docs[body].states.startDateOf[state];
+    }
+
+    function reviewDeadlineOf(address body)
+        external
+        view
+        onlyRegistered(body)
+        returns (uint32)
+    {
+        return _docs[body].reviewDeadline;
     }
 }

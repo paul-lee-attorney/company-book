@@ -16,13 +16,17 @@ interface IBookOfAgreements {
 
     function removeDoc(address body) external;
 
-    function submitDoc(address body, bytes32 docHash) external;
-
     function submitIA(
         address ia,
+        uint32 submitter,
         uint32 submitDate,
-        bytes32 docHash,
-        uint32 submitter
+        bytes32 docHash
+    ) external;
+
+    function recallDoc(
+        address body,
+        uint32 sigDate,
+        uint32 caller
     ) external;
 
     function addAlongDeal(
@@ -31,25 +35,35 @@ interface IBookOfAgreements {
         bytes32 shareNumber,
         uint256 parValue,
         uint256 paidPar,
+        uint32 caller,
         uint32 execDate
     ) external;
 
     function acceptTagAlongDeal(
         address ia,
         uint32 drager,
-        bytes32 sn,
-        uint32 sigDate
+        bytes32 sn
     ) external;
 
-    function updateStateOfDoc(address body, uint8 newState) external;
+    function proposeDoc(
+        address body,
+        uint32 sigDate,
+        uint32 caller
+    ) external;
 
-    // function setPointer(address body) external;
+    function pushToNextState(
+        address body,
+        uint32 sigDate,
+        uint32 caller
+    ) external;
 
     //##################
     //##    读接口    ##
     //##################
 
     function passedReview(address ia) external returns (bool);
+
+    function reviewDeadlineOf(address body) external view returns (uint32);
 
     function bookName() external view returns (string);
 
@@ -61,20 +75,18 @@ interface IBookOfAgreements {
 
     function isSubmitted(address body) external view returns (bool);
 
-    function qtyOfDocuments() external view returns (uint256);
+    function qtyOfDocs() external view returns (uint256);
 
     function docsList() external view returns (bytes32[]);
 
     function getDoc(address body)
         external
         view
-        returns (
-            bytes32 sn,
-            uint32 submitDate,
-            bytes32 docHash
-        );
+        returns (bytes32 sn, bytes32 docHash);
 
-    function stateOfDoc(address body) external view returns (uint8);
+    function currentState(address body) external view returns (uint8);
+
+    function startDateOf(address body) external view returns (uint32);
 
     function groupsConcerned(address ia) external view returns (uint16[]);
 

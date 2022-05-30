@@ -34,6 +34,8 @@ contract BOAKeeper is
 {
     using SNParser for bytes32;
 
+    uint32 public constant REVIEW_DAYS = 15;
+
     TermTitle[] private _termsForCapitalIncrease = [
         TermTitle.ANTI_DILUTION,
         TermTitle.FIRST_REFUSAL
@@ -48,6 +50,11 @@ contract BOAKeeper is
     // ##################
     // ##   Modifier   ##
     // ##################
+
+    modifier withinReviewPeriod(address body, uint32 sigDate) {
+        require(_boa.reviewDeadlineOf(body) >= sigDate, "missed review period");
+        _;
+    }
 
     modifier beEstablished(address body) {
         require(ISigPage(body).established(), "Doc NOT Established");
@@ -93,11 +100,11 @@ contract BOAKeeper is
 
     function submitIA(
         address body,
+        uint32 caller,
         uint32 submitDate,
-        bytes32 docHash,
-        uint32 caller
+        bytes32 docHash
     ) external onlyDirectKeeper onlyOwnerOf(body, caller) beEstablished(body) {
-        _boa.submitIA(body, submitDate, docHash, caller);
+        _boa.submitIA(body, caller, submitDate, docHash);
 
         IAccessControl(body).abandonOwnership();
     }
@@ -111,9 +118,14 @@ contract BOAKeeper is
         uint256 parValue,
         uint256 paidPar,
         uint32 caller,
-        uint32 execDate,
+        uint32 sigDate,
         bytes32 sigHash
-    ) external onlyDirectKeeper currentDate(execDate) {
+    )
+        external
+        onlyDirectKeeper
+        currentDate(sigDate)
+        withinReviewPeriod(ia, sigDate)
+    {
         _addAlongDeal(
             false,
             ia,
@@ -122,7 +134,7 @@ contract BOAKeeper is
             parValue,
             paidPar,
             caller,
-            execDate
+            sigDate
         );
 
         // add in along deal
@@ -132,7 +144,7 @@ contract BOAKeeper is
             parValue,
             paidPar,
             caller,
-            execDate,
+            sigDate,
             sigHash
         );
     }
@@ -144,8 +156,13 @@ contract BOAKeeper is
         uint32 caller,
         uint32 sigDate,
         bytes32 sigHash
-    ) external onlyDirectKeeper currentDate(sigDate) {
-        require(_bom.votingDeadline(ia) >= sigDate, "MISSED voting deadline");
+    )
+        external
+        onlyDirectKeeper
+        currentDate(sigDate)
+        withinReviewPeriod(ia, sigDate)
+    {
+        // require(_bom.votingDeadline(ia) >= sigDate, "MISSED voting deadline");
 
         require(caller == sn.buyerOfDeal(), "caller NOT buyer");
 
@@ -161,9 +178,9 @@ contract BOAKeeper is
         //     "pls SIGN the along deal first"
         // );
 
-        _boa.acceptTagAlongDeal(ia, drager, sn, sigDate);
+        _boa.acceptTagAlongDeal(ia, drager, sn);
 
-        if (_boa.stateOfDoc(ia) == 1) _bom.resumeVoting(ia);
+        // if (_boa.stateOfDoc(ia) == 1) _bom.resumeVoting(ia);
     }
 
     // ======== DragAlong ========
@@ -175,9 +192,14 @@ contract BOAKeeper is
         uint256 parValue,
         uint256 paidPar,
         uint32 caller,
-        uint32 execDate,
+        uint32 sigDate,
         bytes32 sigHash
-    ) external onlyDirectKeeper {
+    )
+        external
+        onlyDirectKeeper
+        currentDate(sigDate)
+        withinReviewPeriod(ia, sigDate)
+    {
         _addAlongDeal(
             true,
             ia,
@@ -186,17 +208,13 @@ contract BOAKeeper is
             parValue,
             paidPar,
             caller,
-            execDate
+            sigDate
         );
 
         ISigPage(ia).addPartyToDoc(shareNumber.shareholder());
-        ISigPage(ia).addSigOfParty(
-            shareNumber.shareholder(),
-            execDate,
-            sigHash
-        );
+        ISigPage(ia).addSigOfParty(shareNumber.shareholder(), sigDate, sigHash);
 
-        _createOption(ia, sn, shareNumber, parValue, paidPar, execDate);
+        _createOption(ia, sn, shareNumber, parValue, paidPar, sigDate);
     }
 
     function _addAlongDeal(
@@ -207,7 +225,7 @@ contract BOAKeeper is
         uint256 parValue,
         uint256 paidPar,
         uint32 caller,
-        uint32 execDate
+        uint32 sigDate
     ) private {
         require(_boa.isSubmitted(ia), "ia not submitted");
         require(!_boa.passedReview(ia), "ia passed review");
@@ -248,7 +266,8 @@ contract BOAKeeper is
             shareNumber,
             parValue,
             paidPar,
-            execDate
+            caller,
+            sigDate
         );
     }
 
@@ -258,18 +277,18 @@ contract BOAKeeper is
         bytes32 shareNumber,
         uint256 parValue,
         uint256 paidPar,
-        uint32 execDate
+        uint32 sigDate
     ) private {
         (, uint256 unitPrice, , , uint32 closingDate, , ) = IAgreement(ia)
             .getDeal(sn.sequenceOfDeal());
 
-        uint8 closingDays = uint8((closingDate - execDate) / 86400);
+        uint8 closingDays = uint8((closingDate - sigDate) / 86400);
 
-        bytes32 snOfOpt = _boo.createOption(
+        _boo.createOption(
             0,
             sn.buyerOfDeal(),
             shareNumber.shareholder(),
-            execDate,
+            sigDate,
             closingDays,
             closingDays,
             unitPrice,
@@ -279,20 +298,13 @@ contract BOAKeeper is
     }
 
     function acceptDragAlong(
-        address ia,
-        bytes32 sn,
+        // bytes32 sn,
         bytes32 snOfOpt,
         bytes32 shareNumber,
         uint32 caller,
-        uint32 sigDate,
-        bytes32 sigHash
+        uint32 sigDate
     ) external onlyDirectKeeper currentDate(sigDate) {
-        require(
-            !_bom.isProposed(ia),
-            "DragAlong shall be accepted before proposal for voting"
-        );
-
-        require(caller == sn.buyerOfDeal(), "caller NOT buyer");
+        // require(caller == sn.buyerOfDeal(), "caller NOT buyer");
 
         (, uint32 rightholder, , uint256 parValue, uint256 paidPar, , ) = _boo
             .getOption(snOfOpt.shortOfOpt());
@@ -310,24 +322,16 @@ contract BOAKeeper is
         address ia,
         bytes32 sn,
         uint32 caller,
-        uint32 execDate,
+        uint32 sigDate,
         bytes32 sigHash
-    ) external onlyDirectKeeper currentDate(execDate) {
-        require(
-            !_bom.isProposed(ia) || _bom.votingDeadline(ia) >= execDate,
-            "MISSED voting deadline"
-        );
-
-        require(
-            _bom.isVoted(ia, caller),
-            "first refusal reqeuster shall not cast vote"
-        );
-
+    ) external onlyDirectKeeper currentDate(sigDate) {
         address term = _getSHA().getTerm(uint8(TermTitle.FIRST_REFUSAL));
         require(
             IFirstRefusal(term).isRightholder(sn.typeOfDeal(), caller),
             "NOT first refusal rightholder"
         );
+
+        _boa.recallDoc(ia, sigDate, caller);
 
         bool basedOnPar = _getSHA()
             .votingRules(sn.typeOfDeal())
@@ -337,11 +341,9 @@ contract BOAKeeper is
             sn.sequenceOfDeal(),
             basedOnPar,
             caller,
-            execDate,
+            sigDate,
             sigHash
         );
-
-        _bom.suspendVoting(ia);
     }
 
     function acceptFirstRefusalRequest(
@@ -350,7 +352,12 @@ contract BOAKeeper is
         uint32 caller,
         uint32 acceptDate,
         bytes32 sigHash
-    ) external onlyDirectKeeper currentDate(acceptDate) {
+    )
+        external
+        onlyDirectKeeper
+        currentDate(acceptDate)
+        withinReviewPeriod(ia, acceptDate)
+    {
         require(
             _bom.votingDeadline(ia) >= acceptDate,
             "MISSED voting deadline"
@@ -371,6 +378,8 @@ contract BOAKeeper is
             sigHash
         );
     }
+
+    // ======== Deal Closing ========
 
     function pushToCoffer(
         address ia,

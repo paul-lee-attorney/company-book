@@ -7,8 +7,12 @@ pragma solidity ^0.4.24;
 
 import "../../boa/interfaces/IAgreement.sol";
 
+import "../../boa/BookOfAgreements.sol";
+
 import "../../../common/ruting/BOSSetting.sol";
 import "../../../common/ruting/BOASetting.sol";
+import "../../../common/access/DraftControl.sol";
+
 import "../../../common/access/DraftControl.sol";
 
 import "../../../common/lib/ArrayUtils.sol";
@@ -213,7 +217,9 @@ contract DragAlong is BOSSetting, BOASetting, DraftControl {
         onlyKeeper
         returns (bool)
     {
-        if (!_boa.isSubmitted(ia)) return false;
+        if (
+            _boa.currentState(ia) != uint8(BookOfAgreements.BOAStates.Submitted)
+        ) return false;
 
         if (sn.typeOfDeal() == 1) return false;
 

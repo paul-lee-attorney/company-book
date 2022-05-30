@@ -24,8 +24,9 @@ interface IBOHKeeper {
 
     function submitSHA(
         address body,
-        bytes32 docHash,
-        uint32 caller
+        uint32 caller,
+        uint32 submitDate,
+        bytes32 docHash
     ) external;
 
     function effectiveSHA(address body, uint32 caller) external;

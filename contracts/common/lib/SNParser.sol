@@ -74,24 +74,28 @@ library SNParser {
         return uint8(sn[0]);
     }
 
+    function reviewDaysOfDoc(bytes32 sn) internal pure returns (uint32) {
+        return uint32(sn[1]);
+    }
+
     function sequenceOfDoc(bytes32 sn) internal pure returns (uint16) {
-        return uint16(bytes2(sn << 8));
+        return uint16(bytes2(sn << 16));
     }
 
     function createDateOfDoc(bytes32 sn) internal pure returns (uint32) {
-        return uint32(bytes4(sn << 24));
+        return uint32(bytes4(sn << 32));
     }
 
     function shortOfDoc(bytes32 sn) internal pure returns (bytes6) {
-        return bytes6(sn << 8);
+        return bytes6(sn << 16);
     }
 
     function creatorOfDoc(bytes32 sn) internal pure returns (uint32) {
-        return uint32(bytes4(sn << 56));
+        return uint32(bytes4(sn << 64));
     }
 
     function addrOfDoc(bytes32 sn) internal pure returns (address) {
-        return address(bytes20(sn << 88));
+        return address(bytes20(sn << 96));
     }
 
     // ======== FirstRefusalRule ========

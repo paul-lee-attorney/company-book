@@ -10,6 +10,14 @@ import "../../common/components/BookOfDocuments.sol";
 import "./interfaces/IShareholdersAgreement.sol";
 
 contract BookOfSHA is BookOfDocuments {
+    enum BOHStates {
+        ZeroPoint,
+        Created,
+        Submitted,
+        Effective,
+        Revoked
+    }
+
     address public pointer;
 
     // constructor(
@@ -28,30 +36,14 @@ contract BookOfSHA is BookOfDocuments {
     //##    写接口    ##
     //##################
 
-    function submitSHA(
+    function changePointer(
         address body,
-        uint32 submitDate,
-        bytes32 docHash,
-        uint32 submitter
-    ) external onlyKeeper {
-        submitDoc(body, submitDate, docHash, submitter);
+        uint32 caller,
+        uint32 sigDate
+    ) external onlyKeeper onlyRegistered(body) onlyForSubmitted(body) {
+        if (pointer != address(0)) pushToNextState(pointer, sigDate, caller);
 
-        // address[] memory terms = IShareholdersAgreement(body).terms();
-
-        // for (uint256 i = 0; i < terms.length; i++) {
-        //     _addTermToRegistry(terms[i]);
-        // }
-    }
-
-    function changePointer(address body)
-        external
-        onlyKeeper
-        onlyRegistered(body)
-        onlyForSubmitted(body)
-    {
-        if (pointer != address(0)) _docs[pointer].state = 4;
-
-        _docs[body].state = 3;
+        pushToNextState(body, sigDate, caller);
         emit ChangePointer(pointer, body);
 
         pointer = body;

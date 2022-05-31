@@ -6,12 +6,12 @@
 pragma solidity ^0.4.24;
 
 interface ITerm {
-    function isTriggered(address ia, uint8 snOfDeal)
+    function isTriggered(address ia, uint16 snOfDeal)
         external
         view
         returns (bool);
 
-    function isExempted(address ia, uint8 snOfDeal)
+    function isExempted(address ia, uint16 snOfDeal)
         external
         view
         returns (bool);

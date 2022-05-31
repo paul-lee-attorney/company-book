@@ -80,7 +80,8 @@ interface IBOAKeeper {
         bytes32 sn,
         bytes32 hashLock,
         uint256 closingDate,
-        uint32 caller
+        uint32 caller,
+        uint32 sigDate
     ) external;
 
     function closeDeal(

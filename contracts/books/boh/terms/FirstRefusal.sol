@@ -5,7 +5,7 @@
 
 pragma solidity ^0.4.24;
 
-import "../../boa/interfaces/IAgreement.sol";
+import "../../boa/interfaces/IInvestmentAgreement.sol";
 
 import "../../../common/ruting/BOSSetting.sol";
 import "../../../common/ruting/BOMSetting.sol";
@@ -193,7 +193,10 @@ contract FirstRefusal is BOSSetting, BOMSetting, DraftControl {
         onlyKeeper
         returns (bool)
     {
-        require(IAgreement(ia).isDeal(sn.sequenceOfDeal()), "deal not exist");
+        require(
+            IInvestmentAgreement(ia).isDeal(sn.sequenceOfDeal()),
+            "deal not exist"
+        );
 
         return isSubject[sn.typeOfDeal()];
     }

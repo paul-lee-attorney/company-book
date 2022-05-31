@@ -5,7 +5,7 @@
 
 pragma solidity ^0.4.24;
 
-interface IAgreement {
+interface IInvestmentAgreement {
     //##################
     //##    写接口    ##
     //##################
@@ -47,33 +47,40 @@ interface IAgreement {
         bytes32 shareNumber,
         uint8 class,
         uint32 buyer,
-        uint256 unitPrice,
-        uint256 parValue,
-        uint256 paidInAmount,
-        uint256 closingDate
-    ) external;
+        uint16 group,
+        uint16 preSSN
+    ) external returns (bytes32 sn);
 
     function delDeal(uint16 sn) external;
 
     function updateDeal(
-        uint16 sn,
+        uint16 ssn,
         uint256 unitPrice,
         uint256 parValue,
-        uint256 paidInAmount,
-        uint256 closingDate
+        uint256 paidPar,
+        uint32 closingDate
     ) external;
 
     function kill() external;
+
+    function lockDealSubject(uint16 ssn, uint32 lockDate)
+        external
+        returns (bool flag);
 
     function finalizeIA() external;
 
     function clearDealCP(
         uint16 ssn,
+        uint32 sigDate,
         bytes32 hashLock,
         uint256 closingDate
     ) external;
 
-    function closeDeal(uint16 ssn, string hashKey) external;
+    function closeDeal(
+        uint16 ssn,
+        uint32 sigDate,
+        string hashKey
+    ) external;
 
     function splitDeal(
         uint16 ssn,
@@ -84,7 +91,13 @@ interface IAgreement {
 
     function restoreDeal(uint16 ssn) external;
 
-    function revokeDeal(uint16 ssn, string hashKey) external;
+    function revokeDeal(
+        uint16 ssn,
+        uint32 sigDate,
+        string hashKey
+    ) external;
+
+    function takeGift(uint16 ssn, uint32 caller) external;
 
     //  ######################
     //  ##     查询接口     ##
@@ -107,13 +120,15 @@ interface IAgreement {
         view
         returns (
             bytes32 sn,
-            uint256 unitPrice,
             uint256 parValue,
             uint256 paidPar,
-            uint32 closingDate,
             uint8 state, // 0-pending 1-cleared 2-closed 3-terminated
             bytes32 hashLock
         );
+
+    function unitPrice(uint16 ssn) external view returns (uint256);
+
+    function closingDate(uint16 ssn) external view returns (uint32);
 
     function shareNumberOfDeal(uint16 ssn) external view returns (bytes32);
 

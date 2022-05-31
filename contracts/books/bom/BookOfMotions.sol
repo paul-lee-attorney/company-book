@@ -5,7 +5,7 @@
 
 pragma solidity ^0.4.24;
 
-import "../boa/interfaces/IAgreement.sol";
+import "../boa/interfaces/IInvestmentAgreement.sol";
 
 import "../../common/ruting/BOASetting.sol";
 import "../../common/ruting/SHASetting.sol";
@@ -122,10 +122,13 @@ contract BookOfMotions is SHASetting, BOASetting, BOSSetting {
     ) external onlyDirectKeeper {
         require(
             _boa.passedReview(ia),
-            "Agreement not passed review procesedure"
+            "InvestmentAgreement not passed review procesedure"
         );
 
-        require(ISigPage(ia).established(), "Agreement not established");
+        require(
+            ISigPage(ia).established(),
+            "InvestmentAgreement not established"
+        );
 
         require(
             !_ias.isMember(ia),
@@ -248,7 +251,7 @@ contract BookOfMotions is SHASetting, BOASetting, BOSSetting {
         onlyProposed(ia)
         onlyOnVoting(ia)
     {
-        require(_boa.passedReview(ia), "Agreement NOT passed review");
+        require(_boa.passedReview(ia), "InvestmentAgreement NOT passed review");
 
         Motion storage motion = _motions[ia];
 
@@ -310,15 +313,13 @@ contract BookOfMotions is SHASetting, BOASetting, BOSSetting {
     {
         uint256 ratio = _ratioOfNay(ia, againstVoter);
 
-        (
-            ,
-            ,
-            uint256 orgParValue,
-            uint256 orgPaidPar,
-            uint32 closingDate,
-            ,
+        (, uint256 orgParValue, uint256 orgPaidPar, , ) = IInvestmentAgreement(
+            ia
+        ).getDeal(sn.sequenceOfDeal());
 
-        ) = IAgreement(ia).getDeal(sn.sequenceOfDeal());
+        uint32 closingDate = IInvestmentAgreement(ia).closingDate(
+            sn.sequenceOfDeal()
+        );
 
         require(execDate < closingDate, "MISSED closing date");
 

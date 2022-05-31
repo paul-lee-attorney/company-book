@@ -5,9 +5,9 @@
 
 pragma solidity ^0.4.24;
 
-import "../../boa/interfaces/IAgreement.sol";
+import "../../boa/interfaces/IInvestmentAgreement.sol";
 
-import "../../boa/BookOfAgreements.sol";
+import "../../boa/BookOfIA.sol";
 
 import "../../../common/ruting/BOSSetting.sol";
 import "../../../common/ruting/BOASetting.sol";
@@ -217,17 +217,16 @@ contract DragAlong is BOSSetting, BOASetting, DraftControl {
         onlyKeeper
         returns (bool)
     {
-        if (
-            _boa.currentState(ia) != uint8(BookOfAgreements.BOAStates.Submitted)
-        ) return false;
+        if (_boa.currentState(ia) != uint8(BookOfIA.BOAStates.Submitted))
+            return false;
 
         if (sn.typeOfDeal() == 1) return false;
 
-        uint32 seller = IAgreement(ia)
+        uint32 seller = IInvestmentAgreement(ia)
             .shareNumberOfDeal(sn.sequenceOfDeal())
             .shareholder();
 
-        // (, uint256 dealPrice, , , uint32 closingDate, , ) = IAgreement(ia)
+        // (, uint256 dealPrice, , , uint32 closingDate, , ) = IInvestmentAgreement(ia)
         //     .getDeal(sn.sequenceOfDeal());
 
         uint16 sellerGroup = _bos.groupNo(seller);
@@ -260,7 +259,7 @@ contract DragAlong is BOSSetting, BOASetting, DraftControl {
     ) public view onlyKeeper returns (bool) {
         require(isTriggered(ia, sn), "not triggered");
 
-        uint32 drager = IAgreement(ia)
+        uint32 drager = IInvestmentAgreement(ia)
             .shareNumberOfDeal(sn.sequenceOfDeal())
             .shareholder();
 
@@ -271,8 +270,12 @@ contract DragAlong is BOSSetting, BOASetting, DraftControl {
             "caller and target shareholder NOT linked"
         );
 
-        (, uint256 dealPrice, , , uint32 closingDate, , ) = IAgreement(ia)
-            .getDeal(sn.sequenceOfDeal());
+        uint256 dealPrice = IInvestmentAgreement(ia).unitPrice(
+            sn.sequenceOfDeal()
+        );
+        uint32 closingDate = IInvestmentAgreement(ia).closingDate(
+            sn.sequenceOfDeal()
+        );
 
         bytes32 rule = _links[_bos.groupNo(drager)].rule;
 
@@ -283,7 +286,7 @@ contract DragAlong is BOSSetting, BOASetting, DraftControl {
             else return false;
         }
 
-        (, , , , , uint256 issuePrice, ) = _bos.getShare(shareNumber.short());
+        (, , , , uint256 issuePrice, ) = _bos.getShare(shareNumber.short());
         uint32 issueDate = shareNumber.issueDate();
 
         if (

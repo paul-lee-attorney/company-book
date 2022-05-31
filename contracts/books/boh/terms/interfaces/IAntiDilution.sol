@@ -20,14 +20,17 @@ interface IAntiDilution {
     // ##  查询接口  ##
     // ################
 
-    function benchmarkExist(uint8 class) external view returns (bool);
+    function isMarked(uint8 class) external view returns (bool);
 
-    function getBenchmark(uint8 class)
-        external
-        view
-        returns (
-            uint8 rank,
-            uint256 price,
-            uint32[] obligors
-        );
+    function classToMark(uint8 class) external view returns (bytes32);
+
+    function obligors(uint8 class) external view returns (uint32[]);
+
+    function benchmarks() external view returns (bytes32[]);
+
+    function giftPar(
+        address ia,
+        bytes32 snOfDeal,
+        bytes32 shareNumber
+    ) external view returns (uint256);
 }

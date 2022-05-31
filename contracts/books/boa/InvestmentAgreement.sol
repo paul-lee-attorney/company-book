@@ -10,17 +10,31 @@ import "../../common/ruting/BOSSetting.sol";
 import "../../common/lib/ArrayUtils.sol";
 import "../../common/lib/SNFactory.sol";
 import "../../common/lib/SNParser.sol";
+import "../../common/lib/Timeline.sol";
 
 import "../../common/components/SigPage.sol";
 
-contract Agreement is BOSSetting, SigPage {
+contract InvestmentAgreement is BOSSetting, SigPage {
     using SNFactory for bytes;
     using SNParser for bytes32;
     using ArrayUtils for bytes32[];
+    using Timeline for Timeline.Line;
+
+    enum TypeOfDeal {
+        ZeroPoint,
+        CapitalIncrease,
+        PreEmptive,
+        ShareTransferExt,
+        TagAlong,
+        DragAlong,
+        ShareTransferInt,
+        FirstRefusal,
+        FreeGift
+    }
 
     /* struct sn{
         uint8 class; 1
-        uint8 typeOfDeal; 1   // 1-CI 2-ST(to 3rd) 3-ST(internal) 4-TagAlong 5-DragAlong 6-FirstRefusal
+        uint8 typeOfDeal; 1   // 1-CI 2-ST(to 3rd) 3-ST(internal) 4-TagAlong 5-FirstRefusal 6-Gift 
         uint16 sequence; 2
         uint32 buyer; 4
         uint16 group; 2
@@ -29,6 +43,14 @@ contract Agreement is BOSSetting, SigPage {
     } 
     */
 
+    enum StateOfDeal {
+        Drafting,
+        Locked,
+        Cleared,
+        Closed,
+        Terminated
+    }
+
     struct Deal {
         bytes32 sn;
         bytes32 shareNumber;
@@ -36,7 +58,7 @@ contract Agreement is BOSSetting, SigPage {
         uint256 parValue;
         uint256 paidPar;
         uint32 closingDate;
-        uint8 state; // 0-drafting 1-cleared 2-closed 3-revoked 4-suspend
+        Timeline.Line states; // 0-drafting 1-cleared 2-closed 3-revoked 4-suspend
         bytes32 hashLock;
     }
 
@@ -70,6 +92,8 @@ contract Agreement is BOSSetting, SigPage {
 
     event DelDeal(bytes32 indexed sn);
 
+    event LockDealSubject(bytes32 indexed sn);
+
     event ClearDealCP(
         bytes32 indexed sn,
         uint8 state,
@@ -86,7 +110,10 @@ contract Agreement is BOSSetting, SigPage {
     //##################
 
     modifier onlyCleared(uint16 ssn) {
-        require(_deals[ssn].state == 1);
+        require(
+            _deals[ssn].states.currentState == uint8(StateOfDeal.Cleared),
+            "wrong stateOfDeal"
+        );
         _;
     }
 
@@ -122,26 +149,43 @@ contract Agreement is BOSSetting, SigPage {
     }
 
     function createDeal(
+        uint8 typeOfDeal,
         bytes32 shareNumber,
         uint8 class,
         uint32 buyer,
-        uint16 group
-    ) external onlyPending onlyAttorney returns (bytes32) {
+        uint16 group,
+        uint16 preSSN
+    ) external onlyPending attorneyOrKeeper returns (bytes32) {
         require(buyer != 0, "buyer is ZERO address");
         require(group > 0, "ZERO group");
-
-        uint8 typeOfDeal = 1;
 
         if (shareNumber > bytes32(0)) {
             require(_bos.isShare(shareNumber.short()), "shareNumber not exist");
             require(shareNumber.class() == class, "class NOT correct");
 
-            if (_bos.isMember(buyer)) typeOfDeal = 3;
-            else typeOfDeal = 2;
+            if (_bos.isMember(buyer))
+                require(
+                    typeOfDeal == uint8(TypeOfDeal.ShareTransferInt) ||
+                        typeOfDeal == uint8(TypeOfDeal.FirstRefusal) ||
+                        typeOfDeal == uint8(TypeOfDeal.FreeGift),
+                    "wrong typeOfDeal"
+                );
+            else
+                require(
+                    typeOfDeal == uint8(TypeOfDeal.ShareTransferExt) ||
+                        typeOfDeal == uint8(TypeOfDeal.TagAlong) ||
+                        typeOfDeal == uint8(TypeOfDeal.DragAlong),
+                    "wrong typeOfDeal"
+                );
 
             addPartyToDoc(shareNumber.shareholder());
         } else {
             require(class <= _bos.counterOfClasses(), "class overflow");
+            require(
+                typeOfDeal == uint8(TypeOfDeal.CapitalIncrease) ||
+                    typeOfDeal == uint8(TypeOfDeal.PreEmptive),
+                "wrong typeOfDeal"
+            );
         }
 
         addPartyToDoc(buyer);
@@ -155,17 +199,13 @@ contract Agreement is BOSSetting, SigPage {
             buyer,
             group,
             shareNumber,
-            0
+            preSSN
         );
 
         Deal storage deal = _deals[counterOfDeals];
 
         deal.sn = sn;
         deal.shareNumber = shareNumber;
-        // deal.unitPrice = unitPrice;
-        // deal.parValue = parValue;
-        // deal.paidPar = paidPar;
-        // deal.closingDate = closingDate;
 
         _dealsList.push(sn);
         isDeal[counterOfDeals] = true;
@@ -223,11 +263,27 @@ contract Agreement is BOSSetting, SigPage {
         selfdestruct(getDirectKeeper());
     }
 
+    function lockDealSubject(uint16 ssn, uint32 lockDate)
+        external
+        onlyKeeper
+        dealExist(ssn)
+        currentDate(lockDate)
+        returns (bool flag)
+    {
+        Deal storage deal = _deals[ssn];
+        if (deal.states.currentState == uint8(StateOfDeal.Drafting)) {
+            deal.states.pushToNextState(lockDate);
+            flag = true;
+            emit LockDealSubject(deal.sn);
+        }
+    }
+
     function clearDealCP(
         uint16 ssn,
+        uint32 sigDate,
         bytes32 hashLock,
         uint32 closingDate
-    ) external onlyKeeper dealExist(ssn) {
+    ) external onlyKeeper currentDate(sigDate) dealExist(ssn) {
         Deal storage deal = _deals[ssn];
 
         require(
@@ -240,21 +296,30 @@ contract Agreement is BOSSetting, SigPage {
             "closingDate LATER than deadline"
         );
 
-        require(deal.state == 0, "Deal state wrong");
+        require(
+            deal.states.currentState == uint8(StateOfDeal.Drafting),
+            "Deal state wrong"
+        );
 
-        deal.state = 1;
+        deal.states.pushToNextState(sigDate);
+
         deal.hashLock = hashLock;
 
         if (closingDate > 0) deal.closingDate = closingDate;
 
-        emit ClearDealCP(deal.sn, deal.state, hashLock, deal.closingDate);
+        emit ClearDealCP(
+            deal.sn,
+            deal.states.currentState,
+            hashLock,
+            deal.closingDate
+        );
     }
 
-    function closeDeal(uint16 ssn, string hashKey)
-        external
-        onlyCleared(ssn)
-        onlyKeeper
-    {
+    function closeDeal(
+        uint16 ssn,
+        uint32 sigDate,
+        string hashKey
+    ) external onlyCleared(ssn) onlyKeeper {
         Deal storage deal = _deals[ssn];
 
         require(
@@ -264,16 +329,16 @@ contract Agreement is BOSSetting, SigPage {
 
         require(now - 15 minutes <= deal.closingDate, "MISSED closing date");
 
-        deal.state = 2;
+        deal.states.pushToNextState(sigDate);
 
         emit CloseDeal(deal.sn, hashKey);
     }
 
-    function revokeDeal(uint16 ssn, string hashKey)
-        external
-        onlyCleared(ssn)
-        onlyKeeper
-    {
+    function revokeDeal(
+        uint16 ssn,
+        uint32 sigDate,
+        string hashKey
+    ) external onlyCleared(ssn) onlyKeeper {
         Deal storage deal = _deals[ssn];
 
         require(
@@ -286,9 +351,36 @@ contract Agreement is BOSSetting, SigPage {
             "hashKey NOT correct"
         );
 
-        deal.state = 3;
+        deal.states.pushToNextState(sigDate);
 
         emit RevokeDeal(deal.sn, hashKey);
+    }
+
+    function takeGift(
+        uint16 ssn,
+        uint32 sigDate,
+        uint32 caller
+    ) external onlyKeeper {
+        Deal storage deal = _deals[ssn];
+
+        require(
+            deal.closingDate < now + 15 minutes,
+            "NOT reached closing date"
+        );
+
+        require(deal.sn.typeOfDeal() == 6, "not a gift deal");
+        require(deal.unitPrice == 0, "unitPrice is not zero");
+        require(caller == deal.sn.buyerOfDeal(), "caller is not buyer");
+
+        require(
+            deal.states.currentState == uint8(StateOfDeal.Locked),
+            "wrong state"
+        );
+
+        deal.states.pushToNextState(sigDate);
+        deal.states.pushToNextState(sigDate);
+
+        emit CloseDeal(deal.sn, "0");
     }
 
     //  #################################
@@ -301,23 +393,37 @@ contract Agreement is BOSSetting, SigPage {
         dealExist(ssn)
         returns (
             bytes32 sn,
-            uint256 unitPrice,
             uint256 parValue,
             uint256 paidPar,
-            uint32 closingDate,
-            uint8 state, // 0-pending 1-cleared 2-closed 3-terminated
+            uint8 state, // 0-pending 1-locked 2-cleared 3-closed 4-terminated
             bytes32 hashLock
         )
     {
         Deal storage deal = _deals[ssn];
 
         sn = deal.sn;
-        unitPrice = deal.unitPrice;
         parValue = deal.parValue;
         paidPar = deal.paidPar;
-        closingDate = deal.closingDate;
-        state = deal.state;
+        state = deal.states.currentState;
         hashLock = deal.hashLock;
+    }
+
+    function unitPrice(uint16 ssn)
+        external
+        view
+        dealExist(ssn)
+        returns (uint256)
+    {
+        return _deals[ssn].unitPrice;
+    }
+
+    function closingDate(uint16 ssn)
+        external
+        view
+        dealExist(ssn)
+        returns (uint32)
+    {
+        return _deals[ssn].closingDate;
     }
 
     function shareNumberOfDeal(uint16 ssn)

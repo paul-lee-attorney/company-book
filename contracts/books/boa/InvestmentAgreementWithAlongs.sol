@@ -5,12 +5,12 @@
 
 pragma solidity ^0.4.24;
 
-import "./AgreementWithFirstRefusal.sol";
+import "./InvestmentAgreementWithFirstRefusal.sol";
 
 // import "../../common/lib/UserGroup.sol";
 // import "../../common/lib/SignerGroup.sol";
 
-contract AgreementWithAlongs is AgreementWithFirstRefusal {
+contract AgreementWithAlongs is InvestmentAgreementWithFirstRefusal {
     // using UserGroup for UserGroup.Group;
     // using SignerGroup for SignerGroup.Group;
 
@@ -63,7 +63,7 @@ contract AgreementWithAlongs is AgreementWithFirstRefusal {
         addDeal.paidPar = paidPar;
 
         // set original Deal state to suspend;
-        orgDeal.state += 4;
+        orgDeal.states.currentState += 4;
 
         _dealsList.push(sn);
         isDeal[counterOfDeals] = true;
@@ -88,8 +88,8 @@ contract AgreementWithAlongs is AgreementWithFirstRefusal {
         bytes32 sigHash
     ) external onlyDirectKeeper {
         // recover state of original deal to normal
-        if (_deals[sn.preSSNOfDeal()].state >= 4)
-            _deals[sn.preSSNOfDeal()].state -= 4;
+        if (_deals[sn.preSSNOfDeal()].states.currentState >= 4)
+            _deals[sn.preSSNOfDeal()].states.currentState -= 4;
 
         _addSigOfParty(caller, sigDate, sigHash);
 

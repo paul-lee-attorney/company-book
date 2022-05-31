@@ -4,7 +4,7 @@
 
 pragma solidity ^0.4.24;
 
-import "./interfaces/IAgreement.sol";
+import "./interfaces/IInvestmentAgreement.sol";
 
 import "../../common/components/interfaces/ISigPage.sol";
 import "../../common/ruting/BOSSetting.sol";
@@ -21,18 +21,18 @@ contract AgreementCalculator is BOSSetting {
         view
         returns (uint256 output)
     {
-        bytes32[] memory dealsList = IAgreement(ia).dealsList();
+        bytes32[] memory dealsList = IInvestmentAgreement(ia).dealsList();
         uint256 len = dealsList.length;
 
         for (uint256 i = 0; i < len; i++) {
             if (
                 dealsList[i].typeOfDeal() > 1 &&
-                IAgreement(ia)
+                IInvestmentAgreement(ia)
                     .shareNumberOfDeal(dealsList[i].sequenceOfDeal())
                     .shareholder() ==
                 acct
             ) {
-                (, , uint256 parValue, , , , ) = IAgreement(ia).getDeal(
+                (, uint256 parValue, , , ) = IInvestmentAgreement(ia).getDeal(
                     dealsList[i].sequenceOfDeal()
                 );
                 output += parValue;
@@ -45,18 +45,18 @@ contract AgreementCalculator is BOSSetting {
         view
         returns (uint256 output)
     {
-        bytes32[] memory dealsList = IAgreement(ia).dealsList();
+        bytes32[] memory dealsList = IInvestmentAgreement(ia).dealsList();
         uint256 len = dealsList.length;
 
         for (uint256 i = 0; i < len; i++)
             if (
                 dealsList[i].typeOfDeal() > 1 &&
-                IAgreement(ia)
+                IInvestmentAgreement(ia)
                     .shareNumberOfDeal(dealsList[i].sequenceOfDeal())
                     .shareholder() ==
                 acct
             ) {
-                (, , , uint256 paidPar, , , ) = IAgreement(ia).getDeal(
+                (, , uint256 paidPar, , ) = IInvestmentAgreement(ia).getDeal(
                     dealsList[i].sequenceOfDeal()
                 );
                 output += paidPar;
@@ -68,11 +68,11 @@ contract AgreementCalculator is BOSSetting {
         view
         returns (uint256 output)
     {
-        bytes32[] memory dealsList = IAgreement(ia).dealsList();
+        bytes32[] memory dealsList = IInvestmentAgreement(ia).dealsList();
         uint256 len = dealsList.length;
         for (uint256 i = 0; i < len; i++)
             if (dealsList[i].buyerOfDeal() == acct) {
-                (, , uint256 parValue, , , , ) = IAgreement(ia).getDeal(
+                (, uint256 parValue, , , ) = IInvestmentAgreement(ia).getDeal(
                     dealsList[i].sequenceOfDeal()
                 );
                 output += parValue;
@@ -84,11 +84,11 @@ contract AgreementCalculator is BOSSetting {
         view
         returns (uint256 output)
     {
-        bytes32[] memory dealsList = IAgreement(ia).dealsList();
+        bytes32[] memory dealsList = IInvestmentAgreement(ia).dealsList();
         uint256 len = dealsList.length;
         for (uint256 i = 0; i < len; i++)
             if (dealsList[i].buyerOfDeal() == acct) {
-                (, , , uint256 paidPar, , , ) = IAgreement(ia).getDeal(
+                (, , uint256 paidPar, , ) = IInvestmentAgreement(ia).getDeal(
                     dealsList[i].sequenceOfDeal()
                 );
                 output += paidPar;
@@ -97,7 +97,7 @@ contract AgreementCalculator is BOSSetting {
 
     // 1-CI 2-ST(to 3rd) 3-ST(internal) 4-(1&3) 5-(2&3) 6-(1&2&3) 7-(1&2)
     function typeOfIA(address ia) external view returns (uint8 output) {
-        bytes32[] memory dealsList = IAgreement(ia).dealsList();
+        bytes32[] memory dealsList = IInvestmentAgreement(ia).dealsList();
         uint256 len = dealsList.length;
         uint8[3] memory signal;
 

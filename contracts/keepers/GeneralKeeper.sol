@@ -164,6 +164,8 @@ contract GeneralKeeper is AccessControl {
         _BOAKeeper.acceptDragAlong(snOfOpt, shareNumber, _msgSender(), sigDate);
     }
 
+    // ======== First Refusal ========
+
     function execFirstRefusal(
         address ia,
         bytes32 sn,
@@ -181,13 +183,23 @@ contract GeneralKeeper is AccessControl {
         _BOAKeeper.acceptFirstRefusalRequest(ia, sn, acceptDate, _msgSender());
     }
 
+    // ======== Deal Closing ========
+
     function pushToCoffer(
         address ia,
         bytes32 sn,
         bytes32 hashLock,
-        uint256 closingDate
+        uint256 closingDate,
+        uint32 sigDate
     ) external {
-        _BOAKeeper.pushToCoffer(ia, sn, hashLock, closingDate, _msgSender());
+        _BOAKeeper.pushToCoffer(
+            ia,
+            sn,
+            hashLock,
+            closingDate,
+            _msgSender(),
+            sigDate
+        );
     }
 
     function closeDeal(

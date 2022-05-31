@@ -7,16 +7,16 @@ pragma solidity ^0.4.24;
 
 import "../../common/access/interfaces/IAccessControl.sol";
 import "../../common/access/interfaces/IDraftControl.sol";
-import "../../common/ruting/interfaces/IBookSetting.sol";
 
+import "../../common/ruting/interfaces/IBookSetting.sol";
 import "../../common/ruting/BOSSetting.sol";
 import "../../common/ruting/BOMSetting.sol";
 
-import "../../common/lib/ArrayUtils.sol";
 import "../../common/lib/AddrGroup.sol";
+import "../../common/lib/TermGroup.sol";
 
 import "../../common/components/SigPage.sol";
-import "../../common/components/EnumsRepo.sol";
+
 import "../../common/utils/CloneFactory.sol";
 
 import "./interfaces/ITerm.sol";
@@ -24,16 +24,24 @@ import "./interfaces/ITerm.sol";
 import "./terms/VotingRules.sol";
 
 contract ShareholdersAgreement is
-    EnumsRepo,
     CloneFactory,
     VotingRules,
     BOMSetting,
     BOSSetting,
     SigPage
 {
-    using ArrayUtils for address[];
-    using ArrayUtils for uint8[];
     using AddrGroup for AddrGroup.Group;
+    using TermGroup for TermGroup.Group;
+
+    enum TermTitle {
+        LOCK_UP,
+        ANTI_DILUTION,
+        FIRST_REFUSAL,
+        GROUPS_UPDATE,
+        TAG_ALONG,
+        DRAG_ALONG,
+        OPTIONS
+    }
 
     // title => template address
     mapping(uint8 => address) public tempOfTitle;
@@ -41,28 +49,17 @@ contract ShareholdersAgreement is
     // title => body
     mapping(uint8 => address) private _titleToBody;
 
-    // body => title
-    mapping(address => uint8) private _bodyToTitle;
+    // titles
+    TermGroup.Group private _titles;
 
     // bodys
-    AddrGroup.Group private _terms;
-
-    // // body => bool
-    // mapping(address => bool) public registered;
-
-    // address[] private _terms;
+    AddrGroup.Group private _bodies;
 
     //##############
     //##  Event   ##
     //##############
 
-    event AddTermToFolder(uint8 indexed typeOfDeal, uint8 title);
-
-    event RemoveTermFromFolder(uint8 indexed typeOfDeal, uint8 title);
-
     event SetTemplate(uint8 indexed title, address tempAdd);
-
-    event RemoveTemplate(uint8 indexed title);
 
     event CreateTerm(uint8 indexed title, address indexed body, uint32 creator);
 
@@ -89,7 +86,7 @@ contract ShareholdersAgreement is
     //##    写接口    ##
     //##################
 
-    function setTermsTemplate(address[15] templates) external onlyKeeper {
+    function setTermsTemplate(address[15] templates) external onlyDirectKeeper {
         for (uint8 i = 0; i < 15; i++) {
             _setTemplate(i, templates[i]);
         }
@@ -97,28 +94,18 @@ contract ShareholdersAgreement is
 
     function _setTemplate(uint8 title, address tempAdd) private {
         if (
-            title == uint8(TermTitle.ANTI_DILUTION) ||
             title == uint8(TermTitle.LOCK_UP) ||
+            title == uint8(TermTitle.ANTI_DILUTION) ||
+            title == uint8(TermTitle.FIRST_REFUSAL) ||
+            title == uint8(TermTitle.GROUPS_UPDATE) ||
             title == uint8(TermTitle.TAG_ALONG) ||
             title == uint8(TermTitle.DRAG_ALONG) ||
-            title == uint8(TermTitle.OPTIONS) ||
-            title == uint8(TermTitle.FIRST_REFUSAL) ||
-            title == uint8(TermTitle.GROUPS_UPDATE)
+            title == uint8(TermTitle.OPTIONS)
         ) {
             tempOfTitle[title] = tempAdd;
 
             emit SetTemplate(title, tempAdd);
         }
-    }
-
-    function removeTemplate(uint8 title)
-        external
-        onlyOwner
-        tempReadyFor(title)
-    {
-        tempOfTitle[title] = address(0);
-
-        emit RemoveTemplate(title);
     }
 
     function createTerm(uint8 title)
@@ -134,36 +121,30 @@ contract ShareholdersAgreement is
         IDraftControl(body).setGeneralCounsel(_rc.userNo(this));
 
         _copyRoleTo(body, ATTORNEYS);
+        _copyRoleTo(body, KEEPERS);
 
         IBookSetting(body).setBOS(address(_bos));
-        if (title != uint8(TermTitle.VOTING_RULES))
-            IBookSetting(body).setBOM(address(_bom));
+        IBookSetting(body).setBOM(address(_bom));
 
         _titleToBody[title] = body;
-        _bodyToTitle[body] = title;
 
-        _terms.addMember(body);
-        // // registered[body] = true;
-        // _terms.push(body);
+        _titles.addTerm(title);
+        _bodies.addMember(body);
 
         emit CreateTerm(title, body, _msgSender());
     }
 
     function removeTerm(uint8 title) external onlyAttorney {
-        delete _bodyToTitle[_titleToBody[title]];
+        _titles.removeTerm(title);
+        _bodies.removeMember(_titleToBody[title]);
 
         delete _titleToBody[title];
-
-        // delete registered[_titleToBody[title]];
-        // _terms.removeByValue(_titleToBody[title]);
-
-        _terms.removeMember(_titleToBody[title]);
 
         emit RemoveTerm(title);
     }
 
     function finalizeSHA() external onlyGC {
-        address[] memory clauses = _terms.members();
+        address[] memory clauses = _bodies.members();
         uint256 len = clauses.length;
 
         for (uint256 i = 0; i < len; i++) {
@@ -181,12 +162,24 @@ contract ShareholdersAgreement is
     //##    读接口    ##
     //##################
 
-    function isTerm(address addr) external view returns (bool) {
-        return _terms.isMember(addr);
+    function hasTitle(uint8 title) external view returns (bool) {
+        return _titleToBody[title] != address(0);
     }
 
-    function terms() external view returns (address[]) {
-        return _terms.members();
+    function isTitle(uint8 title) external view returns (bool) {
+        return _titles.isTerm(title);
+    }
+
+    function isBody(address addr) external view returns (bool) {
+        return _bodies.isMember(addr);
+    }
+
+    function titles() external view returns (uint8[]) {
+        return _titles.terms();
+    }
+
+    function bodies() external view returns (address[]) {
+        return _bodies.members();
     }
 
     function getTerm(uint8 title)
@@ -196,10 +189,6 @@ contract ShareholdersAgreement is
         returns (address body)
     {
         body = _titleToBody[title];
-    }
-
-    function hasTitle(uint8 title) external view returns (bool) {
-        return _titleToBody[title] != address(0);
     }
 
     function termIsTriggered(

@@ -4,13 +4,15 @@
 
 pragma solidity ^0.4.24;
 
-import "./interfaces/IAgreement.sol";
-import "./interfaces/IAgreementCalculator.sol";
+import "./interfaces/IInvestmentAgreement.sol";
+import "./interfaces/IInvestmentAgreementCalculator.sol";
 
 import "../boh/terms/interfaces/IAlongs.sol";
 
+import "../boh/ShareholdersAgreement.sol";
+
 import "../../common/components/BookOfDocuments.sol";
-import "../../common/components/EnumsRepo.sol";
+// import "../../common/components/EnumsRepo.sol";
 
 import "../../common/ruting/SHASetting.sol";
 
@@ -18,10 +20,10 @@ import "../../common/lib/SNParser.sol";
 
 import "../../common/components/interfaces/ISigPage.sol";
 
-contract BookOfAgreements is BookOfDocuments, SHASetting {
+contract BookOfIA is BookOfDocuments, SHASetting {
     using SNParser for bytes32;
 
-    IAgreementCalculator private _agrmtCal;
+    IInvestmentAgreementCalculator private _agrmtCal;
 
     enum BOAStates {
         ZeroPoint,
@@ -101,7 +103,7 @@ contract BookOfAgreements is BookOfDocuments, SHASetting {
     //#################
 
     function setAgreementCalculator(address cal) external onlyOwner {
-        _agrmtCal = IAgreementCalculator(cal);
+        _agrmtCal = IInvestmentAgreementCalculator(cal);
         emit SetAgreementCalculator(cal);
     }
 
@@ -127,7 +129,7 @@ contract BookOfAgreements is BookOfDocuments, SHASetting {
     }
 
     function _mockDeals(address ia, bool basedOnPar) private {
-        bytes32[] memory dealsList = IAgreement(ia).dealsList();
+        bytes32[] memory dealsList = IInvestmentAgreement(ia).dealsList();
         uint256 len = dealsList.length;
 
         // uint16[] storage groups = groupsConcerned[ia];
@@ -137,11 +139,11 @@ contract BookOfAgreements is BookOfDocuments, SHASetting {
 
             uint256 amount;
             if (basedOnPar)
-                (, , amount, , , , ) = IAgreement(ia).getDeal(
+                (, amount, , , ) = IInvestmentAgreement(ia).getDeal(
                     sn.sequenceOfDeal()
                 );
             else
-                (, , , amount, , , ) = IAgreement(ia).getDeal(
+                (, , amount, , ) = IInvestmentAgreement(ia).getDeal(
                     sn.sequenceOfDeal()
                 );
 
@@ -153,7 +155,7 @@ contract BookOfAgreements is BookOfDocuments, SHASetting {
 
             if (sn.typeOfDeal() > 1) {
                 uint16 sellerGroup = _bos.groupNo(
-                    IAgreement(ia)
+                    IInvestmentAgreement(ia)
                         .shareNumberOfDeal(sn.sequenceOfDeal())
                         .shareholder()
                 );
@@ -255,7 +257,7 @@ contract BookOfAgreements is BookOfDocuments, SHASetting {
         uint32 caller,
         uint32 execDate
     ) external onlyDirectKeeper currentDate(execDate) {
-        recallDoc(ia, execDate, caller);
+        rejectDoc(ia, execDate, caller);
 
         uint16 drager = rule.dragerOfLink();
         uint16 follower = _bos.groupNo(shareNumber.shareholder());
@@ -305,13 +307,14 @@ contract BookOfAgreements is BookOfDocuments, SHASetting {
         bytes32 sn
     ) external onlyKeeper {
         uint16 buyerGroup = _bos.groupNo(sn.buyerOfDeal());
-        address ta = _getSHA().getTerm(uint8(EnumsRepo.TermTitle.TAG_ALONG));
+        address ta = _getSHA().getTerm(
+            uint8(ShareholdersAgreement.TermTitle.TAG_ALONG)
+        );
 
         bytes32 rule = IAlongs(ta).linkRule(_bos.groupNo(drager));
 
-        (, , uint256 parValue, uint256 paidPar, , , ) = IAgreement(ia).getDeal(
-            sn.sequenceOfDeal()
-        );
+        (, uint256 parValue, uint256 paidPar, , ) = IInvestmentAgreement(ia)
+            .getDeal(sn.sequenceOfDeal());
 
         Amt storage bAmt = _mockResults[ia][buyerGroup];
 

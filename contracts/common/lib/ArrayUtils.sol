@@ -321,11 +321,7 @@ library ArrayUtils {
         return arrC;
     }
 
-    function minus(uint32[] arrA, uint32[] arrB)
-        internal
-        view
-        returns (uint32[])
-    {
+    function minus(uint32[] arrA, uint32[] arrB) internal returns (uint32[]) {
         uint256 lenA = arrA.length;
         uint256 lenB = arrB.length;
 

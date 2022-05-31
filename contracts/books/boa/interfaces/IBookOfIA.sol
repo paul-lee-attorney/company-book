@@ -5,7 +5,7 @@
 
 pragma solidity ^0.4.24;
 
-interface IBookOfAgreements {
+interface IBookOfIA {
     //##################
     //##    写接口    ##
     //##################
@@ -23,7 +23,7 @@ interface IBookOfAgreements {
         bytes32 docHash
     ) external;
 
-    function recallDoc(
+    function rejectDoc(
         address body,
         uint32 sigDate,
         uint32 caller

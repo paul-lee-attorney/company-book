@@ -12,12 +12,6 @@ interface IShareholdersAgreement {
 
     function setTermsTemplate(address[15] templates) external;
 
-    // function setBOS(address bos) external;
-
-    // function setBOM(address bom) external;
-
-    function removeTemplate(uint8 title) external;
-
     function createTerm(uint8 title) external returns (address body);
 
     function removeTerm(uint8 title) external;
@@ -44,11 +38,15 @@ interface IShareholdersAgreement {
 
     function hasTitle(uint8 title) external view returns (bool);
 
+    function isTitle(uint8 title) external view returns (bool);
+
+    function isBody(address addr) external view returns (bool);
+
+    function titles() external view returns (uint8[]);
+
+    function bodies() external view returns (address[]);
+
     function getTerm(uint8 title) external view returns (address body);
-
-    function isTerm(address addr) external view returns (bool);
-
-    function terms() external view returns (address[]);
 
     function tempOfTitle(uint8 title) external view returns (address);
 

@@ -67,6 +67,8 @@ interface IBookOfShares {
 
     function snList() external view returns (bytes32[]);
 
+    function cleanPar(bytes6 ssn) external view returns (uint256);
+
     function getShare(bytes6 ssn)
         external
         view
@@ -74,7 +76,6 @@ interface IBookOfShares {
             bytes32 shareNumber,
             uint256 parValue,
             uint256 paidPar,
-            uint256 cleanPar,
             uint256 paidInDeadline,
             uint256 unitPrice,
             uint8 state

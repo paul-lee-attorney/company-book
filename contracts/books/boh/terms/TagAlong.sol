@@ -5,7 +5,7 @@
 
 pragma solidity ^0.4.24;
 
-import "../../boa/interfaces/IAgreement.sol";
+import "../../boa/interfaces/IInvestmentAgreement.sol";
 
 import "../../../common/ruting/BOMSetting.sol";
 
@@ -56,7 +56,7 @@ contract TagAlong is BOMSetting, DragAlong {
 
         uint16[] memory rightholders = _links[
             _bos.groupNo(
-                IAgreement(ia)
+                IInvestmentAgreement(ia)
                     .shareNumberOfDeal(sn.sequenceOfDeal())
                     .shareholder()
             )

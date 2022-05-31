@@ -5,7 +5,7 @@
 
 pragma solidity ^0.4.24;
 
-contract IAgreementCalculator {
+contract IInvestmentAgreementCalculator {
     function parToSell(address ia, uint32 acct)
         external
         view

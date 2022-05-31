@@ -7,6 +7,7 @@ pragma solidity ^0.4.24;
 
 import "../books/boh/interfaces/IShareholdersAgreement.sol";
 import "../books/boh/terms/interfaces/IGroupsUpdate.sol";
+import "../books/boh/ShareholdersAgreement.sol";
 
 import "../common/components/EnumsRepo.sol";
 import "../common/components/interfaces/ISigPage.sol";
@@ -83,11 +84,7 @@ contract BOHKeeper is
         require(_bos.isMember(caller), "not MEMBER");
         address body = _boh.createDoc(docType);
 
-        IAccessControl(body).init(
-            _rc.userNo(caller),
-            _rc.userNo(this),
-            address(_rc)
-        );
+        IAccessControl(body).init(caller, _rc.userNo(this), address(_rc));
 
         IShareholdersAgreement(body).setTermsTemplate(termsTemplate);
         IBookSetting(body).setBOM(address(_bom));
@@ -133,19 +130,25 @@ contract BOHKeeper is
 
         _boh.changePointer(body, caller, sigDate);
 
-        if (IShareholdersAgreement(body).hasTitle(uint8(TermTitle.OPTIONS)))
+        if (
+            IShareholdersAgreement(body).hasTitle(
+                uint8(ShareholdersAgreement.TermTitle.OPTIONS)
+            )
+        )
             _boo.registerOption(
-                IShareholdersAgreement(body).getTerm(uint8(TermTitle.OPTIONS))
+                IShareholdersAgreement(body).getTerm(
+                    uint8(ShareholdersAgreement.TermTitle.OPTIONS)
+                )
             );
 
         if (
             IShareholdersAgreement(body).hasTitle(
-                uint8(TermTitle.GROUPS_UPDATE)
+                uint8(ShareholdersAgreement.TermTitle.GROUPS_UPDATE)
             )
         ) {
             bytes32[] memory guo = IGroupsUpdate(
                 IShareholdersAgreement(body).getTerm(
-                    uint8(TermTitle.GROUPS_UPDATE)
+                    uint8(ShareholdersAgreement.TermTitle.GROUPS_UPDATE)
                 )
             ).orders();
             uint256 len = guo.length;

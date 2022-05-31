@@ -7,7 +7,7 @@ pragma solidity ^0.4.24;
 
 import "../../../common/lib/UserGroup.sol";
 
-import "../../boa/interfaces/IAgreement.sol";
+import "../../boa/interfaces/IInvestmentAgreement.sol";
 
 import "../../../common/ruting/BOSSetting.sol";
 import "../../../common/ruting/BOMSetting.sol";
@@ -22,7 +22,7 @@ import "../../../common/components/interfaces/ISigPage.sol";
 
 contract AntiDilution is BOSSetting, BOMSetting, DraftControl {
     using SNFactory for bytes;
-    using ArrayUtils for uint32[];
+    // using ArrayUtils for uint32[];
     using ArrayUtils for bytes32[];
     using SNParser for bytes32;
     using UserGroup for UserGroup.Group;
@@ -36,7 +36,7 @@ contract AntiDilution is BOSSetting, BOMSetting, DraftControl {
     // class => benchmark
     mapping(uint8 => bytes32) public classToMark;
 
-    bytes32[] public benchmarks;
+    bytes32[] private _benchmarks;
 
     // ################
     // ##   Event    ##
@@ -79,20 +79,8 @@ contract AntiDilution is BOSSetting, BOMSetting, DraftControl {
         bytes32 sn = _createSN(class, price);
 
         isMarked[class] = true;
-
         classToMark[class] = sn;
-
-        uint256 len = benchmarks.length;
-        benchmarks.push(sn);
-
-        for (uint256 i = 0; i < len; i++) {
-            if (benchmarks[len - 1 - i] > benchmarks[len - i])
-                (benchmarks[len - 1 - i], benchmarks[len - i]) = (
-                    benchmarks[len - i],
-                    benchmarks[len - 1 - i]
-                );
-            else break;
-        }
+        sn.insertToQue(_benchmarks);
 
         emit SetBenchmark(class, price);
     }
@@ -104,7 +92,7 @@ contract AntiDilution is BOSSetting, BOMSetting, DraftControl {
         delete isMarked[class];
         delete classToMark[class];
 
-        benchmarks.removeByValue(mark);
+        _benchmarks.removeByValue(mark);
 
         emit DelBenchmark(class);
     }
@@ -114,8 +102,6 @@ contract AntiDilution is BOSSetting, BOMSetting, DraftControl {
         onlyAttorney
         onlyMarked(class)
     {
-        // ISigPage(getDirectKeeper()).isParty(acct);
-
         if (_obligors[classToMark[class]].addMember(acct))
             emit AddObligor(class, acct);
     }
@@ -133,13 +119,35 @@ contract AntiDilution is BOSSetting, BOMSetting, DraftControl {
     // ##  查询接口  ##
     // ################
 
-    function getBenchmarks()
+    function obligors(uint8 class)
         external
         view
-        onlyStakeholders
-        returns (bytes32[] marks)
+        onlyMarked(class)
+        returns (uint32[])
     {
-        return marks = benchmarks;
+        return _obligors[classToMark[class]].members();
+    }
+
+    function benchmarks() external view returns (bytes32[] marks) {
+        return marks = _benchmarks;
+    }
+
+    function giftPar(
+        address ia,
+        bytes32 snOfDeal,
+        bytes32 shareNumber
+    ) external view onlyMarked(shareNumber.class()) returns (uint256) {
+        uint256 markPrice = classToMark[shareNumber.class()].priceOfMark();
+
+        uint256 dealPrice = IInvestmentAgreement(ia).unitPrice(
+            snOfDeal.sequenceOfDeal()
+        );
+
+        require(markPrice > dealPrice, "AntiDilution not triggered");
+
+        (, uint256 parValue, , , , ) = _bos.getShare(shareNumber.short());
+
+        return (parValue * markPrice) / dealPrice - parValue;
     }
 
     // ################
@@ -152,13 +160,12 @@ contract AntiDilution is BOSSetting, BOMSetting, DraftControl {
         onlyKeeper
         returns (bool)
     {
-        (, uint256 unitPrice, , , , , ) = IAgreement(ia).getDeal(
+        uint256 unitPrice = IInvestmentAgreement(ia).unitPrice(
             sn.sequenceOfDeal()
         );
-        uint8 typeOfDeal = uint8(sn[3]);
 
-        if (typeOfDeal > 1) return false;
-        if (unitPrice < uint256(bytes31(benchmarks[benchmarks.length - 1])))
+        if (sn.typeOfDeal() > 1) return false;
+        if (unitPrice < _benchmarks[_benchmarks.length - 1].priceOfMark())
             return true;
         else return false;
     }
@@ -170,11 +177,11 @@ contract AntiDilution is BOSSetting, BOMSetting, DraftControl {
     {
         require(consentParties.length > 0, "豁免方人数应大于“0”");
 
-        uint8 i = uint8(benchmarks.length);
+        uint8 i = uint8(_benchmarks.length);
 
-        while (i > 0 && uint256(bytes31(benchmarks[i - 1])) > price) {
+        while (i > 0 && uint256(bytes31(_benchmarks[i - 1])) > price) {
             uint32[] memory classMember = _bosCal.membersOfClass(
-                uint8(benchmarks[i - 1][31])
+                uint8(_benchmarks[i - 1][31])
             );
 
             if (classMember.length > consentParties.length) {
@@ -208,7 +215,7 @@ contract AntiDilution is BOSSetting, BOMSetting, DraftControl {
 
         (uint32[] memory consentParties, ) = _bom.getYea(ia);
 
-        (, uint256 unitPrice, , , , , ) = IAgreement(ia).getDeal(
+        uint256 unitPrice = IInvestmentAgreement(ia).unitPrice(
             sn.sequenceOfDeal()
         );
 

@@ -5,7 +5,7 @@
 
 pragma solidity ^0.4.24;
 
-import "../books/boa/interfaces/IAgreement.sol";
+import "../books/boa/interfaces/IInvestmentAgreement.sol";
 
 import "../common/ruting/BOSSetting.sol";
 import "../common/ruting/BOASetting.sol";
@@ -13,7 +13,6 @@ import "../common/ruting/BOMSetting.sol";
 import "../common/ruting/BOOSetting.sol";
 import "../common/ruting/SHASetting.sol";
 
-import "../common/lib/SafeMath.sol";
 import "../common/lib/SNParser.sol";
 
 import "../common/components/interfaces/ISigPage.sol";
@@ -30,7 +29,6 @@ contract BOMKeeper is
     BOOSetting,
     BOSSetting
 {
-    using SafeMath for uint256;
     using SNParser for bytes32;
 
     // ##################
@@ -99,14 +97,18 @@ contract BOMKeeper is
         uint32 againstVoter,
         uint32 caller
     ) external onlyDirectKeeper currentDate(exerciseDate) {
-        bytes32 shareNumber = IAgreement(ia).shareNumberOfDeal(
+        bytes32 shareNumber = IInvestmentAgreement(ia).shareNumberOfDeal(
             sn.sequenceOfDeal()
         );
 
         require(caller == shareNumber.shareholder(), "NOT Seller of the Deal");
 
-        (, uint256 unitPrice, , , uint32 closingDate, , ) = IAgreement(ia)
-            .getDeal(sn.sequenceOfDeal());
+        uint256 unitPrice = IInvestmentAgreement(ia).unitPrice(
+            sn.sequenceOfDeal()
+        );
+        uint32 closingDate = IInvestmentAgreement(ia).closingDate(
+            sn.sequenceOfDeal()
+        );
 
         (uint256 parValue, uint256 paidPar) = _bom.requestToBuy(
             ia,

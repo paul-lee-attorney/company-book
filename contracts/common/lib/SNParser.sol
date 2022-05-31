@@ -343,4 +343,13 @@ library SNParser {
     function iaOfMotion(bytes32 sn) internal pure returns (address) {
         return address(bytes20(sn << 96));
     }
+
+    // ======== AntiDilution ========
+    function priceOfMark(bytes32 sn) internal pure returns (uint256) {
+        return uint256(bytes31(sn));
+    }
+
+    function classOfMark(bytes32 sn) internal pure returns (uint8) {
+        return uint8(sn[31]);
+    }
 }

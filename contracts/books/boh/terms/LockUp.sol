@@ -5,7 +5,7 @@
 
 pragma solidity ^0.4.24;
 
-import "../../boa/interfaces/IAgreement.sol";
+import "../../boa/interfaces/IInvestmentAgreement.sol";
 
 import "../../../common/ruting/BOSSetting.sol";
 import "../../../common/ruting/BOMSetting.sol";
@@ -131,7 +131,7 @@ contract LockUp is BOSSetting, BOMSetting, DraftControl {
         onlyKeeper
         returns (bool)
     {
-        (, , , , uint256 closingDate, , ) = IAgreement(ia).getDeal(
+        uint256 closingDate = IInvestmentAgreement(ia).closingDate(
             sn.sequenceOfDeal()
         );
 

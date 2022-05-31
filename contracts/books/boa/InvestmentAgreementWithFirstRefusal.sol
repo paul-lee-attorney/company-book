@@ -5,12 +5,12 @@
 
 pragma solidity ^0.4.24;
 
-import "./Agreement.sol";
+import "./InvestmentAgreement.sol";
 
 import "../../common/lib/UserGroup.sol";
 import "../../common/lib/SequenceList.sol";
 
-contract AgreementWithFirstRefusal is Agreement {
+contract InvestmentAgreementWithFirstRefusal is InvestmentAgreement {
     using UserGroup for UserGroup.Group;
     using SequenceList for SequenceList.List;
 

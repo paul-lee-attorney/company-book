@@ -5,7 +5,6 @@
 
 pragma solidity ^0.4.24;
 
-import "../../common/lib/SafeMath.sol";
 import "../../common/lib/ArrayUtils.sol";
 import "../../common/lib/SNFactory.sol";
 import "../../common/lib/SNParser.sol";
@@ -13,7 +12,6 @@ import "../../common/lib/SNParser.sol";
 import "../../common/ruting/BOSSetting.sol";
 
 contract BookOfPledges is BOSSetting {
-    using SafeMath for uint8;
     using SNFactory for bytes;
     using SNParser for bytes32;
     using ArrayUtils for bytes32[];

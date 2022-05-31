@@ -5,7 +5,6 @@
 
 pragma solidity ^0.4.24;
 
-import "../../common/lib/SafeMath.sol";
 import "../../common/lib/ArrayUtils.sol";
 import "../../common/lib/SNFactory.sol";
 import "../../common/lib/SNParser.sol";
@@ -16,7 +15,6 @@ contract SharesRepo is AccessControl {
     using SNFactory for bytes;
     using SNFactory for bytes32;
     using SNParser for bytes32;
-    using SafeMath for uint256;
     using ArrayUtils for uint256[];
     using ArrayUtils for address[];
     using ArrayUtils for bytes32[];
@@ -239,6 +237,7 @@ contract SharesRepo is AccessControl {
 
     function decreaseCleanPar(bytes6 ssn, uint256 parValue)
         external
+        onlyKeeper
         shareExist(ssn)
         notFreezed(ssn)
     {
@@ -307,6 +306,10 @@ contract SharesRepo is AccessControl {
         return _snList;
     }
 
+    function cleanPar(bytes6 ssn) external view returns (uint256) {
+        return _shares[ssn].cleanPar;
+    }
+
     function getShare(bytes6 ssn)
         public
         view
@@ -315,7 +318,6 @@ contract SharesRepo is AccessControl {
             bytes32 shareNumber,
             uint256 parValue,
             uint256 paidPar,
-            uint256 cleanPar,
             uint32 paidInDeadline,
             uint256 unitPrice,
             uint8 state
@@ -326,7 +328,6 @@ contract SharesRepo is AccessControl {
         shareNumber = share.shareNumber;
         parValue = share.parValue;
         paidPar = share.paidPar;
-        cleanPar = share.cleanPar;
         paidInDeadline = share.paidInDeadline;
         unitPrice = share.unitPrice;
         state = share.state;

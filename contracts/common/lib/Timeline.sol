@@ -11,6 +11,15 @@ library Timeline {
         uint8 currentState;
     }
 
+    function setState(
+        Line storage line,
+        uint8 state,
+        uint32 startDate
+    ) internal {
+        line.currentState = state;
+        line.startDateOf[state] = startDate;
+    }
+
     function pushToNextState(Line storage line, uint32 nextKeyDate) internal {
         line.currentState++;
         line.startDateOf[line.currentState] = nextKeyDate;

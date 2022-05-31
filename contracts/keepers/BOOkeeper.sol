@@ -5,7 +5,7 @@
 
 pragma solidity ^0.4.24;
 
-import "../books/boa/interfaces/IAgreement.sol";
+import "../books/boa/interfaces/IInvestmentAgreement.sol";
 
 import "../common/access/AccessControl.sol";
 
@@ -16,7 +16,6 @@ import "../common/ruting/BOPSetting.sol";
 import "../common/ruting/BOOSetting.sol";
 import "../common/ruting/BOSSetting.sol";
 
-import "../common/lib/SafeMath.sol";
 import "../common/lib/SNParser.sol";
 
 import "../common/ruting/interfaces/IBookSetting.sol";
@@ -36,7 +35,6 @@ contract BOOKeeper is
     BOOSetting,
     BOSSetting
 {
-    using SafeMath for uint256;
     using SNParser for bytes32;
 
     // ################

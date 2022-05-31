@@ -17,12 +17,11 @@ import "../common/lib/SNParser.sol";
 
 import "../common/components/interfaces/ISigPage.sol";
 
-import "../common/components/EnumsRepo.sol";
+// import "../common/components/EnumsRepo.sol";
 
 import "../common/utils/Context.sol";
 
 contract BOMKeeper is
-    EnumsRepo,
     BOASetting,
     BOMSetting,
     SHASetting,

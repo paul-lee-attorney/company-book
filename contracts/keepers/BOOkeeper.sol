@@ -22,12 +22,9 @@ import "../common/ruting/interfaces/IBookSetting.sol";
 import "../common/access/interfaces/IAccessControl.sol";
 import "../common/components/interfaces/ISigPage.sol";
 
-import "../common/components/EnumsRepo.sol";
-
 import "../common/utils/Context.sol";
 
 contract BOOKeeper is
-    EnumsRepo,
     BOASetting,
     SHASetting,
     BOMSetting,

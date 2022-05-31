@@ -34,6 +34,8 @@ interface ISigPage {
 
     function acceptDoc(uint32 sigDate, bytes32 sigHash) external;
 
+    function backToDraft() external;
+
     //####################
     //##    查询接口    ##
     //####################

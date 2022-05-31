@@ -12,7 +12,11 @@ interface IBOAKeeper {
 
     function createIA(uint8 docType, uint32 caller) external;
 
-    function removeIA(address body, uint32 caller) external;
+    function removeIA(
+        address body,
+        uint32 caller,
+        uint32 sigDate
+    ) external;
 
     function submitIA(
         address body,
@@ -45,12 +49,14 @@ interface IBOAKeeper {
         bytes32 sigHash
     ) external;
 
-    function acceptTagAlong(
+    function acceptAlongDeal(
         address ia,
-        address drager,
         bytes32 sn,
+        uint32 drager,
+        bool dragAlong,
         uint32 caller,
-        uint32 sigDate
+        uint32 sigDate,
+        bytes32 sigHash
     ) external;
 
     function acceptDragAlong(

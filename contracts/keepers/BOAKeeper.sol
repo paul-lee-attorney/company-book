@@ -5,12 +5,6 @@
 
 pragma solidity ^0.4.24;
 
-import "../common/access/interfaces/IRoles.sol";
-import "../common/access/interfaces/IAccessControl.sol";
-
-import "../common/components/interfaces/ISigPage.sol";
-// import "../common/components/EnumsRepo.sol";
-
 import "../books/boh/terms/interfaces/IAntiDilution.sol";
 import "../books/boh/ShareholdersAgreement.sol";
 import "../books/boa/interfaces/IInvestmentAgreement.sol";
@@ -18,6 +12,11 @@ import "../books/boa/InvestmentAgreement.sol";
 
 import "../books/boh/terms/interfaces/IAlongs.sol";
 import "../books/boh/terms/interfaces/IFirstRefusal.sol";
+
+import "../common/access/interfaces/IRoles.sol";
+import "../common/access/interfaces/IAccessControl.sol";
+
+import "../common/components/interfaces/ISigPage.sol";
 
 import "../common/ruting/interfaces/IBookSetting.sol";
 import "../common/ruting/BOASetting.sol";
@@ -27,6 +26,7 @@ import "../common/ruting/SHASetting.sol";
 import "../common/ruting/BOOSetting.sol";
 
 import "../common/lib/SNParser.sol";
+import "../common/lib/EnumsRepo.sol";
 
 contract BOAKeeper is
     BOASetting,
@@ -37,16 +37,16 @@ contract BOAKeeper is
 {
     using SNParser for bytes32;
 
-    ShareholdersAgreement.TermTitle[] private _termsForCapitalIncrease = [
-        ShareholdersAgreement.TermTitle.ANTI_DILUTION,
-        ShareholdersAgreement.TermTitle.FIRST_REFUSAL
+    EnumsRepo.TermTitle[] private _termsForCapitalIncrease = [
+        EnumsRepo.TermTitle.ANTI_DILUTION,
+        EnumsRepo.TermTitle.FIRST_REFUSAL
     ];
 
-    ShareholdersAgreement.TermTitle[] private _termsForShareTransfer = [
-        ShareholdersAgreement.TermTitle.LOCK_UP,
-        ShareholdersAgreement.TermTitle.FIRST_REFUSAL,
-        ShareholdersAgreement.TermTitle.TAG_ALONG,
-        ShareholdersAgreement.TermTitle.DRAG_ALONG
+    EnumsRepo.TermTitle[] private _termsForShareTransfer = [
+        EnumsRepo.TermTitle.LOCK_UP,
+        EnumsRepo.TermTitle.FIRST_REFUSAL,
+        EnumsRepo.TermTitle.TAG_ALONG,
+        EnumsRepo.TermTitle.DRAG_ALONG
     ];
 
     // ##################
@@ -80,24 +80,52 @@ contract BOAKeeper is
     function createIA(uint8 docType, uint32 caller) external onlyDirectKeeper {
         require(_bos.isMember(caller), "caller not MEMBER");
 
-        address body = _boa.createDoc(docType);
+        address ia = _boa.createDoc(docType);
 
-        IAccessControl(body).init(caller, _rc.userNo(this), address(_rc));
+        IAccessControl(ia).init(caller, _rc.userNo(this), address(_rc));
 
-        IBookSetting(body).setBOS(address(_bos));
-        IBookSetting(body).setBOSCal(address(_bosCal));
+        IBookSetting(ia).setBOS(address(_bos));
+        IBookSetting(ia).setBOSCal(address(_bosCal));
 
-        _copyRoleTo(body, KEEPERS);
+        _copyRoleTo(ia, KEEPERS);
     }
 
-    function removeIA(address body, uint32 caller)
-        external
-        onlyDirectKeeper
-        onlyOwnerOf(body, caller)
-        notEstablished(body)
-    {
-        _boa.removeDoc(body);
-        IInvestmentAgreement(body).kill();
+    function removeIA(
+        address ia,
+        uint32 caller,
+        uint32 sigDate
+    ) external onlyDirectKeeper onlyOwnerOf(ia, caller) notEstablished(ia) {
+        _releaseCleanParOfIA(ia, sigDate);
+        _boa.removeDoc(ia);
+        IInvestmentAgreement(ia).kill();
+    }
+
+    function _releaseCleanParOfIA(address ia, uint32 releaseDate) private {
+        bytes32[] memory snList = IInvestmentAgreement(ia).dealsList();
+        uint256 len = snList.length;
+        for (uint256 i = 0; i < len; i++) {
+            bytes32 sn = snList[i];
+            if (sn.typeOfDeal() <= uint8(EnumsRepo.TypeOfDeal.PreEmptive))
+                continue;
+            _releaseCleanParOfDeal(ia, sn, releaseDate);
+        }
+    }
+
+    function _releaseCleanParOfDeal(
+        address ia,
+        bytes32 sn,
+        uint32 releaseDate
+    ) private {
+        (, uint256 parValue, , uint8 state, ) = IInvestmentAgreement(ia)
+            .getDeal(sn.sequenceOfDeal());
+
+        if (state >= uint8(InvestmentAgreement.StateOfDeal.Locked)) {
+            IInvestmentAgreement(ia).releaseDealSubject(
+                sn.sequenceOfDeal(),
+                releaseDate
+            );
+            _bos.increaseCleanPar(sn.shortShareNumberOfDeal(), parValue);
+        }
     }
 
     function submitIA(
@@ -107,30 +135,36 @@ contract BOAKeeper is
         bytes32 docHash
     ) external onlyDirectKeeper onlyOwnerOf(body, caller) beEstablished(body) {
         _boa.submitIA(body, caller, submitDate, docHash);
-        _decreaseCleanPar(body, submitDate);
+        _lockCleanParOfIA(body, submitDate);
         IAccessControl(body).abandonOwnership();
     }
 
-    function _decreaseCleanPar(address body, uint32 submitDate) private {
-        bytes32[] memory snList = IInvestmentAgreement(body).dealsList();
+    function _lockCleanParOfIA(address ia, uint32 lockDate) private {
+        bytes32[] memory snList = IInvestmentAgreement(ia).dealsList();
         uint256 len = snList.length;
         for (uint256 i = 0; i < len; i++) {
             bytes32 sn = snList[i];
-            if (
-                sn.typeOfDeal() <=
-                uint8(InvestmentAgreement.TypeOfDeal.PreEmptive)
-            ) continue;
-            if (
-                IInvestmentAgreement(body).lockDealSubject(
-                    sn.sequenceOfDeal(),
-                    submitDate
-                )
-            ) {
-                (, uint256 parValue, , , ) = IInvestmentAgreement(body).getDeal(
-                    sn.sequenceOfDeal()
-                );
-                _bos.decreaseCleanPar(sn.shortShareNumberOfDeal(), parValue);
-            }
+            if (sn.typeOfDeal() <= uint8(EnumsRepo.TypeOfDeal.PreEmptive))
+                continue;
+            _lockCleanParOfDeal(ia, sn, lockDate);
+        }
+    }
+
+    function _lockCleanParOfDeal(
+        address ia,
+        bytes32 sn,
+        uint32 lockDate
+    ) private {
+        (, uint256 parValue, , uint8 state, ) = IInvestmentAgreement(ia)
+            .getDeal(sn.sequenceOfDeal());
+
+        if (state < uint8(InvestmentAgreement.StateOfDeal.Locked)) {
+            IInvestmentAgreement(ia).lockDealSubject(
+                sn.sequenceOfDeal(),
+                lockDate
+            );
+
+            _bos.decreaseCleanPar(sn.shortShareNumberOfDeal(), parValue);
         }
     }
 
@@ -151,6 +185,8 @@ contract BOAKeeper is
         currentDate(sigDate)
         withinReviewPeriod(ia, sigDate)
     {
+        require(!ISigPage(ia).isParty(caller), "caller is a Party of IA");
+
         _addAlongDeal(
             false,
             ia,
@@ -162,7 +198,9 @@ contract BOAKeeper is
             sigDate
         );
 
-        bytes32 taSN = _createTagAlongDeal(ia, shareNumber, sn);
+        // _boa.rejectDoc(ia, sigDate, caller);
+
+        bytes32 taSN = _createTagAlongDeal(ia, sn, shareNumber);
 
         uint256 unitPrice = IInvestmentAgreement(ia).unitPrice(
             sn.sequenceOfDeal()
@@ -179,15 +217,71 @@ contract BOAKeeper is
             paidPar,
             closingDate
         );
+
+        ISigPage(ia).addSigOfParty(caller, sigDate, sigHash);
+    }
+
+    function _addAlongDeal(
+        bool dragAlong,
+        address ia,
+        bytes32 sn,
+        bytes32 shareNumber,
+        uint256 parValue,
+        uint256 paidPar,
+        uint32 caller,
+        uint32 sigDate
+    ) private {
+        uint32 drager = IInvestmentAgreement(ia)
+            .shareNumberOfDeal(sn.sequenceOfDeal())
+            .shareholder();
+
+        address term = dragAlong
+            ? _getSHA().getTerm(uint8(EnumsRepo.TermTitle.DRAG_ALONG))
+            : _getSHA().getTerm(uint8(EnumsRepo.TermTitle.TAG_ALONG));
+
+        require(
+            ITerm(term).isTriggered(ia, sn.sequenceOfDeal()),
+            "not triggered"
+        );
+
+        if (dragAlong)
+            require(caller == drager, "caller is not drager of DragAlong");
+        else
+            require(
+                caller == shareNumber.shareholder(),
+                "caller is not shareholder of TagAlong"
+            );
+
+        require(
+            IAlongs(term).isLinked(drager, shareNumber.shareholder()),
+            "drager and target shareholder NOT linked"
+        );
+
+        if (dragAlong)
+            require(
+                IAlongs(term).priceCheck(ia, sn, shareNumber, caller),
+                "price NOT satisfied"
+            );
+
+        // test quota of alongDeal and update mock results
+        _boa.addAlongDeal(
+            ia,
+            IAlongs(term).linkRule(_bos.groupNo(drager)),
+            shareNumber,
+            parValue,
+            paidPar,
+            caller,
+            sigDate
+        );
     }
 
     function _createTagAlongDeal(
         address ia,
-        bytes32 shareNumber,
-        bytes32 sn
+        bytes32 sn,
+        bytes32 shareNumber
     ) private returns (bytes32 taSN) {
         taSN = IInvestmentAgreement(ia).createDeal(
-            uint8(InvestmentAgreement.TypeOfDeal.TagAlong),
+            uint8(EnumsRepo.TypeOfDeal.TagAlong),
             shareNumber,
             shareNumber.class(),
             sn.buyerOfDeal(),
@@ -196,10 +290,11 @@ contract BOAKeeper is
         );
     }
 
-    function acceptTagAlongDeal(
+    function acceptAlongDeal(
         address ia,
-        uint32 drager,
         bytes32 sn,
+        uint32 drager,
+        bool dragAlong,
         uint32 caller,
         uint32 sigDate,
         bytes32 sigHash
@@ -209,25 +304,9 @@ contract BOAKeeper is
         currentDate(sigDate)
         withinReviewPeriod(ia, sigDate)
     {
-        // require(_bom.votingDeadline(ia) >= sigDate, "MISSED voting deadline");
-
         require(caller == sn.buyerOfDeal(), "caller NOT buyer");
-
-        IInvestmentAgreement(ia).acceptTagAlongDeal(
-            sn.shortShareNumberOfDeal(),
-            caller,
-            sigDate,
-            sigHash
-        );
-
-        // require(
-        //     ISigPage(ia).sigDate(sn.buyerOfDeal()) > 0,
-        //     "pls SIGN the along deal first"
-        // );
-
-        _boa.acceptTagAlongDeal(ia, drager, sn);
-
-        // if (_boa.stateOfDoc(ia) == 1) _bom.resumeVoting(ia);
+        ISigPage(ia).addSigOfParty(caller, sigDate, sigHash);
+        _boa.acceptAlongDeal(ia, sn, drager, dragAlong);
     }
 
     // ======== AntiDilution ========
@@ -251,7 +330,7 @@ contract BOAKeeper is
         );
 
         address ad = _getSHA().getTerm(
-            uint8(ShareholdersAgreement.TermTitle.ANTI_DILUTION)
+            uint8(EnumsRepo.TermTitle.ANTI_DILUTION)
         );
 
         uint32 closingDate = IInvestmentAgreement(ia).closingDate(
@@ -286,7 +365,7 @@ contract BOAKeeper is
 
                 if (targetCleanPar > 0) {
                     bytes32 snOfGiftDeal = IInvestmentAgreement(ia).createDeal(
-                        uint8(InvestmentAgreement.TypeOfDeal.FreeGift),
+                        uint8(EnumsRepo.TypeOfDeal.FreeGift),
                         sharesInHand[j],
                         sharesInHand[j].class(),
                         caller,
@@ -381,67 +460,6 @@ contract BOAKeeper is
         _createOption(ia, sn, shareNumber, parValue, paidPar, sigDate);
     }
 
-    function _addAlongDeal(
-        bool dragAlong,
-        address ia,
-        bytes32 sn,
-        bytes32 shareNumber,
-        uint256 parValue,
-        uint256 paidPar,
-        uint32 caller,
-        uint32 sigDate
-    ) private {
-        require(_boa.isSubmitted(ia), "ia not submitted");
-        require(!_boa.passedReview(ia), "ia passed review");
-
-        uint32 drager = IInvestmentAgreement(ia)
-            .shareNumberOfDeal(sn.sequenceOfDeal())
-            .shareholder();
-
-        address term = dragAlong
-            ? _getSHA().getTerm(
-                uint8(ShareholdersAgreement.TermTitle.DRAG_ALONG)
-            )
-            : _getSHA().getTerm(
-                uint8(ShareholdersAgreement.TermTitle.TAG_ALONG)
-            );
-
-        require(
-            ITerm(term).isTriggered(ia, sn.sequenceOfDeal()),
-            "not triggered"
-        );
-
-        if (dragAlong)
-            require(caller == drager, "caller is not drager of DragAlong");
-        else
-            require(
-                caller == shareNumber.shareholder(),
-                "caller is not shareholder of TagAlong"
-            );
-
-        require(
-            IAlongs(term).isLinked(drager, shareNumber.shareholder()),
-            "drager and target shareholder NOT linked"
-        );
-
-        if (dragAlong)
-            require(
-                IAlongs(term).priceCheck(ia, sn, shareNumber, caller),
-                "price NOT satisfied"
-            );
-
-        // test quota of alongDeal and update mock results
-        _boa.addAlongDeal(
-            ia,
-            IAlongs(term).linkRule(_bos.groupNo(drager)),
-            shareNumber,
-            parValue,
-            paidPar,
-            caller,
-            sigDate
-        );
-    }
-
     function _createOption(
         address ia,
         bytes32 sn,
@@ -501,7 +519,7 @@ contract BOAKeeper is
         bytes32 sigHash
     ) external onlyDirectKeeper currentDate(sigDate) {
         address term = _getSHA().getTerm(
-            uint8(ShareholdersAgreement.TermTitle.FIRST_REFUSAL)
+            uint8(EnumsRepo.TermTitle.FIRST_REFUSAL)
         );
         require(
             IFirstRefusal(term).isRightholder(sn.typeOfDeal(), caller),
@@ -596,7 +614,7 @@ contract BOAKeeper is
     }
 
     function _checkSHA(
-        ShareholdersAgreement.TermTitle[] terms,
+        EnumsRepo.TermTitle[] terms,
         address ia,
         bytes32 sn
     ) private {

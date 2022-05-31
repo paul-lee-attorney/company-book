@@ -5,7 +5,44 @@
 
 pragma solidity ^0.4.24;
 
-contract EnumsRepo {
+library EnumsRepo {
+    enum TermTitle {
+        LOCK_UP,
+        ANTI_DILUTION,
+        FIRST_REFUSAL,
+        GROUPS_UPDATE,
+        DRAG_ALONG,
+        TAG_ALONG,
+        OPTIONS
+    }
+
+    enum TypeOfDeal {
+        ZeroPoint,
+        CapitalIncrease,
+        PreEmptive,
+        ShareTransferExt,
+        TagAlong,
+        DragAlong,
+        ShareTransferInt,
+        FirstRefusal,
+        FreeGift
+    }
+
+    enum BODStates {
+        ZeroPoint,
+        Created,
+        Submitted
+    }
+
+    enum BOAStates {
+        ZeroPoint,
+        Created,
+        Submitted,
+        Proposed,
+        Voted,
+        Exercised
+    }
+
     enum ActionType {
         CAPITAL_INCREASE,
         SHARE_TRANSFER,
@@ -25,24 +62,6 @@ contract EnumsRepo {
         LOCKUP_EXEMPT,
         ANTIDILUTION_EXEMPT,
         CONVENE_GM
-    }
-
-    enum TermTitle {
-        LOCK_UP,
-        ANTI_DILUTION,
-        PRE_EMPTIVE,
-        FIRST_REFUSAL,
-        GROUPS_UPDATE,
-        DRAG_ALONG,
-        TAG_ALONG,
-        OPTIONS,
-        LIQUIDATION_PREFERENCE,
-        VALUATION_ADJUSTMENT,
-        ORDINARY_ISSUES,
-        SPECIAL_ISSUES,
-        GENERAL_INFO,
-        BOARD,
-        VOTING_RULES
     }
 
     enum TermState {

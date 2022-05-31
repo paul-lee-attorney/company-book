@@ -39,10 +39,11 @@ interface IBookOfIA {
         uint32 execDate
     ) external;
 
-    function acceptTagAlongDeal(
+    function acceptAlongDeal(
         address ia,
+        bytes32 sn,
         uint32 drager,
-        bytes32 sn
+        bool dragAlong
     ) external;
 
     function proposeDoc(

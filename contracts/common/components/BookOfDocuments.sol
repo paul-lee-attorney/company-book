@@ -5,6 +5,7 @@
 
 pragma solidity ^0.4.24;
 
+import "../lib/EnumsRepo.sol";
 import "../lib/SNFactory.sol";
 import "../lib/SNParser.sol";
 import "../lib/SafeMath.sol";
@@ -25,12 +26,6 @@ contract BookOfDocuments is CloneFactory, BOSSetting {
 
     string public bookName;
     address public template;
-
-    enum States {
-        ZeroPoint,
-        Created,
-        Submitted
-    }
 
     struct Doc {
         bytes32 sn;
@@ -94,7 +89,8 @@ contract BookOfDocuments is CloneFactory, BOSSetting {
 
     modifier onlyForPending(address body) {
         require(
-            _docs[body].states.currentState == uint8(States.Created),
+            _docs[body].states.currentState ==
+                uint8(EnumsRepo.BODStates.Created),
             "state of doc is not Created"
         );
         _;
@@ -102,7 +98,8 @@ contract BookOfDocuments is CloneFactory, BOSSetting {
 
     modifier onlyForSubmitted(address body) {
         require(
-            _docs[body].states.currentState == uint8(States.Submitted),
+            _docs[body].states.currentState ==
+                uint8(EnumsRepo.BODStates.Submitted),
             "state of doc is not Submitted"
         );
         _;
@@ -220,17 +217,18 @@ contract BookOfDocuments is CloneFactory, BOSSetting {
     ) public onlyDirectKeeper onlyRegistered(body) currentDate(sigDate) {
         Doc storage doc = _docs[body];
 
-        if (doc.states.currentState == uint8(States.Submitted)) {
+        if (doc.states.currentState == uint8(EnumsRepo.BODStates.Submitted)) {
             require(doc.reviewDeadline >= sigDate, "missed review period");
 
             doc.docHash = bytes32(0);
             // doc.reviewDeadline = 0;
             doc.states.backToPrevState();
+            ISigPage(body).backToDraft();
 
             emit UpdateStateOfDoc(doc.sn, doc.states.currentState, caller);
         } else
             require(
-                doc.states.currentState == uint8(States.Created),
+                doc.states.currentState == uint8(EnumsRepo.BODStates.Created),
                 "wrong state of Doc"
             );
     }
@@ -243,7 +241,7 @@ contract BookOfDocuments is CloneFactory, BOSSetting {
         Doc storage doc = _docs[body];
 
         require(
-            doc.states.currentState >= uint8(States.Submitted),
+            doc.states.currentState >= uint8(EnumsRepo.BODStates.Submitted),
             "not after Proposed"
         );
 
@@ -264,8 +262,10 @@ contract BookOfDocuments is CloneFactory, BOSSetting {
     {
         Doc storage doc = _docs[body];
 
-        if (doc.states.currentState < uint8(States.Submitted)) return false;
-        else if (doc.states.currentState > uint8(States.Submitted)) return true;
+        if (doc.states.currentState < uint8(EnumsRepo.BODStates.Submitted))
+            return false;
+        else if (doc.states.currentState > uint8(EnumsRepo.BODStates.Submitted))
+            return true;
         else if (doc.reviewDeadline > now + 15 minutes) return false;
         else return true;
     }
@@ -276,7 +276,9 @@ contract BookOfDocuments is CloneFactory, BOSSetting {
         onlyRegistered(body)
         returns (bool)
     {
-        return _docs[body].states.currentState >= uint8(States.Submitted);
+        return
+            _docs[body].states.currentState >=
+            uint8(EnumsRepo.BODStates.Submitted);
     }
 
     function qtyOfDocs() external view returns (uint256) {

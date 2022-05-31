@@ -11,6 +11,7 @@ import "../../common/lib/ArrayUtils.sol";
 import "../../common/lib/SNFactory.sol";
 import "../../common/lib/SNParser.sol";
 import "../../common/lib/Timeline.sol";
+import "../../common/lib/EnumsRepo.sol";
 
 import "../../common/components/SigPage.sol";
 
@@ -19,18 +20,6 @@ contract InvestmentAgreement is BOSSetting, SigPage {
     using SNParser for bytes32;
     using ArrayUtils for bytes32[];
     using Timeline for Timeline.Line;
-
-    enum TypeOfDeal {
-        ZeroPoint,
-        CapitalIncrease,
-        PreEmptive,
-        ShareTransferExt,
-        TagAlong,
-        DragAlong,
-        ShareTransferInt,
-        FirstRefusal,
-        FreeGift
-    }
 
     /* struct sn{
         uint8 class; 1
@@ -93,6 +82,8 @@ contract InvestmentAgreement is BOSSetting, SigPage {
     event DelDeal(bytes32 indexed sn);
 
     event LockDealSubject(bytes32 indexed sn);
+
+    event ReleaseDealSubject(bytes32 indexed sn);
 
     event ClearDealCP(
         bytes32 indexed sn,
@@ -165,16 +156,19 @@ contract InvestmentAgreement is BOSSetting, SigPage {
 
             if (_bos.isMember(buyer))
                 require(
-                    typeOfDeal == uint8(TypeOfDeal.ShareTransferInt) ||
-                        typeOfDeal == uint8(TypeOfDeal.FirstRefusal) ||
-                        typeOfDeal == uint8(TypeOfDeal.FreeGift),
+                    typeOfDeal ==
+                        uint8(EnumsRepo.TypeOfDeal.ShareTransferInt) ||
+                        typeOfDeal ==
+                        uint8(EnumsRepo.TypeOfDeal.FirstRefusal) ||
+                        typeOfDeal == uint8(EnumsRepo.TypeOfDeal.FreeGift),
                     "wrong typeOfDeal"
                 );
             else
                 require(
-                    typeOfDeal == uint8(TypeOfDeal.ShareTransferExt) ||
-                        typeOfDeal == uint8(TypeOfDeal.TagAlong) ||
-                        typeOfDeal == uint8(TypeOfDeal.DragAlong),
+                    typeOfDeal ==
+                        uint8(EnumsRepo.TypeOfDeal.ShareTransferExt) ||
+                        typeOfDeal == uint8(EnumsRepo.TypeOfDeal.TagAlong) ||
+                        typeOfDeal == uint8(EnumsRepo.TypeOfDeal.DragAlong),
                     "wrong typeOfDeal"
                 );
 
@@ -182,8 +176,8 @@ contract InvestmentAgreement is BOSSetting, SigPage {
         } else {
             require(class <= _bos.counterOfClasses(), "class overflow");
             require(
-                typeOfDeal == uint8(TypeOfDeal.CapitalIncrease) ||
-                    typeOfDeal == uint8(TypeOfDeal.PreEmptive),
+                typeOfDeal == uint8(EnumsRepo.TypeOfDeal.CapitalIncrease) ||
+                    typeOfDeal == uint8(EnumsRepo.TypeOfDeal.PreEmptive),
                 "wrong typeOfDeal"
             );
         }
@@ -275,6 +269,21 @@ contract InvestmentAgreement is BOSSetting, SigPage {
             deal.states.pushToNextState(lockDate);
             flag = true;
             emit LockDealSubject(deal.sn);
+        }
+    }
+
+    function releaseDealSubject(uint16 ssn, uint32 releaseDate)
+        public
+        onlyKeeper
+        dealExist(ssn)
+        currentDate(releaseDate)
+        returns (bool flag)
+    {
+        Deal storage deal = _deals[ssn];
+        if (deal.states.currentState >= uint8(StateOfDeal.Locked)) {
+            deal.states.setState(uint8(StateOfDeal.Drafting), releaseDate);
+            flag = true;
+            emit ReleaseDealSubject(deal.sn);
         }
     }
 

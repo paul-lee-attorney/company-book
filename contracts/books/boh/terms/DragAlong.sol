@@ -217,7 +217,7 @@ contract DragAlong is BOSSetting, BOASetting, DraftControl {
         onlyKeeper
         returns (bool)
     {
-        if (_boa.currentState(ia) != uint8(BookOfIA.BOAStates.Submitted))
+        if (_boa.currentState(ia) != uint8(EnumsRepo.BOAStates.Submitted))
             return false;
 
         if (sn.typeOfDeal() == 1) return false;

@@ -14,6 +14,7 @@ import "../../common/ruting/BOMSetting.sol";
 
 import "../../common/lib/AddrGroup.sol";
 import "../../common/lib/TermGroup.sol";
+import "../../common/lib/EnumsRepo.sol";
 
 import "../../common/components/SigPage.sol";
 
@@ -32,16 +33,6 @@ contract ShareholdersAgreement is
 {
     using AddrGroup for AddrGroup.Group;
     using TermGroup for TermGroup.Group;
-
-    enum TermTitle {
-        LOCK_UP,
-        ANTI_DILUTION,
-        FIRST_REFUSAL,
-        GROUPS_UPDATE,
-        TAG_ALONG,
-        DRAG_ALONG,
-        OPTIONS
-    }
 
     // title => template address
     mapping(uint8 => address) public tempOfTitle;
@@ -94,13 +85,13 @@ contract ShareholdersAgreement is
 
     function _setTemplate(uint8 title, address tempAdd) private {
         if (
-            title == uint8(TermTitle.LOCK_UP) ||
-            title == uint8(TermTitle.ANTI_DILUTION) ||
-            title == uint8(TermTitle.FIRST_REFUSAL) ||
-            title == uint8(TermTitle.GROUPS_UPDATE) ||
-            title == uint8(TermTitle.TAG_ALONG) ||
-            title == uint8(TermTitle.DRAG_ALONG) ||
-            title == uint8(TermTitle.OPTIONS)
+            title == uint8(EnumsRepo.TermTitle.LOCK_UP) ||
+            title == uint8(EnumsRepo.TermTitle.ANTI_DILUTION) ||
+            title == uint8(EnumsRepo.TermTitle.FIRST_REFUSAL) ||
+            title == uint8(EnumsRepo.TermTitle.GROUPS_UPDATE) ||
+            title == uint8(EnumsRepo.TermTitle.TAG_ALONG) ||
+            title == uint8(EnumsRepo.TermTitle.DRAG_ALONG) ||
+            title == uint8(EnumsRepo.TermTitle.OPTIONS)
         ) {
             tempOfTitle[title] = tempAdd;
 

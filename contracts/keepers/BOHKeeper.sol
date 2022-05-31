@@ -9,7 +9,6 @@ import "../books/boh/interfaces/IShareholdersAgreement.sol";
 import "../books/boh/terms/interfaces/IGroupsUpdate.sol";
 import "../books/boh/ShareholdersAgreement.sol";
 
-import "../common/components/EnumsRepo.sol";
 import "../common/components/interfaces/ISigPage.sol";
 
 import "../common/ruting/BOMSetting.sol";
@@ -21,16 +20,10 @@ import "../common/ruting/interfaces/IBookSetting.sol";
 import "../common/access/interfaces/IRoles.sol";
 
 import "../common/lib/SNParser.sol";
-
+import "../common/lib/EnumsRepo.sol";
 import "../common/utils/Context.sol";
 
-contract BOHKeeper is
-    EnumsRepo,
-    BOSSetting,
-    SHASetting,
-    BOMSetting,
-    BOOSetting
-{
+contract BOHKeeper is BOSSetting, SHASetting, BOMSetting, BOOSetting {
     using SNParser for bytes32;
 
     address[15] public termsTemplate;
@@ -132,23 +125,23 @@ contract BOHKeeper is
 
         if (
             IShareholdersAgreement(body).hasTitle(
-                uint8(ShareholdersAgreement.TermTitle.OPTIONS)
+                uint8(EnumsRepo.TermTitle.OPTIONS)
             )
         )
             _boo.registerOption(
                 IShareholdersAgreement(body).getTerm(
-                    uint8(ShareholdersAgreement.TermTitle.OPTIONS)
+                    uint8(EnumsRepo.TermTitle.OPTIONS)
                 )
             );
 
         if (
             IShareholdersAgreement(body).hasTitle(
-                uint8(ShareholdersAgreement.TermTitle.GROUPS_UPDATE)
+                uint8(EnumsRepo.TermTitle.GROUPS_UPDATE)
             )
         ) {
             bytes32[] memory guo = IGroupsUpdate(
                 IShareholdersAgreement(body).getTerm(
-                    uint8(ShareholdersAgreement.TermTitle.GROUPS_UPDATE)
+                    uint8(EnumsRepo.TermTitle.GROUPS_UPDATE)
                 )
             ).orders();
             uint256 len = guo.length;

@@ -67,6 +67,10 @@ interface IInvestmentAgreement {
         external
         returns (bool flag);
 
+    function releaseDealSubject(uint16 ssn, uint32 releaseDate)
+        external
+        returns (bool flag);
+
     function finalizeIA() external;
 
     function clearDealCP(

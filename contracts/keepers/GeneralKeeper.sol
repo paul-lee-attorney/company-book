@@ -91,8 +91,8 @@ contract GeneralKeeper is AccessControl {
         _BOAKeeper.createIA(docType, _msgSender());
     }
 
-    function removeIA(address body) external {
-        _BOAKeeper.removeIA(body, _msgSender());
+    function removeIA(address body, uint32 sigDate) external {
+        _BOAKeeper.removeIA(body, _msgSender(), sigDate);
     }
 
     function submitIA(
@@ -149,11 +149,20 @@ contract GeneralKeeper is AccessControl {
 
     function acceptTagAlong(
         address ia,
-        uint32 drager,
         bytes32 sn,
-        uint32 sigDate
+        uint32 drager,
+        uint32 sigDate,
+        bytes32 sigHash
     ) external {
-        _BOAKeeper.acceptTagAlong(ia, drager, sn, _msgSender(), sigDate);
+        _BOAKeeper.acceptAlongDeal(
+            ia,
+            sn,
+            drager,
+            false,
+            _msgSender(),
+            sigDate,
+            sigHash
+        );
     }
 
     function acceptDragAlong(

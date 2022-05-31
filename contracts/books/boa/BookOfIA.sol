@@ -17,6 +17,7 @@ import "../../common/components/BookOfDocuments.sol";
 import "../../common/ruting/SHASetting.sol";
 
 import "../../common/lib/SNParser.sol";
+import "../../common/lib/EnumsRepo.sol";
 
 import "../../common/components/interfaces/ISigPage.sol";
 
@@ -24,15 +25,6 @@ contract BookOfIA is BookOfDocuments, SHASetting {
     using SNParser for bytes32;
 
     IInvestmentAgreementCalculator private _agrmtCal;
-
-    enum BOAStates {
-        ZeroPoint,
-        Created,
-        Submitted,
-        Proposed,
-        Voted,
-        Exercised
-    }
 
     struct Amt {
         uint256 selAmt;
@@ -301,17 +293,18 @@ contract BookOfIA is BookOfDocuments, SHASetting {
         emit AddAlongDeal(ia, follower, shareNumber, parValue, paidPar);
     }
 
-    function acceptTagAlongDeal(
+    function acceptAlongDeal(
         address ia,
+        bytes32 sn,
         uint32 drager,
-        bytes32 sn
+        bool dragAlong
     ) external onlyKeeper {
         uint16 buyerGroup = _bos.groupNo(sn.buyerOfDeal());
-        address ta = _getSHA().getTerm(
-            uint8(ShareholdersAgreement.TermTitle.TAG_ALONG)
-        );
+        address term = dragAlong
+            ? _getSHA().getTerm(uint8(EnumsRepo.TermTitle.DRAG_ALONG))
+            : _getSHA().getTerm(uint8(EnumsRepo.TermTitle.TAG_ALONG));
 
-        bytes32 rule = IAlongs(ta).linkRule(_bos.groupNo(drager));
+        bytes32 rule = IAlongs(term).linkRule(_bos.groupNo(drager));
 
         (, uint256 parValue, uint256 paidPar, , ) = IInvestmentAgreement(ia)
             .getDeal(sn.sequenceOfDeal());

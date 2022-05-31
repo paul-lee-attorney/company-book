@@ -181,6 +181,10 @@ contract SigPage is DraftControl {
         }
     }
 
+    function backToDraft() public {
+        if (established) established = false;
+    }
+
     //####################
     //##    查询接口    ##
     //####################

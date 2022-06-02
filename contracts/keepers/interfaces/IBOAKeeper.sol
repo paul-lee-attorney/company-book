@@ -25,22 +25,12 @@ interface IBOAKeeper {
         uint32 caller
     ) external;
 
-    // ======== TagAlong ========
+    // ======== TagAlong & DragAlong ========
 
-    function execTagAlong(
+    function execAlongRight(
         address ia,
         bytes32 sn,
-        bytes32 shareNumber,
-        uint256 parValue,
-        uint256 paidPar,
-        uint32 caller,
-        uint32 execDate,
-        bytes32 sigHash
-    ) external;
-
-    function execDragAlong(
-        address ia,
-        bytes32 sn,
+        bool dragAlong,
         bytes32 shareNumber,
         uint256 parValue,
         uint256 paidPar,
@@ -59,12 +49,7 @@ interface IBOAKeeper {
         bytes32 sigHash
     ) external;
 
-    function acceptDragAlong(
-        bytes32 snOfOpt,
-        bytes32 shareNumber,
-        uint32 caller,
-        uint32 sigDate
-    ) external;
+    // ======== FirstRefusal ========
 
     function execFirstRefusal(
         address ia,

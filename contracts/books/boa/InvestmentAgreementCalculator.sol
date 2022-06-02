@@ -111,7 +111,7 @@ contract AgreementCalculator is BOSSetting {
     }
 
     function otherMembers(address ia) external view returns (uint32[]) {
-        uint32[] memory signers = ISigPage(ia).signers();
+        uint32[] memory signers = ISigPage(ia).parties();
         uint32[] memory members = _bos.membersList();
 
         return members.minus(signers);

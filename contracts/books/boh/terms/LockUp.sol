@@ -183,7 +183,7 @@ contract LockUp is BOSSetting, BOMSetting, DraftControl {
     {
         (uint32[] memory consentParties, ) = _bom.getYea(ia);
 
-        uint32[] memory signers = ISigPage(ia).signers();
+        uint32[] memory signers = ISigPage(ia).parties();
 
         uint256 len = consentParties.length + signers.length;
 

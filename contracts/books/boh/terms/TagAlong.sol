@@ -49,7 +49,7 @@ contract TagAlong is BOMSetting, DragAlong {
         for (i = 0; i < consentParties.length; i++)
             _exemptedGroups[_bos.groupNo(consentParties[i])] = true;
 
-        uint32[] memory signers = ISigPage(ia).signers();
+        uint32[] memory signers = ISigPage(ia).parties();
 
         for (i = 0; i < signers.length; i++)
             _exemptedGroups[_bos.groupNo(signers[i])] = true;

@@ -22,19 +22,17 @@ interface ISigPage {
 
     function signDoc(uint32 _sigDate, bytes32 _sigHash) external;
 
-    // function updateStateOfDoc(uint8 state) external;
+    function acceptDoc(uint32 sigDate, bytes32 sigHash) external;
 
-    function addSigOfParty(
-        address acct,
+    function addBlank(uint32 acct, uint16 sn) external;
+
+    function signDeal(
+        uint16 sn,
         uint32 sigDate,
         bytes32 sigHash
     ) external;
 
-    // function removeSigOfParty(address acct) external;
-
-    function acceptDoc(uint32 sigDate, bytes32 sigHash) external;
-
-    function backToDraft() external;
+    function backToDraft(uint32 reviewDeadline) external;
 
     //####################
     //##    查询接口    ##
@@ -42,37 +40,43 @@ interface ISigPage {
 
     function established() external returns (bool);
 
-    // function docState() external returns (uint8);
-
     function sigDeadline() external returns (uint32);
-
-    // function closingStartpoint() external returns (uint32);
 
     function closingDeadline() external returns (uint32);
 
     function isParty(address acct) external returns (bool);
 
+    function isSigner(address acct) external returns (bool);
+
+    function isInitSigner(uint32 acct) public view returns (bool);
+
     function parties() external returns (uint32[]);
 
     function qtyOfParties() external returns (uint8);
 
-    function counterOfParty(uint32 acct) external view returns (uint16);
+    function qtyOfBlankForParty(uint32 acct) external view returns (uint16);
 
-    function counterOfParties() external view returns (uint16);
+    function qtyOfSigForParty(uint32 acct) external view returns (uint16);
 
-    function isSigner(address acct) external returns (bool);
+    function sigDateOfDeal(uint32 acct, uint16 sn)
+        external
+        view
+        returns (uint32);
 
-    function signers() external returns (uint32[]);
+    function sigHashOfDeal(uint32 acct, uint16 sn)
+        external
+        view
+        returns (bytes32);
 
-    function qtyOfSigners() external returns (uint256);
+    function sigDateOfDoc(uint32 acct) external view returns (uint32);
 
-    function counterOfSigner(uint32 acct) external view returns (uint16);
+    function sigHashOfDoc(uint32 acct) external view returns (bytes32);
 
-    function counterOfSigners() external view returns (uint16);
+    function dealSigVerify(
+        uint32 acct,
+        uint16 sn,
+        string src
+    ) external view returns (bool);
 
-    function sigDate(address acct) external returns (uint32);
-
-    function sigHash(address acct) external returns (bytes32);
-
-    function sigVerify(address acct, string src) external returns (bool);
+    function partyDulySigned(uint32 acct) external view returns (bool);
 }

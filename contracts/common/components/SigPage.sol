@@ -5,14 +5,11 @@
 
 pragma solidity ^0.4.24;
 
-import "../../common/lib/PartyGroup.sol";
 import "../../common/lib/SignerGroup.sol";
 
 import "../access/DraftControl.sol";
 
 contract SigPage is DraftControl {
-    // using ArrayUtils for uint32[];
-    using PartyGroup for PartyGroup.Group;
     using SignerGroup for SignerGroup.Group;
 
     bool public established;
@@ -21,9 +18,7 @@ contract SigPage is DraftControl {
 
     uint32 public closingDeadline;
 
-    PartyGroup.Group private _parties;
-
-    SignerGroup.Group private _signatures;
+    SignerGroup.Group internal _signatures;
 
     //####################
     //##     event      ##
@@ -31,7 +26,7 @@ contract SigPage is DraftControl {
 
     event DocFinalized();
 
-    event DocBackToPending();
+    event BackToDraft();
 
     event DocEstablished();
 
@@ -43,11 +38,9 @@ contract SigPage is DraftControl {
 
     event RemoveParty(uint32 acct);
 
-    event AddSigOfParty(uint32 acct, uint32 sigDate, bytes32 sigHash);
+    event AddBlank(uint32 acct, uint16 sn);
 
-    event UpdateSigOfParty(uint32 acct, uint32 sigDate, bytes32 sigHash);
-
-    // event RemoveSigOfParty(uint32 acct);
+    event SignDeal(uint32 acct, uint16 sn, uint32 sigDate, bytes32 sigHash);
 
     event SignDoc(uint32 acct, uint32 sigDate, bytes32 sigHash);
 
@@ -55,23 +48,23 @@ contract SigPage is DraftControl {
     //##    modifier    ##
     //####################
 
-    // modifier onlyPending() {
-    //     require(docState == 0, "Doc NOT pending");
-    //     _;
-    // }
-
     modifier onlyParty() {
-        require(_parties.isParty(_msgSender()), "msg.sender NOT a party");
+        require(_signatures.isParty(_msgSender()), "msg.sender NOT a party");
         _;
     }
 
-    modifier notSigned() {
-        require(!_signatures.isSigner(_msgSender()), "SIGNED already");
+    modifier onlyInitSigner() {
+        require(_signatures.isInitSigner(_msgSender()), "not an InitSigner");
         _;
     }
 
-    modifier onlyFutureTime(uint32 time) {
-        require(time > now + 15 minutes, "NOT FUTURE time");
+    modifier notInitSigner() {
+        require(!_signatures.isInitSigner(_msgSender()), "is an InitSigner");
+        _;
+    }
+
+    modifier onlyFutureTime(uint32 date) {
+        require(date > now + 15 minutes, "NOT FUTURE time");
         _;
     }
 
@@ -99,7 +92,7 @@ contract SigPage is DraftControl {
         emit SetClosingDeadline(deadline);
     }
 
-    function addPartyToDoc(uint32 acct) public {
+    function addPartyToDoc(uint32 acct) public onlyPending {
         if (!finalized)
             require(
                 hasRole(ATTORNEYS, _msgSender()),
@@ -111,11 +104,11 @@ contract SigPage is DraftControl {
                 "only DK may add party to an established DOC"
             );
 
-        if (_parties.addParty(acct)) emit AddParty(acct);
+        if (_signatures.addBlank(acct, 0)) emit AddParty(acct);
     }
 
     function removePartyFromDoc(uint32 acct) public onlyPending onlyAttorney {
-        if (_parties.removeParty(acct)) emit RemoveParty(acct);
+        if (_signatures.removeParty(acct)) emit RemoveParty(acct);
     }
 
     function circulateDoc() public onlyGC onlyPending {
@@ -123,66 +116,53 @@ contract SigPage is DraftControl {
 
         finalized = true;
 
-        _parties.resetCounter();
-
         emit DocFinalized();
     }
 
-    function signDoc(uint32 _sigDate, bytes32 _sigHash)
+    function signDoc(uint32 sigDate, bytes32 sigHash)
         external
+        onlyParty
         onlyFinalized
-        notSigned
     {
-        require(_sigDate < sigDeadline, "later than SigDeadline");
+        require(sigDate < sigDeadline, "later than SigDeadline");
 
-        _addSigOfParty(_msgSender(), _sigDate, _sigHash);
+        if (_signatures.signDeal(_msgSender(), 0, sigDate, sigHash))
+            emit SignDoc(_msgSender(), sigDate, sigHash);
     }
 
-    function acceptDoc(uint32 _sigDate, bytes32 _sigHash)
-        public
-        onlyParty
-        notSigned
-    {
+    function acceptDoc(uint32 sigDate, bytes32 sigHash) external onlyParty {
         require(established, "Doc not established");
 
-        _addSigOfParty(_msgSender(), _sigDate, _sigHash);
+        if (_signatures.signDeal(_msgSender(), 0, sigDate, sigHash))
+            emit SignDoc(_msgSender(), sigDate, sigHash);
     }
 
-    function addSigOfParty(
-        uint32 acct,
-        uint32 _sigDate,
-        bytes32 _sigHash
-    ) external onlyDirectKeeper {
-        _addSigOfParty(acct, _sigDate, _sigHash);
+    function addBlank(uint32 acct, uint16 sn) public onlyKeeper {
+        if (_signatures.addBlank(acct, sn)) emit AddBlank(acct, sn);
     }
 
-    function _addSigOfParty(
-        uint32 acct,
+    function signDeal(
+        uint16 sn,
         uint32 sigDate,
         bytes32 sigHash
-    ) internal currentDate(sigDate) {
-        require(_parties.isParty(acct), "not a Party");
-        require(
-            _parties.counterOfParty(acct) >= _signatures.counterOfSigner(acct),
-            "not enough signing blank"
-        );
-
-        if (_signatures.addSignature(acct, sigDate, sigHash))
-            emit AddSigOfParty(acct, sigDate, sigHash);
-        else emit UpdateSigOfParty(acct, sigDate, sigHash);
-
-        _checkCompletionOfSig();
+    ) public onlyKeeper {
+        if (_signatures.signDeal(_msgSender(), sn, sigDate, sigHash)) {
+            emit SignDeal(_msgSender(), sn, sigDate, sigHash);
+            _checkCompletionOfSig();
+        }
     }
 
     function _checkCompletionOfSig() private {
-        if (_parties.counterOfParties() == _signatures.counterOfSigners()) {
+        if (_signatures.docEstablished()) {
             established = true;
             emit DocEstablished();
         }
     }
 
-    function backToDraft() public {
+    function backToDraft(uint32 reviewDeadline) public {
         if (established) established = false;
+        sigDeadline = reviewDeadline;
+        emit BackToDraft();
     }
 
     //####################
@@ -190,54 +170,76 @@ contract SigPage is DraftControl {
     //####################
 
     function isParty(uint32 acct) public view returns (bool) {
-        return _parties.isParty(acct);
-    }
-
-    function parties() external view returns (uint32[]) {
-        return _parties.parties();
-    }
-
-    function qtyOfParties() external view returns (uint256) {
-        return _parties.qtyOfParties();
-    }
-
-    function counterOfParty(uint32 acct) external view returns (uint16) {
-        return _parties.counterOfParty(acct);
-    }
-
-    function counterOfParties() external view returns (uint16) {
-        return _parties.counterOfParties();
+        return _signatures.isParty(acct);
     }
 
     function isSigner(uint32 acct) external view returns (bool) {
         return _signatures.isSigner(acct);
     }
 
-    function signers() external view returns (uint32[]) {
-        return _signatures.signers();
+    function isInitSigner(uint32 acct) public view returns (bool) {
+        return _signatures.isInitSigner(acct);
     }
 
-    function qtyOfSigners() external view returns (uint256) {
-        return _signatures.qtyOfSigners();
+    function parties() external view returns (uint32[]) {
+        return _signatures.parties;
     }
 
-    function counterOfSigner(uint32 acct) external view returns (uint16) {
-        return _signatures.counterOfSigner(acct);
+    function qtyOfParties() external view returns (uint256) {
+        return _signatures.parties.length;
     }
 
-    function counterOfSigners() external view returns (uint16) {
-        return _signatures.counterOfSigners();
+    function qtyOfBlankForParty(uint32 acct) external view returns (uint16) {
+        return _signatures.counterOfBlank[acct];
     }
 
-    function sigDate(uint32 acct) external view returns (uint32) {
-        return _signatures.sigDate(acct);
+    function qtyOfSigForParty(uint32 acct) external view returns (uint16) {
+        return _signatures.counterOfSig[acct];
     }
 
-    function sigHash(uint32 acct) external view returns (bytes32) {
-        return _signatures.sigHash(acct);
+    function sigDateOfDeal(uint32 acct, uint16 sn)
+        external
+        view
+        returns (uint32)
+    {
+        return _signatures.sigDateOfDeal(acct, sn);
     }
 
-    function sigVerify(uint32 acct, string src) external view returns (bool) {
-        return _signatures.sigVerify(acct, src);
+    function sigHashOfDeal(uint32 acct, uint16 sn)
+        external
+        view
+        returns (bytes32)
+    {
+        return _signatures.sigHashOfDeal(acct, sn);
+    }
+
+    function sigDateOfDoc(uint32 acct)
+        external
+        view
+        onlyInitSigner
+        returns (uint32)
+    {
+        _signatures.sigDateOfDoc(acct);
+    }
+
+    function sigHashOfDoc(uint32 acct)
+        external
+        view
+        onlyInitSigner
+        returns (bytes32)
+    {
+        _signatures.sigHashOfDoc(acct);
+    }
+
+    function dealSigVerify(
+        uint32 acct,
+        uint16 sn,
+        string src
+    ) external view returns (bool) {
+        return _signatures.dealSigVerify(acct, sn, src);
+    }
+
+    function partyDulySigned(uint32 acct) external view returns (bool) {
+        return _signatures.partyDulySigned(acct);
     }
 }

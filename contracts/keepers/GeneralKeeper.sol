@@ -114,35 +114,15 @@ contract GeneralKeeper is AccessControl {
         uint32 sigDate,
         bytes32 sigHash
     ) external {
-        _BOAKeeper.execTagAlong(
+        _BOAKeeper.execAlongRight(
             ia,
             sn,
+            false,
             shareNumber,
             parValue,
             paidPar,
             _msgSender(),
             sigDate,
-            sigHash
-        );
-    }
-
-    function execDragAlong(
-        address ia,
-        bytes32 sn,
-        bytes32 shareNumber,
-        uint256 parValue,
-        uint256 paidPar,
-        uint32 execDate,
-        bytes32 sigHash
-    ) external {
-        _BOAKeeper.execDragAlong(
-            ia,
-            sn,
-            shareNumber,
-            parValue,
-            paidPar,
-            _msgSender(),
-            execDate,
             sigHash
         );
     }
@@ -165,12 +145,45 @@ contract GeneralKeeper is AccessControl {
         );
     }
 
-    function acceptDragAlong(
-        bytes32 snOfOpt,
+    // ======= DragAlong ========
+
+    function execDragAlong(
+        address ia,
+        bytes32 sn,
         bytes32 shareNumber,
-        uint32 sigDate
+        uint256 parValue,
+        uint256 paidPar,
+        uint32 sigDate,
+        bytes32 sigHash
     ) external {
-        _BOAKeeper.acceptDragAlong(snOfOpt, shareNumber, _msgSender(), sigDate);
+        _BOAKeeper.execAlongRight(
+            ia,
+            sn,
+            true,
+            shareNumber,
+            parValue,
+            paidPar,
+            _msgSender(),
+            sigDate,
+            sigHash
+        );
+    }
+
+    function acceptDragAlong(
+        address ia,
+        bytes32 sn,
+        uint32 sigDate,
+        bytes32 sigHash
+    ) external {
+        _BOAKeeper.acceptAlongDeal(
+            ia,
+            sn,
+            _msgSender(),
+            true,
+            _msgSender(),
+            sigDate,
+            sigHash
+        );
     }
 
     // ======== First Refusal ========

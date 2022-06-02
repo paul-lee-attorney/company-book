@@ -11,108 +11,165 @@ library SignerGroup {
     using ArrayUtils for uint32[];
 
     struct Group {
-        mapping(uint32 => bytes32) _sigHash;
-        mapping(uint32 => uint32) _sigDate;
-        mapping(uint32 => uint16) _counterOfSigner;
-        uint16 _counter;
-        uint32[] _signers;
+        mapping(uint32 => mapping(uint16 => uint16)) dealToSN;
+        mapping(uint32 => mapping(uint16 => bytes32)) sigHash;
+        mapping(uint32 => mapping(uint16 => uint32)) sigDate;
+        mapping(uint32 => uint16) counterOfSig;
+        mapping(uint32 => uint16) counterOfBlank;
+        uint16 balance;
+        uint32[] parties;
     }
 
     // ##################
     // ##    写端口    ##
     // ##################
 
-    function addSignature(
+    function addBlank(
         Group storage group,
         uint32 acct,
+        uint16 snOfDeal
+    ) internal returns (bool flag) {
+        if (group.dealToSN[acct][snOfDeal] == 0) {
+            if (group.counterOfBlank[acct] == 0) group.parties.push(acct);
+
+            group.counterOfBlank[acct]++;
+            group.dealToSN[acct][snOfDeal] = group.counterOfBlank[acct];
+
+            group.balance++;
+
+            flag = true;
+        }
+    }
+
+    function removeParty(Group storage group, uint32 acct)
+        internal
+        returns (bool flag)
+    {
+        if (group.counterOfBlank[acct] > 0) {
+            group.balance -= group.counterOfBlank[acct];
+
+            for (uint16 i = 0; i <= group.counterOfBlank[acct]; i++) {
+                delete group.sigDate[acct][i];
+                delete group.sigHash[acct][i];
+            }
+
+            delete group.counterOfBlank[acct];
+            delete group.counterOfSig[acct];
+
+            group.parties.removeByValue(acct);
+
+            flag = true;
+        }
+    }
+
+    function signDeal(
+        Group storage group,
+        uint32 acct,
+        uint16 snOfDeal,
         uint32 sigDate,
         bytes32 sigHash
     ) internal returns (bool flag) {
-        // require(sigDate > 0, "zero sigDate");
+        uint16 sn = group.dealToSN[acct][snOfDeal];
 
-        if (group._sigDate[acct] == 0) {
-            group._signers.push(acct);
+        if (sn > 0 && group.sigDate[acct][sn] == 0) {
+            group.sigDate[acct][sn] = sigDate;
+            group.sigHash[acct][sn] = sigHash;
+
+            if (snOfDeal == 0) {
+                group.sigDate[acct][0] = sigDate;
+                group.sigHash[acct][0] = sigHash;
+            }
+
+            group.counterOfSig[acct]++;
+            group.balance--;
+
             flag = true;
         }
-
-        group._counterOfSigner[acct]++;
-        group._counter++;
-
-        group._sigDate[acct] = sigDate;
-        group._sigHash[acct] = sigHash;
     }
 
     // ##################
     // ##   查询端口   ##
     // ##################
 
+    function isParty(Group storage group, uint32 acct)
+        internal
+        view
+        returns (bool)
+    {
+        return group.counterOfBlank[acct] > 0;
+    }
+
     function isSigner(Group storage group, uint32 acct)
         internal
         view
         returns (bool)
     {
-        return group._sigDate[acct] > 0;
+        return group.counterOfSig[acct] > 0;
     }
 
-    function sigDate(Group storage group, uint32 acct)
+    function isInitSigner(Group storage group, uint32 acct)
+        internal
+        view
+        returns (bool)
+    {
+        return group.sigDate[acct][0] > 0;
+    }
+
+    function sigDateOfDeal(
+        Group storage group,
+        uint32 acct,
+        uint16 snOfDeal
+    ) internal view returns (uint32) {
+        uint16 sn = group.dealToSN[acct][snOfDeal];
+        if (sn > 0) return group.sigDate[acct][sn];
+        else revert("party did not sign this deal");
+    }
+
+    function sigHashOfDeal(
+        Group storage group,
+        uint32 acct,
+        uint16 snOfDeal
+    ) internal view returns (bytes32) {
+        uint16 sn = group.dealToSN[acct][snOfDeal];
+        if (sn > 0) return group.sigHash[acct][sn];
+        else revert("party did not sign this deal");
+    }
+
+    function sigDateOfDoc(Group storage group, uint32 acct)
         internal
         view
         returns (uint32)
     {
-        require(group._sigDate[acct] > 0, "not a signer");
-
-        return group._sigDate[acct];
+        return group.sigDate[acct][0];
     }
 
-    function sigHash(Group storage group, uint32 acct)
+    function sigHashOfDoc(Group storage group, uint32 acct)
         internal
         view
         returns (bytes32)
     {
-        require(group._sigDate[acct] > 0, "not a signer");
-
-        return group._sigHash[acct];
+        return group.sigHash[acct][0];
     }
 
-    function sigVerify(
+    function dealSigVerify(
         Group storage group,
         uint32 acct,
+        uint16 snOfDeal,
         string src
     ) internal view returns (bool) {
-        require(group._sigDate[acct] > 0, "not a signer");
-
-        return group._sigHash[acct] == keccak256(bytes(src));
+        uint16 sn = group.dealToSN[acct][snOfDeal];
+        return group.sigHash[acct][sn] == keccak256(bytes(src));
     }
 
-    function counterOfSigner(Group storage group, uint32 acct)
+    function partyDulySigned(Group storage group, uint32 acct)
         internal
         view
-        returns (uint16)
+        returns (bool)
     {
-        return group._counterOfSigner[acct];
+        return group.counterOfBlank[acct] == group.counterOfSig[acct];
     }
 
-    function counterOfSigners(Group storage group)
-        internal
-        view
-        returns (uint16)
-    {
-        return group._counter;
-    }
-
-    function qtyOfSigners(Group storage group) internal view returns (uint256) {
-        return group._signers.length;
-    }
-
-    function getSigner(Group storage group, uint256 index)
-        internal
-        view
-        returns (uint32)
-    {
-        return group._signers[index];
-    }
-
-    function signers(Group storage group) internal view returns (uint32[]) {
-        return group._signers;
+    function docEstablished(Group storage group) internal view returns (bool) {
+        return group.balance == 0 && group.parties.length > 0;
     }
 }

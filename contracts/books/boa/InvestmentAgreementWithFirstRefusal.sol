@@ -85,11 +85,10 @@ contract InvestmentAgreementWithFirstRefusal is InvestmentAgreement {
         notice.totalAmt += weight;
 
         // request seller to check and confirm
-        if (_subjectDeals.addItem(ssn))
-            addPartyToDoc(_deals[ssn].shareNumber.shareholder());
+        _subjectDeals.addItem(ssn);
 
-        addPartyToDoc(acct);
-        _addSigOfParty(acct, execDate, sigHash);
+        _signatures.addBlank(acct, 0);
+        _signatures.signDeal(acct, 0, execDate, sigHash);
 
         established = false;
 
@@ -142,9 +141,10 @@ contract InvestmentAgreementWithFirstRefusal is InvestmentAgreement {
                 frDeal.paidPar,
                 frDeal.closingDate
             );
-        }
 
-        _addSigOfParty(acct, acceptDate, sigHash);
+            _signatures.addBlank(acct, counterOfDeals);
+            _signatures.signDeal(acct, counterOfDeals, acceptDate, sigHash);
+        }
 
         emit AcceptFR(orgDeal.sn, acct);
     }

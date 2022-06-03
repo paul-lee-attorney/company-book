@@ -28,6 +28,14 @@ library EnumsRepo {
         FreeGift
     }
 
+    enum StateOfDeal {
+        Drafting,
+        Locked,
+        Cleared,
+        Closed,
+        Terminated
+    }
+
     enum BODStates {
         ZeroPoint,
         Created,

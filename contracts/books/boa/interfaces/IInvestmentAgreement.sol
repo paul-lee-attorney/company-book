@@ -10,7 +10,9 @@ interface IInvestmentAgreement {
     //##    写接口    ##
     //##################
 
-    function recordFRRequest(
+    // ======== FristRefusal ========
+
+    function execFirstRefusalRight(
         uint16 ssn,
         bool basedOnPar,
         uint32 acct,
@@ -25,22 +27,7 @@ interface IInvestmentAgreement {
         bytes32 sigHash
     ) external;
 
-    function createTagAlongDeal(
-        bytes32 shareNumber,
-        uint16 ssn,
-        uint256 parValue,
-        uint256 paidPar,
-        uint32 caller,
-        uint32 createDate,
-        bytes32 sigHash
-    ) external;
-
-    function acceptTagAlongDeal(
-        bytes6 ssn,
-        uint32 caller,
-        uint32 _sigDate,
-        bytes32 _sigHash
-    ) external;
+    // ======== InvestmentAgreement ========
 
     function createDeal(
         uint8 typeOfDeal,
@@ -51,8 +38,6 @@ interface IInvestmentAgreement {
         uint16 preSSN
     ) external returns (bytes32 sn);
 
-    function delDeal(uint16 sn) external;
-
     function updateDeal(
         uint16 ssn,
         uint256 unitPrice,
@@ -60,6 +45,8 @@ interface IInvestmentAgreement {
         uint256 paidPar,
         uint32 closingDate
     ) external;
+
+    function delDeal(uint16 sn) external;
 
     function kill() external;
 
@@ -86,34 +73,33 @@ interface IInvestmentAgreement {
         string hashKey
     ) external;
 
-    function splitDeal(
-        uint16 ssn,
-        uint32 buyer,
-        uint256 parValue,
-        uint256 paidPar
-    ) external;
-
-    function restoreDeal(uint16 ssn) external;
-
     function revokeDeal(
         uint16 ssn,
         uint32 sigDate,
         string hashKey
     ) external;
 
-    function takeGift(uint16 ssn, uint32 caller) external;
+    function takeGift(
+        uint16 ssn,
+        uint32 caller,
+        uint32 sigDate
+    ) external;
 
     //  ######################
     //  ##     查询接口     ##
     //  ######################
 
-    function isExecParty(uint16 ssn, uint32 acct) external view returns (bool);
+    // ======== FirstRefusal ========
 
-    function execParties(uint16 ssn) external view returns (uint32[]);
+    function counterOfFR(uint16 ssn) external view returns (uint16);
 
-    function isSubjectDeal(uint16 ssn) external returns (bool);
+    function sumOfWeight(uint16 ssn) external view returns (uint16);
 
-    function subjectDeals() external view returns (uint16[]);
+    function isTargetDeal(uint16 ssn) public view returns (bool);
+
+    function frDeals(uint16 ssn) external view returns (uint16[]);
+
+    // ======== InvestmentAgreement ========
 
     function isDeal(uint16 ssn) external view returns (bool);
 

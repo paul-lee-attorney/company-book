@@ -119,7 +119,7 @@ contract BOAKeeper is
         (, uint256 parValue, , uint8 state, ) = IInvestmentAgreement(ia)
             .getDeal(sn.sequenceOfDeal());
 
-        if (state >= uint8(InvestmentAgreement.StateOfDeal.Locked)) {
+        if (state >= uint8(EnumsRepo.StateOfDeal.Locked)) {
             IInvestmentAgreement(ia).releaseDealSubject(
                 sn.sequenceOfDeal(),
                 releaseDate
@@ -158,7 +158,7 @@ contract BOAKeeper is
         (, uint256 parValue, , uint8 state, ) = IInvestmentAgreement(ia)
             .getDeal(sn.sequenceOfDeal());
 
-        if (state < uint8(InvestmentAgreement.StateOfDeal.Locked)) {
+        if (state < uint8(EnumsRepo.StateOfDeal.Locked)) {
             IInvestmentAgreement(ia).lockDealSubject(
                 sn.sequenceOfDeal(),
                 lockDate
@@ -477,7 +477,7 @@ contract BOAKeeper is
             .votingRules(sn.typeOfDeal())
             .basedOnParOfVR();
 
-        IInvestmentAgreement(ia).recordFRRequest(
+        IInvestmentAgreement(ia).execFirstRefusalRight(
             sn.sequenceOfDeal(),
             basedOnPar,
             caller,

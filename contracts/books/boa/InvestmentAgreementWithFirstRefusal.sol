@@ -9,28 +9,36 @@ import "./InvestmentAgreement.sol";
 
 import "../../common/lib/UserGroup.sol";
 import "../../common/lib/SequenceList.sol";
+import "../../common/lib/Timeline.sol";
 
 contract InvestmentAgreementWithFirstRefusal is InvestmentAgreement {
     using UserGroup for UserGroup.Group;
     using SequenceList for SequenceList.List;
+    using Timeline for Timeline.Line;
 
-    struct FRNotice {
-        UserGroup.Group execParties;
-        bool basedOnPar;
-        uint256 totalAmt;
+    struct FRRecord {
+        uint16 frSSN;
+        uint256 weight;
     }
 
-    // sequenceOfDeal => FRNotice
-    mapping(uint16 => FRNotice) private _frNotices;
+    // // sequenceOfDeal => FRRecord
+    // mapping(uint16 => FRRecord) private _frNotices;
 
-    // sequenceOfDeal => bool/list
-    SequenceList.List internal _subjectDeals;
+    // // sequenceOfDeal => bool/list
+    // SequenceList.List internal _subjectDeals;
+
+    // dealSN => counterOfFR
+    mapping(uint16 => uint16) public counterOfFR;
+
+    // dealSN => accumulatedWeight
+    mapping(uint16 => uint256) public sumOfWeight;
+
+    // dealSN => counterOfFR => frSSN
+    mapping(uint16 => mapping(uint16 => FRRecord)) private _frRecords;
 
     //##################
     //##    Event     ##
     //##################
-
-    event RecordFRNotice(bytes32 indexed sn, uint32 sender, uint32 execDate);
 
     event CreateFRDeal(
         bytes32 indexed sn,
@@ -41,58 +49,116 @@ contract InvestmentAgreementWithFirstRefusal is InvestmentAgreement {
         uint32 closingDate
     );
 
+    event UpdateFRDeal(bytes32 indexed sn, uint256 parValue, uint256 paidPar);
+
     event AcceptFR(bytes32 indexed sn, uint32 sender);
 
     //##################
     //##   Modifier   ##
     //##################
 
-    modifier subDealExist(uint16 ssn) {
-        require(_subjectDeals.isItem(ssn), "NOT be requested for FR");
-        _;
-    }
+    // modifier subDealExist(uint16 ssn) {
+    //     require(_subjectDeals.isItem(ssn), "NOT be requested for FR");
+    //     _;
+    // }
 
     //##################
     //##    写接口    ##
     //##################
 
-    function recordFRRequest(
+    function execFirstRefusalRight(
         uint16 ssn,
         bool basedOnPar,
         uint32 acct,
         uint32 execDate,
         bytes32 sigHash
     ) external onlyKeeper dealExist(ssn) {
-        FRNotice storage notice = _frNotices[ssn];
-        Deal storage deal = _deals[ssn];
+        require(!isInitSigner(acct), "FR requester is an InitSigner");
 
-        require(
-            deal.shareNumber.shareholder() != acct,
-            "FR requester is seller"
-        );
+        counterOfFR[ssn]++;
+        counterOfDeals++;
 
-        require(
-            notice.execParties.addMember(acct),
-            "already record the FR notice"
-        );
+        FRRecord storage record = _frRecords[ssn][counterOfFR[ssn]];
+        Deal storage targetDeal = _deals[ssn];
+        Deal storage frDeal = _deals[counterOfDeals];
 
-        notice.basedOnPar = basedOnPar;
+        if (counterOfFR[ssn] == 1)
+            targetDeal.states.setState(
+                uint8(EnumsRepo.StateOfDeal.Terminated),
+                execDate
+            );
 
         uint256 weight = basedOnPar
             ? _bos.parInHand(acct)
             : _bos.paidInHand(acct);
         require(weight > 0, "first refusal request has ZERO weight");
-        notice.totalAmt += weight;
 
-        // request seller to check and confirm
-        _subjectDeals.addItem(ssn);
+        record.weight = weight;
+        sumOfWeight[ssn] += weight;
 
-        _signatures.addBlank(acct, 0);
-        _signatures.signDeal(acct, 0, execDate, sigHash);
+        bytes32 snOfFR = _createSN(
+            targetDeal.sn.typeOfDeal(),
+            uint8(EnumsRepo.TypeOfDeal.FirstRefusal), // FirstRefusal
+            counterOfDeals,
+            acct,
+            _bos.groupNo(acct),
+            targetDeal.shareNumber,
+            targetDeal.sn.sequenceOfDeal()
+        );
+
+        frDeal.sn = snOfFR;
+        frDeal.shareNumber = targetDeal.shareNumber;
+        frDeal.unitPrice = targetDeal.unitPrice;
+        frDeal.parValue = (targetDeal.parValue * weight) / sumOfWeight[ssn];
+        frDeal.paidPar = (targetDeal.paidPar * weight) / sumOfWeight[ssn];
+        frDeal.closingDate = targetDeal.closingDate;
+
+        emit CreateFRDeal(
+            snOfFR,
+            frDeal.shareNumber,
+            frDeal.unitPrice,
+            frDeal.parValue,
+            frDeal.paidPar,
+            frDeal.closingDate
+        );
+
+        _signatures.addBlank(acct, snOfFR.sequenceOfDeal());
+        _signatures.signDeal(acct, snOfFR.sequenceOfDeal(), execDate, sigHash);
+
+        _signatures.addBlank(
+            frDeal.shareNumber.shareholder(),
+            snOfFR.sequenceOfDeal()
+        );
 
         established = false;
 
-        emit RecordFRNotice(_deals[ssn].sn, acct, execDate);
+        _updatePrevFRDeal(ssn, counterOfFR[ssn], targetDeal);
+    }
+
+    function _updatePrevFRDeal(
+        uint16 ssn,
+        uint16 len,
+        Deal storage targetDeal
+    ) private {
+        while (len > 1) {
+            FRRecord storage prevRecord = _frRecords[ssn][len - 1];
+            Deal storage prevFRDeal = _deals[prevRecord.frSSN];
+
+            prevFRDeal.parValue =
+                (targetDeal.parValue * prevRecord.weight) /
+                sumOfWeight[ssn];
+            prevFRDeal.paidPar =
+                (targetDeal.paidPar * prevRecord.weight) /
+                sumOfWeight[ssn];
+
+            emit UpdateFRDeal(
+                prevFRDeal.sn,
+                prevFRDeal.parValue,
+                prevFRDeal.paidPar
+            );
+
+            len--;
+        }
     }
 
     function acceptFR(
@@ -100,82 +166,38 @@ contract InvestmentAgreementWithFirstRefusal is InvestmentAgreement {
         uint32 acct,
         uint32 acceptDate,
         bytes32 sigHash
-    ) external subDealExist(ssn) {
-        FRNotice storage notice = _frNotices[ssn];
-        Deal storage orgDeal = _deals[ssn];
+    ) external dealExist(ssn) {
+        uint16 len = counterOfFR[ssn];
 
-        uint32[] memory parties = notice.execParties.members();
-        uint256 len = parties.length;
-
-        for (uint256 i = 0; i < len; i++) {
-            uint256 weight = notice.basedOnPar
-                ? _bos.parInHand(parties[i])
-                : _bos.paidInHand(parties[i]);
-
-            counterOfDeals++;
-
-            bytes32 snOfFR = _createSN(
-                orgDeal.sn.typeOfDeal(),
-                6, // FirstRefusal
-                counterOfDeals,
-                parties[i],
-                _bos.groupNo(parties[i]),
-                orgDeal.shareNumber,
-                orgDeal.sn.sequenceOfDeal()
-            );
-
-            Deal storage frDeal = _deals[counterOfDeals];
-
-            frDeal.sn = snOfFR;
-            frDeal.shareNumber = orgDeal.shareNumber;
-            frDeal.unitPrice = orgDeal.unitPrice;
-            frDeal.parValue = (orgDeal.parValue * weight) / notice.totalAmt;
-            frDeal.paidPar = (orgDeal.paidPar * weight) / notice.totalAmt;
-            frDeal.closingDate = orgDeal.closingDate;
-
-            emit CreateFRDeal(
-                snOfFR,
-                frDeal.shareNumber,
-                frDeal.unitPrice,
-                frDeal.parValue,
-                frDeal.paidPar,
-                frDeal.closingDate
-            );
-
-            _signatures.addBlank(acct, counterOfDeals);
-            _signatures.signDeal(acct, counterOfDeals, acceptDate, sigHash);
+        while (len > 0) {
+            uint16 frSSN = _frRecords[ssn][len].frSSN;
+            _signatures.signDeal(acct, frSSN, acceptDate, sigHash);
+            len--;
         }
 
-        emit AcceptFR(orgDeal.sn, acct);
+        emit AcceptFR(_deals[ssn].sn, acct);
     }
 
     //  #################################
     //  ##       查询接口              ##
     //  #################################
 
-    function isExecParty(uint16 ssn, uint32 acct)
-        external
-        view
-        subDealExist(ssn)
-        returns (bool)
-    {
-        return _frNotices[ssn].execParties.isMember(acct);
+    function isTargetDeal(uint16 ssn) public view returns (bool) {
+        return counterOfFR[ssn] > 0;
     }
 
-    function execParties(uint16 ssn)
-        external
-        view
-        subDealExist(ssn)
-        returns (uint32[])
-    {
-        return _frNotices[ssn].execParties.members();
-    }
+    function frDeals(uint16 ssn) external view returns (uint16[]) {
+        require(isTargetDeal(ssn), "not a target deal of FR");
 
-    function isSubjectDeal(uint16 ssn) external view returns (bool) {
-        return _subjectDeals.isItem(ssn);
-    }
+        uint16 len = counterOfFR[ssn];
 
-    function subjectDeals() external view returns (uint16[]) {
-        return _subjectDeals.getItems();
+        uint16[] memory deals = new uint16[](len - 1);
+
+        while (len > 0) {
+            deals[len - 1] = _frRecords[ssn][len].frSSN;
+            len--;
+        }
+
+        return deals;
     }
 }

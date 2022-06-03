@@ -32,14 +32,6 @@ contract InvestmentAgreement is BOSSetting, SigPage {
     } 
     */
 
-    enum StateOfDeal {
-        Drafting,
-        Locked,
-        Cleared,
-        Closed,
-        Terminated
-    }
-
     struct Deal {
         bytes32 sn;
         bytes32 shareNumber;
@@ -47,7 +39,7 @@ contract InvestmentAgreement is BOSSetting, SigPage {
         uint256 parValue;
         uint256 paidPar;
         uint32 closingDate;
-        Timeline.Line states; // 0-drafting 1-cleared 2-closed 3-revoked 4-suspend
+        Timeline.Line states; // 0-Drafting 1-Locked 2-Cleared 3-Closed 4-Terminated
         bytes32 hashLock;
     }
 
@@ -102,7 +94,8 @@ contract InvestmentAgreement is BOSSetting, SigPage {
 
     modifier onlyCleared(uint16 ssn) {
         require(
-            _deals[ssn].states.currentState == uint8(StateOfDeal.Cleared),
+            _deals[ssn].states.currentState ==
+                uint8(EnumsRepo.StateOfDeal.Cleared),
             "wrong stateOfDeal"
         );
         _;
@@ -146,7 +139,7 @@ contract InvestmentAgreement is BOSSetting, SigPage {
         uint32 buyer,
         uint16 group,
         uint16 preSSN
-    ) external onlyPending attorneyOrKeeper returns (bytes32) {
+    ) public onlyPending attorneyOrKeeper returns (bytes32) {
         require(buyer != 0, "buyer is ZERO address");
         require(group > 0, "ZERO group");
 
@@ -215,7 +208,7 @@ contract InvestmentAgreement is BOSSetting, SigPage {
         uint256 parValue,
         uint256 paidPar,
         uint32 closingDate
-    ) external onlyPending dealExist(ssn) onlyAttorney {
+    ) public onlyPending dealExist(ssn) attorneyOrKeeper {
         require(parValue > 0, "parValue is ZERO");
         require(parValue >= paidPar, "paidPar overflow");
         require(closingDate > now + 15 minutes, "closingDate shall be future");
@@ -265,7 +258,7 @@ contract InvestmentAgreement is BOSSetting, SigPage {
         returns (bool flag)
     {
         Deal storage deal = _deals[ssn];
-        if (deal.states.currentState == uint8(StateOfDeal.Drafting)) {
+        if (deal.states.currentState == uint8(EnumsRepo.StateOfDeal.Drafting)) {
             deal.states.pushToNextState(lockDate);
             flag = true;
             emit LockDealSubject(deal.sn);
@@ -280,8 +273,11 @@ contract InvestmentAgreement is BOSSetting, SigPage {
         returns (bool flag)
     {
         Deal storage deal = _deals[ssn];
-        if (deal.states.currentState >= uint8(StateOfDeal.Locked)) {
-            deal.states.setState(uint8(StateOfDeal.Drafting), releaseDate);
+        if (deal.states.currentState >= uint8(EnumsRepo.StateOfDeal.Locked)) {
+            deal.states.setState(
+                uint8(EnumsRepo.StateOfDeal.Drafting),
+                releaseDate
+            );
             flag = true;
             emit ReleaseDealSubject(deal.sn);
         }
@@ -306,7 +302,7 @@ contract InvestmentAgreement is BOSSetting, SigPage {
         );
 
         require(
-            deal.states.currentState == uint8(StateOfDeal.Drafting),
+            deal.states.currentState == uint8(EnumsRepo.StateOfDeal.Drafting),
             "Deal state wrong"
         );
 
@@ -367,8 +363,8 @@ contract InvestmentAgreement is BOSSetting, SigPage {
 
     function takeGift(
         uint16 ssn,
-        uint32 sigDate,
-        uint32 caller
+        uint32 caller,
+        uint32 sigDate
     ) external onlyKeeper {
         Deal storage deal = _deals[ssn];
 
@@ -382,7 +378,7 @@ contract InvestmentAgreement is BOSSetting, SigPage {
         require(caller == deal.sn.buyerOfDeal(), "caller is not buyer");
 
         require(
-            deal.states.currentState == uint8(StateOfDeal.Locked),
+            deal.states.currentState == uint8(EnumsRepo.StateOfDeal.Locked),
             "wrong state"
         );
 

@@ -9,18 +9,25 @@ contract RegCenter {
     struct User {
         address primeKey;
         address backupKey;
+        bool flag;
     }
 
     // userNo => User
     mapping(uint32 => User) private _users;
 
     // key => bool
-    mapping(address => bool) private _registeredKeys;
+    mapping(address => bool) private _usedKeys;
 
     // primeKey => userNo
     mapping(address => uint32) private _userNo;
 
     uint32 public counterOfUsers;
+
+    address private _owner;
+
+    constructor() {
+        _owner = msg.sender;
+    }
 
     // ##################
     // ##    Event     ##
@@ -32,12 +39,19 @@ contract RegCenter {
 
     event ReplacePrimeKey(uint32 indexed userNo, address newKey);
 
+    event ResetBackupKeyFlag(uint32 indexed userNo);
+
     // ##################
     // ##    Modifier  ##
     // ##################
 
     modifier onlyRegKey(address key) {
-        require(_registeredKeys[key], "not registered key");
+        require(_usedKeys[key], "not registered key");
+        _;
+    }
+
+    modifier onlyOwner() {
+        require(msg.sender == _owner);
         _;
     }
 
@@ -46,14 +60,14 @@ contract RegCenter {
     // ##################
 
     function regUser() external {
-        require(!_registeredKeys[msg.sender], "already registered");
+        require(!_usedKeys[msg.sender], "already registered");
         require(counterOfUsers + 1 > counterOfUsers, "counterOfUsers overflow");
 
         counterOfUsers++;
 
         _users[counterOfUsers].primeKey = msg.sender;
 
-        _registeredKeys[msg.sender] = true;
+        _usedKeys[msg.sender] = true;
         _userNo[msg.sender] = counterOfUsers;
 
         emit RegUser(counterOfUsers, msg.sender);
@@ -61,22 +75,22 @@ contract RegCenter {
 
     function setBackupKey(uint32 userNo, address backupKey) external {
         require(backupKey != address(0), "zero key");
-        require(!_registeredKeys[backupKey], "used key");
-        require(userNo <= counterOfUsers, "userNo overflow");
+        require(!_usedKeys[backupKey], "used key");
 
         User storage user = _users[userNo];
 
         require(msg.sender == user.primeKey, "wrong primeKey");
+        require(!user.flag, "already set backup key");
 
         user.backupKey = backupKey;
-        _registeredKeys[backupKey] = true;
+        _usedKeys[backupKey] = true;
+
+        user.flag = true;
 
         emit SetBackupKey(userNo, backupKey);
     }
 
     function replacePrimeKey(uint32 userNo) external {
-        require(userNo <= counterOfUsers, "userNo overflow");
-
         User storage user = _users[userNo];
 
         require(msg.sender == user.backupKey, "wrong backupKey");
@@ -88,6 +102,11 @@ contract RegCenter {
         user.backupKey = address(0);
 
         emit ReplacePrimeKey(userNo, user.primeKey);
+    }
+
+    function resetBackupKeyFlag(uint32 userNo) external onlyOwner {
+        _users[userNo].flag = false;
+        emit ResetBackupKeyFlag(userNo);
     }
 
     // ##################

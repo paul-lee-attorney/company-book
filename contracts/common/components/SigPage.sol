@@ -142,7 +142,7 @@ contract SigPage is DraftControl {
         uint32 caller,
         uint32 sigDate,
         bytes32 sigHash
-    ) external onlyKeeper {
+    ) public onlyKeeper {
         if (_signatures.signDeal(caller, ssn, sigDate, sigHash)) {
             emit SignDeal(caller, ssn, sigDate, sigHash);
             _checkCompletionOfSig();

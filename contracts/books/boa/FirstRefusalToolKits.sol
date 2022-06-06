@@ -66,7 +66,7 @@ contract FirstRefusalRecords is InvestmentAgreement {
         uint32 acct,
         uint32 execDate,
         bytes32 sigHash
-    ) external onlyKeeper dealExist(ssn) {
+    ) external onlyKeeper dealExist(ssn) returns (bytes32) {
         require(!isInitSigner(acct), "FR requester is an InitSigner");
 
         Deal storage targetDeal = _deals[ssn];
@@ -100,14 +100,13 @@ contract FirstRefusalRecords is InvestmentAgreement {
 
         sumOfWeight[ssn] += weight;
 
-        _signatures.addBlank(acct, record.ssn);
-        _signatures.signDeal(acct, record.ssn, execDate, sigHash);
-
-        _signatures.addBlank(targetDeal.shareNumber.shareholder(), record.ssn);
-
         established = false;
 
         _updateFRDeals(ssn, counterOfFR[ssn]);
+
+        signDeal(ssn, acct, execDate, sigHash);
+
+        return snOfFR;
     }
 
     function _updateFRDeals(uint16 ssn, uint16 len) private {
@@ -144,7 +143,7 @@ contract FirstRefusalRecords is InvestmentAgreement {
 
         while (len > 0) {
             uint16 frSSN = _records[ssn][len].ssn;
-            _signatures.signDeal(acct, frSSN, acceptDate, sigHash);
+            signDeal(frSSN, acct, acceptDate, sigHash);
             len--;
         }
 

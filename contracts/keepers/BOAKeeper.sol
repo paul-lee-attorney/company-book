@@ -399,8 +399,6 @@ contract BOAKeeper is
             sigDate,
             sigHash
         );
-
-        // ISigPage(ia).signDeal(ssn, caller, sigDate, sigHash);
     }
 
     function _createGiftDeals(
@@ -416,6 +414,7 @@ contract BOAKeeper is
 
         for (uint256 i = 0; i < obligors.length; i++) {
             bytes32[] memory sharesInHand = _bos.sharesInHand(obligors[i]);
+
             for (uint256 j = 0; j < sharesInHand.length; j++) {
                 uint256 targetCleanPar = _bos.cleanPar(sharesInHand[j].short());
 
@@ -508,7 +507,7 @@ contract BOAKeeper is
         currentDate(sigDate)
         withinReviewPeriod(ia, sigDate)
     {
-        // require(!ISigPage(ia).isSigner(), "caller is a signer");
+        require(!ISigPage(ia).isInitSigner(caller), "caller is an init signer");
 
         address term = _getSHA().getTerm(
             uint8(EnumsRepo.TermTitle.FIRST_REFUSAL)
@@ -545,11 +544,6 @@ contract BOAKeeper is
         currentDate(acceptDate)
         withinReviewPeriod(ia, acceptDate)
     {
-        require(
-            _bom.votingDeadline(ia) >= acceptDate,
-            "MISSED voting deadline"
-        );
-
         require(
             caller ==
                 IInvestmentAgreement(ia)

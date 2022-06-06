@@ -18,7 +18,7 @@ interface IInvestmentAgreement {
         uint32 acct,
         uint32 execDate,
         bytes32 sigHash
-    ) external;
+    ) external returns (bytes32);
 
     function acceptFR(
         uint16 ssn,

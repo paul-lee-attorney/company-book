@@ -10,7 +10,15 @@ import "./interfaces/IRegCenter.sol";
 contract RegCenterSetting {
     IRegCenter internal _rc;
 
+    // ##################
+    // ##   Event      ##
+    // ##################
+
     event SetRegCenter(address rc);
+
+    // ##################
+    // ##   修饰器     ##
+    // ##################
 
     modifier theUser(uint32 user) {
         require(_rc.checkID(user, msg.sender), "not the user's primeKey");
@@ -21,6 +29,10 @@ contract RegCenterSetting {
         require(_rc.isUser(msg.sender), "not a user");
         _;
     }
+
+    // ##################
+    // ##    写端口    ##
+    // ##################
 
     // shall be set up at the creation stage of a contract
     function _setRegCenter(address rc) internal {

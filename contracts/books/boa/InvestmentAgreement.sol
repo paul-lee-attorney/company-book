@@ -139,7 +139,7 @@ contract InvestmentAgreement is BOSSetting, SigPage {
         uint32 buyer,
         uint16 group,
         uint16 preSSN
-    ) public onlyPending attorneyOrKeeper returns (bytes32) {
+    ) public attorneyOrKeeper returns (bytes32) {
         require(buyer != 0, "buyer is ZERO address");
         require(group > 0, "ZERO group");
 
@@ -164,8 +164,6 @@ contract InvestmentAgreement is BOSSetting, SigPage {
                         typeOfDeal == uint8(EnumsRepo.TypeOfDeal.DragAlong),
                     "wrong typeOfDeal"
                 );
-
-            addPartyToDoc(shareNumber.shareholder());
         } else {
             require(class <= _bos.counterOfClasses(), "class overflow");
             require(
@@ -174,8 +172,6 @@ contract InvestmentAgreement is BOSSetting, SigPage {
                 "wrong typeOfDeal"
             );
         }
-
-        addPartyToDoc(buyer);
 
         counterOfDeals++;
 
@@ -197,6 +193,20 @@ contract InvestmentAgreement is BOSSetting, SigPage {
         _dealsList.push(sn);
         isDeal[counterOfDeals] = true;
 
+        if (finalized) {
+            if (
+                shareNumber > bytes32(0) &&
+                typeOfDeal != uint8(EnumsRepo.TypeOfDeal.DragAlong) &&
+                typeOfDeal != uint8(EnumsRepo.TypeOfDeal.FreeGift)
+            ) addBlank(shareNumber.shareholder(), counterOfDeals);
+
+            addBlank(buyer, counterOfDeals);
+        } else {
+            if (shareNumber > bytes32(0))
+                addBlank(shareNumber.shareholder(), 0);
+            addBlank(buyer, 0);
+        }
+
         emit CreateDeal(sn, shareNumber);
 
         return sn;
@@ -208,7 +218,7 @@ contract InvestmentAgreement is BOSSetting, SigPage {
         uint256 parValue,
         uint256 paidPar,
         uint32 closingDate
-    ) public onlyPending dealExist(ssn) attorneyOrKeeper {
+    ) public dealExist(ssn) attorneyOrKeeper {
         require(parValue > 0, "parValue is ZERO");
         require(parValue >= paidPar, "paidPar overflow");
         require(closingDate > now + 15 minutes, "closingDate shall be future");
@@ -233,7 +243,7 @@ contract InvestmentAgreement is BOSSetting, SigPage {
 
         bytes32 sn = deal.sn;
 
-        if (sn.typeOfDeal() > 1) {
+        if (sn.typeOfDeal() > uint8(EnumsRepo.TypeOfDeal.PreEmptive)) {
             removePartyFromDoc(deal.shareNumber.shareholder());
         }
 
@@ -291,10 +301,7 @@ contract InvestmentAgreement is BOSSetting, SigPage {
     ) external onlyKeeper currentDate(sigDate) dealExist(ssn) {
         Deal storage deal = _deals[ssn];
 
-        require(
-            closingDate == 0 || now - 15 minutes < closingDate,
-            "closingDate shall be FUTURE time"
-        );
+        require(sigDate < closingDate, "closingDate shall be FUTURE time");
 
         require(
             closingDate <= closingDeadline,
@@ -368,10 +375,7 @@ contract InvestmentAgreement is BOSSetting, SigPage {
     ) external onlyKeeper {
         Deal storage deal = _deals[ssn];
 
-        require(
-            deal.closingDate < now + 15 minutes,
-            "NOT reached closing date"
-        );
+        require(deal.closingDate < sigDate, "NOT reached closing date");
 
         require(deal.sn.typeOfDeal() == 6, "not a gift deal");
         require(deal.unitPrice == 0, "unitPrice is not zero");

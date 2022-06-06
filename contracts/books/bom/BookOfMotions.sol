@@ -34,7 +34,7 @@ contract BookOfMotions is SHASetting, BOASetting, BOSSetting {
         UserGroup.Group againstVoters;
         uint256 sumOfNay;
         VoterGroup.Group allVoters;
-        uint8 state; // 0-pending 1-proposed  2-passed 3-rejected(no need to buy) 4-rejected (against need to buy)
+        uint8 state; // 0-pending 1-proposed  2-passed 3-rejected(not to buy) 4-rejected (to buy)
     }
 
     // ia/sha... => Motion

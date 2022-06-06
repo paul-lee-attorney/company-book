@@ -12,7 +12,6 @@ import "../boh/terms/interfaces/IAlongs.sol";
 import "../boh/ShareholdersAgreement.sol";
 
 import "../../common/components/BookOfDocuments.sol";
-// import "../../common/components/EnumsRepo.sol";
 
 import "../../common/ruting/SHASetting.sol";
 

@@ -223,7 +223,7 @@ contract BookOfDocuments is CloneFactory, BOSSetting {
             doc.docHash = bytes32(0);
             // doc.reviewDeadline = 0;
             doc.states.backToPrevState();
-            ISigPage(body).backToDraft(doc.reviewDeadline);
+            // ISigPage(body).backToDraft(doc.reviewDeadline);
 
             emit UpdateStateOfDoc(doc.sn, doc.states.currentState, caller);
         } else

@@ -11,21 +11,15 @@ import "../../common/lib/UserGroup.sol";
 import "../../common/lib/SequenceList.sol";
 import "../../common/lib/Timeline.sol";
 
-contract InvestmentAgreementWithFirstRefusal is InvestmentAgreement {
+contract FirstRefusalRecords is InvestmentAgreement {
     using UserGroup for UserGroup.Group;
     using SequenceList for SequenceList.List;
     using Timeline for Timeline.Line;
 
-    struct FRRecord {
-        uint16 frSSN;
-        uint256 weight;
+    struct Record {
+        uint16 ssn; // FR sequence number
+        uint256 weight; // FR rightholder's voting weight
     }
-
-    // // sequenceOfDeal => FRRecord
-    // mapping(uint16 => FRRecord) private _frNotices;
-
-    // // sequenceOfDeal => bool/list
-    // SequenceList.List internal _subjectDeals;
 
     // dealSN => counterOfFR
     mapping(uint16 => uint16) public counterOfFR;
@@ -33,8 +27,8 @@ contract InvestmentAgreementWithFirstRefusal is InvestmentAgreement {
     // dealSN => accumulatedWeight
     mapping(uint16 => uint256) public sumOfWeight;
 
-    // dealSN => counterOfFR => frSSN
-    mapping(uint16 => mapping(uint16 => FRRecord)) private _frRecords;
+    // dealSN => counterOfFR => ssn
+    mapping(uint16 => mapping(uint16 => Record)) private _records;
 
     //##################
     //##    Event     ##
@@ -75,12 +69,18 @@ contract InvestmentAgreementWithFirstRefusal is InvestmentAgreement {
     ) external onlyKeeper dealExist(ssn) {
         require(!isInitSigner(acct), "FR requester is an InitSigner");
 
-        counterOfFR[ssn]++;
-        counterOfDeals++;
-
-        FRRecord storage record = _frRecords[ssn][counterOfFR[ssn]];
         Deal storage targetDeal = _deals[ssn];
-        Deal storage frDeal = _deals[counterOfDeals];
+
+        bytes32 snOfFR = createDeal(
+            uint8(EnumsRepo.TypeOfDeal.FirstRefusal),
+            targetDeal.shareNumber,
+            targetDeal.shareNumber.class(),
+            acct,
+            _bos.groupNo(acct),
+            targetDeal.sn.sequenceOfDeal()
+        );
+
+        counterOfFR[ssn]++;
 
         if (counterOfFR[ssn] == 1)
             targetDeal.states.setState(
@@ -93,68 +93,41 @@ contract InvestmentAgreementWithFirstRefusal is InvestmentAgreement {
             : _bos.paidInHand(acct);
         require(weight > 0, "first refusal request has ZERO weight");
 
+        Record storage record = _records[ssn][counterOfFR[ssn]];
+
+        record.ssn = snOfFR.sequenceOfDeal();
         record.weight = weight;
+
         sumOfWeight[ssn] += weight;
 
-        bytes32 snOfFR = _createSN(
-            targetDeal.sn.typeOfDeal(),
-            uint8(EnumsRepo.TypeOfDeal.FirstRefusal), // FirstRefusal
-            counterOfDeals,
-            acct,
-            _bos.groupNo(acct),
-            targetDeal.shareNumber,
-            targetDeal.sn.sequenceOfDeal()
-        );
+        _signatures.addBlank(acct, record.ssn);
+        _signatures.signDeal(acct, record.ssn, execDate, sigHash);
 
-        frDeal.sn = snOfFR;
-        frDeal.shareNumber = targetDeal.shareNumber;
-        frDeal.unitPrice = targetDeal.unitPrice;
-        frDeal.parValue = (targetDeal.parValue * weight) / sumOfWeight[ssn];
-        frDeal.paidPar = (targetDeal.paidPar * weight) / sumOfWeight[ssn];
-        frDeal.closingDate = targetDeal.closingDate;
-
-        emit CreateFRDeal(
-            snOfFR,
-            frDeal.shareNumber,
-            frDeal.unitPrice,
-            frDeal.parValue,
-            frDeal.paidPar,
-            frDeal.closingDate
-        );
-
-        _signatures.addBlank(acct, snOfFR.sequenceOfDeal());
-        _signatures.signDeal(acct, snOfFR.sequenceOfDeal(), execDate, sigHash);
-
-        _signatures.addBlank(
-            frDeal.shareNumber.shareholder(),
-            snOfFR.sequenceOfDeal()
-        );
+        _signatures.addBlank(targetDeal.shareNumber.shareholder(), record.ssn);
 
         established = false;
 
-        _updatePrevFRDeal(ssn, counterOfFR[ssn], targetDeal);
+        _updateFRDeals(ssn, counterOfFR[ssn]);
     }
 
-    function _updatePrevFRDeal(
-        uint16 ssn,
-        uint16 len,
-        Deal storage targetDeal
-    ) private {
-        while (len > 1) {
-            FRRecord storage prevRecord = _frRecords[ssn][len - 1];
-            Deal storage prevFRDeal = _deals[prevRecord.frSSN];
+    function _updateFRDeals(uint16 ssn, uint16 len) private {
+        Deal storage targetDeal = _deals[ssn];
 
-            prevFRDeal.parValue =
-                (targetDeal.parValue * prevRecord.weight) /
-                sumOfWeight[ssn];
-            prevFRDeal.paidPar =
-                (targetDeal.paidPar * prevRecord.weight) /
+        while (len > 0) {
+            Record storage record = _records[ssn][len];
+
+            uint256 parValue = (targetDeal.parValue * record.weight) /
                 sumOfWeight[ssn];
 
-            emit UpdateFRDeal(
-                prevFRDeal.sn,
-                prevFRDeal.parValue,
-                prevFRDeal.paidPar
+            uint256 paidPar = (targetDeal.paidPar * record.weight) /
+                sumOfWeight[ssn];
+
+            updateDeal(
+                record.ssn,
+                targetDeal.unitPrice,
+                parValue,
+                paidPar,
+                targetDeal.closingDate
             );
 
             len--;
@@ -170,7 +143,7 @@ contract InvestmentAgreementWithFirstRefusal is InvestmentAgreement {
         uint16 len = counterOfFR[ssn];
 
         while (len > 0) {
-            uint16 frSSN = _frRecords[ssn][len].frSSN;
+            uint16 frSSN = _records[ssn][len].ssn;
             _signatures.signDeal(acct, frSSN, acceptDate, sigHash);
             len--;
         }
@@ -194,7 +167,7 @@ contract InvestmentAgreementWithFirstRefusal is InvestmentAgreement {
         uint16[] memory deals = new uint16[](len - 1);
 
         while (len > 0) {
-            deals[len - 1] = _frRecords[ssn][len].frSSN;
+            deals[len - 1] = _records[ssn][len].ssn;
             len--;
         }
 

@@ -26,7 +26,7 @@ contract SigPage is DraftControl {
 
     event DocFinalized();
 
-    event BackToDraft();
+    event BackToFinalized();
 
     event DocEstablished();
 
@@ -92,30 +92,13 @@ contract SigPage is DraftControl {
         emit SetClosingDeadline(deadline);
     }
 
-    function addPartyToDoc(uint32 acct) public onlyPending {
-        if (!finalized)
-            require(
-                hasRole(ATTORNEYS, _msgSender()),
-                "only Attorney may add party to a pending DOC"
-            );
-        else
-            require(
-                _msgSender() == getDirectKeeper(),
-                "only DK may add party to an established DOC"
-            );
-
-        if (_signatures.addBlank(acct, 0)) emit AddParty(acct);
-    }
-
     function removePartyFromDoc(uint32 acct) public onlyPending onlyAttorney {
         if (_signatures.removeParty(acct)) emit RemoveParty(acct);
     }
 
     function circulateDoc() public onlyGC onlyPending {
         lockContents();
-
         finalized = true;
-
         emit DocFinalized();
     }
 
@@ -137,17 +120,31 @@ contract SigPage is DraftControl {
             emit SignDoc(_msgSender(), sigDate, sigHash);
     }
 
-    function addBlank(uint32 acct, uint16 sn) public onlyKeeper {
+    function addBlank(uint32 acct, uint16 sn) public {
+        if (!finalized)
+            require(
+                hasRole(ATTORNEYS, _msgSender()),
+                "only Attorney may add party to a pending DOC"
+            );
+        else
+            require(
+                _msgSender() == getDirectKeeper(),
+                "only DK may add party to an established DOC"
+            );
+
+        established = false;
+
         if (_signatures.addBlank(acct, sn)) emit AddBlank(acct, sn);
     }
 
     function signDeal(
-        uint16 sn,
+        uint16 ssn,
+        uint32 caller,
         uint32 sigDate,
         bytes32 sigHash
-    ) public onlyKeeper {
-        if (_signatures.signDeal(_msgSender(), sn, sigDate, sigHash)) {
-            emit SignDeal(_msgSender(), sn, sigDate, sigHash);
+    ) external onlyKeeper {
+        if (_signatures.signDeal(caller, ssn, sigDate, sigHash)) {
+            emit SignDeal(caller, ssn, sigDate, sigHash);
             _checkCompletionOfSig();
         }
     }
@@ -159,10 +156,10 @@ contract SigPage is DraftControl {
         }
     }
 
-    function backToDraft(uint32 reviewDeadline) public {
+    function backToFinalized(uint32 reviewDeadline) external onlyKeeper {
         if (established) established = false;
         sigDeadline = reviewDeadline;
-        emit BackToDraft();
+        emit BackToFinalized();
     }
 
     //####################

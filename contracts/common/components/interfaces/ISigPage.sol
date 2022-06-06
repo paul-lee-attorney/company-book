@@ -14,8 +14,6 @@ interface ISigPage {
 
     function setClosingDeadline(uint256 deadline) external;
 
-    function addPartyToDoc(address acct) external;
-
     function removePartyFromDoc(address acct) external;
 
     function circulateDoc() external;
@@ -27,12 +25,13 @@ interface ISigPage {
     function addBlank(uint32 acct, uint16 sn) external;
 
     function signDeal(
-        uint16 sn,
+        uint16 ssn,
+        uint32 caller,
         uint32 sigDate,
         bytes32 sigHash
     ) external;
 
-    function backToDraft(uint32 reviewDeadline) external;
+    function backToFinalized(uint32 reviewDeadline) external;
 
     //####################
     //##    查询接口    ##

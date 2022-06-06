@@ -23,10 +23,8 @@ contract RegCenter {
 
     uint32 public counterOfUsers;
 
-    address private _owner;
-
     constructor() {
-        _owner = msg.sender;
+        regUser();
     }
 
     // ##################
@@ -51,7 +49,7 @@ contract RegCenter {
     }
 
     modifier onlyOwner() {
-        require(msg.sender == _owner);
+        require(_userNo[msg.sender] == 1, "not owner");
         _;
     }
 
@@ -59,7 +57,7 @@ contract RegCenter {
     // ##    写端口    ##
     // ##################
 
-    function regUser() external {
+    function regUser() public {
         require(!_usedKeys[msg.sender], "already registered");
         require(counterOfUsers + 1 > counterOfUsers, "counterOfUsers overflow");
 

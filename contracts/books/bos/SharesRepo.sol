@@ -8,15 +8,17 @@ pragma solidity ^0.4.24;
 import "../../common/lib/ArrayUtils.sol";
 import "../../common/lib/SNFactory.sol";
 import "../../common/lib/SNParser.sol";
+import "../../common/lib/SNList.sol";
 
 import "../../common/access/AccessControl.sol";
 
 contract SharesRepo is AccessControl {
     using SNFactory for bytes;
-    using SNFactory for bytes32;
+    // using SNFactory for bytes32;
     using SNParser for bytes32;
-    using ArrayUtils for uint256[];
-    using ArrayUtils for address[];
+    using SNList for SNList.List;
+    // using ArrayUtils for uint256[];
+    // using ArrayUtils for address[];
     using ArrayUtils for bytes32[];
 
     //Share 股票
@@ -48,8 +50,8 @@ contract SharesRepo is AccessControl {
     //ssn => Share
     mapping(bytes6 => Share) internal _shares;
 
-    //ssn => exist?
-    mapping(bytes6 => bool) public isShare;
+    // //ssn => exist?
+    // mapping(bytes6 => bool) public isShare;
 
     //股权序列号计数器（2**16-1, 0-65535）
     uint16 public counterOfShares;
@@ -57,8 +59,10 @@ contract SharesRepo is AccessControl {
     //类别序列号计数器(2**8-1, 0-255)
     uint8 public counterOfClasses;
 
-    //shareNumber数组
-    bytes32[] internal _snList;
+    // //shareNumber数组
+    // bytes32[] internal _snList;
+
+    SNList.List internal _snList;
 
     //##################
     //##    Event     ##
@@ -116,7 +120,7 @@ contract SharesRepo is AccessControl {
     }
 
     modifier shareExist(bytes6 ssn) {
-        require(isShare[ssn], "ssn NOT exist");
+        require(_snList.isItem(ssn), "ssn NOT exist");
         _;
     }
 
@@ -137,7 +141,7 @@ contract SharesRepo is AccessControl {
         _sn = _sn.sequenceToSN(1, sequenceNumber);
         _sn = _sn.dateToSN(3, issueDate);
         _sn = _sn.dateToSN(7, shareholder);
-        _sn = _sn.bytes32ToSN(11, bytes32(preSN), 0, 6);
+        _sn = _sn.shortToSN(11, preSN);
 
         sn = _sn.bytesToBytes32();
     }
@@ -162,8 +166,10 @@ contract SharesRepo is AccessControl {
         share.paidInDeadline = paidInDeadline;
         share.unitPrice = unitPrice;
 
-        isShare[ssn] = true;
-        shareNumber.insertToQue(_snList);
+        // isShare[ssn] = true;
+        // shareNumber.insertToQue(_snList);
+
+        _snList.addItem(shareNumber);
 
         emit IssueShare(
             shareNumber,
@@ -178,8 +184,11 @@ contract SharesRepo is AccessControl {
         bytes32 shareNumber = _shares[ssn].shareNumber;
 
         delete _shares[ssn];
-        _snList.removeByValue(shareNumber);
-        isShare[ssn] = false;
+
+        _snList.removeItem(shareNumber);
+
+        // _snList.removeByValue(shareNumber);
+        // isShare[ssn] = false;
 
         emit DeregisterShare(shareNumber);
     }
@@ -302,8 +311,12 @@ contract SharesRepo is AccessControl {
     //##    读接口    ##
     //##################
 
+    function isShare(bytes6 ssn) external view returns (bool) {
+        return _snList.isItem(ssn);
+    }
+
     function snList() external view returns (bytes32[]) {
-        return _snList;
+        return _snList.snList();
     }
 
     function cleanPar(bytes6 ssn) external view returns (uint256) {

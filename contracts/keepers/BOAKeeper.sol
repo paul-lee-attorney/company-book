@@ -25,18 +25,11 @@ import "../common/ruting/BOASetting.sol";
 import "../common/ruting/BOMSetting.sol";
 import "../common/ruting/BOSSetting.sol";
 import "../common/ruting/SHASetting.sol";
-import "../common/ruting/BOOSetting.sol";
 
 import "../common/lib/SNParser.sol";
 import "../common/lib/EnumsRepo.sol";
 
-contract BOAKeeper is
-    BOASetting,
-    SHASetting,
-    BOMSetting,
-    BOOSetting,
-    BOSSetting
-{
+contract BOAKeeper is BOASetting, SHASetting, BOMSetting, BOSSetting {
     using SNParser for bytes32;
 
     EnumsRepo.TermTitle[] private _termsForCapitalIncrease = [

@@ -11,7 +11,7 @@ import "../../common/lib/UserGroup.sol";
 import "../../common/lib/SequenceList.sol";
 import "../../common/lib/Timeline.sol";
 
-contract FirstRefusalRecords is InvestmentAgreement {
+contract FirstRefusalToolKits is InvestmentAgreement {
     using UserGroup for UserGroup.Group;
     using SequenceList for SequenceList.List;
     using Timeline for Timeline.Line;

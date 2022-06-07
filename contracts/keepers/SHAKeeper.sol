@@ -6,7 +6,6 @@
 pragma solidity ^0.4.24;
 
 import "../books/boh/terms/interfaces/IAntiDilution.sol";
-import "../books/boh/ShareholdersAgreement.sol";
 import "../books/boh/interfaces/ITerm.sol";
 
 import "../books/boa/interfaces/IInvestmentAgreement.sol";
@@ -15,28 +14,16 @@ import "../books/boa/InvestmentAgreement.sol";
 import "../books/boh/terms/interfaces/IAlongs.sol";
 import "../books/boh/terms/interfaces/IFirstRefusal.sol";
 
-import "../common/access/interfaces/IRoles.sol";
-import "../common/access/interfaces/IAccessControl.sol";
-
 import "../common/components/interfaces/ISigPage.sol";
 
-import "../common/ruting/interfaces/IBookSetting.sol";
 import "../common/ruting/BOASetting.sol";
-import "../common/ruting/BOMSetting.sol";
 import "../common/ruting/BOSSetting.sol";
 import "../common/ruting/SHASetting.sol";
-import "../common/ruting/BOOSetting.sol";
 
 import "../common/lib/SNParser.sol";
 import "../common/lib/EnumsRepo.sol";
 
-contract SHAKeeper is
-    BOASetting,
-    SHASetting,
-    BOMSetting,
-    BOOSetting,
-    BOSSetting
-{
+contract SHAKeeper is BOASetting, SHASetting, BOSSetting {
     using SNParser for bytes32;
 
     // ##################
@@ -48,9 +35,9 @@ contract SHAKeeper is
         _;
     }
 
-    // #############################
-    // ##   InvestmentAgreement   ##
-    // #############################
+    // ####################
+    // ##   SHA Rights   ##
+    // ####################
 
     // ======== TagAlong & DragAlong ========
 

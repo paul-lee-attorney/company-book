@@ -5,16 +5,16 @@
 pragma solidity ^0.4.24;
 
 import "./interfaces/IInvestmentAgreement.sol";
-import "./interfaces/IInvestmentAgreementCalculator.sol";
+// import "./interfaces/IInvestmentAgreementCalculator.sol";
 
 import "../boh/terms/interfaces/IAlongs.sol";
-
-import "../boh/ShareholdersAgreement.sol";
 
 import "../../common/components/BookOfDocuments.sol";
 
 import "../../common/ruting/SHASetting.sol";
+import "../../common/ruting/BOSSetting.sol";
 
+import "../../common/lib/ArrayUtils.sol";
 import "../../common/lib/SNParser.sol";
 import "../../common/lib/EnumsRepo.sol";
 
@@ -22,8 +22,7 @@ import "../../common/components/interfaces/ISigPage.sol";
 
 contract BookOfIA is BookOfDocuments, SHASetting {
     using SNParser for bytes32;
-
-    IInvestmentAgreementCalculator private _agrmtCal;
+    using ArrayUtils for uint32[];
 
     struct Amt {
         uint256 selAmt;
@@ -63,8 +62,6 @@ contract BookOfIA is BookOfDocuments, SHASetting {
     //##  Event   ##
     //##############
 
-    event SetAgreementCalculator(address indexed calculator);
-
     event MockDeals(address indexed ia);
 
     event CalculateResult(
@@ -93,11 +90,6 @@ contract BookOfIA is BookOfDocuments, SHASetting {
     //##  Write I/O  ##
     //#################
 
-    function setAgreementCalculator(address cal) external onlyOwner {
-        _agrmtCal = IInvestmentAgreementCalculator(cal);
-        emit SetAgreementCalculator(cal);
-    }
-
     function submitIA(
         address ia,
         uint32 submitter,
@@ -105,9 +97,7 @@ contract BookOfIA is BookOfDocuments, SHASetting {
         bytes32 docHash
     ) external onlyDirectKeeper {
         submitDoc(ia, submitter, submitDate, docHash);
-        bool basedOnPar = _getSHA()
-            .votingRules(_agrmtCal.typeOfIA(ia))
-            .basedOnParOfVR();
+        bool basedOnPar = _getSHA().votingRules(typeOfIA(ia)).basedOnParOfVR();
         _mockDeals(ia, basedOnPar);
         _calculateResult(ia, basedOnPar);
     }
@@ -365,5 +355,27 @@ contract BookOfIA is BookOfDocuments, SHASetting {
         buyAmt = amt.buyAmt;
         orgAmt = amt.orgAmt;
         rstAmt = amt.rstAmt;
+    }
+
+    // 1-CI 2-ST(to 3rd) 3-ST(internal) 4-(1&3) 5-(2&3) 6-(1&2&3) 7-(1&2)
+    function typeOfIA(address ia) public view returns (uint8 output) {
+        bytes32[] memory dealsList = IInvestmentAgreement(ia).dealsList();
+        uint256 len = dealsList.length;
+        uint8[3] memory signal;
+
+        for (uint256 i = 0; i < len; i++) {
+            uint8 typeOfDeal = dealsList[i].typeOfDeal();
+            signal[typeOfDeal - 1] = typeOfDeal;
+        }
+        // 协议类别计算
+        uint8 sumOfSignal = signal[0] + signal[1] + signal[2];
+        output = sumOfSignal == 3 ? signal[2] == 0 ? 7 : 3 : sumOfSignal;
+    }
+
+    function otherMembers(address ia) external view returns (uint32[]) {
+        uint32[] memory signers = ISigPage(ia).parties();
+        uint32[] memory members = _bos.membersList();
+
+        return members.minus(signers);
     }
 }

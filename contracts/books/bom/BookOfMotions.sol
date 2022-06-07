@@ -135,7 +135,7 @@ contract BookOfMotions is SHASetting, BOASetting, BOSSetting {
             "the InvestmentAgreement has been proposed"
         );
 
-        bytes32 rule = _getSHA().votingRules(_agrmtCal.typeOfIA(ia));
+        bytes32 rule = _getSHA().votingRules(_boa.typeOfIA(ia));
 
         uint32 votingDeadline = proposeDate +
             uint32(rule.votingDaysOfVR()) *
@@ -214,7 +214,7 @@ contract BookOfMotions is SHASetting, BOASetting, BOSSetting {
         if (motion.votingRule.onlyAttendanceOfVR()) {
             totalHead = motion.allVoters.qtyOfVoters();
         } else {
-            uint32[] memory others = _agrmtCal.otherMembers(ia);
+            uint32[] memory others = _boa.otherMembers(ia);
 
             totalHead = others.length;
 

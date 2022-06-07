@@ -51,8 +51,6 @@ contract BookOfMotions is SHASetting, BOASetting, BOSSetting {
 
     event Vote(address indexed ia, uint32 voter, bool support, uint256 voteAmt);
 
-    event TurnOverVote(address indexed ia, uint32 voter, uint256 voteAmt);
-
     event VoteCounting(address indexed ia, uint8 result);
 
     //####################
@@ -123,11 +121,6 @@ contract BookOfMotions is SHASetting, BOASetting, BOSSetting {
         require(
             _boa.passedReview(ia),
             "InvestmentAgreement not passed review procesedure"
-        );
-
-        require(
-            ISigPage(ia).established(),
-            "InvestmentAgreement not established"
         );
 
         require(
@@ -334,18 +327,6 @@ contract BookOfMotions is SHASetting, BOASetting, BOSSetting {
         parValue = ((orgParValue * ratio) / 10000);
         paidPar = ((orgPaidPar * ratio) / 10000);
     }
-
-    // function suspendVoting(address ia) external onlyProposed(ia) onlyKeeper {
-    //     require(_motions[ia].state == 1, "NOT a proposed motion");
-    //     _motions[ia].state = 5;
-    //     emit SuspendVoting(ia);
-    // }
-
-    // function resumeVoting(address ia) external onlyProposed(ia) onlyKeeper {
-    //     require(_motions[ia].state == 5, "NOT a suspend motion");
-    //     _motions[ia].state = 1;
-    //     emit ResumeVoting(ia);
-    // }
 
     //##################
     //##    读接口    ##

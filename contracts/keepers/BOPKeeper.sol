@@ -10,9 +10,7 @@ import "../common/ruting/BOPSetting.sol";
 
 import "../common/lib/SNParser.sol";
 
-import "../common/utils/Context.sol";
-
-contract BOPKeeper is BOSSetting, BOPSetting, Context {
+contract BOPKeeper is BOSSetting, BOPSetting {
     using SNParser for bytes32;
 
     // ################

@@ -67,14 +67,14 @@ contract FirstRefusalRecords is InvestmentAgreement {
         uint32 execDate,
         bytes32 sigHash
     ) external onlyKeeper dealExist(ssn) returns (bytes32) {
-        require(!isInitSigner(acct), "FR requester is an InitSigner");
-
         Deal storage targetDeal = _deals[ssn];
 
         bytes32 snOfFR = createDeal(
-            uint8(EnumsRepo.TypeOfDeal.FirstRefusal),
+            targetDeal.shareNumber == bytes32(0)
+                ? uint8(EnumsRepo.TypeOfDeal.PreEmptive)
+                : uint8(EnumsRepo.TypeOfDeal.FirstRefusal),
             targetDeal.shareNumber,
-            targetDeal.shareNumber.class(),
+            targetDeal.sn.classOfDeal(),
             acct,
             _bos.groupNo(acct),
             targetDeal.sn.sequenceOfDeal()

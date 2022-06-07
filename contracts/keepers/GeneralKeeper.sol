@@ -9,6 +9,7 @@ import "../common/access/AccessControl.sol";
 import "../common/access/interfaces/IAccessControl.sol";
 
 import "./interfaces/IBOAKeeper.sol";
+import "./interfaces/ISHAKeeper.sol";
 import "./interfaces/IBOHKeeper.sol";
 import "./interfaces/IBOMKeeper.sol";
 import "./interfaces/IBOOKeeper.sol";
@@ -16,6 +17,7 @@ import "./interfaces/IBOPKeeper.sol";
 
 contract GeneralKeeper is AccessControl {
     IBOAKeeper private _BOAKeeper;
+    ISHAKeeper private _SHAKeeper;
     IBOHKeeper private _BOHKeeper;
     IBOMKeeper private _BOMKeeper;
     IBOOKeeper private _BOOKeeper;
@@ -30,6 +32,8 @@ contract GeneralKeeper is AccessControl {
     // ###############
 
     event SetBOAKeeper(address keeper);
+
+    event SetSHAKeeper(address keeper);
 
     event SetBOHKeeper(address keeper);
 
@@ -103,108 +107,6 @@ contract GeneralKeeper is AccessControl {
         _BOAKeeper.submitIA(body, submitDate, docHash, _msgSender());
     }
 
-    // ======= TagAlong ========
-
-    function execTagAlong(
-        address ia,
-        bytes32 sn,
-        bytes32 shareNumber,
-        uint256 parValue,
-        uint256 paidPar,
-        uint32 sigDate,
-        bytes32 sigHash
-    ) external {
-        _BOAKeeper.execAlongRight(
-            ia,
-            sn,
-            false,
-            shareNumber,
-            parValue,
-            paidPar,
-            _msgSender(),
-            sigDate,
-            sigHash
-        );
-    }
-
-    function acceptTagAlong(
-        address ia,
-        bytes32 sn,
-        uint32 drager,
-        uint32 sigDate,
-        bytes32 sigHash
-    ) external {
-        _BOAKeeper.acceptAlongDeal(
-            ia,
-            sn,
-            drager,
-            false,
-            _msgSender(),
-            sigDate,
-            sigHash
-        );
-    }
-
-    // ======= DragAlong ========
-
-    function execDragAlong(
-        address ia,
-        bytes32 sn,
-        bytes32 shareNumber,
-        uint256 parValue,
-        uint256 paidPar,
-        uint32 sigDate,
-        bytes32 sigHash
-    ) external {
-        _BOAKeeper.execAlongRight(
-            ia,
-            sn,
-            true,
-            shareNumber,
-            parValue,
-            paidPar,
-            _msgSender(),
-            sigDate,
-            sigHash
-        );
-    }
-
-    function acceptDragAlong(
-        address ia,
-        bytes32 sn,
-        uint32 sigDate,
-        bytes32 sigHash
-    ) external {
-        _BOAKeeper.acceptAlongDeal(
-            ia,
-            sn,
-            _msgSender(),
-            true,
-            _msgSender(),
-            sigDate,
-            sigHash
-        );
-    }
-
-    // ======== First Refusal ========
-
-    function execFirstRefusal(
-        address ia,
-        bytes32 sn,
-        uint32 execDate,
-        bytes32 sigHash
-    ) external {
-        _BOAKeeper.execFirstRefusal(ia, sn, _msgSender(), execDate, sigHash);
-    }
-
-    function acceptFirstRefusalRequest(
-        address ia,
-        bytes32 sn,
-        uint32 acceptDate
-    ) external {
-        _BOAKeeper.acceptFirstRefusalRequest(ia, sn, acceptDate, _msgSender());
-    }
-
     // ======== Deal Closing ========
 
     function pushToCoffer(
@@ -239,6 +141,146 @@ contract GeneralKeeper is AccessControl {
         string hashKey
     ) external {
         _BOAKeeper.revokeDeal(ia, sn, hashKey, _msgSender());
+    }
+
+    // ###################
+    // ##   SHAKeeper   ##
+    // ###################
+
+    // ======= TagAlong ========
+
+    function execTagAlong(
+        address ia,
+        bytes32 sn,
+        bytes32 shareNumber,
+        uint256 parValue,
+        uint256 paidPar,
+        uint32 sigDate,
+        bytes32 sigHash
+    ) external {
+        _SHAKeeper.execAlongRight(
+            ia,
+            sn,
+            false,
+            shareNumber,
+            parValue,
+            paidPar,
+            _msgSender(),
+            sigDate,
+            sigHash
+        );
+    }
+
+    function acceptTagAlong(
+        address ia,
+        bytes32 sn,
+        uint32 drager,
+        uint32 sigDate,
+        bytes32 sigHash
+    ) external {
+        _SHAKeeper.acceptAlongDeal(
+            ia,
+            sn,
+            drager,
+            false,
+            _msgSender(),
+            sigDate,
+            sigHash
+        );
+    }
+
+    // ======= DragAlong ========
+
+    function execDragAlong(
+        address ia,
+        bytes32 sn,
+        bytes32 shareNumber,
+        uint256 parValue,
+        uint256 paidPar,
+        uint32 sigDate,
+        bytes32 sigHash
+    ) external {
+        _SHAKeeper.execAlongRight(
+            ia,
+            sn,
+            true,
+            shareNumber,
+            parValue,
+            paidPar,
+            _msgSender(),
+            sigDate,
+            sigHash
+        );
+    }
+
+    function acceptDragAlong(
+        address ia,
+        bytes32 sn,
+        uint32 sigDate,
+        bytes32 sigHash
+    ) external {
+        _SHAKeeper.acceptAlongDeal(
+            ia,
+            sn,
+            _msgSender(),
+            true,
+            _msgSender(),
+            sigDate,
+            sigHash
+        );
+    }
+
+    // ======== AntiDilution ========
+
+    function execAntiDilution(
+        address ia,
+        bytes32 sn,
+        bytes32 shareNumber,
+        uint32 sigDate,
+        bytes32 sigHash
+    ) external {
+        _SHAKeeper.execAntiDilution(
+            ia,
+            sn,
+            shareNumber,
+            _msgSender(),
+            sigDate,
+            sigHash
+        );
+    }
+
+    function takeGiftShares(
+        address ia,
+        bytes32 sn,
+        uint32 sigDate
+    ) external {
+        _SHAKeeper.takeGiftShares(ia, sn, _msgSender(), sigDate);
+    }
+
+    // ======== First Refusal ========
+
+    function execFirstRefusal(
+        address ia,
+        bytes32 sn,
+        uint32 execDate,
+        bytes32 sigHash
+    ) external {
+        _SHAKeeper.execFirstRefusal(ia, sn, _msgSender(), execDate, sigHash);
+    }
+
+    function acceptFirstRefusalRequest(
+        address ia,
+        bytes32 sn,
+        uint32 acceptDate,
+        bytes32 sigHash
+    ) external {
+        _SHAKeeper.acceptFirstRefusalRequest(
+            ia,
+            sn,
+            _msgSender(),
+            acceptDate,
+            sigHash
+        );
     }
 
     // ##################

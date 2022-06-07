@@ -377,9 +377,12 @@ contract InvestmentAgreement is BOSSetting, SigPage {
 
         require(deal.closingDate < sigDate, "NOT reached closing date");
 
-        require(deal.sn.typeOfDeal() == 6, "not a gift deal");
+        require(
+            deal.sn.typeOfDeal() == uint8(EnumsRepo.TypeOfDeal.FreeGift),
+            "not a gift deal"
+        );
         require(deal.unitPrice == 0, "unitPrice is not zero");
-        require(caller == deal.sn.buyerOfDeal(), "caller is not buyer");
+        // require(caller == deal.sn.buyerOfDeal(), "caller is not buyer");
 
         require(
             deal.states.currentState == uint8(EnumsRepo.StateOfDeal.Locked),

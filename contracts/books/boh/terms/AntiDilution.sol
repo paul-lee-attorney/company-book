@@ -5,7 +5,7 @@
 
 pragma solidity ^0.4.24;
 
-import "../../../common/lib/UserGroup.sol";
+import "../../../common/lib/ObjGroup.sol";
 
 import "../../boa/interfaces/IInvestmentAgreement.sol";
 
@@ -14,7 +14,7 @@ import "../../../common/ruting/BOMSetting.sol";
 import "../../../common/access/DraftControl.sol";
 
 import "../../../common/lib/ArrayUtils.sol";
-import "../../../common/lib/SafeMath.sol";
+// import "../../../common/lib/SafeMath.sol";
 import "../../../common/lib/SNFactory.sol";
 import "../../../common/lib/SNParser.sol";
 
@@ -25,10 +25,10 @@ contract AntiDilution is BOSSetting, BOMSetting, DraftControl {
     // using ArrayUtils for uint32[];
     using ArrayUtils for bytes32[];
     using SNParser for bytes32;
-    using UserGroup for UserGroup.Group;
+    using ObjGroup for ObjGroup.UserGroup;
 
     // benchmark => _obligors
-    mapping(bytes32 => UserGroup.Group) private _obligors;
+    mapping(bytes32 => ObjGroup.UserGroup) private _obligors;
 
     // class => bool
     mapping(uint8 => bool) public isMarked;
@@ -125,7 +125,7 @@ contract AntiDilution is BOSSetting, BOMSetting, DraftControl {
         onlyMarked(class)
         returns (uint32[])
     {
-        return _obligors[classToMark[class]].members();
+        return _obligors[classToMark[class]].members;
     }
 
     function benchmarks() external view returns (bytes32[] marks) {

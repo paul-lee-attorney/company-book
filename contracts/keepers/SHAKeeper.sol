@@ -367,7 +367,7 @@ contract SHAKeeper is BOASetting, SHASetting, BOSSetting {
         uint32 sigDate
     ) external currentDate(sigDate) onlyDirectKeeper {
         require(caller == sn.buyerOfDeal(), "caller is not buyer");
-        IInvestmentAgreement(ia).takeGift(sn.sequenceOfDeal(), caller, sigDate);
+        IInvestmentAgreement(ia).takeGift(sn.sequenceOfDeal(), sigDate);
     }
 
     // ======== FirstRefusal ========

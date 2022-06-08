@@ -10,14 +10,14 @@ import "../boh/terms/interfaces/IOptions.sol";
 import "../../common/ruting/BOSSetting.sol";
 
 import "../../common/lib/ArrayUtils.sol";
-import "../../common/lib/UserGroup.sol";
+import "../../common/lib/ObjGroup.sol";
 import "../../common/lib/SNFactory.sol";
 import "../../common/lib/SNParser.sol";
-import "../../common/lib/SNList.sol";
+import "../../common/lib/ObjGroup.sol";
 
 contract BookOfOptions is BOSSetting {
-    using UserGroup for UserGroup.Group;
-    using SNList for SNList.List;
+    using ObjGroup for ObjGroup.UserGroup;
+    using ObjGroup for ObjGroup.SNList;
     using ArrayUtils for bytes32[];
     using ArrayUtils for uint32[];
     using SNFactory for bytes;
@@ -26,7 +26,7 @@ contract BookOfOptions is BOSSetting {
     struct Option {
         bytes32 sn;
         uint32 rightholder;
-        UserGroup.Group obligors;
+        ObjGroup.UserGroup obligors;
         uint32 closingDate;
         uint256 parValue;
         uint256 paidPar;
@@ -80,7 +80,7 @@ contract BookOfOptions is BOSSetting {
 
     // bytes32[] private _snList;
 
-    SNList.List private _snList;
+    ObjGroup.SNList private _snList;
 
     uint16 public counterOfOptions;
 
@@ -376,7 +376,7 @@ contract BookOfOptions is BOSSetting {
             );
         else
             require(
-                opt.obligors.isMember(shareNumber.shareholder()),
+                opt.obligors.isMember[shareNumber.shareholder()],
                 "WRONG sharehoder"
             );
 
@@ -442,7 +442,7 @@ contract BookOfOptions is BOSSetting {
 
         if (typeOfOpt == 1)
             require(
-                opt.obligors.isMember(shareNumber.shareholder()),
+                opt.obligors.isMember[shareNumber.shareholder()],
                 "WRONG shareholder"
             );
         else
@@ -543,11 +543,11 @@ contract BookOfOptions is BOSSetting {
     }
 
     function isObligor(bytes6 ssn, uint32 acct) external view returns (bool) {
-        return _options[ssn].obligors.isMember(acct);
+        return _options[ssn].obligors.isMember[acct];
     }
 
     function obligors(bytes6 ssn) external view returns (uint32[]) {
-        return _options[ssn].obligors.members();
+        return _options[ssn].obligors.members;
     }
 
     function stateOfOption(bytes6 ssn) external view returns (uint8) {

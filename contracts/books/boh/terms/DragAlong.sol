@@ -16,7 +16,6 @@ import "../../../common/access/DraftControl.sol";
 import "../../../common/access/DraftControl.sol";
 
 import "../../../common/lib/ArrayUtils.sol";
-import "../../../common/lib/SafeMath.sol";
 
 import "../../../common/lib/SNParser.sol";
 import "../../../common/lib/SNFactory.sol";
@@ -24,7 +23,6 @@ import "../../../common/lib/SNFactory.sol";
 contract DragAlong is BOSSetting, BOASetting, DraftControl {
     using ArrayUtils for address[];
     using ArrayUtils for uint16[];
-    using SafeMath for uint256;
     using SNParser for bytes32;
     using SNFactory for bytes;
 
@@ -251,6 +249,23 @@ contract DragAlong is BOSSetting, BOASetting, DraftControl {
         return false;
     }
 
+    function _roeOfDeal(
+        uint256 dealPrice,
+        uint256 issuePrice,
+        uint32 closingDate,
+        uint32 issueDateOfShare
+    ) internal pure returns (uint256 roe) {
+        require(dealPrice > issuePrice, "NEGATIVE selling price");
+        require(closingDate > issueDateOfShare, "NEGATIVE holding period");
+
+        uint256 deltaPrice = dealPrice - issuePrice;
+        uint32 deltaDate = closingDate - issueDateOfShare;
+
+        roe =
+            (deltaPrice * 365000000) /
+            (issuePrice * (uint256(deltaDate) / 864));
+    }
+
     function priceCheck(
         address ia,
         bytes32 sn,
@@ -290,7 +305,7 @@ contract DragAlong is BOSSetting, BOASetting, DraftControl {
         uint32 issueDate = shareNumber.issueDate();
 
         if (
-            dealPrice.roeOfDeal(issuePrice, closingDate, issueDate) >=
+            _roeOfDeal(dealPrice, issuePrice, closingDate, issueDate) >=
             rule.roeOfLink()
         ) return true;
 

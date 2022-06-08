@@ -7,12 +7,12 @@ pragma solidity ^0.4.24;
 
 import "./InvestmentAgreement.sol";
 
-import "../../common/lib/UserGroup.sol";
-import "../../common/lib/Timeline.sol";
+// import "../../common/lib/ObjGroup.sol";
+import "../../common/lib/ObjGroup.sol";
 
 contract FirstRefusalToolKits is InvestmentAgreement {
-    using UserGroup for UserGroup.Group;
-    using Timeline for Timeline.Line;
+    // using ObjGroup for ObjGroup.UserGroup;
+    using ObjGroup for ObjGroup.TimeLine;
 
     struct Record {
         uint16 ssn; // FR sequence number

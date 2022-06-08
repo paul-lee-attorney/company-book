@@ -5,7 +5,7 @@
 
 pragma solidity ^0.4.24;
 
-import "../../common/lib/UserGroup.sol";
+import "../../common/lib/ObjGroup.sol";
 import "../../common/lib/ArrayUtils.sol";
 import "../../common/lib/SNParser.sol";
 
@@ -14,7 +14,7 @@ import "./GroupsRepo.sol";
 contract MembersRepo is GroupsRepo {
     using ArrayUtils for uint32[];
     using SNParser for bytes32;
-    using UserGroup for UserGroup.Group;
+    using ObjGroup for ObjGroup.UserGroup;
 
     struct Member {
         bytes32[] sharesInHand;
@@ -22,7 +22,7 @@ contract MembersRepo is GroupsRepo {
         uint256 paidInHand;
     }
 
-    UserGroup.Group private _shareholders;
+    ObjGroup.UserGroup private _shareholders;
 
     // mapping(uint32 => bool) public isMember;
 
@@ -63,12 +63,12 @@ contract MembersRepo is GroupsRepo {
     //##################
 
     modifier onlyMember() {
-        require(_shareholders.isMember(_msgSender()), "NOT Member");
+        require(_shareholders.isMember[_msgSender()], "NOT Member");
         _;
     }
 
     modifier memberExist(uint32 acct) {
-        require(_shareholders.isMember(acct), "Acct is NOT Member");
+        require(_shareholders.isMember[acct], "Acct is NOT Member");
         _;
     }
 
@@ -87,19 +87,19 @@ contract MembersRepo is GroupsRepo {
 
     function _addMember(uint32 acct) internal {
         require(
-            _shareholders.qtyOfMembers() < maxQtyOfMembers,
+            _shareholders.members.length < maxQtyOfMembers,
             "Qty of Members overflow"
         );
 
         if (_shareholders.addMember(acct))
-            emit AddMember(acct, _shareholders.qtyOfMembers());
+            emit AddMember(acct, _shareholders.members.length);
     }
 
     function _removeMember(uint32 acct) internal {
         if (_shareholders.removeMember(acct)) {
             delete _members[acct];
             if (groupNo[acct] > 0) removeMemberFromGroup(acct, groupNo[acct]);
-            emit RemoveMember(acct, _shareholders.qtyOfMembers());
+            emit RemoveMember(acct, _shareholders.members.length);
         }
     }
 
@@ -165,11 +165,11 @@ contract MembersRepo is GroupsRepo {
     //##################
 
     function isMember(uint32 acct) public view returns (bool) {
-        return _shareholders.isMember(acct);
+        return _shareholders.isMember[acct];
     }
 
     function membersList() external view returns (uint32[]) {
-        return _shareholders.members();
+        return _shareholders.members;
     }
 
     function parInHand(uint32 acct)

@@ -12,7 +12,7 @@ import "../../../common/ruting/BOMSetting.sol";
 import "../../../common/access/DraftControl.sol";
 
 import "../../../common/lib/ArrayUtils.sol";
-import "../../../common/lib/UserGroup.sol";
+import "../../../common/lib/ObjGroup.sol";
 import "../../../common/lib/SNFactory.sol";
 import "../../../common/lib/SNParser.sol";
 
@@ -25,11 +25,11 @@ contract FirstRefusal is BOSSetting, BOMSetting, DraftControl {
     using ArrayUtils for uint32[];
     using SNFactory for bytes;
     using SNParser for bytes32;
-    using UserGroup for UserGroup.Group;
+    using ObjGroup for ObjGroup.UserGroup;
 
     struct FR {
         bytes32 rule;
-        UserGroup.Group rightholders;
+        ObjGroup.UserGroup rightholders;
         // mapping(address => bool) isRightholder;
         // address[] rightholders;
     }
@@ -168,7 +168,7 @@ contract FirstRefusal is BOSSetting, BOMSetting, DraftControl {
         FR storage fr = _firstRefusals[typeOfDeal];
 
         if (fr.rule.membersEqualOfFR()) return _bos.isMember(acct);
-        else return fr.rightholders.isMember(acct);
+        else return fr.rightholders.isMember[acct];
     }
 
     function rightholders(uint8 typeOfDeal)
@@ -180,7 +180,7 @@ contract FirstRefusal is BOSSetting, BOMSetting, DraftControl {
         FR storage fr = _firstRefusals[typeOfDeal];
 
         if (fr.rule.membersEqualOfFR()) return _bos.membersList();
-        else return fr.rightholders.members();
+        else return fr.rightholders.members;
     }
 
     // ################
@@ -222,7 +222,7 @@ contract FirstRefusal is BOSSetting, BOMSetting, DraftControl {
             return
                 _firstRefusals[sn.typeOfDeal()]
                     .rightholders
-                    .members()
+                    .members
                     .fullyCoveredBy(agreedParties);
     }
 }

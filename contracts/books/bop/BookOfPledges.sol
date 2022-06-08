@@ -8,14 +8,14 @@ pragma solidity ^0.4.24;
 import "../../common/lib/ArrayUtils.sol";
 import "../../common/lib/SNFactory.sol";
 import "../../common/lib/SNParser.sol";
-import "../../common/lib/SNList.sol";
+import "../../common/lib/ObjGroup.sol";
 
 import "../../common/ruting/BOSSetting.sol";
 
 contract BookOfPledges is BOSSetting {
     using SNFactory for bytes;
     using SNParser for bytes32;
-    using SNList for SNList.List;
+    using ObjGroup for ObjGroup.SNList;
     using ArrayUtils for bytes32[];
 
     //Pledge 质权
@@ -43,7 +43,7 @@ contract BookOfPledges is BOSSetting {
 
     uint16 public counterOfPledges;
 
-    SNList.List private _snList;
+    ObjGroup.SNList private _snList;
 
     constructor(uint32 bookeeper, address regCenter) public {
         init(_msgSender(), bookeeper, regCenter);

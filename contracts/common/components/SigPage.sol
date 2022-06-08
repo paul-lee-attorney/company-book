@@ -5,12 +5,12 @@
 
 pragma solidity ^0.4.24;
 
-import "../../common/lib/SignerGroup.sol";
+import "../lib/ObjGroup.sol";
 
 import "../access/DraftControl.sol";
 
 contract SigPage is DraftControl {
-    using SignerGroup for SignerGroup.Group;
+    using ObjGroup for ObjGroup.SignerGroup;
 
     bool public established;
 
@@ -18,7 +18,7 @@ contract SigPage is DraftControl {
 
     uint32 public closingDeadline;
 
-    SignerGroup.Group internal _signatures;
+    ObjGroup.SignerGroup private _signatures;
 
     //####################
     //##     event      ##
@@ -49,17 +49,17 @@ contract SigPage is DraftControl {
     //####################
 
     modifier onlyParty() {
-        require(_signatures.isParty(_msgSender()), "msg.sender NOT a party");
+        require(isParty(_msgSender()), "msg.sender NOT a party");
         _;
     }
 
     modifier onlyInitSigner() {
-        require(_signatures.isInitSigner(_msgSender()), "not an InitSigner");
+        require(isInitSigner(_msgSender()), "not an InitSigner");
         _;
     }
 
     modifier notInitSigner() {
-        require(!_signatures.isInitSigner(_msgSender()), "is an InitSigner");
+        require(!isInitSigner(_msgSender()), "is an InitSigner");
         _;
     }
 
@@ -150,7 +150,7 @@ contract SigPage is DraftControl {
     }
 
     function _checkCompletionOfSig() private {
-        if (_signatures.docEstablished()) {
+        if (_signatures.balance == 0 && _signatures.parties.length > 0) {
             established = true;
             emit DocEstablished();
         }
@@ -167,15 +167,15 @@ contract SigPage is DraftControl {
     //####################
 
     function isParty(uint32 acct) public view returns (bool) {
-        return _signatures.isParty(acct);
+        return _signatures.counterOfBlank[acct] > 0;
     }
 
     function isSigner(uint32 acct) external view returns (bool) {
-        return _signatures.isSigner(acct);
+        return _signatures.counterOfSig[acct] > 0;
     }
 
     function isInitSigner(uint32 acct) public view returns (bool) {
-        return _signatures.isInitSigner(acct);
+        return _signatures.sigDate[acct][0] > 0;
     }
 
     function parties() external view returns (uint32[]) {
@@ -199,7 +199,9 @@ contract SigPage is DraftControl {
         view
         returns (uint32)
     {
-        return _signatures.sigDateOfDeal(acct, sn);
+        uint16 seq = _signatures.dealToSN[acct][sn];
+        if (seq > 0) return _signatures.sigDate[acct][seq];
+        else revert("party did not sign this deal");
     }
 
     function sigHashOfDeal(uint32 acct, uint16 sn)
@@ -207,7 +209,9 @@ contract SigPage is DraftControl {
         view
         returns (bytes32)
     {
-        return _signatures.sigHashOfDeal(acct, sn);
+        uint16 seq = _signatures.dealToSN[acct][sn];
+        if (seq > 0) return _signatures.sigHash[acct][seq];
+        else revert("party did not sign this deal");
     }
 
     function sigDateOfDoc(uint32 acct)
@@ -216,7 +220,7 @@ contract SigPage is DraftControl {
         onlyInitSigner
         returns (uint32)
     {
-        _signatures.sigDateOfDoc(acct);
+        return _signatures.sigDate[acct][0];
     }
 
     function sigHashOfDoc(uint32 acct)
@@ -225,7 +229,7 @@ contract SigPage is DraftControl {
         onlyInitSigner
         returns (bytes32)
     {
-        _signatures.sigHashOfDoc(acct);
+        return _signatures.sigHash[acct][0];
     }
 
     function dealSigVerify(
@@ -233,10 +237,12 @@ contract SigPage is DraftControl {
         uint16 sn,
         string src
     ) external view returns (bool) {
-        return _signatures.dealSigVerify(acct, sn, src);
+        uint16 seq = _signatures.dealToSN[acct][sn];
+        return _signatures.sigHash[acct][seq] == keccak256(bytes(src));
     }
 
     function partyDulySigned(uint32 acct) external view returns (bool) {
-        return _signatures.partyDulySigned(acct);
+        return
+            _signatures.counterOfBlank[acct] == _signatures.counterOfSig[acct];
     }
 }

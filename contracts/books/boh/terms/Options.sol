@@ -9,7 +9,7 @@ import "../../../common/ruting/BOSSetting.sol";
 import "../../../common/access/DraftControl.sol";
 
 import "../../../common/lib/ArrayUtils.sol";
-import "../../../common/lib/UserGroup.sol";
+import "../../../common/lib/ObjGroup.sol";
 
 import "../../../common/lib/SNFactory.sol";
 import "../../../common/lib/SNParser.sol";
@@ -19,12 +19,12 @@ contract Options is BOSSetting, DraftControl {
     using ArrayUtils for uint32[];
     using SNFactory for bytes;
     using SNParser for bytes32;
-    using UserGroup for UserGroup.Group;
+    using ObjGroup for ObjGroup.UserGroup;
 
     struct Option {
         bytes32 sn;
         uint32 rightholder;
-        UserGroup.Group obligors;
+        ObjGroup.UserGroup obligors;
         // mapping(address => bool) isObligor;
         // address[] obligors;
     }
@@ -266,7 +266,7 @@ contract Options is BOSSetting, DraftControl {
         optionExist(sequence)
         returns (bool)
     {
-        return _options[sequence].obligors.isMember(acct);
+        return _options[sequence].obligors.isMember[acct];
     }
 
     function getObligors(uint16 sequence)
@@ -275,7 +275,7 @@ contract Options is BOSSetting, DraftControl {
         optionExist(sequence)
         returns (uint32[])
     {
-        return _options[sequence].obligors.members();
+        return _options[sequence].obligors.members;
     }
 
     function isRightholder(uint16 sequence, uint32 acct)

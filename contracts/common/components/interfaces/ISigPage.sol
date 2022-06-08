@@ -47,7 +47,7 @@ interface ISigPage {
 
     function isSigner(address acct) external returns (bool);
 
-    function isInitSigner(uint32 acct) public view returns (bool);
+    function isInitSigner(uint32 acct) external view returns (bool);
 
     function parties() external returns (uint32[]);
 

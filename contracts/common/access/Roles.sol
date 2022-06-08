@@ -8,13 +8,13 @@ pragma solidity ^0.4.24;
 import "./RegCenterSetting.sol";
 import "./interfaces/IRoles.sol";
 
-import "../lib/UserGroup.sol";
+import "../lib/ObjGroup.sol";
 
 contract Roles is RegCenterSetting {
-    using UserGroup for UserGroup.Group;
+    using ObjGroup for ObjGroup.UserGroup;
 
     struct RoleData {
-        UserGroup.Group roleGroup;
+        ObjGroup.UserGroup roleGroup;
         uint32 admin;
     }
 
@@ -92,11 +92,11 @@ contract Roles is RegCenterSetting {
     // ##################
 
     function hasRole(bytes32 role, uint32 acct) public view returns (bool) {
-        return _roles[role].roleGroup.isMember(acct);
+        return _roles[role].roleGroup.isMember[acct];
     }
 
     function roleMembers(bytes32 role) public view returns (uint32[]) {
-        return _roles[role].roleGroup.members();
+        return _roles[role].roleGroup.members;
     }
 
     function roleAdmin(bytes32 role) public view returns (uint32) {

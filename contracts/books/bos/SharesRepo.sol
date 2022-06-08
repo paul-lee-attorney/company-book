@@ -8,7 +8,7 @@ pragma solidity ^0.4.24;
 import "../../common/lib/ArrayUtils.sol";
 import "../../common/lib/SNFactory.sol";
 import "../../common/lib/SNParser.sol";
-import "../../common/lib/SNList.sol";
+import "../../common/lib/ObjGroup.sol";
 
 import "../../common/access/AccessControl.sol";
 
@@ -16,7 +16,7 @@ contract SharesRepo is AccessControl {
     using SNFactory for bytes;
     // using SNFactory for bytes32;
     using SNParser for bytes32;
-    using SNList for SNList.List;
+    using ObjGroup for ObjGroup.SNList;
     // using ArrayUtils for uint256[];
     // using ArrayUtils for address[];
     using ArrayUtils for bytes32[];
@@ -62,7 +62,7 @@ contract SharesRepo is AccessControl {
     // //shareNumber数组
     // bytes32[] internal _snList;
 
-    SNList.List internal _snList;
+    ObjGroup.SNList internal _snList;
 
     //##################
     //##    Event     ##

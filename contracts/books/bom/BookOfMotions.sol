@@ -13,27 +13,27 @@ import "../../common/ruting/BOSSetting.sol";
 
 import "../../common/lib/SNFactory.sol";
 import "../../common/lib/SNParser.sol";
-import "../../common/lib/UserGroup.sol";
-import "../../common/lib/VoterGroup.sol";
-import "../../common/lib/AddrGroup.sol";
+import "../../common/lib/ObjGroup.sol";
+import "../../common/lib/ObjGroup.sol";
+import "../../common/lib/ObjGroup.sol";
 
 import "../../common/components/interfaces/ISigPage.sol";
 
 contract BookOfMotions is SHASetting, BOASetting, BOSSetting {
     using SNFactory for bytes;
     using SNParser for bytes32;
-    using UserGroup for UserGroup.Group;
-    using VoterGroup for VoterGroup.Group;
-    using AddrGroup for AddrGroup.Group;
+    using ObjGroup for ObjGroup.UserGroup;
+    using ObjGroup for ObjGroup.VoterGroup;
+    using ObjGroup for ObjGroup.AddrList;
 
     struct Motion {
         bytes32 sn;
         bytes32 votingRule;
-        UserGroup.Group supportVoters;
+        ObjGroup.UserGroup supportVoters;
         uint256 sumOfYea;
-        UserGroup.Group againstVoters;
+        ObjGroup.UserGroup againstVoters;
         uint256 sumOfNay;
-        VoterGroup.Group allVoters;
+        ObjGroup.VoterGroup allVoters;
         uint8 state; // 0-pending 1-proposed  2-passed 3-rejected(not to buy) 4-rejected (to buy)
     }
 
@@ -41,7 +41,7 @@ contract BookOfMotions is SHASetting, BOASetting, BOSSetting {
     mapping(address => Motion) private _motions;
 
     // Investment Agreements Subject to voting
-    AddrGroup.Group private _ias;
+    ObjGroup.AddrList private _ias;
 
     //##############
     //##  Event   ##
@@ -58,7 +58,7 @@ contract BookOfMotions is SHASetting, BOASetting, BOSSetting {
     //####################
 
     modifier onlyProposed(address ia) {
-        require(_ias.isMember(ia), "IA is NOT isProposed");
+        require(_ias.isItem[ia], "IA is NOT isProposed");
         _;
     }
 
@@ -76,10 +76,7 @@ contract BookOfMotions is SHASetting, BOASetting, BOSSetting {
     }
 
     modifier notVotedTo(address ia, uint32 caller) {
-        require(
-            !_motions[ia].allVoters.isVoter(caller),
-            "HAVE voted for the IA"
-        );
+        require(!isVoted(ia, caller), "HAVE voted for the IA");
         _;
     }
 
@@ -123,10 +120,7 @@ contract BookOfMotions is SHASetting, BOASetting, BOSSetting {
             "InvestmentAgreement not passed review procesedure"
         );
 
-        require(
-            !_ias.isMember(ia),
-            "the InvestmentAgreement has been proposed"
-        );
+        require(!_ias.isItem[ia], "the InvestmentAgreement has been proposed");
 
         bytes32 rule = _getSHA().votingRules(_boa.typeOfIA(ia));
 
@@ -140,7 +134,7 @@ contract BookOfMotions is SHASetting, BOASetting, BOSSetting {
         motion.sn = _createSN(ia, submitter, proposeDate, votingDeadline);
         motion.state = 1;
 
-        if (_ias.addMember(ia)) emit ProposeMotion(ia, motion.sn);
+        if (_ias.addItem(ia)) emit ProposeMotion(ia, motion.sn);
     }
 
     function _getVoteAmount(address ia, uint32 caller)
@@ -205,7 +199,7 @@ contract BookOfMotions is SHASetting, BOASetting, BOSSetting {
         Motion storage motion = _motions[ia];
 
         if (motion.votingRule.onlyAttendanceOfVR()) {
-            totalHead = motion.allVoters.qtyOfVoters();
+            totalHead = motion.allVoters.voters.length;
         } else {
             uint32[] memory others = _boa.otherMembers(ia);
 
@@ -257,14 +251,14 @@ contract BookOfMotions is SHASetting, BOASetting, BOSSetting {
 
         bool flag1 = motion.votingRule.ratioHeadOfVR() > 0
             ? totalHead > 0
-                ? (motion.supportVoters.qtyOfMembers() * 10000) / totalHead >=
+                ? (motion.supportVoters.members.length * 10000) / totalHead >=
                     motion.votingRule.ratioHeadOfVR()
                 : false
             : true;
 
         bool flag2 = motion.votingRule.ratioAmountOfVR() > 0
-            ? motion.allVoters.sumOfAmt() > 0
-                ? (motion.sumOfYea * 10000) / motion.allVoters.sumOfAmt() >=
+            ? motion.allVoters.sumOfAmt > 0
+                ? (motion.sumOfYea * 10000) / motion.allVoters.sumOfAmt >=
                     motion.votingRule.ratioAmountOfVR()
                 : false
             : true;
@@ -286,9 +280,9 @@ contract BookOfMotions is SHASetting, BOASetting, BOSSetting {
         Motion storage motion = _motions[ia];
 
         require(motion.state == 4, "agianst NO need to buy");
-        require(motion.againstVoters.isMember(againstVoter), "NOT NAY voter");
+        require(motion.againstVoters.isMember[againstVoter], "NOT NAY voter");
 
-        return ((motion.allVoters.amtOfVoter(againstVoter) * 10000) /
+        return ((motion.allVoters.amtOfVoter[againstVoter] * 10000) /
             motion.sumOfNay);
     }
 
@@ -346,11 +340,11 @@ contract BookOfMotions is SHASetting, BOASetting, BOSSetting {
     }
 
     function votedYea(address ia, uint32 acct) external view returns (bool) {
-        return _motions[ia].supportVoters.isMember(acct);
+        return _motions[ia].supportVoters.isMember[acct];
     }
 
     function votedNay(address ia, uint32 acct) external view returns (bool) {
-        return _motions[ia].againstVoters.isMember(acct);
+        return _motions[ia].againstVoters.isMember[acct];
     }
 
     function getYea(address ia)
@@ -358,7 +352,7 @@ contract BookOfMotions is SHASetting, BOASetting, BOSSetting {
         view
         returns (uint32[] membersOfYea, uint256 supportPar)
     {
-        membersOfYea = _motions[ia].supportVoters.members();
+        membersOfYea = _motions[ia].supportVoters.members;
         supportPar = _motions[ia].sumOfYea;
     }
 
@@ -367,16 +361,16 @@ contract BookOfMotions is SHASetting, BOASetting, BOSSetting {
         view
         returns (uint32[] membersOfNay, uint256 againstPar)
     {
-        membersOfNay = _motions[ia].againstVoters.members();
+        membersOfNay = _motions[ia].againstVoters.members;
         againstPar = _motions[ia].sumOfNay;
     }
 
     function sumOfVoteAmt(address ia) external view returns (uint256) {
-        return _motions[ia].allVoters.sumOfAmt();
+        return _motions[ia].allVoters.sumOfAmt;
     }
 
     function isVoted(address ia, uint32 acct) public view returns (bool) {
-        return _motions[ia].allVoters.isVoter(acct);
+        return _motions[ia].allVoters.sigDate[acct] > 0;
     }
 
     function getVote(address ia, uint32 acct)
@@ -393,10 +387,10 @@ contract BookOfMotions is SHASetting, BOASetting, BOSSetting {
 
         Motion storage motion = _motions[ia];
 
-        attitude = motion.supportVoters.isMember(acct);
-        date = motion.allVoters.sigDate(acct);
-        amount = motion.allVoters.amtOfVoter(acct);
-        sigHash = motion.allVoters.sigHash(acct);
+        attitude = motion.supportVoters.isMember[acct];
+        date = motion.allVoters.sigDate[acct];
+        amount = motion.allVoters.amtOfVoter[acct];
+        sigHash = motion.allVoters.sigHash[acct];
     }
 
     function isPassed(address ia)

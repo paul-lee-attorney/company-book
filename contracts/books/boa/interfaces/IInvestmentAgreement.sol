@@ -79,11 +79,7 @@ interface IInvestmentAgreement {
         string hashKey
     ) external;
 
-    function takeGift(
-        uint16 ssn,
-        uint32 caller,
-        uint32 sigDate
-    ) external;
+    function takeGift(uint16 ssn, uint32 sigDate) external;
 
     //  ######################
     //  ##     查询接口     ##
@@ -95,7 +91,7 @@ interface IInvestmentAgreement {
 
     function sumOfWeight(uint16 ssn) external view returns (uint16);
 
-    function isTargetDeal(uint16 ssn) public view returns (bool);
+    function isTargetDeal(uint16 ssn) external view returns (bool);
 
     function frDeals(uint16 ssn) external view returns (uint16[]);
 

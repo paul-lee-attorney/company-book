@@ -10,7 +10,7 @@ import "../../common/ruting/BOSSetting.sol";
 import "../../common/lib/ArrayUtils.sol";
 import "../../common/lib/SNFactory.sol";
 import "../../common/lib/SNParser.sol";
-import "../../common/lib/Timeline.sol";
+import "../../common/lib/ObjGroup.sol";
 import "../../common/lib/EnumsRepo.sol";
 
 import "../../common/components/SigPage.sol";
@@ -19,7 +19,7 @@ contract InvestmentAgreement is BOSSetting, SigPage {
     using SNFactory for bytes;
     using SNParser for bytes32;
     using ArrayUtils for bytes32[];
-    using Timeline for Timeline.Line;
+    using ObjGroup for ObjGroup.TimeLine;
 
     /* struct sn{
         uint8 class; 1
@@ -39,7 +39,7 @@ contract InvestmentAgreement is BOSSetting, SigPage {
         uint256 parValue;
         uint256 paidPar;
         uint32 closingDate;
-        Timeline.Line states; // 0-Drafting 1-Locked 2-Cleared 3-Closed 4-Terminated
+        ObjGroup.TimeLine states; // 0-Drafting 1-Locked 2-Cleared 3-Closed 4-Terminated
         bytes32 hashLock;
     }
 
@@ -368,11 +368,7 @@ contract InvestmentAgreement is BOSSetting, SigPage {
         emit RevokeDeal(deal.sn, hashKey);
     }
 
-    function takeGift(
-        uint16 ssn,
-        uint32 caller,
-        uint32 sigDate
-    ) external onlyKeeper {
+    function takeGift(uint16 ssn, uint32 sigDate) external onlyKeeper {
         Deal storage deal = _deals[ssn];
 
         require(deal.closingDate < sigDate, "NOT reached closing date");
@@ -382,7 +378,6 @@ contract InvestmentAgreement is BOSSetting, SigPage {
             "not a gift deal"
         );
         require(deal.unitPrice == 0, "unitPrice is not zero");
-        // require(caller == deal.sn.buyerOfDeal(), "caller is not buyer");
 
         require(
             deal.states.currentState == uint8(EnumsRepo.StateOfDeal.Locked),

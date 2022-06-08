@@ -8,9 +8,9 @@ pragma solidity ^0.4.24;
 import "../lib/EnumsRepo.sol";
 import "../lib/SNFactory.sol";
 import "../lib/SNParser.sol";
-import "../lib/SafeMath.sol";
+// import "../lib/SafeMath.sol";
 import "../lib/ArrayUtils.sol";
-import "../lib/Timeline.sol";
+import "../lib/ObjGroup.sol";
 
 import "./interfaces/ISigPage.sol";
 
@@ -21,7 +21,7 @@ import "../utils/CloneFactory.sol";
 contract BookOfDocuments is CloneFactory, BOSSetting {
     using SNFactory for bytes;
     using SNParser for bytes32;
-    using Timeline for Timeline.Line;
+    using ObjGroup for ObjGroup.TimeLine;
     using ArrayUtils for bytes32[];
 
     string public bookName;
@@ -31,7 +31,7 @@ contract BookOfDocuments is CloneFactory, BOSSetting {
         bytes32 sn;
         bytes32 docHash;
         uint32 reviewDeadline;
-        Timeline.Line states;
+        ObjGroup.TimeLine states;
     }
 
     // struct snInfo {

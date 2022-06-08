@@ -13,8 +13,8 @@ library SNList {
     using SNParser for bytes32;
 
     struct List {
-        mapping(bytes6 => bool) _isItem;
-        bytes32[] _snList;
+        mapping(bytes6 => bool) isItem;
+        bytes32[] items;
     }
 
     // ##################
@@ -25,9 +25,9 @@ library SNList {
         internal
         returns (bool flag)
     {
-        if (!list._isItem[sn.short()]) {
-            list._isItem[sn.short()] = true;
-            sn.insertToQue(list._snList);
+        if (!list.isItem[sn.short()]) {
+            list.isItem[sn.short()] = true;
+            sn.insertToQue(list.items);
             flag = true;
         }
     }
@@ -36,30 +36,10 @@ library SNList {
         internal
         returns (bool flag)
     {
-        if (list._isItem[sn.short()]) {
-            list._isItem[sn.short()] = false;
-            list._snList.removeByValue(sn);
+        if (list.isItem[sn.short()]) {
+            list.isItem[sn.short()] = false;
+            list.items.removeByValue(sn);
             flag = true;
         }
-    }
-
-    // ##################
-    // ##   查询端口   ##
-    // ##################
-
-    function isItem(List storage list, bytes6 ssn)
-        internal
-        view
-        returns (bool)
-    {
-        return list._isItem[ssn];
-    }
-
-    function qtyOfItems(List storage list) internal view returns (uint256) {
-        return list._snList.length;
-    }
-
-    function snList(List storage list) internal view returns (bytes32[]) {
-        return list._snList;
     }
 }

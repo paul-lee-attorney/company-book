@@ -52,7 +52,7 @@ contract BOPKeeper is BOSSetting, BOPSetting {
         bytes6 shortShareNumber = sn.shortShareNumberOfPledge();
 
         (, uint256 orgPledgedPar, uint32 orgCreditor, ) = _bop.getPledge(
-            sn.shortOfPledge()
+            sn.short()
         );
 
         if (pledgedPar < orgPledgedPar) {
@@ -63,23 +63,16 @@ contract BOPKeeper is BOSSetting, BOPSetting {
             _bos.decreaseCleanPar(shortShareNumber, pledgedPar - orgPledgedPar);
         }
 
-        _bop.updatePledge(
-            sn.shortOfPledge(),
-            creditor,
-            pledgedPar,
-            guaranteedAmt
-        );
+        _bop.updatePledge(sn.short(), creditor, pledgedPar, guaranteedAmt);
     }
 
     function delPledge(bytes32 sn, uint32 caller) external onlyDirectKeeper {
-        (, uint256 pledgedPar, uint32 creditor, ) = _bop.getPledge(
-            sn.shortOfPledge()
-        );
+        (, uint256 pledgedPar, uint32 creditor, ) = _bop.getPledge(sn.short());
 
         require(caller == creditor, "NOT creditor");
 
         _bos.increaseCleanPar(sn.shortShareNumberOfPledge(), pledgedPar);
 
-        _bop.delPledge(sn.shortOfPledge());
+        _bop.delPledge(sn.short());
     }
 }

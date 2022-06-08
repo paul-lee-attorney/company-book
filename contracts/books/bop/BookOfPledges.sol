@@ -8,12 +8,14 @@ pragma solidity ^0.4.24;
 import "../../common/lib/ArrayUtils.sol";
 import "../../common/lib/SNFactory.sol";
 import "../../common/lib/SNParser.sol";
+import "../../common/lib/SNList.sol";
 
 import "../../common/ruting/BOSSetting.sol";
 
 contract BookOfPledges is BOSSetting {
     using SNFactory for bytes;
     using SNParser for bytes32;
+    using SNList for SNList.List;
     using ArrayUtils for bytes32[];
 
     //Pledge 质权
@@ -25,9 +27,10 @@ contract BookOfPledges is BOSSetting {
     }
 
     // struct snInfo {
-    //     bytes6 shortOfShare; 6
+    //     uint8 typeOfPledge; 1   1-forSelf; 2-forOthers
     //     uint16 sequence; 2
     //     uint32 createDate; 4
+    //     bytes6 shortOfShare; 6
     //     uint32 pledgor; 4
     //     uint32 debtor; 4
     // }
@@ -35,15 +38,12 @@ contract BookOfPledges is BOSSetting {
     // ssn => Pledge
     mapping(bytes6 => Pledge) private _pledges;
 
-    // ssn => pledge exist?
-    mapping(bytes6 => bool) public isPledge;
-
     // shortShareNumber => pledges SN
     mapping(bytes6 => bytes32[]) public pledgesOf;
 
     uint16 public counterOfPledges;
 
-    bytes32[] public snList;
+    SNList.List private _snList;
 
     constructor(uint32 bookeeper, address regCenter) public {
         init(_msgSender(), bookeeper, regCenter);
@@ -74,7 +74,7 @@ contract BookOfPledges is BOSSetting {
     //##################
 
     modifier pledgeExist(bytes6 ssn) {
-        require(isPledge[ssn], "pledge NOT exist");
+        require(_snList.isItem[ssn], "pledge NOT exist");
         _;
     }
 
@@ -83,19 +83,21 @@ contract BookOfPledges is BOSSetting {
     //##################
 
     function _createSN(
-        bytes6 shortOfShare,
+        uint8 typeOfPledge,
         uint16 sequence,
         uint32 createDate,
+        bytes6 shortOfShare,
         uint32 pledgor,
         uint32 debtor
     ) private pure returns (bytes32) {
         bytes memory _sn = new bytes(32);
 
-        _sn = _sn.shortToSN(0, shortOfShare);
-        _sn = _sn.sequenceToSN(6, sequence);
-        _sn = _sn.dateToSN(8, createDate);
-        _sn = _sn.dateToSN(12, pledgor);
-        _sn = _sn.dateToSN(16, debtor);
+        _sn[0] = bytes1(typeOfPledge);
+        _sn = _sn.sequenceToSN(1, sequence);
+        _sn = _sn.dateToSN(3, createDate);
+        _sn = _sn.shortToSN(7, shortOfShare);
+        _sn = _sn.dateToSN(13, pledgor);
+        _sn = _sn.dateToSN(17, debtor);
 
         return _sn.bytesToBytes32();
     }
@@ -107,25 +109,21 @@ contract BookOfPledges is BOSSetting {
         uint32 debtor,
         uint256 pledgedPar,
         uint256 guaranteedAmt
-    )
-        external
-        onlyDirectKeeper
-        shareExist(shareNumber.short())
-        currentDate(createDate)
-    {
+    ) external onlyDirectKeeper shareExist(shareNumber.short()) {
         require(pledgedPar > 0, "ZERO pledged parvalue");
 
         counterOfPledges++;
 
         bytes32 sn = _createSN(
-            shareNumber.short(),
+            1,
             counterOfPledges,
             createDate,
+            shareNumber.short(),
             shareNumber.shareholder(),
             debtor
         );
 
-        bytes6 ssn = sn.shortOfPledge();
+        bytes6 ssn = sn.short();
 
         Pledge storage pld = _pledges[ssn];
 
@@ -134,9 +132,12 @@ contract BookOfPledges is BOSSetting {
         pld.creditor = creditor;
         pld.guaranteedAmt = guaranteedAmt;
 
-        isPledge[ssn] = true;
+        // isPledge[ssn] = true;
+        // sn.insertToQue(snList);
+
+        _snList.addItem(sn);
+
         sn.insertToQue(pledgesOf[shareNumber.short()]);
-        sn.insertToQue(snList);
 
         emit CreatePledge(sn, shareNumber, pledgedPar, creditor, guaranteedAmt);
     }
@@ -149,9 +150,12 @@ contract BookOfPledges is BOSSetting {
         if (pledgesOf[pld.sn.shortShareNumberOfPledge()].length == 0)
             delete pledgesOf[pld.sn.shortShareNumberOfPledge()];
 
-        snList.removeByValue(pld.sn);
+        // snList.removeByValue(pld.sn);
 
-        delete isPledge[ssn];
+        // delete isPledge[ssn];
+
+        _snList.removeItem(pld.sn);
+
         delete _pledges[ssn];
 
         emit DelPledge(pld.sn);
@@ -177,6 +181,14 @@ contract BookOfPledges is BOSSetting {
     //##################
     //##    读接口    ##
     //##################
+
+    function isPledge(bytes6 ssn) external view returns (bool) {
+        return _snList.isItem[ssn];
+    }
+
+    function snList() external view returns (bytes32[]) {
+        return _snList.items;
+    }
 
     function getPledge(bytes6 ssn)
         external

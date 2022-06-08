@@ -260,32 +260,36 @@ library SNParser {
 
     // ======== Pledge ========
 
+    function typeOfPledge(bytes32 sn) internal pure returns (uint8) {
+        return uint8(sn[0]);
+    }
+
+    function sequenceOfPledge(bytes32 sn) internal pure returns (uint16) {
+        return uint16(bytes2(sn << 8));
+    }
+
+    function createDateOfPledge(bytes32 sn) internal pure returns (uint32) {
+        return uint32(bytes4(sn << 24));
+    }
+
     function shortShareNumberOfPledge(bytes32 sn)
         internal
         pure
         returns (bytes6)
     {
-        return bytes6(sn);
+        return bytes6(sn << 56);
     }
 
-    function sequenceOfPledge(bytes32 sn) internal pure returns (uint16) {
-        return uint16(bytes2(sn << 48));
-    }
-
-    function createDateOfPledge(bytes32 sn) internal pure returns (uint32) {
-        return uint32(bytes4(sn << 64));
-    }
-
-    function shortOfPledge(bytes32 sn) internal pure returns (bytes6) {
-        return bytes6(sn << 48);
-    }
+    // function shortOfPledge(bytes32 sn) internal pure returns (bytes6) {
+    //     return bytes6(sn << 48);
+    // }
 
     function pledgorOfPledge(bytes32 sn) internal pure returns (uint32) {
-        return uint32(bytes4(sn << 96));
+        return uint32(bytes4(sn << 104));
     }
 
     function debtorOfPledge(bytes32 sn) internal pure returns (uint32) {
-        return uint32(bytes4(sn << 128));
+        return uint32(bytes4(sn << 136));
     }
 
     // ========= VotingRule ========

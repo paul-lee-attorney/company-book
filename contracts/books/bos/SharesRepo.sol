@@ -120,7 +120,7 @@ contract SharesRepo is AccessControl {
     }
 
     modifier shareExist(bytes6 ssn) {
-        require(_snList.isItem(ssn), "ssn NOT exist");
+        require(_snList.isItem[ssn], "ssn NOT exist");
         _;
     }
 
@@ -312,11 +312,11 @@ contract SharesRepo is AccessControl {
     //##################
 
     function isShare(bytes6 ssn) external view returns (bool) {
-        return _snList.isItem(ssn);
+        return _snList.isItem[ssn];
     }
 
     function snList() external view returns (bytes32[]) {
-        return _snList.snList();
+        return _snList.items;
     }
 
     function cleanPar(bytes6 ssn) external view returns (uint256) {

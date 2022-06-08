@@ -13,9 +13,11 @@ import "../../common/lib/ArrayUtils.sol";
 import "../../common/lib/UserGroup.sol";
 import "../../common/lib/SNFactory.sol";
 import "../../common/lib/SNParser.sol";
+import "../../common/lib/SNList.sol";
 
 contract BookOfOptions is BOSSetting {
     using UserGroup for UserGroup.Group;
+    using SNList for SNList.List;
     using ArrayUtils for bytes32[];
     using ArrayUtils for uint32[];
     using SNFactory for bytes;
@@ -73,10 +75,12 @@ contract BookOfOptions is BOSSetting {
     // ssn => pledges
     mapping(bytes6 => bytes32[]) public pledges;
 
-    // ssn => bool
-    mapping(bytes6 => bool) public isOption;
+    // // ssn => bool
+    // mapping(bytes6 => bool) public isOption;
 
-    bytes32[] private _snList;
+    // bytes32[] private _snList;
+
+    SNList.List private _snList;
 
     uint16 public counterOfOptions;
 
@@ -134,7 +138,7 @@ contract BookOfOptions is BOSSetting {
     // ################
 
     modifier optionExist(bytes6 ssn) {
-        require(isOption[ssn], "option NOT exist");
+        require(_snList.isItem[ssn], "option NOT exist");
         _;
     }
 
@@ -204,8 +208,10 @@ contract BookOfOptions is BOSSetting {
         opt.paidPar = paidPar;
         opt.state = 1;
 
-        isOption[ssn] = true;
-        _snList.push(sn);
+        // isOption[ssn] = true;
+        // _snList.push(sn);
+
+        _snList.addItem(sn);
 
         emit CreateOpt(sn, rightholder, obligor, parValue, paidPar);
     }
@@ -268,8 +274,11 @@ contract BookOfOptions is BOSSetting {
             Option storage opt = _options[sn.shortOfOpt()];
 
             opt.sn = sn;
-            isOption[sn.shortOfOpt()] = true;
-            _snList.push(sn);
+
+            _snList.addItem(sn);
+
+            // isOption[sn.shortOfOpt()] = true;
+            // _snList.push(sn);
 
             opt.rightholder = IOptions(opts).rightholder(ssn);
 
@@ -505,6 +514,10 @@ contract BookOfOptions is BOSSetting {
     // ##  查询接口  ##
     // ################
 
+    function isOption(bytes6 ssn) public view returns (bool) {
+        return _snList.isItem[ssn];
+    }
+
     function getOption(bytes6 ssn)
         external
         view
@@ -542,7 +555,7 @@ contract BookOfOptions is BOSSetting {
     }
 
     function snList() external view returns (bytes32[] list) {
-        list = _snList;
+        list = _snList.items;
     }
 
     function oracles() external view returns (uint256 d1, uint256 d2) {

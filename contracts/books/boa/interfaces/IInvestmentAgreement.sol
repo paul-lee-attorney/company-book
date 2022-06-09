@@ -119,4 +119,11 @@ interface IInvestmentAgreement {
     function shareNumberOfDeal(uint16 ssn) external view returns (bytes32);
 
     function dealsList() external view returns (bytes32[]);
+
+    function dealsConcerned(uint32 acct) external view returns (uint16[]);
+
+    function isBuyerOfDeal(uint32 acct, uint16 seq)
+        external
+        view
+        returns (bool);
 }

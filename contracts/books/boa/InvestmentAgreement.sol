@@ -20,6 +20,7 @@ contract InvestmentAgreement is BOSSetting, SigPage {
     using SNParser for bytes32;
     using ArrayUtils for bytes32[];
     using ObjGroup for ObjGroup.TimeLine;
+    using ObjGroup for ObjGroup.SeqList;
 
     /* struct sn{
         uint8 class; 1
@@ -76,6 +77,14 @@ contract InvestmentAgreement is BOSSetting, SigPage {
     bytes32[] private _dealsList;
 
     uint16 private _counterOfDeals;
+
+    // ======== Parties ========
+
+    // party => seq
+    mapping(uint32 => ObjGroup.SeqList) private _dealsConcerned;
+
+    // party => seq => buyer?
+    mapping(uint32 => mapping(uint16 => bool)) private _isBuyerOfDeal;
 
     //##################
     //##    Event     ##
@@ -219,13 +228,18 @@ contract InvestmentAgreement is BOSSetting, SigPage {
                 typeOfDeal != uint8(EnumsRepo.TypeOfDeal.DragAlong) &&
                 typeOfDeal != uint8(EnumsRepo.TypeOfDeal.FreeGift)
             ) addBlank(shareNumber.shareholder(), _counterOfDeals);
-
             addBlank(buyer, _counterOfDeals);
         } else {
             if (shareNumber > bytes32(0))
                 addBlank(shareNumber.shareholder(), 0);
             addBlank(buyer, 0);
         }
+
+        if (shareNumber > bytes32(0))
+            _dealsConcerned[shareNumber.shareholder()].addItem(_counterOfDeals);
+
+        _dealsConcerned[buyer].addItem(_counterOfDeals);
+        _isBuyerOfDeal[buyer][_counterOfDeals] = true;
 
         emit CreateDeal(sn, shareNumber);
 
@@ -408,6 +422,12 @@ contract InvestmentAgreement is BOSSetting, SigPage {
         emit CloseDeal(deal.sn, "0");
     }
 
+    function signIA(
+        uint32 caller,
+        uint32 sigDate,
+        bytes32 sigHash
+    ) external {}
+
     //  #################################
     //  ##       查询接口              ##
     //  #################################
@@ -474,5 +494,25 @@ contract InvestmentAgreement is BOSSetting, SigPage {
 
     function dealsList() external view onlyUser returns (bytes32[]) {
         return _dealsList;
+    }
+
+    function dealsConcerned(uint32 acct)
+        external
+        view
+        onlyUser
+        returns (uint16[])
+    {
+        require(isParty(acct), "not a party");
+        return _dealsConcerned[acct].items;
+    }
+
+    function isBuyerOfDeal(uint32 acct, uint16 seq)
+        external
+        view
+        onlyUser
+        returns (bool)
+    {
+        require(isParty(acct), "not a party");
+        return _isBuyerOfDeal[acct][seq];
     }
 }

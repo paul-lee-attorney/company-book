@@ -5,23 +5,22 @@
 pragma solidity ^0.4.24;
 
 import "./interfaces/IInvestmentAgreement.sol";
-// import "./interfaces/IInvestmentAgreementCalculator.sol";
 
 import "../boh/terms/interfaces/IAlongs.sol";
 
+import "../../common/components/interfaces/ISigPage.sol";
 import "../../common/components/BookOfDocuments.sol";
 
 import "../../common/ruting/SHASetting.sol";
-import "../../common/ruting/BOSSetting.sol";
 
 import "../../common/lib/ArrayUtils.sol";
+import "../../common/lib/ObjGroup.sol";
 import "../../common/lib/SNParser.sol";
 import "../../common/lib/EnumsRepo.sol";
 
-import "../../common/components/interfaces/ISigPage.sol";
-
 contract BookOfIA is BookOfDocuments, SHASetting {
     using SNParser for bytes32;
+    using ObjGroup for ObjGroup.SeqList;
     using ArrayUtils for uint32[];
 
     struct Amt {
@@ -34,11 +33,11 @@ contract BookOfIA is BookOfDocuments, SHASetting {
     // IA address => group => Amt
     mapping(address => mapping(uint16 => Amt)) private _mockResults;
 
-    // IA address => groups
-    mapping(address => uint16[]) public groupsConcerned;
+    // IA address => SeqList
+    mapping(address => ObjGroup.SeqList) private _groupsConcerned;
 
-    // IA address => group => bool
-    mapping(address => mapping(uint16 => bool)) public isConcernedGroup;
+    // IA address => deal seq => bool
+    mapping(address => mapping(uint16 => bool)) private _isMocked;
 
     struct TopGroup {
         uint16 groupNum;
@@ -50,13 +49,6 @@ contract BookOfIA is BookOfDocuments, SHASetting {
 
     // IA address => topGroup
     mapping(address => TopGroup) private _topGroups;
-
-    // constructor(
-    //     string _bookName,
-    //     uint32 _owner,
-    //     uint32 _bookeeper,
-    //     address _rc
-    // ) public BookOfDocuments(_bookName, _owner, _bookeeper, _rc) {}
 
     //##############
     //##  Event   ##
@@ -83,10 +75,6 @@ contract BookOfIA is BookOfDocuments, SHASetting {
     event AcceptAlongDeal(address ia, address drager, bytes32 sn);
 
     //#################
-    //##  Modifier   ##
-    //#################
-
-    //#################
     //##  Write I/O  ##
     //#################
 
@@ -102,37 +90,34 @@ contract BookOfIA is BookOfDocuments, SHASetting {
         _calculateResult(ia, basedOnPar);
     }
 
-    function _addGroup(address ia, uint16 group) private {
-        if (!isConcernedGroup[ia][group]) {
-            isConcernedGroup[ia][group] = true;
-            groupsConcerned[ia].push(group);
-        }
-    }
-
     function _mockDeals(address ia, bool basedOnPar) private {
         bytes32[] memory dealsList = IInvestmentAgreement(ia).dealsList();
         uint256 len = dealsList.length;
-
-        // uint16[] storage groups = groupsConcerned[ia];
 
         for (uint256 i = 0; i < len; i++) {
             bytes32 sn = dealsList[i];
 
             uint256 amount;
+            uint8 state;
+
             if (basedOnPar)
-                (, amount, , , ) = IInvestmentAgreement(ia).getDeal(
+                (, amount, , state, ) = IInvestmentAgreement(ia).getDeal(
                     sn.sequenceOfDeal()
                 );
             else
-                (, , amount, , ) = IInvestmentAgreement(ia).getDeal(
+                (, , amount, state, ) = IInvestmentAgreement(ia).getDeal(
                     sn.sequenceOfDeal()
                 );
 
             uint16 buyerGroup = sn.groupOfBuyer();
 
-            _mockResults[ia][buyerGroup].buyAmt += amount;
-
-            _addGroup(ia, buyerGroup);
+            if (_isMocked[ia][sn.sequenceOfDeal()]) {
+                if (state != uint8(EnumsRepo.StateOfDeal.Terminated)) continue;
+                else _mockResults[ia][buyerGroup].buyAmt -= amount;
+            } else {
+                _mockResults[ia][buyerGroup].buyAmt += amount;
+                _groupsConcerned[ia].addItem(buyerGroup);
+            }
 
             if (sn.typeOfDeal() > 1) {
                 uint16 sellerGroup = _bos.groupNo(
@@ -141,40 +126,24 @@ contract BookOfIA is BookOfDocuments, SHASetting {
                         .shareholder()
                 );
 
-                _mockResults[ia][sellerGroup].selAmt += amount;
-
-                _addGroup(ia, sellerGroup);
+                if (
+                    _isMocked[ia][sn.sequenceOfDeal()] &&
+                    state == uint8(EnumsRepo.StateOfDeal.Terminated)
+                ) _mockResults[ia][sellerGroup].selAmt -= amount;
+                else {
+                    _mockResults[ia][sellerGroup].selAmt += amount;
+                    _groupsConcerned[ia].addItem(sellerGroup);
+                }
             }
+
+            _isMocked[ia][sn.sequenceOfDeal()] = true;
         }
 
         emit MockDeals(ia);
     }
 
-    function _checkController(address ia, bool basedOnPar) private {
-        TopGroup storage top = _topGroups[ia];
-
-        uint16 controller = _bos.controller();
-        uint256 amtOfCorp = basedOnPar ? _bos.regCap() : _bos.paidCap();
-        amtOfCorp += top.netIncreasedAmt;
-
-        if (isConcernedGroup[ia][controller]) {
-            if (top.groupNum == controller) top.isOrgController = true;
-        } else {
-            uint256 amtOfController = basedOnPar
-                ? _bosCal.parOfGroup(controller)
-                : _bosCal.paidOfGroup(controller);
-
-            if (top.amount < amtOfController) {
-                top.isOrgController = true;
-                top.groupNum = controller;
-                top.amount = amtOfController;
-            }
-        }
-        top.shareRatio = (top.amount * 10000) / amtOfCorp;
-    }
-
     function _calculateResult(address ia, bool basedOnPar) private {
-        uint16[] storage groups = groupsConcerned[ia];
+        uint16[] storage groups = _groupsConcerned[ia].items;
         TopGroup storage top = _topGroups[ia];
 
         uint256 len = groups.length;
@@ -211,6 +180,29 @@ contract BookOfIA is BookOfDocuments, SHASetting {
         );
     }
 
+    function _checkController(address ia, bool basedOnPar) private {
+        TopGroup storage top = _topGroups[ia];
+
+        uint16 controller = _bos.controller();
+        uint256 amtOfCorp = basedOnPar ? _bos.regCap() : _bos.paidCap();
+        amtOfCorp += top.netIncreasedAmt;
+
+        if (_groupsConcerned[ia].isItem[controller]) {
+            if (top.groupNum == controller) top.isOrgController = true;
+        } else {
+            uint256 amtOfController = basedOnPar
+                ? _bosCal.parOfGroup(controller)
+                : _bosCal.paidOfGroup(controller);
+
+            if (top.amount < amtOfController) {
+                top.isOrgController = true;
+                top.groupNum = controller;
+                top.amount = amtOfController;
+            }
+        }
+        top.shareRatio = (top.amount * 10000) / amtOfCorp;
+    }
+
     function proposeIA(
         address ia,
         uint32 proposeDate,
@@ -245,13 +237,18 @@ contract BookOfIA is BookOfDocuments, SHASetting {
 
         Amt storage fAmt = _mockResults[ia][follower];
 
-        if (!isConcernedGroup[ia][follower]) {
+        if (_groupsConcerned[ia].addItem(follower))
             fAmt.orgAmt = rule.basedOnParOfLink()
                 ? _bosCal.parOfGroup(follower)
                 : _bosCal.paidOfGroup(follower);
-            isConcernedGroup[ia][follower] = true;
-            groupsConcerned[ia].push(follower);
-        }
+
+        // if (!_isConcernedGroup[ia][follower]) {
+        //     fAmt.orgAmt = rule.basedOnParOfLink()
+        //         ? _bosCal.parOfGroup(follower)
+        //         : _bosCal.paidOfGroup(follower);
+        //     _isConcernedGroup[ia][follower] = true;
+        //     _groupsConcerned[ia].push(follower);
+        // }
 
         if (rule.basedOnParOfLink()) {
             require(
@@ -305,7 +302,7 @@ contract BookOfIA is BookOfDocuments, SHASetting {
 
         bAmt.rstAmt = bAmt.orgAmt + bAmt.buyAmt - bAmt.selAmt;
 
-        // if (!ISigPage(ia).established()) updateSateOfDoc(ia, 1);
+        _isMocked[ia][sn.sequenceOfDeal()] = true;
 
         emit AcceptAlongDeal(ia, drager, sn);
     }
@@ -313,6 +310,24 @@ contract BookOfIA is BookOfDocuments, SHASetting {
     //##################
     //##    读接口    ##
     //##################
+
+    function groupsConcerned(address ia)
+        external
+        view
+        onlyUser
+        returns (uint16[])
+    {
+        return _groupsConcerned[ia].items;
+    }
+
+    function isConcernedGroup(address ia, uint16 group)
+        external
+        view
+        onlyUser
+        returns (bool)
+    {
+        return _groupsConcerned[ia].isItem[group];
+    }
 
     function topGroup(address ia)
         external
@@ -339,7 +354,7 @@ contract BookOfIA is BookOfDocuments, SHASetting {
     function mockResults(address ia, uint16 group)
         external
         view
-        onlyRegistered(ia)
+        onlyUser
         onlyForSubmitted(ia)
         returns (
             uint256 selAmt,
@@ -348,7 +363,7 @@ contract BookOfIA is BookOfDocuments, SHASetting {
             uint256 rstAmt
         )
     {
-        require(isConcernedGroup[ia][group], "NOT concerned group");
+        require(_groupsConcerned[ia].isItem[group], "NOT concerned group");
 
         Amt storage amt = _mockResults[ia][group];
         selAmt = amt.selAmt;

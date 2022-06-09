@@ -23,13 +23,37 @@ contract InvestmentAgreement is BOSSetting, SigPage {
 
     /* struct sn{
         uint8 class; 1
-        uint8 typeOfDeal; 1   // 1-CI 2-ST(to 3rd) 3-ST(internal) 4-TagAlong 5-FirstRefusal 6-Gift 
+        uint8 typeOfDeal; 1    
         uint16 sequence; 2
         uint32 buyer; 4
         uint16 group; 2
         bytes6 shortShareNumber; 6
         uint16 preSN; 2
     } 
+    */
+
+    /*
+    enum TypeOfDeal {
+        ZeroPoint,
+        CapitalIncrease,
+        PreEmptive,
+        ShareTransferExt,
+        TagAlong,
+        DragAlong,
+        ShareTransferInt,
+        FirstRefusal,
+        FreeGift
+    }
+    */
+
+    /*
+    enum StateOfDeal {
+        Drafting,
+        Locked,
+        Cleared,
+        Closed,
+        Terminated
+    }
     */
 
     struct Deal {
@@ -39,7 +63,7 @@ contract InvestmentAgreement is BOSSetting, SigPage {
         uint256 parValue;
         uint256 paidPar;
         uint32 closingDate;
-        ObjGroup.TimeLine states; // 0-Drafting 1-Locked 2-Cleared 3-Closed 4-Terminated
+        ObjGroup.TimeLine states;
         bytes32 hashLock;
     }
 
@@ -47,21 +71,17 @@ contract InvestmentAgreement is BOSSetting, SigPage {
     mapping(uint16 => Deal) internal _deals;
 
     // sequence => exist?
-    mapping(uint16 => bool) public isDeal;
+    mapping(uint16 => bool) private _isDeal;
 
-    bytes32[] internal _dealsList;
+    bytes32[] private _dealsList;
 
-    uint16 public counterOfDeals;
+    uint16 private _counterOfDeals;
 
     //##################
     //##    Event     ##
     //##################
 
     event CreateDeal(bytes32 indexed sn, bytes32 shareNumber);
-
-    event CreateAlongDeal(bytes32 indexed sn);
-
-    event AddFirstRefusalBuyer(bytes32 indexed sn, address buyer);
 
     event UpdateDeal(
         bytes32 indexed sn,
@@ -102,7 +122,7 @@ contract InvestmentAgreement is BOSSetting, SigPage {
     }
 
     modifier dealExist(uint16 ssn) {
-        require(isDeal[ssn], "NOT a deal sn");
+        require(_isDeal[ssn], "NOT a deal sn");
         _;
     }
 
@@ -173,34 +193,34 @@ contract InvestmentAgreement is BOSSetting, SigPage {
             );
         }
 
-        counterOfDeals++;
+        _counterOfDeals++;
 
         bytes32 sn = _createSN(
             class,
             typeOfDeal,
-            counterOfDeals,
+            _counterOfDeals,
             buyer,
             group,
             shareNumber,
             preSSN
         );
 
-        Deal storage deal = _deals[counterOfDeals];
+        Deal storage deal = _deals[_counterOfDeals];
 
         deal.sn = sn;
         deal.shareNumber = shareNumber;
 
         _dealsList.push(sn);
-        isDeal[counterOfDeals] = true;
+        _isDeal[_counterOfDeals] = true;
 
         if (finalized) {
             if (
                 shareNumber > bytes32(0) &&
                 typeOfDeal != uint8(EnumsRepo.TypeOfDeal.DragAlong) &&
                 typeOfDeal != uint8(EnumsRepo.TypeOfDeal.FreeGift)
-            ) addBlank(shareNumber.shareholder(), counterOfDeals);
+            ) addBlank(shareNumber.shareholder(), _counterOfDeals);
 
-            addBlank(buyer, counterOfDeals);
+            addBlank(buyer, _counterOfDeals);
         } else {
             if (shareNumber > bytes32(0))
                 addBlank(shareNumber.shareholder(), 0);
@@ -251,7 +271,7 @@ contract InvestmentAgreement is BOSSetting, SigPage {
 
         delete _deals[ssn];
         _dealsList.removeByValue(sn);
-        isDeal[ssn] = false;
+        _isDeal[ssn] = false;
 
         emit DelDeal(sn);
     }
@@ -264,7 +284,6 @@ contract InvestmentAgreement is BOSSetting, SigPage {
         external
         onlyKeeper
         dealExist(ssn)
-        currentDate(lockDate)
         returns (bool flag)
     {
         Deal storage deal = _deals[ssn];
@@ -276,10 +295,9 @@ contract InvestmentAgreement is BOSSetting, SigPage {
     }
 
     function releaseDealSubject(uint16 ssn, uint32 releaseDate)
-        public
+        external
         onlyKeeper
         dealExist(ssn)
-        currentDate(releaseDate)
         returns (bool flag)
     {
         Deal storage deal = _deals[ssn];
@@ -298,7 +316,7 @@ contract InvestmentAgreement is BOSSetting, SigPage {
         uint32 sigDate,
         bytes32 hashLock,
         uint32 closingDate
-    ) external onlyKeeper currentDate(sigDate) dealExist(ssn) {
+    ) external onlyKeeper dealExist(ssn) {
         Deal storage deal = _deals[ssn];
 
         require(sigDate < closingDate, "closingDate shall be FUTURE time");
@@ -339,7 +357,7 @@ contract InvestmentAgreement is BOSSetting, SigPage {
             "hashKey NOT correct"
         );
 
-        require(now - 15 minutes <= deal.closingDate, "MISSED closing date");
+        require(sigDate <= deal.closingDate, "MISSED closing date");
 
         deal.states.pushToNextState(sigDate);
 
@@ -394,10 +412,19 @@ contract InvestmentAgreement is BOSSetting, SigPage {
     //  ##       查询接口              ##
     //  #################################
 
+    function isDeal(uint16 ssn) external view onlyUser returns (bool) {
+        return _isDeal[ssn];
+    }
+
+    function counterOfDeals() external view onlyUser returns (uint16) {
+        return _counterOfDeals;
+    }
+
     function getDeal(uint16 ssn)
         external
         view
         dealExist(ssn)
+        onlyUser
         returns (
             bytes32 sn,
             uint256 parValue,
@@ -418,6 +445,7 @@ contract InvestmentAgreement is BOSSetting, SigPage {
     function unitPrice(uint16 ssn)
         external
         view
+        onlyUser
         dealExist(ssn)
         returns (uint256)
     {
@@ -427,6 +455,7 @@ contract InvestmentAgreement is BOSSetting, SigPage {
     function closingDate(uint16 ssn)
         external
         view
+        onlyUser
         dealExist(ssn)
         returns (uint32)
     {
@@ -436,13 +465,14 @@ contract InvestmentAgreement is BOSSetting, SigPage {
     function shareNumberOfDeal(uint16 ssn)
         external
         view
+        onlyUser
         dealExist(ssn)
         returns (bytes32)
     {
         return _deals[ssn].shareNumber;
     }
 
-    function dealsList() external view returns (bytes32[]) {
+    function dealsList() external view onlyUser returns (bytes32[]) {
         return _dealsList;
     }
 }

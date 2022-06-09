@@ -7,11 +7,9 @@ pragma solidity ^0.4.24;
 
 import "./InvestmentAgreement.sol";
 
-// import "../../common/lib/ObjGroup.sol";
 import "../../common/lib/ObjGroup.sol";
 
 contract FirstRefusalToolKits is InvestmentAgreement {
-    // using ObjGroup for ObjGroup.UserGroup;
     using ObjGroup for ObjGroup.TimeLine;
 
     struct Record {
@@ -20,10 +18,10 @@ contract FirstRefusalToolKits is InvestmentAgreement {
     }
 
     // dealSN => counterOfFR
-    mapping(uint16 => uint16) public counterOfFR;
+    mapping(uint16 => uint16) private _counterOfFR;
 
     // dealSN => accumulatedWeight
-    mapping(uint16 => uint256) public sumOfWeight;
+    mapping(uint16 => uint256) private _sumOfWeight;
 
     // dealSN => counterOfFR => ssn
     mapping(uint16 => mapping(uint16 => Record)) private _records;
@@ -46,15 +44,6 @@ contract FirstRefusalToolKits is InvestmentAgreement {
     event AcceptFR(bytes32 indexed sn, uint32 sender);
 
     //##################
-    //##   Modifier   ##
-    //##################
-
-    // modifier subDealExist(uint16 ssn) {
-    //     require(_subjectDeals.isItem(ssn), "NOT be requested for FR");
-    //     _;
-    // }
-
-    //##################
     //##    写接口    ##
     //##################
 
@@ -64,7 +53,7 @@ contract FirstRefusalToolKits is InvestmentAgreement {
         uint32 acct,
         uint32 execDate,
         bytes32 sigHash
-    ) external onlyKeeper dealExist(ssn) returns (bytes32) {
+    ) external onlyDirectKeeper dealExist(ssn) returns (bytes32) {
         Deal storage targetDeal = _deals[ssn];
 
         bytes32 snOfFR = createDeal(
@@ -78,9 +67,9 @@ contract FirstRefusalToolKits is InvestmentAgreement {
             targetDeal.sn.sequenceOfDeal()
         );
 
-        counterOfFR[ssn]++;
+        _counterOfFR[ssn]++;
 
-        if (counterOfFR[ssn] == 1)
+        if (_counterOfFR[ssn] == 1)
             targetDeal.states.setState(
                 uint8(EnumsRepo.StateOfDeal.Terminated),
                 execDate
@@ -91,16 +80,16 @@ contract FirstRefusalToolKits is InvestmentAgreement {
             : _bos.paidInHand(acct);
         require(weight > 0, "first refusal request has ZERO weight");
 
-        Record storage record = _records[ssn][counterOfFR[ssn]];
+        Record storage record = _records[ssn][_counterOfFR[ssn]];
 
         record.ssn = snOfFR.sequenceOfDeal();
         record.weight = weight;
 
-        sumOfWeight[ssn] += weight;
+        _sumOfWeight[ssn] += weight;
 
         established = false;
 
-        _updateFRDeals(ssn, counterOfFR[ssn]);
+        _updateFRDeals(ssn, _counterOfFR[ssn]);
 
         signDeal(ssn, acct, execDate, sigHash);
 
@@ -114,10 +103,10 @@ contract FirstRefusalToolKits is InvestmentAgreement {
             Record storage record = _records[ssn][len];
 
             uint256 parValue = (targetDeal.parValue * record.weight) /
-                sumOfWeight[ssn];
+                _sumOfWeight[ssn];
 
             uint256 paidPar = (targetDeal.paidPar * record.weight) /
-                sumOfWeight[ssn];
+                _sumOfWeight[ssn];
 
             updateDeal(
                 record.ssn,
@@ -136,8 +125,8 @@ contract FirstRefusalToolKits is InvestmentAgreement {
         uint32 acct,
         uint32 acceptDate,
         bytes32 sigHash
-    ) external dealExist(ssn) {
-        uint16 len = counterOfFR[ssn];
+    ) external onlyDirectKeeper dealExist(ssn) {
+        uint16 len = _counterOfFR[ssn];
 
         while (len > 0) {
             uint16 frSSN = _records[ssn][len].ssn;
@@ -152,14 +141,22 @@ contract FirstRefusalToolKits is InvestmentAgreement {
     //  ##       查询接口              ##
     //  #################################
 
-    function isTargetDeal(uint16 ssn) public view returns (bool) {
-        return counterOfFR[ssn] > 0;
+    function counterOfFR(uint16 ssn) external view onlyUser returns (uint16) {
+        return _counterOfFR[ssn];
     }
 
-    function frDeals(uint16 ssn) external view returns (uint16[]) {
-        require(isTargetDeal(ssn), "not a target deal of FR");
+    function sumOfWeight(uint16 ssn) external view onlyUser returns (uint256) {
+        return _sumOfWeight[ssn];
+    }
 
-        uint16 len = counterOfFR[ssn];
+    function isTargetDeal(uint16 ssn) external view onlyUser returns (bool) {
+        return _counterOfFR[ssn] > 0;
+    }
+
+    function frDeals(uint16 ssn) external view onlyUser returns (uint16[]) {
+        require(_counterOfFR[ssn] > 0, "not a target deal of FR");
+
+        uint16 len = _counterOfFR[ssn];
 
         uint16[] memory deals = new uint16[](len - 1);
 

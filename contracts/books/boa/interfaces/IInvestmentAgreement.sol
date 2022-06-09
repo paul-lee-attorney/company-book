@@ -89,7 +89,7 @@ interface IInvestmentAgreement {
 
     function counterOfFR(uint16 ssn) external view returns (uint16);
 
-    function sumOfWeight(uint16 ssn) external view returns (uint16);
+    function sumOfWeight(uint16 ssn) external view returns (uint256);
 
     function isTargetDeal(uint16 ssn) external view returns (bool);
 

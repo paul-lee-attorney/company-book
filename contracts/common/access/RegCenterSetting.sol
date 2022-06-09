@@ -26,7 +26,7 @@ contract RegCenterSetting {
     }
 
     modifier onlyUser() {
-        require(_rc.isUser(msg.sender), "not a user");
+        require(_rc.isUser(msg.sender), "please register first");
         _;
     }
 

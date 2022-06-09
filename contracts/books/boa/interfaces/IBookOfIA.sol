@@ -16,6 +16,8 @@ interface IBookOfIA {
 
     function removeDoc(address body) external;
 
+    // ======== BookOfIA ========
+
     function submitIA(
         address ia,
         uint32 submitter,
@@ -88,6 +90,8 @@ interface IBookOfIA {
     function currentState(address body) external view returns (uint8);
 
     function startDateOf(address body) external view returns (uint32);
+
+    // ======== BookOfIA ========
 
     function groupsConcerned(address ia) external view returns (uint16[]);
 

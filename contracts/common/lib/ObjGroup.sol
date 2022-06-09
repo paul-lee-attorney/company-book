@@ -10,6 +10,7 @@ import "./SNParser.sol";
 
 library ObjGroup {
     using ArrayUtils for uint8[];
+    using ArrayUtils for uint16[];
     using ArrayUtils for uint32[];
     using ArrayUtils for bytes32[];
     using ArrayUtils for address[];
@@ -70,6 +71,35 @@ library ObjGroup {
         if (list.isItem[title]) {
             list.isItem[title] = false;
             list.items.removeByValue(title);
+            flag = true;
+        }
+    }
+
+    // ======== SeqList ========
+
+    struct SeqList {
+        mapping(uint16 => bool) isItem;
+        uint16[] items;
+    }
+
+    function addItem(SeqList storage list, uint16 seqNo)
+        internal
+        returns (bool flag)
+    {
+        if (!list.isItem[seqNo]) {
+            list.isItem[seqNo] = true;
+            list.items.push(seqNo);
+            flag = true;
+        }
+    }
+
+    function removeItem(SeqList storage list, uint16 seqNo)
+        internal
+        returns (bool flag)
+    {
+        if (list.isItem[seqNo]) {
+            list.isItem[seqNo] = false;
+            list.items.removeByValue(seqNo);
             flag = true;
         }
     }

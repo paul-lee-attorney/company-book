@@ -84,8 +84,6 @@ interface IBookOfIA {
 
     function passedReview(address ia) external returns (bool);
 
-    function reviewDeadlineOf(address body) external view returns (uint32);
-
     function bookName() external view returns (string);
 
     function template() external view returns (address);
@@ -108,6 +106,10 @@ interface IBookOfIA {
     function currentState(address body) external view returns (uint8);
 
     function startDateOf(address body) external view returns (uint32);
+
+    function reviewDeadlineOf(address body) external view returns (uint32);
+
+    function votingDeadlineOf(address body) external view returns (uint32);
 
     // ======== BookOfIA ========
 

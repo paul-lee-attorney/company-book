@@ -216,7 +216,7 @@ contract BookOfIA is BookOfDocuments {
         uint256 paidPar,
         uint32 caller,
         uint32 execDate
-    ) external onlyDirectKeeper currentDate(execDate) {
+    ) external onlyDirectKeeper {
         // rejectDoc(ia, execDate, caller);
 
         uint16 drager = rule.dragerOfLink();
@@ -225,19 +225,11 @@ contract BookOfIA is BookOfDocuments {
         Amt storage fAmt = _mockResults[ia][follower];
 
         if (_groupsConcerned[ia].addItem(follower))
-            fAmt.orgAmt = rule.basedOnParOfLink()
+            fAmt.orgAmt = _getSHA().basedOnPar()
                 ? _bosCal.parOfGroup(follower)
                 : _bosCal.paidOfGroup(follower);
 
-        // if (!_isConcernedGroup[ia][follower]) {
-        //     fAmt.orgAmt = rule.basedOnParOfLink()
-        //         ? _bosCal.parOfGroup(follower)
-        //         : _bosCal.paidOfGroup(follower);
-        //     _isConcernedGroup[ia][follower] = true;
-        //     _groupsConcerned[ia].push(follower);
-        // }
-
-        if (rule.basedOnParOfLink()) {
+        if (_getSHA().basedOnPar()) {
             require(
                 fAmt.orgAmt >= (fAmt.selAmt + parValue),
                 "parValue over flow"
@@ -284,7 +276,7 @@ contract BookOfIA is BookOfDocuments {
 
         Amt storage bAmt = _mockResults[ia][buyerGroup];
 
-        if (rule.basedOnParOfLink()) bAmt.buyAmt += parValue;
+        if (_getSHA().basedOnPar()) bAmt.buyAmt += parValue;
         else bAmt.buyAmt += paidPar;
 
         bAmt.rstAmt = bAmt.orgAmt + bAmt.buyAmt - bAmt.selAmt;

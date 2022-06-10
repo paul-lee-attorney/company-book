@@ -341,7 +341,7 @@ contract InvestmentAgreement is BOSSetting, SigPage {
         );
 
         require(
-            deal.states.currentState == uint8(EnumsRepo.StateOfDeal.Drafting),
+            deal.states.currentState == uint8(EnumsRepo.StateOfDeal.Locked),
             "Deal state wrong"
         );
 
@@ -401,7 +401,7 @@ contract InvestmentAgreement is BOSSetting, SigPage {
     function takeGift(uint16 ssn, uint32 sigDate) external onlyKeeper {
         Deal storage deal = _deals[ssn];
 
-        require(deal.closingDate < sigDate, "NOT reached closing date");
+        require(deal.closingDate >= sigDate, "missed closing date");
 
         require(
             deal.sn.typeOfDeal() == uint8(EnumsRepo.TypeOfDeal.FreeGift),

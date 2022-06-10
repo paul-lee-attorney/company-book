@@ -124,7 +124,7 @@ contract SigPage is DraftControl {
         }
     }
 
-    function addBlank(uint32 acct, uint16 sn) public {
+    function addBlank(uint32 acct, uint16 ssn) public {
         if (!finalized)
             require(
                 hasRole(ATTORNEYS, _msgSender()),
@@ -138,7 +138,7 @@ contract SigPage is DraftControl {
 
         established = false;
 
-        if (_signatures.addBlank(acct, sn)) emit AddBlank(acct, sn);
+        if (_signatures.addBlank(acct, ssn)) emit AddBlank(acct, ssn);
     }
 
     function signDeal(

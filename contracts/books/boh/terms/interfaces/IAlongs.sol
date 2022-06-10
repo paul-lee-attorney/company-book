@@ -6,12 +6,13 @@
 pragma solidity ^0.4.24;
 
 interface IAlongs {
-    function createTag(
+    function createLink(
         uint16 drager,
         uint8 triggerType,
-        bool basedOnPar,
-        uint256 threshold,
-        bool proRata
+        uint32 threshold,
+        bool proRata,
+        uint32 unitPrice,
+        uint32 roe
     ) external;
 
     function addFollower(uint16 drager, uint16 follower) external;

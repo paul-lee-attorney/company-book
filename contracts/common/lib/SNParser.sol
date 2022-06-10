@@ -132,24 +132,20 @@ library SNParser {
         return uint8(bytes1(sn << 16));
     }
 
-    function basedOnParOfLink(bytes32 sn) internal pure returns (bool) {
-        return uint8(sn[3]) == 1;
-    }
-
     function thresholdOfLink(bytes32 sn) internal pure returns (uint256) {
-        return uint256(bytes4(sn << 32));
+        return uint256(bytes4(sn << 24));
     }
 
     function proRataOfLink(bytes32 sn) internal pure returns (bool) {
-        return uint8(sn[5]) == 1;
+        return uint8(sn[4]) == 1;
     }
 
     function unitPriceOfLink(bytes32 sn) internal pure returns (uint256) {
-        return uint256(bytes4(sn << 72));
+        return uint256(bytes4(sn << 64));
     }
 
     function roeOfLink(bytes32 sn) internal pure returns (uint256) {
-        return uint256(bytes4(sn << 104));
+        return uint256(bytes4(sn << 96));
     }
 
     // ======== OptionSN ========

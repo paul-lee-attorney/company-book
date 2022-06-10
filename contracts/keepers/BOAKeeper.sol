@@ -202,7 +202,13 @@ contract BOAKeeper is BOASetting, SHASetting, BOMSetting, BOSSetting {
                     );
                     _boa.mockDealOfSell(ia, caller, amount);
                 }
-            } else _boa.mockDealOfBuy(ia, seq, caller, amount);
+            } else {
+                if (
+                    sn.typeOfDeal() ==
+                    uint8(EnumsRepo.TypeOfDeal.CapitalIncrease)
+                ) IInvestmentAgreement(ia).lockDealSubject(seq, sigDate);
+                _boa.mockDealOfBuy(ia, seq, caller, amount);
+            }
 
             len--;
         }

@@ -43,8 +43,7 @@ library EnumsRepo {
         Established,
         Proposed,
         Voted,
-        Exercised,
-        Revoked
+        Exercised
     }
 
     // enum BOAStates {

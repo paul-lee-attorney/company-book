@@ -79,7 +79,6 @@ contract DragAlong is BOSSetting, BOASetting, DraftControl {
     function _createLinkRule(
         uint16 drager,
         uint8 triggerType,
-        bool basedOnPar,
         uint32 threshold,
         bool proRata,
         uint32 unitPrice,
@@ -89,11 +88,10 @@ contract DragAlong is BOSSetting, BOASetting, DraftControl {
 
         _sn = _sn.sequenceToSN(0, drager);
         _sn[2] = bytes1(triggerType);
-        _sn = _sn.boolToSN(3, basedOnPar);
-        _sn = _sn.intToSN(4, threshold, 4);
-        _sn = _sn.boolToSN(8, proRata);
-        _sn = _sn.dateToSN(9, unitPrice);
-        _sn = _sn.dateToSN(13, roe);
+        _sn = _sn.intToSN(3, threshold, 4);
+        _sn = _sn.boolToSN(7, proRata);
+        _sn = _sn.dateToSN(8, unitPrice);
+        _sn = _sn.dateToSN(12, roe);
 
         return _sn.bytesToBytes32();
     }
@@ -101,7 +99,6 @@ contract DragAlong is BOSSetting, BOASetting, DraftControl {
     function createLink(
         uint16 drager,
         uint8 triggerType,
-        bool basedOnPar,
         uint32 threshold,
         bool proRata,
         uint32 unitPrice,
@@ -114,7 +111,6 @@ contract DragAlong is BOSSetting, BOASetting, DraftControl {
         bytes32 rule = _createLinkRule(
             drager,
             triggerType,
-            basedOnPar,
             threshold,
             proRata,
             unitPrice,

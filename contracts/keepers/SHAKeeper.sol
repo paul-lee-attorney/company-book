@@ -30,8 +30,22 @@ contract SHAKeeper is BOASetting, SHASetting, BOSSetting {
     // ##   Modifier   ##
     // ##################
 
-    modifier withinReviewPeriod(address body, uint32 sigDate) {
-        require(_boa.reviewDeadlineOf(body) >= sigDate, "missed review period");
+    modifier withinReviewPeriod(address ia, uint32 sigDate) {
+        require(_boa.reviewDeadlineOf(ia) >= sigDate, "missed review period");
+        _;
+    }
+
+    modifier withinProposePeriod(address ia, uint32 sigDate) {
+        require(_boa.reviewDeadlineOf(ia) < sigDate, "still in review period");
+        require(_boa.votingDeadlineOf(ia) >= sigDate, "missed voting deadline");
+        _;
+    }
+
+    modifier onlyEstablished(address ia) {
+        require(
+            _boa.currentState(ia) == uint8(EnumsRepo.BODStates.Established),
+            "IA not established"
+        );
         _;
     }
 
@@ -55,6 +69,7 @@ contract SHAKeeper is BOASetting, SHASetting, BOSSetting {
         external
         onlyDirectKeeper
         currentDate(sigDate)
+        onlyEstablished(ia)
         withinReviewPeriod(ia, sigDate)
     {
         _addAlongDeal(
@@ -207,6 +222,7 @@ contract SHAKeeper is BOASetting, SHASetting, BOSSetting {
         external
         onlyDirectKeeper
         currentDate(sigDate)
+        onlyEstablished(ia)
         withinReviewPeriod(ia, sigDate)
     {
         require(caller == sn.buyerOfDeal(), "caller NOT buyer");
@@ -227,6 +243,7 @@ contract SHAKeeper is BOASetting, SHASetting, BOSSetting {
         external
         onlyDirectKeeper
         currentDate(sigDate)
+        onlyEstablished(ia)
         withinReviewPeriod(ia, sigDate)
     {
         require(
@@ -241,11 +258,6 @@ contract SHAKeeper is BOASetting, SHASetting, BOSSetting {
 
         address ad = _getSHA().getTerm(
             uint8(EnumsRepo.TermTitle.ANTI_DILUTION)
-        );
-
-        require(
-            ITerm(ad).isTriggered(ia, sn.sequenceOfDeal()),
-            "AntiDilution is not triggered"
         );
 
         uint32 closingDate = IInvestmentAgreement(ia).closingDate(

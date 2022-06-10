@@ -110,23 +110,14 @@ contract BookOfDocuments is CloneFactory, SHASetting, BOSSetting {
         _;
     }
 
-    // modifier onlyForEstablished(address body) {
-    //     require(
-    //         _docs[body].states.currentState ==
-    //             uint8(EnumsRepo.BODStates.Established),
-    //         "state of doc is not Established"
-    //     );
-    //     _;
-    // }
-
-    // modifier onlyForCirculated(address ia) {
-    //     require(
-    //         _docs[ia].states.currentState >=
-    //             uint8(EnumsRepo.BODStates.Circulated),
-    //         "not circulated"
-    //     );
-    //     _;
-    // }
+    modifier onlyForCirculated(address body) {
+        require(
+            _docs[body].states.currentState ==
+                uint8(EnumsRepo.BODStates.Circulated),
+            "state of doc is not Circulated"
+        );
+        _;
+    }
 
     //##################
     //##    写接口    ##
@@ -319,5 +310,14 @@ contract BookOfDocuments is CloneFactory, SHASetting, BOSSetting {
         returns (uint32)
     {
         return _docs[body].reviewDeadline;
+    }
+
+    function votingDeadlineOf(address body)
+        external
+        view
+        onlyRegistered(body)
+        returns (uint32)
+    {
+        return _docs[body].votingDeadline;
     }
 }

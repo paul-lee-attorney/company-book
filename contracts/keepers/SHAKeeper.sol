@@ -35,15 +35,15 @@ contract SHAKeeper is BOASetting, SHASetting, BOSSetting {
         _;
     }
 
-    modifier withinProposePeriod(address ia, uint32 sigDate) {
-        require(_boa.reviewDeadlineOf(ia) < sigDate, "still in review period");
-        require(_boa.votingDeadlineOf(ia) >= sigDate, "missed voting deadline");
-        _;
-    }
+    // modifier withinProposePeriod(address ia, uint32 sigDate) {
+    //     require(_boa.reviewDeadlineOf(ia) < sigDate, "still in review period");
+    //     require(_boa.votingDeadlineOf(ia) >= sigDate, "missed voting deadline");
+    //     _;
+    // }
 
-    modifier onlyEstablished(address ia) {
+    modifier onlyExecuted(address ia) {
         require(
-            _boa.currentState(ia) == uint8(EnumsRepo.BODStates.Established),
+            _boa.currentState(ia) == uint8(EnumsRepo.BODStates.Executed),
             "IA not established"
         );
         _;
@@ -69,7 +69,7 @@ contract SHAKeeper is BOASetting, SHASetting, BOSSetting {
         external
         onlyDirectKeeper
         currentDate(sigDate)
-        onlyEstablished(ia)
+        onlyExecuted(ia)
         withinReviewPeriod(ia, sigDate)
     {
         _addAlongDeal(
@@ -83,41 +83,19 @@ contract SHAKeeper is BOASetting, SHASetting, BOSSetting {
             sigDate
         );
 
-        bytes32 alongSN = _createAlongDeal(
-            ia,
-            sn,
-            dragAlong,
-            shareNumber,
-            caller,
-            sigDate,
-            sigHash
-        );
+        bytes32 alongSN = _createAlongDeal(ia, sn, dragAlong, shareNumber);
 
         _updateAlongDeal(ia, sn, alongSN, parValue, paidPar);
-    }
 
-    function _updateAlongDeal(
-        address ia,
-        bytes32 sn,
-        bytes32 alongSN,
-        uint256 parValue,
-        uint256 paidPar
-    ) private {
-        uint256 unitPrice = IInvestmentAgreement(ia).unitPrice(
-            sn.sequenceOfDeal()
-        );
+        _lockDealSubject(ia, alongSN, parValue, sigDate);
 
-        uint32 closingDate = IInvestmentAgreement(ia).closingDate(
-            sn.sequenceOfDeal()
-        );
-
-        IInvestmentAgreement(ia).updateDeal(
-            alongSN.sequenceOfDeal(),
-            unitPrice,
-            parValue,
-            paidPar,
-            closingDate
-        );
+        if (!dragAlong)
+            ISigPage(ia).signDeal(
+                alongSN.sequenceOfDeal(),
+                caller,
+                sigDate,
+                sigHash
+            );
     }
 
     function _addAlongDeal(
@@ -175,18 +153,13 @@ contract SHAKeeper is BOASetting, SHASetting, BOSSetting {
             caller,
             sigDate
         );
-
-        ISigPage(ia).backToFinalized(_boa.reviewDeadlineOf(ia));
     }
 
     function _createAlongDeal(
         address ia,
         bytes32 sn,
         bool dragAlong,
-        bytes32 shareNumber,
-        uint32 caller,
-        uint32 sigDate,
-        bytes32 sigHash
+        bytes32 shareNumber
     ) private returns (bytes32 aSN) {
         uint8 typeOfDeal = dragAlong
             ? uint8(EnumsRepo.TypeOfDeal.DragAlong)
@@ -200,14 +173,44 @@ contract SHAKeeper is BOASetting, SHASetting, BOSSetting {
             sn.groupOfBuyer(),
             sn.sequence()
         );
+    }
 
-        if (!dragAlong)
-            ISigPage(ia).signDeal(
-                sn.sequenceOfDeal(),
-                caller,
-                sigDate,
-                sigHash
-            );
+    function _updateAlongDeal(
+        address ia,
+        bytes32 sn,
+        bytes32 alongSN,
+        uint256 parValue,
+        uint256 paidPar
+    ) private {
+        uint256 unitPrice = IInvestmentAgreement(ia).unitPrice(
+            sn.sequenceOfDeal()
+        );
+
+        uint32 closingDate = IInvestmentAgreement(ia).closingDate(
+            sn.sequenceOfDeal()
+        );
+
+        IInvestmentAgreement(ia).updateDeal(
+            alongSN.sequenceOfDeal(),
+            unitPrice,
+            parValue,
+            paidPar,
+            closingDate
+        );
+    }
+
+    function _lockDealSubject(
+        address ia,
+        bytes32 alongSN,
+        uint256 parValue,
+        uint32 sigDate
+    ) private {
+        if (
+            IInvestmentAgreement(ia).lockDealSubject(
+                alongSN.sequenceOfDeal(),
+                sigDate
+            )
+        ) _bos.decreaseCleanPar(alongSN.shortShareNumberOfDeal(), parValue);
     }
 
     function acceptAlongDeal(
@@ -222,7 +225,7 @@ contract SHAKeeper is BOASetting, SHASetting, BOSSetting {
         external
         onlyDirectKeeper
         currentDate(sigDate)
-        onlyEstablished(ia)
+        onlyExecuted(ia)
         withinReviewPeriod(ia, sigDate)
     {
         require(caller == sn.buyerOfDeal(), "caller NOT buyer");
@@ -243,7 +246,7 @@ contract SHAKeeper is BOASetting, SHASetting, BOSSetting {
         external
         onlyDirectKeeper
         currentDate(sigDate)
-        onlyEstablished(ia)
+        onlyExecuted(ia)
         withinReviewPeriod(ia, sigDate)
     {
         require(
@@ -394,7 +397,7 @@ contract SHAKeeper is BOASetting, SHASetting, BOSSetting {
         external
         onlyDirectKeeper
         currentDate(sigDate)
-        onlyEstablished(ia)
+        onlyExecuted(ia)
         withinReviewPeriod(ia, sigDate)
     {
         require(!ISigPage(ia).isInitSigner(caller), "caller is an init signer");
@@ -428,7 +431,7 @@ contract SHAKeeper is BOASetting, SHASetting, BOSSetting {
         external
         onlyDirectKeeper
         currentDate(acceptDate)
-        onlyEstablished(ia)
+        onlyExecuted(ia)
         withinReviewPeriod(ia, acceptDate)
     {
         if (sn.typeOfDeal() == uint8(EnumsRepo.TypeOfDeal.CapitalIncrease))

@@ -243,11 +243,10 @@ contract BookOfDocuments is CloneFactory, SHASetting, BOSSetting {
     {
         Doc storage doc = _docs[body];
 
-        if (doc.states.currentState < uint8(EnumsRepo.BODStates.Established))
+        if (doc.states.currentState < uint8(EnumsRepo.BODStates.Executed))
             return false;
-        else if (
-            doc.states.currentState > uint8(EnumsRepo.BODStates.Established)
-        ) return true;
+        else if (doc.states.currentState > uint8(EnumsRepo.BODStates.Executed))
+            return true;
         else if (doc.reviewDeadline > now + 15 minutes) return false;
         else return true;
     }

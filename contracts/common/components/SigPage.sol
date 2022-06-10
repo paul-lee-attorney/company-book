@@ -160,11 +160,11 @@ contract SigPage is DraftControl {
         }
     }
 
-    function backToFinalized(uint32 reviewDeadline) external onlyKeeper {
-        if (established) established = false;
-        sigDeadline = reviewDeadline;
-        emit BackToFinalized();
-    }
+    // function backToFinalized(uint32 reviewDeadline) external onlyKeeper {
+    //     if (established) established = false;
+    //     sigDeadline = reviewDeadline;
+    //     emit BackToFinalized();
+    // }
 
     //####################
     //##    查询接口    ##

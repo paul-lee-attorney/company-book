@@ -217,8 +217,6 @@ contract BookOfIA is BookOfDocuments {
         uint32 caller,
         uint32 execDate
     ) external onlyDirectKeeper {
-        // rejectDoc(ia, execDate, caller);
-
         uint16 drager = rule.dragerOfLink();
         uint16 follower = _bos.groupNo(shareNumber.shareholder());
 

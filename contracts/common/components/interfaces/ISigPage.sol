@@ -35,7 +35,7 @@ interface ISigPage {
         bytes32 sigHash
     ) external;
 
-    function backToFinalized(uint32 reviewDeadline) external;
+    // function backToFinalized(uint32 reviewDeadline) external;
 
     //####################
     //##    查询接口    ##

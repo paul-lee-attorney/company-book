@@ -40,7 +40,7 @@ library EnumsRepo {
         ZeroPoint,
         Created,
         Circulated,
-        Established,
+        Executed,
         Proposed,
         Voted,
         Exercised

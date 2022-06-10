@@ -18,7 +18,7 @@ import "../../common/lib/ObjGroup.sol";
 import "../../common/lib/SNParser.sol";
 import "../../common/lib/EnumsRepo.sol";
 
-contract BookOfIA is BookOfDocuments, SHASetting {
+contract BookOfIA is BookOfDocuments {
     using SNParser for bytes32;
     using ObjGroup for ObjGroup.SeqList;
     using ArrayUtils for uint32[];
@@ -43,7 +43,7 @@ contract BookOfIA is BookOfDocuments, SHASetting {
         uint16 groupNum;
         uint256 amount;
         bool isOrgController;
-        uint256 netIncreasedAmt;
+        Amt sumOfIA;
         uint256 shareRatio;
     }
 
@@ -78,96 +78,81 @@ contract BookOfIA is BookOfDocuments, SHASetting {
     //##  Write I/O  ##
     //#################
 
-    function submitIA(
+    function circulateIA(
         address ia,
         uint32 submitter,
-        uint32 submitDate,
-        bytes32 docHash
+        uint32 submitDate
     ) external onlyDirectKeeper {
-        submitDoc(ia, submitter, submitDate, docHash);
-        bool basedOnPar = _getSHA().votingRules(typeOfIA(ia)).basedOnParOfVR();
-        _mockDeals(ia, basedOnPar);
-        _calculateResult(ia, basedOnPar);
+        require(typeOfIA(ia) == _docs[ia].sn.typeOfDoc(), "typeOfIA wrong");
+        circulateDoc(ia, submitter, submitDate);
     }
 
-    function _mockDeals(address ia, bool basedOnPar) private {
-        bytes32[] memory dealsList = IInvestmentAgreement(ia).dealsList();
-        uint256 len = dealsList.length;
+    function mockDealOfSell(
+        address ia,
+        uint32 seller,
+        uint256 amount
+    ) external onlyDirectKeeper {
+        uint16 sellerGroup = _bos.groupNo(seller);
+        _mockResults[ia][sellerGroup].selAmt += amount;
+        _groupsConcerned[ia].addItem(sellerGroup);
+    }
 
-        for (uint256 i = 0; i < len; i++) {
-            bytes32 sn = dealsList[i];
+    function mockDealOfBuy(
+        address ia,
+        uint16 ssn,
+        uint32 buyer,
+        uint256 amount
+    ) external onlyDirectKeeper {
+        uint16 buyerGroup = _bos.groupNo(buyer);
 
-            uint256 amount;
-            uint8 state;
+        if (!_isMocked[ia][ssn]) {
+            _mockResults[ia][buyerGroup].buyAmt += amount;
+            _groupsConcerned[ia].addItem(buyerGroup);
 
-            if (basedOnPar)
-                (, amount, , state, ) = IInvestmentAgreement(ia).getDeal(
-                    sn.sequenceOfDeal()
-                );
-            else
-                (, , amount, state, ) = IInvestmentAgreement(ia).getDeal(
-                    sn.sequenceOfDeal()
-                );
-
-            uint16 buyerGroup = sn.groupOfBuyer();
-
-            if (_isMocked[ia][sn.sequenceOfDeal()]) {
-                if (state != uint8(EnumsRepo.StateOfDeal.Terminated)) continue;
-                else _mockResults[ia][buyerGroup].buyAmt -= amount;
-            } else {
-                _mockResults[ia][buyerGroup].buyAmt += amount;
-                _groupsConcerned[ia].addItem(buyerGroup);
-            }
-
-            if (sn.typeOfDeal() > 1) {
-                uint16 sellerGroup = _bos.groupNo(
-                    IInvestmentAgreement(ia)
-                        .shareNumberOfDeal(sn.sequenceOfDeal())
-                        .shareholder()
-                );
-
-                if (
-                    _isMocked[ia][sn.sequenceOfDeal()] &&
-                    state == uint8(EnumsRepo.StateOfDeal.Terminated)
-                ) _mockResults[ia][sellerGroup].selAmt -= amount;
-                else {
-                    _mockResults[ia][sellerGroup].selAmt += amount;
-                    _groupsConcerned[ia].addItem(sellerGroup);
-                }
-            }
-
-            _isMocked[ia][sn.sequenceOfDeal()] = true;
+            _isMocked[ia][ssn] = true;
         }
-
-        emit MockDeals(ia);
     }
 
-    function _calculateResult(address ia, bool basedOnPar) private {
+    function calculateMockResult(address ia) external onlyDirectKeeper {
         uint16[] storage groups = _groupsConcerned[ia].items;
+
+        delete _topGroups[ia];
         TopGroup storage top = _topGroups[ia];
 
         uint256 len = groups.length;
+        bool basedOnPar = _getSHA().basedOnPar();
 
-        for (uint256 i = 0; i < len; i++) {
-            uint16 groupNum = groups[i];
+        while (len > 0) {
+            uint16 groupNum = groups[len - 1];
 
-            Amt storage amt = _mockResults[ia][groupNum];
+            Amt storage group = _mockResults[ia][groupNum];
 
             if (_bos.isGroup(groupNum))
-                amt.orgAmt = basedOnPar
+                group.orgAmt = basedOnPar
                     ? _bosCal.parOfGroup(groupNum)
                     : _bosCal.paidOfGroup(groupNum);
 
-            require(amt.orgAmt + amt.buyAmt >= amt.selAmt, "amount OVER FLOW");
+            require(
+                group.orgAmt + group.buyAmt >= group.selAmt,
+                "amount OVER FLOW"
+            );
+            group.rstAmt = group.orgAmt + group.buyAmt - group.selAmt;
 
-            amt.rstAmt = amt.orgAmt + amt.buyAmt - amt.selAmt;
-            top.netIncreasedAmt += amt.rstAmt;
-
-            if (amt.rstAmt > top.amount) {
-                top.amount = amt.rstAmt;
+            if (group.rstAmt > top.amount) {
+                top.amount = group.rstAmt;
                 top.groupNum = groupNum;
             }
+
+            top.sumOfIA.buyAmt += group.buyAmt;
+            top.sumOfIA.selAmt += group.selAmt;
         }
+
+        require(
+            top.sumOfIA.buyAmt >= top.sumOfIA.selAmt,
+            "sell amount over flow"
+        );
+
+        top.sumOfIA.rstAmt = top.sumOfIA.buyAmt - top.sumOfIA.selAmt;
 
         _checkController(ia, basedOnPar);
 
@@ -185,7 +170,7 @@ contract BookOfIA is BookOfDocuments, SHASetting {
 
         uint16 controller = _bos.controller();
         uint256 amtOfCorp = basedOnPar ? _bos.regCap() : _bos.paidCap();
-        amtOfCorp += top.netIncreasedAmt;
+        amtOfCorp += top.sumOfIA.rstAmt;
 
         if (_groupsConcerned[ia].isItem[controller]) {
             if (top.groupNum == controller) top.isOrgController = true;
@@ -203,6 +188,8 @@ contract BookOfIA is BookOfDocuments, SHASetting {
         top.shareRatio = (top.amount * 10000) / amtOfCorp;
     }
 
+    // ======== Propose IA ========
+
     function proposeIA(
         address ia,
         uint32 proposeDate,
@@ -212,7 +199,7 @@ contract BookOfIA is BookOfDocuments, SHASetting {
         onlyDirectKeeper
         onlyRegistered(ia)
         currentDate(proposeDate)
-        onlyForSubmitted(ia)
+        onlyForCirculated(ia)
     {
         Doc storage doc = _docs[ia];
 
@@ -230,7 +217,7 @@ contract BookOfIA is BookOfDocuments, SHASetting {
         uint32 caller,
         uint32 execDate
     ) external onlyDirectKeeper currentDate(execDate) {
-        rejectDoc(ia, execDate, caller);
+        // rejectDoc(ia, execDate, caller);
 
         uint16 drager = rule.dragerOfLink();
         uint16 follower = _bos.groupNo(shareNumber.shareholder());
@@ -333,7 +320,7 @@ contract BookOfIA is BookOfDocuments, SHASetting {
         external
         view
         onlyRegistered(ia)
-        onlyForSubmitted(ia)
+        onlyForCirculated(ia)
         returns (
             uint16 groupNum,
             uint256 amount,
@@ -347,7 +334,7 @@ contract BookOfIA is BookOfDocuments, SHASetting {
         groupNum = top.groupNum;
         amount = top.amount;
         isOrgController = top.isOrgController;
-        netIncreasedAmt = top.netIncreasedAmt;
+        netIncreasedAmt = top.sumOfIA.rstAmt;
         shareRatio = top.shareRatio;
     }
 
@@ -355,7 +342,7 @@ contract BookOfIA is BookOfDocuments, SHASetting {
         external
         view
         onlyUser
-        onlyForSubmitted(ia)
+        onlyForCirculated(ia)
         returns (
             uint256 selAmt,
             uint256 buyAmt,

@@ -12,18 +12,36 @@ interface IBookOfIA {
 
     function setTemplate(address body) external;
 
-    function createDoc(uint8 docType) external returns (address body);
+    function createDoc(
+        uint8 docType,
+        uint32 caller,
+        uint32 createDate
+    ) external returns (address body);
 
     function removeDoc(address body) external;
 
     // ======== BookOfIA ========
 
-    function submitIA(
+    function circulateIA(
         address ia,
         uint32 submitter,
-        uint32 submitDate,
-        bytes32 docHash
+        uint32 submitDate
     ) external;
+
+    function mockDealOfSell(
+        address ia,
+        uint32 seller,
+        uint256 amount
+    ) external;
+
+    function mockDealOfBuy(
+        address ia,
+        uint16 ssn,
+        uint32 buyer,
+        uint256 amount
+    ) external;
+
+    function calculateMockResult(address ia) external;
 
     function rejectDoc(
         address body,
@@ -76,7 +94,7 @@ interface IBookOfIA {
 
     function counterOfDocs() external view returns (uint16);
 
-    function isSubmitted(address body) external view returns (bool);
+    function isCirculated(address body) external view returns (bool);
 
     function qtyOfDocs() external view returns (uint256);
 

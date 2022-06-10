@@ -396,13 +396,9 @@ contract SHAKeeper is BOASetting, SHASetting, BOSSetting {
 
         _boa.rejectDoc(ia, sigDate, caller);
 
-        bool basedOnPar = _getSHA()
-            .votingRules(sn.typeOfDeal())
-            .basedOnParOfVR();
-
         IInvestmentAgreement(ia).execFirstRefusalRight(
             sn.sequenceOfDeal(),
-            basedOnPar,
+            _getSHA().basedOnPar(),
             caller,
             sigDate,
             sigHash

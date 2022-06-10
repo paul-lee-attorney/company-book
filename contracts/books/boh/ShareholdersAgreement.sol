@@ -142,7 +142,7 @@ contract ShareholdersAgreement is
             IDraftControl(clauses[i]).lockContents();
         }
 
-        circulateDoc();
+        finalizeDoc();
     }
 
     function kill() external onlyDirectKeeper {

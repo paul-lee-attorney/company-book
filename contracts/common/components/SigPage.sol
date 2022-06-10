@@ -96,28 +96,32 @@ contract SigPage is DraftControl {
         if (_signatures.removeParty(acct)) emit RemoveParty(acct);
     }
 
-    function circulateDoc() public onlyGC onlyPending {
+    function finalizeDoc() public onlyGC onlyPending {
         lockContents();
         finalized = true;
         emit DocFinalized();
     }
 
-    function signDoc(uint32 sigDate, bytes32 sigHash)
-        external
-        onlyParty
-        onlyFinalized
-    {
+    function signDoc(
+        uint32 caller,
+        uint32 sigDate,
+        bytes32 sigHash
+    ) public onlyFinalized {
         require(sigDate < sigDeadline, "later than SigDeadline");
 
-        if (_signatures.signDeal(_msgSender(), 0, sigDate, sigHash))
-            emit SignDoc(_msgSender(), sigDate, sigHash);
+        if (_signatures.signDeal(caller, 0, sigDate, sigHash)) {
+            emit SignDoc(caller, sigDate, sigHash);
+            _checkCompletionOfSig();
+        }
     }
 
     function acceptDoc(uint32 sigDate, bytes32 sigHash) external onlyParty {
         require(established, "Doc not established");
 
-        if (_signatures.signDeal(_msgSender(), 0, sigDate, sigHash))
+        if (_signatures.signDeal(_msgSender(), 0, sigDate, sigHash)) {
             emit SignDoc(_msgSender(), sigDate, sigHash);
+            _checkCompletionOfSig();
+        }
     }
 
     function addBlank(uint32 acct, uint16 sn) public {
@@ -150,7 +154,7 @@ contract SigPage is DraftControl {
     }
 
     function _checkCompletionOfSig() private {
-        if (_signatures.balance == 0 && _signatures.parties.length > 0) {
+        if (_signatures.balance == 0) {
             established = true;
             emit DocEstablished();
         }

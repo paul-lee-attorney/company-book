@@ -10,7 +10,11 @@ interface IBOAKeeper {
     // ##   Write IO  ##
     // #################
 
-    function createIA(uint8 docType, uint32 caller) external;
+    function createIA(
+        uint8 docType,
+        uint32 caller,
+        uint32 createDate
+    ) external;
 
     function removeIA(
         address body,
@@ -18,11 +22,17 @@ interface IBOAKeeper {
         uint32 sigDate
     ) external;
 
-    function submitIA(
+    function circulateIA(
         address body,
-        uint32 submitDate,
-        bytes32 docHash,
-        uint32 caller
+        uint32 caller,
+        uint32 submitDate
+    ) external;
+
+    function signIA(
+        address ia,
+        uint32 caller,
+        uint32 sigDate,
+        bytes32 sigHash
     ) external;
 
     // ======== TagAlong & DragAlong ========

@@ -39,17 +39,22 @@ library EnumsRepo {
     enum BODStates {
         ZeroPoint,
         Created,
-        Submitted
-    }
-
-    enum BOAStates {
-        ZeroPoint,
-        Created,
-        Submitted,
+        Circulated,
+        Established,
         Proposed,
         Voted,
-        Exercised
+        Exercised,
+        Revoked
     }
+
+    // enum BOAStates {
+    //     ZeroPoint,
+    //     Created,
+    //     Circulated,
+    //     Proposed,
+    //     Voted,
+    //     Exercised
+    // }
 
     enum ActionType {
         CAPITAL_INCREASE,

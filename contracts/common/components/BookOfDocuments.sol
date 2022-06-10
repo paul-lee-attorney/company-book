@@ -15,10 +15,11 @@ import "../lib/ObjGroup.sol";
 import "./interfaces/ISigPage.sol";
 
 import "../ruting/BOSSetting.sol";
+import "../ruting/SHASetting.sol";
 
 import "../utils/CloneFactory.sol";
 
-contract BookOfDocuments is CloneFactory, BOSSetting {
+contract BookOfDocuments is CloneFactory, SHASetting, BOSSetting {
     using SNFactory for bytes;
     using SNParser for bytes32;
     using ObjGroup for ObjGroup.TimeLine;
@@ -27,16 +28,29 @@ contract BookOfDocuments is CloneFactory, BOSSetting {
     string public bookName;
     address public template;
 
+    /*
+    enum BODStates {
+        ZeroPoint,
+        Created,
+        Circulated,
+        Established,
+        Proposed,
+        Voted,
+        Exercised,
+        Revoked
+    }
+*/
+
     struct Doc {
         bytes32 sn;
         bytes32 docHash;
         uint32 reviewDeadline;
+        uint32 votingDeadline;
         ObjGroup.TimeLine states;
     }
 
     // struct snInfo {
     //     uint8 docType;           1
-    //     uint8 reviewDays;        1
     //     uint16 sequence;         2
     //     uint32 createDate;       4
     //     uint32 creator;          4
@@ -96,14 +110,23 @@ contract BookOfDocuments is CloneFactory, BOSSetting {
         _;
     }
 
-    modifier onlyForSubmitted(address body) {
-        require(
-            _docs[body].states.currentState ==
-                uint8(EnumsRepo.BODStates.Submitted),
-            "state of doc is not Submitted"
-        );
-        _;
-    }
+    // modifier onlyForEstablished(address body) {
+    //     require(
+    //         _docs[body].states.currentState ==
+    //             uint8(EnumsRepo.BODStates.Established),
+    //         "state of doc is not Established"
+    //     );
+    //     _;
+    // }
+
+    // modifier onlyForCirculated(address ia) {
+    //     require(
+    //         _docs[ia].states.currentState >=
+    //             uint8(EnumsRepo.BODStates.Circulated),
+    //         "not circulated"
+    //     );
+    //     _;
+    // }
 
     //##################
     //##    写接口    ##
@@ -116,7 +139,6 @@ contract BookOfDocuments is CloneFactory, BOSSetting {
 
     function _createSN(
         uint8 docType,
-        uint8 reviewDays,
         uint16 sequence,
         uint32 createDate,
         uint32 creator,
@@ -125,34 +147,25 @@ contract BookOfDocuments is CloneFactory, BOSSetting {
         bytes memory _sn = new bytes(32);
 
         _sn[0] = bytes1(docType);
-        _sn[1] = bytes1(reviewDays);
-        _sn = _sn.sequenceToSN(2, sequence);
-        _sn = _sn.dateToSN(4, createDate);
-        _sn = _sn.dateToSN(8, creator);
-        _sn = _sn.addrToSN(12, body);
+        _sn = _sn.sequenceToSN(1, sequence);
+        _sn = _sn.dateToSN(3, createDate);
+        _sn = _sn.dateToSN(7, creator);
+        _sn = _sn.addrToSN(11, body);
 
         sn = _sn.bytesToBytes32();
     }
 
     function createDoc(
         uint8 docType,
-        uint8 reviewDays,
-        uint32 createDate,
-        uint32 creator
-    )
-        external
-        onlyDirectKeeper
-        tempReady
-        currentDate(createDate)
-        returns (address body)
-    {
+        uint32 creator,
+        uint32 createDate
+    ) external onlyDirectKeeper tempReady returns (address body) {
         body = createClone(template);
 
         counterOfDocs++;
 
         bytes32 sn = _createSN(
             docType,
-            reviewDays,
             counterOfDocs,
             createDate,
             creator,
@@ -181,69 +194,46 @@ contract BookOfDocuments is CloneFactory, BOSSetting {
         _docsList.removeByValue(sn);
 
         delete _docs[body];
-
         delete isRegistered[body];
 
         emit RemoveDoc(sn, caller);
     }
 
-    function submitDoc(
+    function circulateDoc(
         address body,
         uint32 submitter,
-        uint32 submitDate,
-        bytes32 docHash
-    )
-        public
-        onlyDirectKeeper
-        onlyRegistered(body)
-        onlyForPending(body)
-        currentDate(submitDate)
-    {
-        require(ISigPage(body).established(), "doc is not established");
-
+        uint32 circulateDate
+    ) public onlyDirectKeeper onlyRegistered(body) onlyForPending(body) {
         Doc storage doc = _docs[body];
 
-        doc.docHash = docHash;
-        doc.reviewDeadline = submitDate + doc.sn.reviewDaysOfDoc() * 86400;
-        doc.states.pushToNextState(submitDate);
+        bytes32 rule = _getSHA().votingRules(doc.sn.typeOfDoc());
+
+        doc.reviewDeadline =
+            circulateDate +
+            uint32(rule.reviewDaysOfVR()) *
+            86400;
+
+        doc.votingDeadline =
+            circulateDate +
+            uint32(rule.votingDaysOfVR()) *
+            86400;
+
+        doc.states.pushToNextState(circulateDate);
 
         emit UpdateStateOfDoc(doc.sn, doc.states.currentState, submitter);
-    }
-
-    function rejectDoc(
-        address body,
-        uint32 sigDate,
-        uint32 caller
-    ) public onlyDirectKeeper onlyRegistered(body) currentDate(sigDate) {
-        Doc storage doc = _docs[body];
-
-        if (doc.states.currentState == uint8(EnumsRepo.BODStates.Submitted)) {
-            require(doc.reviewDeadline >= sigDate, "missed review period");
-
-            doc.docHash = bytes32(0);
-            // doc.reviewDeadline = 0;
-            doc.states.backToPrevState();
-            // ISigPage(body).backToDraft(doc.reviewDeadline);
-
-            emit UpdateStateOfDoc(doc.sn, doc.states.currentState, caller);
-        } else
-            require(
-                doc.states.currentState == uint8(EnumsRepo.BODStates.Created),
-                "wrong state of Doc"
-            );
     }
 
     function pushToNextState(
         address body,
         uint32 sigDate,
         uint32 caller
-    ) public onlyDirectKeeper onlyRegistered(body) currentDate(sigDate) {
+    ) public onlyDirectKeeper onlyRegistered(body) {
         Doc storage doc = _docs[body];
 
-        require(
-            doc.states.currentState >= uint8(EnumsRepo.BODStates.Submitted),
-            "not after Proposed"
-        );
+        // require(
+        //     doc.states.currentState >= uint8(EnumsRepo.BODStates.Proposed),
+        //     "not after Proposed"
+        // );
 
         doc.states.pushToNextState(sigDate);
 
@@ -262,23 +252,25 @@ contract BookOfDocuments is CloneFactory, BOSSetting {
     {
         Doc storage doc = _docs[body];
 
-        if (doc.states.currentState < uint8(EnumsRepo.BODStates.Submitted))
+        if (doc.states.currentState < uint8(EnumsRepo.BODStates.Established))
             return false;
-        else if (doc.states.currentState > uint8(EnumsRepo.BODStates.Submitted))
-            return true;
+        else if (
+            doc.states.currentState > uint8(EnumsRepo.BODStates.Established)
+        ) return true;
         else if (doc.reviewDeadline > now + 15 minutes) return false;
         else return true;
     }
 
-    function isSubmitted(address body)
+    function isCirculated(address body)
         external
         view
+        onlyUser
         onlyRegistered(body)
         returns (bool)
     {
         return
             _docs[body].states.currentState >=
-            uint8(EnumsRepo.BODStates.Submitted);
+            uint8(EnumsRepo.BODStates.Circulated);
     }
 
     function qtyOfDocs() external view returns (uint256) {

@@ -16,6 +16,9 @@ interface IShareholdersAgreement {
 
     function removeTerm(uint8 title) external;
 
+    // ======== VotingRule ========
+    function setVotingBaseOnPar() external;
+
     function setRule(
         uint8 typeOfVote,
         uint256 ratioHead,
@@ -23,7 +26,6 @@ interface IShareholdersAgreement {
         bool onlyAttendance,
         bool impliedConsent,
         bool againstShallBuy,
-        bool basedOnParValue,
         uint8 votingDays,
         uint8 execDaysForPutOpt
     ) external;
@@ -50,7 +52,11 @@ interface IShareholdersAgreement {
 
     function tempOfTitle(uint8 title) external view returns (address);
 
+    // ======== VotingRule ========
+
     function votingRules(uint8 typeOfVote) external view returns (bytes32);
+
+    function basedOnPar() external view returns (bool);
 
     function termIsTriggered(
         uint8 title,

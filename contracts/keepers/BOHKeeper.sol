@@ -120,7 +120,10 @@ contract BOHKeeper is BOSSetting, SHASetting, BOMSetting, BOOSetting {
         uint32 caller,
         uint32 sigDate
     ) external onlyDirectKeeper onlyPartyOf(body, caller) {
-        require(_boh.isSubmitted(body), "SHA not submitted yet");
+        require(
+            _boh.currentState(body) == uint8(EnumsRepo.BODStates.Voted),
+            "SHA not submitted yet"
+        );
 
         _boh.changePointer(body, caller, sigDate);
 

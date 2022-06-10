@@ -382,19 +382,17 @@ contract InvestmentAgreement is BOSSetting, SigPage {
         uint16 ssn,
         uint32 sigDate,
         string hashKey
-    ) external onlyCleared(ssn) onlyKeeper {
+    ) external onlyCleared(ssn) onlyDirectKeeper {
         Deal storage deal = _deals[ssn];
 
-        require(
-            deal.closingDate < now + 15 minutes,
-            "NOT reached closing date"
-        );
+        require(deal.closingDate < sigDate, "NOT reached closing date");
 
         require(
             deal.hashLock == keccak256(bytes(hashKey)),
             "hashKey NOT correct"
         );
 
+        deal.states.pushToNextState(sigDate);
         deal.states.pushToNextState(sigDate);
 
         emit RevokeDeal(deal.sn, hashKey);

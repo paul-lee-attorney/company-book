@@ -43,7 +43,7 @@ interface IBookOfSHA {
 
     function isRegisteredTerm(address term) external view returns (bool);
 
-    function isSubmitted(address body) external view returns (bool);
+    function isCirculated(address body) external view returns (bool);
 
     function qtyOfDocuments() external view returns (uint256);
 
@@ -57,6 +57,8 @@ interface IBookOfSHA {
             bytes32 docHash,
             uint8 state
         );
+
+    function currentState(address body) external view returns (uint8);
 
     function bodyToSN(address body) external view returns (bytes32);
 

@@ -16,9 +16,13 @@ interface ISigPage {
 
     function removePartyFromDoc(address acct) external;
 
-    function circulateDoc() external;
+    function finalizeDoc() external;
 
-    function signDoc(uint32 _sigDate, bytes32 _sigHash) external;
+    function signDoc(
+        uint32 caller,
+        uint32 sigDate,
+        bytes32 sigHash
+    ) external;
 
     function acceptDoc(uint32 sigDate, bytes32 sigHash) external;
 

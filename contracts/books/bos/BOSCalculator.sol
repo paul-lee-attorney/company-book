@@ -46,35 +46,6 @@ contract BOSCalculator is BOSSetting {
         return shares;
     }
 
-    // function parInHand(uint32 acct)
-    //     public
-    //     view
-    //     memberExist(acct)
-    //     returns (uint256 parValue)
-    // {
-    //     bytes32[] memory list = _bos.sharesInHand(acct);
-    //     uint256 len = list.length;
-    //     for (uint256 i = 0; i < len; i++) {
-    //         (, uint256 par, , , , , ) = _bos.getShare(list[i].short());
-    //         parValue += par;
-    //     }
-    // }
-
-    // function paidInHand(uint32 acct)
-    //     public
-    //     view
-    //     memberExist(acct)
-    //     returns (uint256 paidPar)
-    // {
-    //     bytes32[] memory list = _bos.sharesInHand(acct);
-
-    //     uint256 len = list.length;
-    //     for (uint256 i = 0; i < len; i++) {
-    //         (, , uint256 paid, , , , ) = _bos.getShare(list[i].short());
-    //         paidPar += paid;
-    //     }
-    // }
-
     function parOfGroup(uint16 group) public view returns (uint256 parValue) {
         require(_bos.isGroup(group), "GROUP not exist");
 

@@ -142,7 +142,7 @@ contract BookOfMotions is SHASetting, BOASetting, BOSSetting {
         view
         returns (uint256 amount)
     {
-        if (_motions[ia].votingRule.basedOnParOfVR()) {
+        if (_getSHA().basedOnPar()) {
             amount = _bos.parInHand(caller);
         } else {
             amount = _bos.paidInHand(caller);
@@ -209,7 +209,7 @@ contract BookOfMotions is SHASetting, BOASetting, BOSSetting {
             uint256 voteAmt;
 
             for (i = 0; i < totalHead; i++) {
-                if (motion.votingRule.basedOnParOfVR()) {
+                if (_getSHA().basedOnPar()) {
                     voteAmt = _bos.parInHand(others[i]);
                 } else {
                     voteAmt = _bos.paidInHand(others[i]);

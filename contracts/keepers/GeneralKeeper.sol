@@ -91,20 +91,24 @@ contract GeneralKeeper is AccessControl {
     // ##   BOAKeeper   ##
     // ###################
 
-    function createIA(uint8 docType) external {
-        _BOAKeeper.createIA(docType, _msgSender());
+    function createIA(uint8 typeOfIA, uint32 createDate) external {
+        _BOAKeeper.createIA(typeOfIA, _msgSender(), createDate);
     }
 
     function removeIA(address body, uint32 sigDate) external {
         _BOAKeeper.removeIA(body, _msgSender(), sigDate);
     }
 
-    function submitIA(
-        address body,
-        uint32 submitDate,
-        bytes32 docHash
+    function circulateIA(address body, uint32 submitDate) external {
+        _BOAKeeper.circulateIA(body, _msgSender(), submitDate);
+    }
+
+    function signIA(
+        address ia,
+        uint32 sigDate,
+        bytes32 sigHash
     ) external {
-        _BOAKeeper.submitIA(body, submitDate, docHash, _msgSender());
+        _BOAKeeper.signIA(ia, _msgSender(), sigDate, sigHash);
     }
 
     // ======== Deal Closing ========

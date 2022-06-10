@@ -394,6 +394,7 @@ contract SHAKeeper is BOASetting, SHASetting, BOSSetting {
         external
         onlyDirectKeeper
         currentDate(sigDate)
+        onlyEstablished(ia)
         withinReviewPeriod(ia, sigDate)
     {
         require(!ISigPage(ia).isInitSigner(caller), "caller is an init signer");
@@ -427,6 +428,7 @@ contract SHAKeeper is BOASetting, SHASetting, BOSSetting {
         external
         onlyDirectKeeper
         currentDate(acceptDate)
+        onlyEstablished(ia)
         withinReviewPeriod(ia, acceptDate)
     {
         if (sn.typeOfDeal() == uint8(EnumsRepo.TypeOfDeal.CapitalIncrease))

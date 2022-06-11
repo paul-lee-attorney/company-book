@@ -174,7 +174,7 @@ contract BOAKeeper is BOASetting, SHASetting, BOMSetting, BOSSetting {
         address ia,
         uint32 caller,
         uint32 sigDate
-    ) private {
+    ) private onlyKeeper {
         uint16[] memory seqList = IInvestmentAgreement(ia).dealsConcerned(
             caller
         );

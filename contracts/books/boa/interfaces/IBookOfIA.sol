@@ -43,12 +43,6 @@ interface IBookOfIA {
 
     function calculateMockResult(address ia) external;
 
-    function rejectDoc(
-        address body,
-        uint32 sigDate,
-        uint32 caller
-    ) external;
-
     function addAlongDeal(
         address ia,
         bytes32 rule,

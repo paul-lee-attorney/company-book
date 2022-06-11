@@ -358,4 +358,21 @@ library ArrayUtils {
             array.push(value);
         }
     }
+
+    function combine(bytes32[] arrA, bytes32[] arrB)
+        internal
+        pure
+        returns (bytes32[])
+    {
+        uint256 lenA = arrA.length;
+        uint256 lenB = arrB.length;
+        uint256 i;
+
+        bytes32[] memory arrC = new bytes32[](lenA + lenB);
+
+        for (i = 0; i < lenA; i++) arrC[i] = arrA[i];
+        for (i = 0; i < lenB; i++) arrC[lenA + i] = arrB[i];
+
+        return arrC;
+    }
 }

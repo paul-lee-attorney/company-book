@@ -35,6 +35,12 @@ interface IBOAKeeper {
         bytes32 sigHash
     ) external;
 
+    // function mockDealsOfParty(
+    //     address ia,
+    //     uint32 caller,
+    //     uint32 sigDate
+    // ) external;
+
     // ======== TagAlong & DragAlong ========
 
     function execAlongRight(

@@ -5,6 +5,8 @@
 
 pragma solidity ^0.4.24;
 
+import "./BOAKeeper.sol";
+
 import "../books/boh/terms/interfaces/IAntiDilution.sol";
 import "../books/boh/interfaces/ITerm.sol";
 
@@ -22,6 +24,7 @@ import "../common/ruting/SHASetting.sol";
 
 import "../common/lib/SNParser.sol";
 import "../common/lib/EnumsRepo.sol";
+import "../common/lib/ArrayUtils.sol";
 
 contract SHAKeeper is BOASetting, SHASetting, BOSSetting {
     using SNParser for bytes32;
@@ -204,13 +207,16 @@ contract SHAKeeper is BOASetting, SHASetting, BOSSetting {
         bytes32 alongSN,
         uint256 parValue,
         uint32 sigDate
-    ) private {
+    ) private returns (bool flag) {
         if (
             IInvestmentAgreement(ia).lockDealSubject(
                 alongSN.sequenceOfDeal(),
                 sigDate
             )
-        ) _bos.decreaseCleanPar(alongSN.shortShareNumberOfDeal(), parValue);
+        ) {
+            _bos.decreaseCleanPar(alongSN.shortShareNumberOfDeal(), parValue);
+            flag = true;
+        }
     }
 
     function acceptAlongDeal(
@@ -263,10 +269,6 @@ contract SHAKeeper is BOASetting, SHASetting, BOSSetting {
             uint8(EnumsRepo.TermTitle.ANTI_DILUTION)
         );
 
-        uint32 closingDate = IInvestmentAgreement(ia).closingDate(
-            sn.sequenceOfDeal()
-        );
-
         uint256 giftPar = IAntiDilution(ad).giftPar(ia, sn, shareNumber);
         uint32[] memory obligors = IAntiDilution(ad).obligors(
             shareNumber.class()
@@ -274,8 +276,8 @@ contract SHAKeeper is BOASetting, SHASetting, BOSSetting {
 
         _createGiftDeals(
             ia,
+            sn.sequenceOfDeal(),
             giftPar,
-            closingDate,
             obligors,
             caller,
             sigDate,
@@ -285,93 +287,109 @@ contract SHAKeeper is BOASetting, SHASetting, BOSSetting {
 
     function _createGiftDeals(
         address ia,
+        uint16 ssn,
         uint256 giftPar,
-        uint32 closingDate,
         uint32[] obligors,
         uint32 caller,
         uint32 sigDate,
         bytes32 sigHash
     ) private {
-        _boa.rejectDoc(ia, sigDate, caller);
-
         for (uint256 i = 0; i < obligors.length; i++) {
             bytes32[] memory sharesInHand = _bos.sharesInHand(obligors[i]);
 
             for (uint256 j = 0; j < sharesInHand.length; j++) {
-                uint256 targetCleanPar = _bos.cleanPar(sharesInHand[j].short());
+                (bytes32 snOfGiftDeal, uint256 result) = _createGift(
+                    ia,
+                    ssn,
+                    sharesInHand[j],
+                    giftPar,
+                    caller,
+                    sigDate
+                );
 
-                if (targetCleanPar > 0) {
-                    bytes32 snOfGiftDeal = IInvestmentAgreement(ia).createDeal(
-                        uint8(EnumsRepo.TypeOfDeal.FreeGift),
-                        sharesInHand[j],
-                        sharesInHand[j].class(),
-                        caller,
-                        _bos.groupNo(caller),
-                        0
-                    );
+                ISigPage(ia).signDeal(
+                    snOfGiftDeal.sequenceOfDeal(),
+                    caller,
+                    sigDate,
+                    sigHash
+                );
 
-                    if (targetCleanPar < giftPar) {
-                        _lockDealSubject(
-                            ia,
-                            snOfGiftDeal,
-                            sharesInHand[j].shortShareNumberOfDeal(),
-                            targetCleanPar,
-                            closingDate,
-                            caller,
-                            sigDate,
-                            sigHash
-                        );
-                        giftPar -= targetCleanPar;
-                        continue;
-                    } else {
-                        _lockDealSubject(
-                            ia,
-                            snOfGiftDeal,
-                            sharesInHand[j].shortShareNumberOfDeal(),
-                            giftPar,
-                            closingDate,
-                            caller,
-                            sigDate,
-                            sigHash
-                        );
-                        giftPar = 0;
-                        break;
-                    }
-                }
+                ISigPage(ia).signDeal(
+                    snOfGiftDeal.sequenceOfDeal(),
+                    obligors[i],
+                    sigDate,
+                    sigHash
+                );
+
+                giftPar = result;
+                if (giftPar == 0) break;
             }
             if (giftPar == 0) break;
         }
-
         require(giftPar == 0, "obligors have not enough parValue");
     }
 
-    function _lockDealSubject(
+    function _createGift(
+        address ia,
+        uint16 ssn,
+        bytes32 shareNumber,
+        uint256 giftPar,
+        uint32 caller,
+        uint32 sigDate
+    ) private returns (bytes32 snOfGiftDeal, uint256 result) {
+        uint256 targetCleanPar = _bos.cleanPar(shareNumber.short());
+
+        if (targetCleanPar > 0) {
+            snOfGiftDeal = IInvestmentAgreement(ia).createDeal(
+                uint8(EnumsRepo.TypeOfDeal.FreeGift),
+                shareNumber,
+                shareNumber.class(),
+                caller,
+                _bos.groupNo(caller),
+                ssn
+            );
+
+            uint256 lockAmount = (targetCleanPar < giftPar)
+                ? targetCleanPar
+                : giftPar;
+
+            _updateGiftDeal(ia, snOfGiftDeal, lockAmount);
+
+            if (
+                IInvestmentAgreement(ia).lockDealSubject(
+                    snOfGiftDeal.sequenceOfDeal(),
+                    sigDate
+                )
+            ) {
+                _bos.decreaseCleanPar(shareNumber.short(), lockAmount);
+                _boa.mockDealOfSell(ia, caller, lockAmount);
+            }
+
+            _boa.mockDealOfBuy(
+                ia,
+                snOfGiftDeal.sequenceOfDeal(),
+                caller,
+                lockAmount
+            );
+        }
+        result = giftPar - lockAmount;
+    }
+
+    function _updateGiftDeal(
         address ia,
         bytes32 snOfGiftDeal,
-        bytes6 ssn,
-        uint256 lockAmount,
-        uint32 closingDate,
-        uint32 caller,
-        uint32 sigDate,
-        bytes32 sigHash
+        uint256 lockAmount
     ) private {
+        uint32 closingDate = IInvestmentAgreement(ia).closingDate(
+            snOfGiftDeal.preSSNOfDeal()
+        );
+
         IInvestmentAgreement(ia).updateDeal(
             snOfGiftDeal.sequenceOfDeal(),
             0,
             lockAmount,
             lockAmount,
             closingDate
-        );
-        IInvestmentAgreement(ia).lockDealSubject(
-            snOfGiftDeal.sequenceOfDeal(),
-            sigDate
-        );
-        _bos.decreaseCleanPar(ssn, lockAmount);
-        ISigPage(ia).signDeal(
-            snOfGiftDeal.sequenceOfDeal(),
-            caller,
-            sigDate,
-            sigHash
         );
     }
 
@@ -383,6 +401,28 @@ contract SHAKeeper is BOASetting, SHASetting, BOSSetting {
     ) external currentDate(sigDate) onlyDirectKeeper {
         require(caller == sn.buyerOfDeal(), "caller is not buyer");
         IInvestmentAgreement(ia).takeGift(sn.sequenceOfDeal(), sigDate);
+
+        bytes32 shareNumber = IInvestmentAgreement(ia).shareNumberOfDeal(
+            sn.sequenceOfDeal()
+        );
+
+        (, uint256 parValue, uint256 paidPar, , ) = IInvestmentAgreement(ia)
+            .getDeal(sn.sequenceOfDeal());
+
+        _bos.increaseCleanPar(sn.shortShareNumberOfDeal(), parValue);
+        _bos.transferShare(
+            shareNumber,
+            parValue,
+            paidPar,
+            sn.buyerOfDeal(),
+            sigDate,
+            0
+        );
+
+        if (sn.groupOfBuyer() > 0)
+            _bos.addMemberToGroup(sn.buyerOfDeal(), sn.groupOfBuyer());
+
+        _bosCal.updateController(true);
     }
 
     // ======== FirstRefusal ========
@@ -409,8 +449,6 @@ contract SHAKeeper is BOASetting, SHASetting, BOSSetting {
             IFirstRefusal(term).isRightholder(sn.typeOfDeal(), caller),
             "NOT first refusal rightholder"
         );
-
-        _boa.rejectDoc(ia, sigDate, caller);
 
         IInvestmentAgreement(ia).execFirstRefusalRight(
             sn.sequenceOfDeal(),

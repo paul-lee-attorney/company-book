@@ -274,13 +274,6 @@ contract BOAKeeper is BOASetting, SHASetting, BOMSetting, BOSSetting {
             "InvestmentAgreement NOT in voted state"
         );
 
-        (, uint256 parValue, uint256 paidPar, , ) = IInvestmentAgreement(ia)
-            .getDeal(sn.sequenceOfDeal());
-
-        uint256 unitPrice = IInvestmentAgreement(ia).unitPrice(
-            sn.sequenceOfDeal()
-        );
-
         //交易发起人为买方;
         require(sn.buyerOfDeal() == caller, "caller is NOT buyer");
 
@@ -291,7 +284,22 @@ contract BOAKeeper is BOASetting, SHASetting, BOMSetting, BOSSetting {
             hashKey
         );
 
+        transferTargetShare(ia, sn, closingDate);
+    }
+
+    function transferTargetShare(
+        address ia,
+        bytes32 sn,
+        uint32 closingDate
+    ) public onlyKeeper {
         bytes32 shareNumber = IInvestmentAgreement(ia).shareNumberOfDeal(
+            sn.sequenceOfDeal()
+        );
+
+        (, uint256 parValue, uint256 paidPar, , ) = IInvestmentAgreement(ia)
+            .getDeal(sn.sequenceOfDeal());
+
+        uint256 unitPrice = IInvestmentAgreement(ia).unitPrice(
             sn.sequenceOfDeal()
         );
 

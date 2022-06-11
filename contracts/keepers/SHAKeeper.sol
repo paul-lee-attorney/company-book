@@ -5,7 +5,7 @@
 
 pragma solidity ^0.4.24;
 
-import "./BOAKeeper.sol";
+import "./interfaces/IBOAKeeper.sol";
 
 import "../books/boh/terms/interfaces/IAntiDilution.sol";
 import "../books/boh/interfaces/ITerm.sol";
@@ -28,6 +28,8 @@ import "../common/lib/ArrayUtils.sol";
 
 contract SHAKeeper is BOASetting, SHASetting, BOSSetting {
     using SNParser for bytes32;
+
+    IBOAKeeper private _boaKeeper;
 
     // ##################
     // ##   Modifier   ##
@@ -55,6 +57,10 @@ contract SHAKeeper is BOASetting, SHASetting, BOSSetting {
     // ####################
     // ##   SHA Rights   ##
     // ####################
+
+    function setBOAKeeper(address boaKeeper) external onlyOwner {
+        _boaKeeper = IBOAKeeper(boaKeeper);
+    }
 
     // ======== TagAlong & DragAlong ========
 
@@ -402,27 +408,29 @@ contract SHAKeeper is BOASetting, SHASetting, BOSSetting {
         require(caller == sn.buyerOfDeal(), "caller is not buyer");
         IInvestmentAgreement(ia).takeGift(sn.sequenceOfDeal(), sigDate);
 
-        bytes32 shareNumber = IInvestmentAgreement(ia).shareNumberOfDeal(
-            sn.sequenceOfDeal()
-        );
+        _boaKeeper.transferTargetShare(ia, sn, sigDate);
 
-        (, uint256 parValue, uint256 paidPar, , ) = IInvestmentAgreement(ia)
-            .getDeal(sn.sequenceOfDeal());
+        // bytes32 shareNumber = IInvestmentAgreement(ia).shareNumberOfDeal(
+        //     sn.sequenceOfDeal()
+        // );
 
-        _bos.increaseCleanPar(sn.shortShareNumberOfDeal(), parValue);
-        _bos.transferShare(
-            shareNumber,
-            parValue,
-            paidPar,
-            sn.buyerOfDeal(),
-            sigDate,
-            0
-        );
+        // (, uint256 parValue, uint256 paidPar, , ) = IInvestmentAgreement(ia)
+        //     .getDeal(sn.sequenceOfDeal());
 
-        if (sn.groupOfBuyer() > 0)
-            _bos.addMemberToGroup(sn.buyerOfDeal(), sn.groupOfBuyer());
+        // _bos.increaseCleanPar(sn.shortShareNumberOfDeal(), parValue);
+        // _bos.transferShare(
+        //     shareNumber,
+        //     parValue,
+        //     paidPar,
+        //     sn.buyerOfDeal(),
+        //     sigDate,
+        //     0
+        // );
 
-        _bosCal.updateController(true);
+        // if (sn.groupOfBuyer() > 0)
+        //     _bos.addMemberToGroup(sn.buyerOfDeal(), sn.groupOfBuyer());
+
+        // _bosCal.updateController(true);
     }
 
     // ======== FirstRefusal ========

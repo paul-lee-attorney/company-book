@@ -53,7 +53,7 @@ contract FirstRefusalToolKits is InvestmentAgreement {
         uint32 acct,
         uint32 execDate,
         bytes32 sigHash
-    ) external onlyDirectKeeper dealExist(ssn) returns (bytes32) {
+    ) external onlyKeeper dealExist(ssn) returns (bytes32) {
         Deal storage targetDeal = _deals[ssn];
 
         bytes32 snOfFR = createDeal(
@@ -87,9 +87,9 @@ contract FirstRefusalToolKits is InvestmentAgreement {
 
         _sumOfWeight[ssn] += weight;
 
-        established = false;
-
         _updateFRDeals(ssn, _counterOfFR[ssn]);
+
+        lockDealSubject(snOfFR.sequenceOfDeal(), execDate);
 
         signDeal(ssn, acct, execDate, sigHash);
 

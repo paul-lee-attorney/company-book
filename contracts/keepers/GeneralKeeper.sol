@@ -272,13 +272,13 @@ contract GeneralKeeper is AccessControl {
         _SHAKeeper.execFirstRefusal(ia, sn, _msgSender(), execDate, sigHash);
     }
 
-    function acceptFirstRefusalRequest(
+    function acceptFirstRefusal(
         address ia,
         bytes32 sn,
         uint32 acceptDate,
         bytes32 sigHash
     ) external {
-        _SHAKeeper.acceptFirstRefusalRequest(
+        _SHAKeeper.acceptFirstRefusal(
             ia,
             sn,
             _msgSender(),

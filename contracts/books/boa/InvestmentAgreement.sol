@@ -295,7 +295,7 @@ contract InvestmentAgreement is BOSSetting, SigPage {
     }
 
     function lockDealSubject(uint16 ssn, uint32 lockDate)
-        external
+        public
         onlyKeeper
         dealExist(ssn)
         returns (bool flag)

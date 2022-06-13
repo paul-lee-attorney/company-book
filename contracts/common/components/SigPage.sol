@@ -132,7 +132,7 @@ contract SigPage is DraftControl {
             );
         else
             require(
-                _msgSender() == getDirectKeeper(),
+                hasRole(KEEPERS, _msgSender()),
                 "only DK may add party to an established DOC"
             );
 

@@ -320,12 +320,12 @@ contract SHAKeeper is BOASetting, SHASetting, BOSSetting {
                     sigHash
                 );
 
-                ISigPage(ia).signDeal(
-                    snOfGiftDeal.sequenceOfDeal(),
-                    obligors[i],
-                    sigDate,
-                    sigHash
-                );
+                // ISigPage(ia).signDeal(
+                //     snOfGiftDeal.sequenceOfDeal(),
+                //     obligors[i],
+                //     sigDate,
+                //     sigHash
+                // );
 
                 giftPar = result;
                 if (giftPar == 0) break;
@@ -409,28 +409,6 @@ contract SHAKeeper is BOASetting, SHASetting, BOSSetting {
         IInvestmentAgreement(ia).takeGift(sn.sequenceOfDeal(), sigDate);
 
         _boaKeeper.transferTargetShare(ia, sn, sigDate);
-
-        // bytes32 shareNumber = IInvestmentAgreement(ia).shareNumberOfDeal(
-        //     sn.sequenceOfDeal()
-        // );
-
-        // (, uint256 parValue, uint256 paidPar, , ) = IInvestmentAgreement(ia)
-        //     .getDeal(sn.sequenceOfDeal());
-
-        // _bos.increaseCleanPar(sn.shortShareNumberOfDeal(), parValue);
-        // _bos.transferShare(
-        //     shareNumber,
-        //     parValue,
-        //     paidPar,
-        //     sn.buyerOfDeal(),
-        //     sigDate,
-        //     0
-        // );
-
-        // if (sn.groupOfBuyer() > 0)
-        //     _bos.addMemberToGroup(sn.buyerOfDeal(), sn.groupOfBuyer());
-
-        // _bosCal.updateController(true);
     }
 
     // ======== FirstRefusal ========
@@ -467,7 +445,7 @@ contract SHAKeeper is BOASetting, SHASetting, BOSSetting {
         );
     }
 
-    function acceptFirstRefusalRequest(
+    function acceptFirstRefusal(
         address ia,
         bytes32 sn,
         uint32 caller,

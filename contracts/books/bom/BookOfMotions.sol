@@ -115,10 +115,12 @@ contract BookOfMotions is SHASetting, BOASetting, BOSSetting {
         uint32 proposeDate,
         uint32 submitter
     ) external onlyDirectKeeper {
-        require(
-            _boa.passedReview(ia),
-            "InvestmentAgreement not passed review procesedure"
-        );
+        // require(
+        //     _boa.passedReview(ia),
+        //     "InvestmentAgreement not passed review procesedure"
+        // );
+
+        // require(ISigPage(ia).established(), "doc is not established");
 
         require(!_ias.isItem[ia], "the InvestmentAgreement has been proposed");
 

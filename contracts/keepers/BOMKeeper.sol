@@ -17,7 +17,7 @@ import "../common/lib/SNParser.sol";
 
 import "../common/components/interfaces/ISigPage.sol";
 
-// import "../common/components/EnumsRepo.sol";
+import "../common/lib/EnumsRepo.sol";
 
 contract BOMKeeper is
     BOASetting,
@@ -56,6 +56,18 @@ contract BOMKeeper is
         onlyPartyOf(ia, caller)
         currentDate(proposeDate)
     {
+        require(
+            _boa.currentState(ia) == uint8(EnumsRepo.BODStates.Executed),
+            "InvestmentAgreement not on Executed state"
+        );
+
+        require(
+            _boa.reviewDeadlineOf(ia) < proposeDate,
+            "InvestmentAgreement not passed review procesedure"
+        );
+
+        require(ISigPage(ia).established(), "doc is not established");
+
         _bom.proposeMotion(ia, proposeDate, caller);
     }
 

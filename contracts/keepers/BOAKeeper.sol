@@ -291,7 +291,7 @@ contract BOAKeeper is BOASetting, SHASetting, BOMSetting, BOSSetting {
         address ia,
         bytes32 sn,
         uint32 closingDate
-    ) public onlyKeeper {
+    ) public onlyDirectKeeper {
         bytes32 shareNumber = IInvestmentAgreement(ia).shareNumberOfDeal(
             sn.sequenceOfDeal()
         );

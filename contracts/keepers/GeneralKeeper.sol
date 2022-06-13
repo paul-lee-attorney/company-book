@@ -259,6 +259,7 @@ contract GeneralKeeper is AccessControl {
         uint32 sigDate
     ) external {
         _SHAKeeper.takeGiftShares(ia, sn, _msgSender(), sigDate);
+        _BOAKeeper.transferTargetShare(ia, sn, sigDate);
     }
 
     // ======== First Refusal ========

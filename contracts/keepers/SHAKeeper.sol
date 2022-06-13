@@ -5,8 +5,6 @@
 
 pragma solidity ^0.4.24;
 
-import "./interfaces/IBOAKeeper.sol";
-
 import "../books/boh/terms/interfaces/IAntiDilution.sol";
 import "../books/boh/interfaces/ITerm.sol";
 
@@ -28,8 +26,6 @@ import "../common/lib/ArrayUtils.sol";
 
 contract SHAKeeper is BOASetting, SHASetting, BOSSetting {
     using SNParser for bytes32;
-
-    IBOAKeeper private _boaKeeper;
 
     // ##################
     // ##   Modifier   ##
@@ -57,10 +53,6 @@ contract SHAKeeper is BOASetting, SHASetting, BOSSetting {
     // ####################
     // ##   SHA Rights   ##
     // ####################
-
-    function setBOAKeeper(address boaKeeper) external onlyOwner {
-        _boaKeeper = IBOAKeeper(boaKeeper);
-    }
 
     // ======== TagAlong & DragAlong ========
 
@@ -407,8 +399,6 @@ contract SHAKeeper is BOASetting, SHASetting, BOSSetting {
     ) external currentDate(sigDate) onlyDirectKeeper {
         require(caller == sn.buyerOfDeal(), "caller is not buyer");
         IInvestmentAgreement(ia).takeGift(sn.sequenceOfDeal(), sigDate);
-
-        _boaKeeper.transferTargetShare(ia, sn, sigDate);
     }
 
     // ======== FirstRefusal ========

@@ -205,7 +205,7 @@ contract BookOfDocuments is CloneFactory, SHASetting, BOSSetting {
             86400;
 
         doc.votingDeadline =
-            circulateDate +
+            doc.reviewDeadline +
             uint32(rule.votingDaysOfVR()) *
             86400;
 

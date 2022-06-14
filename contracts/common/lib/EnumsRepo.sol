@@ -84,10 +84,11 @@ library EnumsRepo {
         REVOKED
     }
 
-    enum MotionState {
-        PROPOSED,
-        DISTRIBUTED,
-        PASSED,
-        REJECTED
+    enum StateOfMotion {
+        Pending,
+        Proposed,
+        Passed,
+        Rejected_NotToBuy,
+        Rejected_ToBuy
     }
 }

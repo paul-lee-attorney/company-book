@@ -66,8 +66,6 @@ contract BOMKeeper is
             "InvestmentAgreement not passed review procesedure"
         );
 
-        require(ISigPage(ia).established(), "doc is not established");
-
         _bom.proposeMotion(ia, proposeDate, caller);
     }
 

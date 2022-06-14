@@ -17,6 +17,7 @@ contract VotingRules is DraftControl {
     //     uint16 ratioAmount;
     //     bool onlyAttendance;
     //     bool impliedConsent;
+    //     bool partyAsConsent;
     //     bool againstShallBuy;
     //     uint8 reviewDays; //default: 15 natural days
     //     uint8 votingDays; //default: 30 natrual days
@@ -32,35 +33,36 @@ contract VotingRules is DraftControl {
     constructor() public {
         // votingDays = 30; // default 30 days as per Company Law Act
 
-        // default for Capital Increase : (10进制) 0000 6666 00 00 00 00 15 30 00 01
+        //                                            2    4           8          12
+        // default for Capital Increase : (10进制) 0000 6666 00 00 01 00 15 30 00 01
         _votingRules[
             1
-        ] = 0x00004242000000000f1e000100000000000000000000000000000000000000;
+        ] = 0x00004242000001000f1e00010000000000000000000000000000000000000000;
 
         _votingRules[
             4
-        ] = 0x00004242000000000f1e000400000000000000000000000000000000000000;
+        ] = 0x00004242000001000f1e00040000000000000000000000000000000000000000;
 
         _votingRules[
             6
-        ] = 0x00004242000000000f1e070600000000000000000000000000000000000000;
+        ] = 0x00004242000001000f1e07060000000000000000000000000000000000000000;
 
         _votingRules[
             7
-        ] = 0x00004242000000000f1e070700000000000000000000000000000000000000;
+        ] = 0x00004242000001000f1e07070000000000000000000000000000000000000000;
 
-        // default for Share Transfer : (10进制) 0000 5000 00 01 01 00 15 30 07 02
+        // default for Share Transfer : (10进制) 0000 5000 00 01 00 01 15 30 07 02
         _votingRules[
             2
-        ] = 0x00003200000101000f1e070200000000000000000000000000000000000000;
+        ] = 0x00003200000100010f1e07020000000000000000000000000000000000000000;
 
         _votingRules[
             3
-        ] = 0x00000000000000000000003000000000000000000000000000000000000000;
+        ] = 0x0000000000000000000000030000000000000000000000000000000000000000;
 
         _votingRules[
             5
-        ] = 0x00003200000101000f1e070500000000000000000000000000000000000000;
+        ] = 0x00003200000100010f1e07050000000000000000000000000000000000000000;
     }
 
     // ################
@@ -95,6 +97,7 @@ contract VotingRules is DraftControl {
         uint256 ratioAmount,
         bool onlyAttendance,
         bool impliedConsent,
+        bool partyAsConsent,
         bool againstShallBuy,
         uint8 reviewDays,
         uint8 votingDays,
@@ -108,11 +111,12 @@ contract VotingRules is DraftControl {
         _sn = _sn.intToSN(2, ratioAmount, 2);
         _sn = _sn.boolToSN(4, onlyAttendance);
         _sn = _sn.boolToSN(5, impliedConsent);
-        _sn = _sn.boolToSN(6, againstShallBuy);
-        _sn[7] = bytes1(reviewDays);
-        _sn[8] = bytes1(votingDays);
-        _sn[9] = bytes1(execDaysForPutOpt);
-        _sn[10] = bytes1(typeOfVote);
+        _sn = _sn.boolToSN(6, partyAsConsent);
+        _sn = _sn.boolToSN(7, againstShallBuy);
+        _sn[8] = bytes1(reviewDays);
+        _sn[9] = bytes1(votingDays);
+        _sn[10] = bytes1(execDaysForPutOpt);
+        _sn[11] = bytes1(typeOfVote);
 
         _votingRules[typeOfVote] = _sn.bytesToBytes32();
 

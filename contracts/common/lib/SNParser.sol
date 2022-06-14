@@ -298,24 +298,28 @@ library SNParser {
         return uint8(sn[5]) == 1;
     }
 
-    function againstShallBuyOfVR(bytes32 sn) internal pure returns (bool) {
+    function partyAsConsentOfVR(bytes32 sn) internal pure returns (bool) {
         return uint8(sn[6]) == 1;
     }
 
-    function reviewDaysOfVR(bytes32 sn) internal pure returns (uint8) {
-        return uint8(sn[7]);
+    function againstShallBuyOfVR(bytes32 sn) internal pure returns (bool) {
+        return uint8(sn[7]) == 1;
     }
 
-    function votingDaysOfVR(bytes32 sn) internal pure returns (uint8) {
+    function reviewDaysOfVR(bytes32 sn) internal pure returns (uint8) {
         return uint8(sn[8]);
     }
 
-    function execDaysForPutOptOfVR(bytes32 sn) internal pure returns (uint8) {
+    function votingDaysOfVR(bytes32 sn) internal pure returns (uint8) {
         return uint8(sn[9]);
     }
 
-    function typeOfVoteOfVR(bytes32 sn) internal pure returns (uint8) {
+    function execDaysForPutOptOfVR(bytes32 sn) internal pure returns (uint8) {
         return uint8(sn[10]);
+    }
+
+    function typeOfVoteOfVR(bytes32 sn) internal pure returns (uint8) {
+        return uint8(sn[11]);
     }
 
     // ======== MotionSN ========

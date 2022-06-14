@@ -205,53 +205,6 @@ library ArrayUtils {
         }
     }
 
-    // ======== address ========
-
-    function firstIndexOf(address[] storage array, address key)
-        internal
-        view
-        returns (bool, uint256)
-    {
-        if (array.length == 0) {
-            return (false, 0);
-        }
-
-        for (uint256 i = 0; i < array.length; i++) {
-            if (array[i] == key) {
-                return (true, i);
-            }
-        }
-        return (false, 0);
-    }
-
-    function removeByIndex(address[] storage array, uint256 index) internal {
-        require(index < array.length, "ArrayForaddress: index out of bounds");
-
-        while (index < array.length - 1) {
-            array[index] = array[index + 1];
-            index++;
-        }
-        array.length--;
-    }
-
-    function removeByValue(address[] storage array, address value) internal {
-        uint256 index;
-        bool isIn;
-        (isIn, index) = firstIndexOf(array, value);
-        if (isIn) {
-            removeByIndex(array, index);
-        }
-    }
-
-    function addValue(address[] storage array, address value) internal {
-        uint256 index;
-        bool isIn;
-        (isIn, index) = firstIndexOf(array, value);
-        if (!isIn) {
-            array.push(value);
-        }
-    }
-
     function combine(uint32[] arrA, uint32[] arrB)
         internal
         pure
@@ -310,6 +263,53 @@ library ArrayUtils {
         }
 
         return true;
+    }
+
+    // ======== address ========
+
+    function firstIndexOf(address[] storage array, address key)
+        internal
+        view
+        returns (bool, uint256)
+    {
+        if (array.length == 0) {
+            return (false, 0);
+        }
+
+        for (uint256 i = 0; i < array.length; i++) {
+            if (array[i] == key) {
+                return (true, i);
+            }
+        }
+        return (false, 0);
+    }
+
+    function removeByIndex(address[] storage array, uint256 index) internal {
+        require(index < array.length, "ArrayForaddress: index out of bounds");
+
+        while (index < array.length - 1) {
+            array[index] = array[index + 1];
+            index++;
+        }
+        array.length--;
+    }
+
+    function removeByValue(address[] storage array, address value) internal {
+        uint256 index;
+        bool isIn;
+        (isIn, index) = firstIndexOf(array, value);
+        if (isIn) {
+            removeByIndex(array, index);
+        }
+    }
+
+    function addValue(address[] storage array, address value) internal {
+        uint256 index;
+        bool isIn;
+        (isIn, index) = firstIndexOf(array, value);
+        if (!isIn) {
+            array.push(value);
+        }
     }
 
     // ======== bytes32 ========

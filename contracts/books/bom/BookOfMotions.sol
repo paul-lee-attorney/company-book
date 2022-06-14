@@ -14,8 +14,7 @@ import "../../common/ruting/BOSSetting.sol";
 import "../../common/lib/SNFactory.sol";
 import "../../common/lib/SNParser.sol";
 import "../../common/lib/ObjGroup.sol";
-import "../../common/lib/ObjGroup.sol";
-import "../../common/lib/ObjGroup.sol";
+import "../../common/lib/EnumsRepo.sol";
 
 import "../../common/components/interfaces/ISigPage.sol";
 
@@ -63,7 +62,10 @@ contract BookOfMotions is SHASetting, BOASetting, BOSSetting {
     }
 
     modifier onlyOnVoting(address ia) {
-        require(_motions[ia].state == 1, "Motion already voted");
+        require(
+            _motions[ia].state == uint8(EnumsRepo.StateOfMotion.Proposed),
+            "Motion already voted"
+        );
         _;
     }
 
@@ -120,7 +122,7 @@ contract BookOfMotions is SHASetting, BOASetting, BOSSetting {
         //     "InvestmentAgreement not passed review procesedure"
         // );
 
-        // require(ISigPage(ia).established(), "doc is not established");
+        require(ISigPage(ia).established(), "doc is not established");
 
         require(!_ias.isItem[ia], "the InvestmentAgreement has been proposed");
 
@@ -134,7 +136,7 @@ contract BookOfMotions is SHASetting, BOASetting, BOSSetting {
 
         motion.votingRule = rule;
         motion.sn = _createSN(ia, submitter, proposeDate, votingDeadline);
-        motion.state = 1;
+        motion.state = uint8(EnumsRepo.StateOfMotion.Proposed);
 
         if (_ias.addItem(ia)) emit ProposeMotion(ia, motion.sn);
     }
@@ -203,30 +205,38 @@ contract BookOfMotions is SHASetting, BOASetting, BOSSetting {
         if (motion.votingRule.onlyAttendanceOfVR()) {
             totalHead = motion.allVoters.voters.length;
         } else {
-            uint32[] memory others = _boa.otherMembers(ia);
+            uint32[] memory voters = motion.votingRule.partyAsConsentOfVR()
+                ? _bos.membersList()
+                : _boa.otherMembers(ia);
 
-            totalHead = others.length;
+            totalHead = voters.length;
 
             uint256 i;
             uint256 voteAmt;
 
             for (i = 0; i < totalHead; i++) {
                 if (_getSHA().basedOnPar()) {
-                    voteAmt = _bos.parInHand(others[i]);
+                    voteAmt = _bos.parInHand(voters[i]);
                 } else {
-                    voteAmt = _bos.paidInHand(others[i]);
+                    voteAmt = _bos.paidInHand(voters[i]);
                 }
 
                 if (
                     motion.allVoters.addVote(
-                        others[i],
+                        voters[i],
                         voteAmt,
-                        19770919,
+                        19450908,
                         bytes32(0)
                     )
                 ) {
                     if (motion.votingRule.impliedConsentOfVR()) {
-                        motion.supportVoters.addMember(others[i]);
+                        motion.supportVoters.addMember(voters[i]);
+                        motion.sumOfYea += voteAmt;
+                    } else if (
+                        motion.votingRule.partyAsConsentOfVR() &&
+                        ISigPage(ia).isParty(voters[i])
+                    ) {
+                        motion.supportVoters.addMember(voters[i]);
                         motion.sumOfYea += voteAmt;
                     }
                 }

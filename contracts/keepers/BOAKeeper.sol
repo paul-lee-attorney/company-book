@@ -224,7 +224,10 @@ contract BOAKeeper is BOASetting, SHASetting, BOMSetting, BOSSetting {
         uint32 caller,
         uint32 sigDate
     ) external onlyDirectKeeper currentDate(sigDate) {
-        require(_bom.isPassed(ia), "Motion NOT passed");
+        bytes32 vr = _getSHA().votingRules(_boa.typeOfIA(ia));
+
+        if (vr.ratioHeadOfVR() > 0 || vr.ratioAmountOfVR() > 0)
+            require(_bom.isPassed(ia), "Motion NOT passed");
 
         if (sn.typeOfDeal() > 1) {
             require(

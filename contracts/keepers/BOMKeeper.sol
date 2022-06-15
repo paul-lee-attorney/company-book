@@ -66,7 +66,13 @@ contract BOMKeeper is
             "InvestmentAgreement not passed review procesedure"
         );
 
+        require(
+            _boa.votingDeadlineOf(ia) >= proposeDate,
+            "missed votingDeadline"
+        );
+
         _bom.proposeMotion(ia, proposeDate, caller);
+        _boa.pushToNextState(ia, proposeDate, caller);
     }
 
     function supportMotion(
@@ -89,12 +95,13 @@ contract BOMKeeper is
         _bom.againstMotion(ia, caller, sigDate, sigHash);
     }
 
-    function voteCounting(address ia, uint32 caller)
-        external
-        onlyDirectKeeper
-        onlyPartyOf(ia, caller)
-    {
-        _bom.voteCounting(ia);
+    function voteCounting(
+        address ia,
+        uint32 caller,
+        uint32 sigDate
+    ) external onlyDirectKeeper onlyPartyOf(ia, caller) currentDate(sigDate) {
+        _bom.voteCounting(ia, sigDate);
+        _boa.pushToNextState(ia, sigDate, caller);
     }
 
     function requestToBuy(
@@ -104,6 +111,11 @@ contract BOMKeeper is
         uint32 againstVoter,
         uint32 caller
     ) external onlyDirectKeeper currentDate(exerciseDate) {
+        require(
+            _bom.state(ia) == uint8(EnumsRepo.StateOfMotion.Rejected_ToBuy),
+            "agianst NO need to buy"
+        );
+
         bytes32 shareNumber = IInvestmentAgreement(ia).shareNumberOfDeal(
             sn.sequenceOfDeal()
         );
@@ -127,7 +139,7 @@ contract BOMKeeper is
         uint8 closingDays = uint8((closingDate - exerciseDate + 42300) / 84600);
 
         bytes32 snOfOpt = _boo.createOption(
-            1,
+            uint8(EnumsRepo.TypeOfOption.PutOption),
             caller,
             againstVoter,
             exerciseDate,

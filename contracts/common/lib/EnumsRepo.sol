@@ -91,4 +91,9 @@ library EnumsRepo {
         Rejected_NotToBuy,
         Rejected_ToBuy
     }
+
+    enum TypeOfOption {
+        CallOption,
+        PutOption
+    }
 }

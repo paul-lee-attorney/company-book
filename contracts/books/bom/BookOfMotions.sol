@@ -69,9 +69,9 @@ contract BookOfMotions is SHASetting, BOASetting, BOSSetting {
         _;
     }
 
-    modifier beforeExpire(address ia) {
+    modifier beforeExpire(address ia, uint32 date) {
         require(
-            now - 15 minutes <= _motions[ia].sn.votingDeadlineOfMotion(),
+            date <= _motions[ia].sn.votingDeadlineOfMotion(),
             "missed voting deadline"
         );
         _;
@@ -79,16 +79,6 @@ contract BookOfMotions is SHASetting, BOASetting, BOSSetting {
 
     modifier notVotedTo(address ia, uint32 caller) {
         require(!isVoted(ia, caller), "HAVE voted for the IA");
-        _;
-    }
-
-    modifier onlyPartyOfIA(address ia, uint32 caller) {
-        require(ISigPage(ia).isParty(caller), "NOT a Party to the IA");
-        _;
-    }
-
-    modifier notPartyOfIA(address ia, uint32 caller) {
-        require(!ISigPage(ia).isParty(caller), "Party shall AVOID");
         _;
     }
 
@@ -117,25 +107,21 @@ contract BookOfMotions is SHASetting, BOASetting, BOSSetting {
         uint32 proposeDate,
         uint32 submitter
     ) external onlyDirectKeeper {
-        // require(
-        //     _boa.passedReview(ia),
-        //     "InvestmentAgreement not passed review procesedure"
-        // );
-
         require(ISigPage(ia).established(), "doc is not established");
 
         require(!_ias.isItem[ia], "the InvestmentAgreement has been proposed");
 
         bytes32 rule = _getSHA().votingRules(_boa.typeOfIA(ia));
 
-        uint32 votingDeadline = proposeDate +
-            uint32(rule.votingDaysOfVR()) *
-            86400;
-
         Motion storage motion = _motions[ia];
 
         motion.votingRule = rule;
-        motion.sn = _createSN(ia, submitter, proposeDate, votingDeadline);
+        motion.sn = _createSN(
+            ia,
+            submitter,
+            proposeDate,
+            _boa.votingDeadlineOf(ia)
+        );
         motion.state = uint8(EnumsRepo.StateOfMotion.Proposed);
 
         if (_ias.addItem(ia)) emit ProposeMotion(ia, motion.sn);
@@ -163,7 +149,7 @@ contract BookOfMotions is SHASetting, BOASetting, BOSSetting {
         onlyDirectKeeper
         notVotedTo(ia, caller)
         onlyOnVoting(ia)
-        beforeExpire(ia)
+        beforeExpire(ia, sigDate)
     {
         uint256 voteAmt = _getVoteAmount(ia, caller);
 
@@ -183,10 +169,10 @@ contract BookOfMotions is SHASetting, BOASetting, BOSSetting {
         bytes32 sigHash
     )
         external
+        onlyDirectKeeper
         notVotedTo(ia, caller)
         onlyOnVoting(ia)
-        beforeExpire(ia)
-        currentDate(sigDate)
+        beforeExpire(ia, sigDate)
     {
         uint256 voteAmt = _getVoteAmount(ia, caller);
 
@@ -244,20 +230,15 @@ contract BookOfMotions is SHASetting, BOASetting, BOSSetting {
         }
     }
 
-    function voteCounting(address ia)
+    function voteCounting(address ia, uint32 sigDate)
         external
         onlyDirectKeeper
         onlyProposed(ia)
         onlyOnVoting(ia)
     {
-        require(_boa.passedReview(ia), "InvestmentAgreement NOT passed review");
-
         Motion storage motion = _motions[ia];
 
-        require(
-            now + 15 minutes > motion.sn.votingDeadlineOfMotion(),
-            "voting NOT end"
-        );
+        require(sigDate > motion.sn.votingDeadlineOfMotion(), "voting NOT end");
 
         uint256 totalHead = _getParas(ia);
 
@@ -276,10 +257,10 @@ contract BookOfMotions is SHASetting, BOASetting, BOSSetting {
             : true;
 
         motion.state = flag1 && flag2
-            ? 2
+            ? uint8(EnumsRepo.StateOfMotion.Passed)
             : motion.votingRule.againstShallBuyOfVR()
-            ? 4
-            : 3;
+            ? uint8(EnumsRepo.StateOfMotion.Rejected_ToBuy)
+            : uint8(EnumsRepo.StateOfMotion.Rejected_NotToBuy);
 
         emit VoteCounting(ia, motion.state);
     }
@@ -291,7 +272,10 @@ contract BookOfMotions is SHASetting, BOASetting, BOSSetting {
     {
         Motion storage motion = _motions[ia];
 
-        require(motion.state == 4, "agianst NO need to buy");
+        // require(
+        //     motion.state == uint8(EnumsRepo.StateOfMotion.Rejected_ToBuy),
+        //     "agianst NO need to buy"
+        // );
         require(motion.againstVoters.isMember[againstVoter], "NOT NAY voter");
 
         return ((motion.allVoters.amtOfVoter[againstVoter] * 10000) /
@@ -307,20 +291,15 @@ contract BookOfMotions is SHASetting, BOASetting, BOSSetting {
         external
         view
         onlyDirectKeeper
-        currentDate(execDate)
         returns (uint256 parValue, uint256 paidPar)
     {
-        uint256 ratio = _ratioOfNay(ia, againstVoter);
+        // uint256 ratio = _ratioOfNay(ia, againstVoter);
 
-        (, uint256 orgParValue, uint256 orgPaidPar, , ) = IInvestmentAgreement(
-            ia
-        ).getDeal(sn.sequenceOfDeal());
-
-        uint32 closingDate = IInvestmentAgreement(ia).closingDate(
-            sn.sequenceOfDeal()
+        require(
+            execDate <
+                IInvestmentAgreement(ia).closingDate(sn.sequenceOfDeal()),
+            "MISSED closing date"
         );
-
-        require(execDate < closingDate, "MISSED closing date");
 
         require(
             execDate <
@@ -330,8 +309,12 @@ contract BookOfMotions is SHASetting, BOASetting, BOSSetting {
             "MISSED execute deadline"
         );
 
-        parValue = ((orgParValue * ratio) / 10000);
-        paidPar = ((orgPaidPar * ratio) / 10000);
+        // parValue = ((orgParValue * ratio) / 10000);
+        // paidPar = ((orgPaidPar * ratio) / 10000);
+
+        (, parValue, paidPar, , ) = IInvestmentAgreement(ia).getDeal(
+            sn.sequenceOfDeal()
+        );
     }
 
     //##################
@@ -411,7 +394,7 @@ contract BookOfMotions is SHASetting, BOASetting, BOSSetting {
         onlyProposed(ia)
         returns (bool)
     {
-        return _motions[ia].state == 2;
+        return _motions[ia].state == uint8(EnumsRepo.StateOfMotion.Passed);
     }
 
     function isRejected(address ia)
@@ -420,6 +403,6 @@ contract BookOfMotions is SHASetting, BOASetting, BOSSetting {
         onlyProposed(ia)
         returns (bool)
     {
-        return _motions[ia].state == 3;
+        return _motions[ia].state > uint8(EnumsRepo.StateOfMotion.Passed);
     }
 }

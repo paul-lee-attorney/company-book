@@ -218,7 +218,7 @@ contract BookOfDocuments is CloneFactory, SHASetting, BOSSetting {
         address body,
         uint32 sigDate,
         uint32 caller
-    ) public onlyDirectKeeper onlyRegistered(body) {
+    ) public onlyKeeper onlyRegistered(body) {
         Doc storage doc = _docs[body];
 
         // require(

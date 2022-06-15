@@ -22,8 +22,6 @@ import "../common/ruting/interfaces/IBookSetting.sol";
 import "../common/access/interfaces/IAccessControl.sol";
 import "../common/components/interfaces/ISigPage.sol";
 
-// import "../common/utils/Context.sol";
-
 contract BOOKeeper is
     BOASetting,
     SHASetting,
@@ -165,11 +163,13 @@ contract BOOKeeper is
     function _recoverCleanPar(bytes32[] plds) private {
         uint256 len = plds.length;
 
-        for (uint256 i = 0; i < len; i++)
+        while (len > 0) {
             _bos.increaseCleanPar(
-                plds[i].shortShareNumberOfFt(),
-                plds[i].paidParOfFt()
+                plds[len - 1].shortShareNumberOfFt(),
+                plds[len - 1].paidParOfFt()
             );
+            len--;
+        }
     }
 
     function closeOption(

@@ -30,7 +30,7 @@ interface IBookOfMotions {
         bytes32 sigHash
     ) external;
 
-    function voteCounting(address ia) external;
+    function voteCounting(address ia, uint32 sigDate) external;
 
     function requestToBuy(
         address ia,

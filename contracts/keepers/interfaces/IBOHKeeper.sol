@@ -30,5 +30,12 @@ interface IBOHKeeper {
         uint32 submitDate
     ) external;
 
+    function signSHA(
+        address sha,
+        uint32 caller,
+        uint32 sigDate,
+        bytes32 sigHash
+    ) external;
+
     function effectiveSHA(address body, uint32 caller) external;
 }

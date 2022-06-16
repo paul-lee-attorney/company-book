@@ -304,11 +304,16 @@ contract GeneralKeeper is AccessControl {
         _BOHKeeper.removeSHA(body, _msgSender());
     }
 
-    function circulateSHA(
-        address body,
-        uint32 submitDate
-    ) external {
+    function circulateSHA(address body, uint32 submitDate) external {
         _BOHKeeper.circulateSHA(body, _msgSender(), submitDate);
+    }
+
+    function signSHA(
+        address sha,
+        uint32 sigDate,
+        bytes32 sigHash
+    ) external {
+        _BOHKeeper.signSHA(sha, _msgSender(), sigDate, sigHash);
     }
 
     function effectiveSHA(address body) external {

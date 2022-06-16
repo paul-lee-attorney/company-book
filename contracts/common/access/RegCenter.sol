@@ -13,17 +13,17 @@ contract RegCenter {
     }
 
     // userNo => User
-    mapping(uint32 => User) private _users;
+    mapping(uint40 => User) private _users;
 
     // key => bool
     mapping(address => bool) private _usedKeys;
 
     // primeKey => userNo
-    mapping(address => uint32) private _userNo;
+    mapping(address => uint40) private _userNo;
 
-    uint32 public counterOfUsers;
+    uint40 public counterOfUsers;
 
-    constructor() {
+    constructor() public {
         regUser();
     }
 
@@ -31,13 +31,13 @@ contract RegCenter {
     // ##    Event     ##
     // ##################
 
-    event RegUser(uint32 indexed userNo, address primeKey);
+    event RegUser(uint40 indexed userNo, address primeKey);
 
-    event SetBackupKey(uint32 indexed userNo, address backupKey);
+    event SetBackupKey(uint40 indexed userNo, address backupKey);
 
-    event ReplacePrimeKey(uint32 indexed userNo, address newKey);
+    event ReplacePrimeKey(uint40 indexed userNo, address newKey);
 
-    event ResetBackupKeyFlag(uint32 indexed userNo);
+    event ResetBackupKeyFlag(uint40 indexed userNo);
 
     // ##################
     // ##    Modifier  ##
@@ -71,7 +71,7 @@ contract RegCenter {
         emit RegUser(counterOfUsers, msg.sender);
     }
 
-    function setBackupKey(uint32 userNo, address backupKey) external {
+    function setBackupKey(uint40 userNo, address backupKey) external {
         require(backupKey != address(0), "zero key");
         require(!_usedKeys[backupKey], "used key");
 
@@ -88,7 +88,7 @@ contract RegCenter {
         emit SetBackupKey(userNo, backupKey);
     }
 
-    function replacePrimeKey(uint32 userNo) external {
+    function replacePrimeKey(uint40 userNo) external {
         User storage user = _users[userNo];
 
         require(msg.sender == user.backupKey, "wrong backupKey");
@@ -102,7 +102,7 @@ contract RegCenter {
         emit ReplacePrimeKey(userNo, user.primeKey);
     }
 
-    function resetBackupKeyFlag(uint32 userNo) external onlyOwner {
+    function resetBackupKeyFlag(uint40 userNo) external onlyOwner {
         _users[userNo].flag = false;
         emit ResetBackupKeyFlag(userNo);
     }
@@ -111,12 +111,13 @@ contract RegCenter {
     // ##   查询端口   ##
     // ##################
 
-    function isUser(address key) external returns (bool) {
+    function isUser(address key) external view returns (bool) {
         return checkID(userNo(key), key);
     }
 
-    function checkID(uint32 userNo, address key)
+    function checkID(uint40 userNo, address key)
         public
+        view
         onlyRegKey(key)
         returns (bool)
     {
@@ -126,7 +127,7 @@ contract RegCenter {
         return key == _users[userNo].primeKey;
     }
 
-    function userNo(address key) public onlyRegKey(key) returns (uint32) {
+    function userNo(address key) public view onlyRegKey(key) returns (uint40) {
         return _userNo[key];
     }
 }

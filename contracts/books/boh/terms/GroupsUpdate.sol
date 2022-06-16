@@ -22,8 +22,8 @@ contract GroupsUpdate is BOSSetting, DraftControl {
     //##################
     //##    Event     ##
     //##################
-    event AddMemberOrder(uint32 acct, uint16 groupNo);
-    event RemoveMemberOrder(uint32 acct, uint16 groupNo);
+    event AddMemberOrder(uint40 acct, uint16 groupNo);
+    event RemoveMemberOrder(uint40 acct, uint16 groupNo);
     event DelOrder(bytes32 order);
 
     //##################
@@ -32,19 +32,19 @@ contract GroupsUpdate is BOSSetting, DraftControl {
 
     function _createOrder(
         bool addMember,
-        uint32 acct,
+        uint40 acct,
         uint16 groupNo
     ) private pure returns (bytes32) {
         bytes memory _sn = new bytes(32);
 
         _sn = _sn.boolToSN(0, addMember);
         _sn = _sn.sequenceToSN(1, groupNo);
-        _sn = _sn.dateToSN(3, acct);
+        _sn = _sn.acctToSN(3, acct);
 
         return _sn.bytesToBytes32();
     }
 
-    function addMemberOrder(uint32 acct, uint16 groupNo) external onlyAttorney {
+    function addMemberOrder(uint40 acct, uint16 groupNo) external onlyAttorney {
         require(groupNo > 0, "ZERO groupNo");
         require(groupNo <= _bos.counterOfGroups() + 1, "groupNo OVER FLOW");
 
@@ -56,7 +56,7 @@ contract GroupsUpdate is BOSSetting, DraftControl {
         emit AddMemberOrder(acct, groupNo);
     }
 
-    function removeMemberOrder(uint32 acct, uint16 groupNo)
+    function removeMemberOrder(uint40 acct, uint16 groupNo)
         external
         memberExist(acct)
         onlyAttorney

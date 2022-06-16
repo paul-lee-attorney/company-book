@@ -6,7 +6,7 @@
 pragma solidity ^0.4.24;
 
 interface IRegCenter {
-    function counterOfUsers() external returns (uint32);
+    function counterOfUsers() external returns (uint40);
 
     // ##################
     // ##    写端口    ##
@@ -14,9 +14,9 @@ interface IRegCenter {
 
     function regUser() external;
 
-    function setBackupKey(uint32 userNo, address backupKey) external;
+    function setBackupKey(uint40 userNo, address backupKey) external;
 
-    function replacePrimaryKey(uint32 userNo) external;
+    function replacePrimaryKey(uint40 userNo) external;
 
     // ##################
     // ##   查询端口   ##
@@ -24,7 +24,7 @@ interface IRegCenter {
 
     function isUser(address key) external returns (bool);
 
-    function checkID(uint32 userNo, address key) external returns (bool);
+    function checkID(uint40 userNo, address key) external returns (bool);
 
-    function userNo(address key) external returns (uint32);
+    function userNo(address key) external returns (uint40);
 }

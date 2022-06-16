@@ -12,17 +12,17 @@ contract AccessControl is Roles {
 
     bytes32 public constant READERS = bytes32("Readers");
 
-    uint32 private _directKeeper;
+    uint40 private _directKeeper;
 
-    uint32 private _owner;
+    uint40 private _owner;
 
     // ##################
     // ##   Event      ##
     // ##################
 
     event Init(
-        uint32 indexed owner,
-        uint32 indexed directKeeper,
+        uint40 indexed owner,
+        uint40 indexed directKeeper,
         address regCenter
     );
 
@@ -73,8 +73,8 @@ contract AccessControl is Roles {
     // ##################
 
     function init(
-        uint32 owner,
-        uint32 directKeeper,
+        uint40 owner,
+        uint40 directKeeper,
         address regCenter
     ) public {
         _setRegCenter(regCenter);
@@ -100,11 +100,11 @@ contract AccessControl is Roles {
     // ##   查询端口   ##
     // ##################
 
-    function getOwner() public view returns (uint32) {
+    function getOwner() public view returns (uint40) {
         return _owner;
     }
 
-    function getDirectKeeper() public view returns (uint32) {
+    function getDirectKeeper() public view returns (uint40) {
         return _directKeeper;
     }
 }

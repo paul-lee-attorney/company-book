@@ -21,8 +21,8 @@ interface IBookOfPledges {
     function createPledge(
         bytes32 shareNumber,
         uint32 createDate,
-        uint32 creditor,
-        uint32 debtor,
+        uint40 creditor,
+        uint40 debtor,
         uint256 pledgedPar,
         uint256 guaranteedAmt
     ) external;
@@ -31,7 +31,7 @@ interface IBookOfPledges {
 
     function updatePledge(
         bytes32 sn,
-        uint32 creditor,
+        uint40 creditor,
         uint256 pledgedPar,
         uint256 guaranteedAmt
     ) external;
@@ -52,7 +52,7 @@ interface IBookOfPledges {
             bytes6 short,
             uint16 sequence,
             uint32 createDate,
-            uint32 creditor
+            uint40 creditor
         );
 
     function getPledge(bytes32 sn)
@@ -61,7 +61,7 @@ interface IBookOfPledges {
         returns (
             bytes32 shareNumber,
             uint256 pledgedPar,
-            uint32 creditor,
+            uint40 creditor,
             uint256 guaranteedAmt
         );
 }

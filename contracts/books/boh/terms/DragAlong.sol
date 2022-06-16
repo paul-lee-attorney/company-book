@@ -180,7 +180,7 @@ contract DragAlong is BOSSetting, BOASetting, DraftControl {
         return _links[drager].isFollower[follower];
     }
 
-    function isLinked(uint32 dragerAddr, uint32 followerAddr)
+    function isLinked(uint40 dragerAddr, uint40 followerAddr)
         public
         view
         onlyKeeper
@@ -216,7 +216,7 @@ contract DragAlong is BOSSetting, BOASetting, DraftControl {
 
         if (sn.typeOfDeal() == 1) return false;
 
-        uint32 seller = IInvestmentAgreement(ia)
+        uint40 seller = IInvestmentAgreement(ia)
             .shareNumberOfDeal(sn.sequenceOfDeal())
             .shareholder();
 
@@ -266,11 +266,11 @@ contract DragAlong is BOSSetting, BOASetting, DraftControl {
         address ia,
         bytes32 sn,
         bytes32 shareNumber,
-        uint32 caller
+        uint40 caller
     ) public view onlyKeeper returns (bool) {
         require(isTriggered(ia, sn), "not triggered");
 
-        uint32 drager = IInvestmentAgreement(ia)
+        uint40 drager = IInvestmentAgreement(ia)
             .shareNumberOfDeal(sn.sequenceOfDeal())
             .shareholder();
 

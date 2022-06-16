@@ -22,7 +22,7 @@ contract BookOfPledges is BOSSetting {
     struct Pledge {
         bytes32 sn; //质押编号
         uint256 pledgedPar; // 出质票面额（数量）
-        uint32 creditor; //质权人、债权人
+        uint40 creditor; //质权人、债权人
         uint256 guaranteedAmt; //担保金额
     }
 
@@ -31,8 +31,8 @@ contract BookOfPledges is BOSSetting {
     //     uint16 sequence; 2
     //     uint32 createDate; 4
     //     bytes6 shortOfShare; 6
-    //     uint32 pledgor; 4
-    //     uint32 debtor; 4
+    //     uint40 pledgor; 5
+    //     uint40 debtor; 5
     // }
 
     // ssn => Pledge
@@ -45,7 +45,7 @@ contract BookOfPledges is BOSSetting {
 
     ObjGroup.SNList private _snList;
 
-    constructor(uint32 bookeeper, address regCenter) public {
+    constructor(uint40 bookeeper, address regCenter) public {
         init(_msgSender(), bookeeper, regCenter);
     }
 
@@ -57,7 +57,7 @@ contract BookOfPledges is BOSSetting {
         bytes32 indexed sn,
         bytes32 indexed shareNumber,
         uint256 pledgedPar,
-        uint32 creditor,
+        uint40 creditor,
         uint256 guaranteedAmt
     );
 
@@ -87,8 +87,8 @@ contract BookOfPledges is BOSSetting {
         uint16 sequence,
         uint32 createDate,
         bytes6 shortOfShare,
-        uint32 pledgor,
-        uint32 debtor
+        uint40 pledgor,
+        uint40 debtor
     ) private pure returns (bytes32) {
         bytes memory _sn = new bytes(32);
 
@@ -96,8 +96,8 @@ contract BookOfPledges is BOSSetting {
         _sn = _sn.sequenceToSN(1, sequence);
         _sn = _sn.dateToSN(3, createDate);
         _sn = _sn.shortToSN(7, shortOfShare);
-        _sn = _sn.dateToSN(13, pledgor);
-        _sn = _sn.dateToSN(17, debtor);
+        _sn = _sn.acctToSN(13, pledgor);
+        _sn = _sn.acctToSN(18, debtor);
 
         return _sn.bytesToBytes32();
     }
@@ -105,8 +105,8 @@ contract BookOfPledges is BOSSetting {
     function createPledge(
         bytes32 shareNumber,
         uint32 createDate,
-        uint32 creditor,
-        uint32 debtor,
+        uint40 creditor,
+        uint40 debtor,
         uint256 pledgedPar,
         uint256 guaranteedAmt
     ) external onlyDirectKeeper shareExist(shareNumber.short()) {
@@ -163,7 +163,7 @@ contract BookOfPledges is BOSSetting {
 
     function updatePledge(
         bytes6 ssn,
-        uint32 creditor,
+        uint40 creditor,
         uint256 pledgedPar,
         uint256 guaranteedAmt
     ) external onlyKeeper pledgeExist(ssn) {
@@ -197,7 +197,7 @@ contract BookOfPledges is BOSSetting {
         returns (
             bytes32 sn,
             uint256 pledgedPar,
-            uint32 creditor,
+            uint40 creditor,
             uint256 guaranteedAmt
         )
     {

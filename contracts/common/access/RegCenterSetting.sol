@@ -20,7 +20,7 @@ contract RegCenterSetting {
     // ##   修饰器     ##
     // ##################
 
-    modifier theUser(uint32 user) {
+    modifier theUser(uint40 user) {
         require(_rc.checkID(user, msg.sender), "not the user's primeKey");
         _;
     }
@@ -46,7 +46,7 @@ contract RegCenterSetting {
         _rc.regUser();
     }
 
-    function _msgSender() internal returns (uint32) {
+    function _msgSender() internal returns (uint40) {
         return _rc.userNo(msg.sender);
     }
 }

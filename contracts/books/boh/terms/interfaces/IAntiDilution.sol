@@ -12,9 +12,9 @@ interface IAntiDilution {
 
     function delBenchmark(uint8 class) external;
 
-    function addObligor(uint8 class, uint32 obligor) external;
+    function addObligor(uint8 class, uint40 obligor) external;
 
-    function removeObligor(uint8 class, uint32 obligor) external;
+    function removeObligor(uint8 class, uint40 obligor) external;
 
     // ################
     // ##  查询接口  ##
@@ -24,7 +24,7 @@ interface IAntiDilution {
 
     function classToMark(uint8 class) external view returns (bytes32);
 
-    function obligors(uint8 class) external view returns (uint32[]);
+    function obligors(uint8 class) external view returns (uint40[]);
 
     function benchmarks() external view returns (bytes32[]);
 

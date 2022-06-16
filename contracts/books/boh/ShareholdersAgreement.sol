@@ -52,7 +52,7 @@ contract ShareholdersAgreement is
 
     event SetTemplate(uint8 indexed title, address tempAdd);
 
-    event CreateTerm(uint8 indexed title, address indexed body, uint32 creator);
+    event CreateTerm(uint8 indexed title, address indexed body, uint40 creator);
 
     event RemoveTerm(uint8 indexed title);
 

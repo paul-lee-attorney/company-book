@@ -22,7 +22,7 @@ contract BOSSetting is AccessControl {
         _;
     }
 
-    modifier memberExist(uint32 acct) {
+    modifier memberExist(uint40 acct) {
         require(_bos.isMember(acct), "member NOT exist");
         _;
     }

@@ -19,18 +19,18 @@ interface ISigPage {
     function finalizeDoc() external;
 
     function signDoc(
-        uint32 caller,
+        uint40 caller,
         uint32 sigDate,
         bytes32 sigHash
     ) external;
 
     function acceptDoc(uint32 sigDate, bytes32 sigHash) external;
 
-    function addBlank(uint32 acct, uint16 sn) external;
+    function addBlank(uint40 acct, uint16 sn) external;
 
     function signDeal(
         uint16 ssn,
-        uint32 caller,
+        uint40 caller,
         uint32 sigDate,
         bytes32 sigHash
     ) external;
@@ -51,35 +51,35 @@ interface ISigPage {
 
     function isSigner(address acct) external returns (bool);
 
-    function isInitSigner(uint32 acct) external view returns (bool);
+    function isInitSigner(uint40 acct) external view returns (bool);
 
-    function parties() external returns (uint32[]);
+    function parties() external returns (uint40[]);
 
     function qtyOfParties() external returns (uint8);
 
-    function qtyOfBlankForParty(uint32 acct) external view returns (uint16);
+    function qtyOfBlankForParty(uint40 acct) external view returns (uint16);
 
-    function qtyOfSigForParty(uint32 acct) external view returns (uint16);
+    function qtyOfSigForParty(uint40 acct) external view returns (uint16);
 
-    function sigDateOfDeal(uint32 acct, uint16 sn)
+    function sigDateOfDeal(uint40 acct, uint16 sn)
         external
         view
         returns (uint32);
 
-    function sigHashOfDeal(uint32 acct, uint16 sn)
+    function sigHashOfDeal(uint40 acct, uint16 sn)
         external
         view
         returns (bytes32);
 
-    function sigDateOfDoc(uint32 acct) external view returns (uint32);
+    function sigDateOfDoc(uint40 acct) external view returns (uint32);
 
-    function sigHashOfDoc(uint32 acct) external view returns (bytes32);
+    function sigHashOfDoc(uint40 acct) external view returns (bytes32);
 
     function dealSigVerify(
-        uint32 acct,
+        uint40 acct,
         uint16 sn,
         string src
     ) external view returns (bool);
 
-    function partyDulySigned(uint32 acct) external view returns (bool);
+    function partyDulySigned(uint40 acct) external view returns (bool);
 }

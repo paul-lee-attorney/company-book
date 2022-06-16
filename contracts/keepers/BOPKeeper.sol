@@ -21,10 +21,10 @@ contract BOPKeeper is BOSSetting, BOPSetting {
         uint32 createDate,
         bytes32 shareNumber,
         uint256 pledgedPar,
-        uint32 creditor,
-        uint32 debtor,
+        uint40 creditor,
+        uint40 debtor,
         uint256 guaranteedAmt,
-        uint32 caller
+        uint40 caller
     ) external onlyDirectKeeper currentDate(createDate) {
         require(shareNumber.shareholder() == caller, "NOT shareholder");
 
@@ -42,16 +42,16 @@ contract BOPKeeper is BOSSetting, BOPSetting {
 
     function updatePledge(
         bytes32 sn,
-        uint32 creditor,
+        uint40 creditor,
         uint256 pledgedPar,
         uint256 guaranteedAmt,
-        uint32 caller
+        uint40 caller
     ) external onlyDirectKeeper {
         require(pledgedPar > 0, "ZERO pledgedPar");
 
         bytes6 shortShareNumber = sn.shortShareNumberOfPledge();
 
-        (, uint256 orgPledgedPar, uint32 orgCreditor, ) = _bop.getPledge(
+        (, uint256 orgPledgedPar, uint40 orgCreditor, ) = _bop.getPledge(
             sn.short()
         );
 
@@ -66,8 +66,8 @@ contract BOPKeeper is BOSSetting, BOPSetting {
         _bop.updatePledge(sn.short(), creditor, pledgedPar, guaranteedAmt);
     }
 
-    function delPledge(bytes32 sn, uint32 caller) external onlyDirectKeeper {
-        (, uint256 pledgedPar, uint32 creditor, ) = _bop.getPledge(sn.short());
+    function delPledge(bytes32 sn, uint40 caller) external onlyDirectKeeper {
+        (, uint256 pledgedPar, uint40 creditor, ) = _bop.getPledge(sn.short());
 
         require(caller == creditor, "NOT creditor");
 

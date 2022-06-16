@@ -13,19 +13,19 @@ interface IBookOfMotions {
     function proposeMotion(
         address ia,
         uint256 votingDeadline,
-        uint32 submitter
+        uint40 submitter
     ) external;
 
     function supportMotion(
         address ia,
-        uint32 caller,
+        uint40 caller,
         uint32 sigDate,
         bytes32 sigHash
     ) external;
 
     function againstMotion(
         address ia,
-        uint32 caller,
+        uint40 caller,
         uint32 sigDate,
         bytes32 sigHash
     ) external;
@@ -36,7 +36,7 @@ interface IBookOfMotions {
         address ia,
         bytes32 sn,
         uint32 exerciseDate,
-        uint32 agianstVoter
+        uint40 agianstVoter
     ) external returns (uint256 parValue, uint256 paidPar);
 
     function suspendVoting(address ia) external;
@@ -53,25 +53,25 @@ interface IBookOfMotions {
 
     function state(address ia) external view returns (uint8);
 
-    function votedYea(address ia, uint32 acct) external returns (bool);
+    function votedYea(address ia, uint40 acct) external returns (bool);
 
-    function votedNay(address ia, uint32 acct) external returns (bool);
+    function votedNay(address ia, uint40 acct) external returns (bool);
 
     function getYea(address ia)
         external
         view
-        returns (uint32[] membersOfYea, uint256 supportPar);
+        returns (uint40[] membersOfYea, uint256 supportPar);
 
     function getNay(address ia)
         external
         view
-        returns (uint32[] membersOfNay, uint256 againstPar);
+        returns (uint40[] membersOfNay, uint256 againstPar);
 
     function sumOfVoteAmt(address ia) external view returns (uint256);
 
-    function isVoted(address ia, uint32 acct) external view returns (bool);
+    function isVoted(address ia, uint40 acct) external view returns (bool);
 
-    function getVote(address ia, uint32 acct)
+    function getVote(address ia, uint40 acct)
         external
         view
         returns (

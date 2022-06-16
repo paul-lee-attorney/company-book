@@ -58,12 +58,12 @@ contract BOAKeeper is BOASetting, SHASetting, BOMSetting, BOSSetting {
         _;
     }
 
-    modifier onlyOwnerOf(address body, uint32 caller) {
+    modifier onlyOwnerOf(address body, uint40 caller) {
         require(IAccessControl(body).getOwner() == caller, "NOT Owner of Doc");
         _;
     }
 
-    modifier onlyPartyOf(address ia, uint32 caller) {
+    modifier onlyPartyOf(address ia, uint40 caller) {
         require(ISigPage(ia).isParty(caller), "NOT Owner of Doc");
         _;
     }
@@ -74,7 +74,7 @@ contract BOAKeeper is BOASetting, SHASetting, BOMSetting, BOSSetting {
 
     function createIA(
         uint8 typOfIA,
-        uint32 caller,
+        uint40 caller,
         uint32 createDate
     ) external onlyDirectKeeper currentDate(createDate) {
         require(_bos.isMember(caller), "caller not MEMBER");
@@ -91,7 +91,7 @@ contract BOAKeeper is BOASetting, SHASetting, BOMSetting, BOSSetting {
 
     function removeIA(
         address ia,
-        uint32 caller,
+        uint40 caller,
         uint32 sigDate
     ) external onlyDirectKeeper onlyOwnerOf(ia, caller) notEstablished(ia) {
         _releaseCleanParOfIA(ia, sigDate);
@@ -132,7 +132,7 @@ contract BOAKeeper is BOASetting, SHASetting, BOMSetting, BOSSetting {
 
     function circulateIA(
         address ia,
-        uint32 submitter,
+        uint40 submitter,
         uint32 submitDate
     )
         external
@@ -153,7 +153,7 @@ contract BOAKeeper is BOASetting, SHASetting, BOMSetting, BOSSetting {
 
     function signIA(
         address ia,
-        uint32 caller,
+        uint40 caller,
         uint32 sigDate,
         bytes32 sigHash
     ) external onlyDirectKeeper onlyPartyOf(ia, caller) currentDate(sigDate) {
@@ -174,7 +174,7 @@ contract BOAKeeper is BOASetting, SHASetting, BOMSetting, BOSSetting {
 
     function _mockDealsOfParty(
         address ia,
-        uint32 caller,
+        uint40 caller,
         uint32 sigDate
     ) private onlyKeeper {
         uint16[] memory seqList = IInvestmentAgreement(ia).dealsConcerned(
@@ -223,7 +223,7 @@ contract BOAKeeper is BOASetting, SHASetting, BOMSetting, BOSSetting {
         bytes32 sn,
         bytes32 hashLock,
         uint256 closingDate,
-        uint32 caller,
+        uint40 caller,
         uint32 sigDate
     ) external onlyDirectKeeper currentDate(sigDate) {
         require(
@@ -285,7 +285,7 @@ contract BOAKeeper is BOASetting, SHASetting, BOMSetting, BOSSetting {
         bytes32 sn,
         uint32 closingDate,
         string hashKey,
-        uint32 caller
+        uint40 caller
     ) external onlyDirectKeeper currentDate(closingDate) {
         require(
             _boa.currentState(ia) == uint8(EnumsRepo.BODStates.Voted),
@@ -310,7 +310,7 @@ contract BOAKeeper is BOASetting, SHASetting, BOMSetting, BOSSetting {
     function _checkCompletionOfIA(
         address ia,
         uint32 sigDate,
-        uint32 caller
+        uint40 caller
     ) private {
         bytes32[] memory snList = IInvestmentAgreement(ia).dealsList();
 
@@ -374,7 +374,7 @@ contract BOAKeeper is BOASetting, SHASetting, BOMSetting, BOSSetting {
     function revokeDeal(
         address ia,
         bytes32 sn,
-        uint32 caller,
+        uint40 caller,
         uint32 sigDate,
         string hashKey
     ) external onlyDirectKeeper currentDate(sigDate) {

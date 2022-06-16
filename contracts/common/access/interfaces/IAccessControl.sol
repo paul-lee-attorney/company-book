@@ -11,8 +11,8 @@ interface IAccessControl {
     // ##################
 
     function init(
-        uint32 owner,
-        uint32 directKeeper,
+        uint40 owner,
+        uint40 directKeeper,
         address usersList
     ) external;
 
@@ -26,7 +26,7 @@ interface IAccessControl {
     // ##   查询端口   ##
     // ##################
 
-    function getOwner() external view returns (uint32);
+    function getOwner() external view returns (uint40);
 
-    function getDirectKeeper() external view returns (uint32);
+    function getDirectKeeper() external view returns (uint40);
 }

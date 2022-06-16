@@ -44,12 +44,12 @@ contract BOHKeeper is BOSSetting, SHASetting, BOMSetting, BOOSetting {
         _;
     }
 
-    modifier onlyOwnerOf(address body, uint32 caller) {
+    modifier onlyOwnerOf(address body, uint40 caller) {
         require(IAccessControl(body).getOwner() == caller, "not Owner");
         _;
     }
 
-    modifier onlyPartyOf(address body, uint32 caller) {
+    modifier onlyPartyOf(address body, uint40 caller) {
         require(ISigPage(body).isParty(caller), "NOT Party of Doc");
         _;
     }
@@ -61,7 +61,7 @@ contract BOHKeeper is BOSSetting, SHASetting, BOMSetting, BOOSetting {
     function addTermTemplate(
         uint8 title,
         address add,
-        uint32 caller
+        uint40 caller
     ) external onlyDirectKeeper {
         require(caller == getOwner(), "caller is not Owner");
 
@@ -71,7 +71,7 @@ contract BOHKeeper is BOSSetting, SHASetting, BOMSetting, BOOSetting {
 
     function createSHA(
         uint8 docType,
-        uint32 caller,
+        uint40 caller,
         uint32 createDate
     ) external onlyDirectKeeper currentDate(createDate) {
         require(_bos.isMember(caller), "not MEMBER");
@@ -87,7 +87,7 @@ contract BOHKeeper is BOSSetting, SHASetting, BOMSetting, BOOSetting {
         _copyRoleTo(sha, KEEPERS);
     }
 
-    function removeSHA(address sha, uint32 caller)
+    function removeSHA(address sha, uint40 caller)
         external
         onlyDirectKeeper
         onlyOwnerOf(sha, caller)
@@ -99,7 +99,7 @@ contract BOHKeeper is BOSSetting, SHASetting, BOMSetting, BOOSetting {
 
     function circulateSHA(
         address sha,
-        uint32 caller,
+        uint40 caller,
         uint32 submitDate
     )
         external
@@ -118,7 +118,7 @@ contract BOHKeeper is BOSSetting, SHASetting, BOMSetting, BOOSetting {
 
     function signSHA(
         address sha,
-        uint32 caller,
+        uint40 caller,
         uint32 sigDate,
         bytes32 sigHash
     ) external onlyDirectKeeper onlyPartyOf(sha, caller) currentDate(sigDate) {
@@ -135,7 +135,7 @@ contract BOHKeeper is BOSSetting, SHASetting, BOMSetting, BOOSetting {
 
     function effectiveSHA(
         address sha,
-        uint32 caller,
+        uint40 caller,
         uint32 sigDate
     ) external onlyDirectKeeper onlyPartyOf(sha, caller) currentDate(sigDate) {
         require(
@@ -143,7 +143,7 @@ contract BOHKeeper is BOSSetting, SHASetting, BOMSetting, BOOSetting {
             "SHA not executed yet"
         );
 
-        uint32[] memory members = _bos.membersList();
+        uint40[] memory members = _bos.membersList();
         uint256 len = members.length;
         while (len > 0) {
             require(

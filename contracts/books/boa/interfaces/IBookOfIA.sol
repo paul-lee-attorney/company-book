@@ -14,7 +14,7 @@ interface IBookOfIA {
 
     function createDoc(
         uint8 docType,
-        uint32 caller,
+        uint40 caller,
         uint32 createDate
     ) external returns (address body);
 
@@ -25,20 +25,20 @@ interface IBookOfIA {
     function circulateIA(
         address ia,
         bytes32 rule,
-        uint32 submitter,
+        uint40 submitter,
         uint32 submitDate
     ) external;
 
     function mockDealOfSell(
         address ia,
-        uint32 seller,
+        uint40 seller,
         uint256 amount
     ) external;
 
     function mockDealOfBuy(
         address ia,
         uint16 ssn,
-        uint32 buyer,
+        uint40 buyer,
         uint256 amount
     ) external;
 
@@ -50,27 +50,27 @@ interface IBookOfIA {
         bytes32 shareNumber,
         uint256 parValue,
         uint256 paidPar,
-        uint32 caller,
+        uint40 caller,
         uint32 execDate
     ) external;
 
     function acceptAlongDeal(
         address ia,
         bytes32 sn,
-        uint32 drager,
+        uint40 drager,
         bool dragAlong
     ) external;
 
     function proposeDoc(
         address body,
         uint32 sigDate,
-        uint32 caller
+        uint40 caller
     ) external;
 
     function pushToNextState(
         address body,
         uint32 sigDate,
-        uint32 caller
+        uint40 caller
     ) external;
 
     //##################
@@ -142,5 +142,5 @@ interface IBookOfIA {
 
     function typeOfIA(address ia) external view returns (uint8 output);
 
-    function otherMembers(address ia) external view returns (uint32[]);
+    function otherMembers(address ia) external view returns (uint40[]);
 }

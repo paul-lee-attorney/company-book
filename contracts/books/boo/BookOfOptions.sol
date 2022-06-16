@@ -19,13 +19,13 @@ contract BookOfOptions is BOSSetting {
     using ObjGroup for ObjGroup.UserGroup;
     using ObjGroup for ObjGroup.SNList;
     using ArrayUtils for bytes32[];
-    using ArrayUtils for uint32[];
+    // using ArrayUtils for uint32[];
     using SNFactory for bytes;
     using SNParser for bytes32;
 
     struct Option {
         bytes32 sn;
-        uint32 rightholder;
+        uint40 rightholder;
         ObjGroup.UserGroup obligors;
         uint32 closingDate;
         uint256 parValue;
@@ -94,17 +94,17 @@ contract BookOfOptions is BOSSetting {
 
     event CreateOpt(
         bytes32 indexed sn,
-        uint32 rightholder,
-        uint32 obligor,
+        uint40 rightholder,
+        uint40 obligor,
         uint256 parValue,
         uint256 paidPar
     );
 
     event RegisterOpt(bytes32 indexed sn);
 
-    event AddObligorIntoOpt(bytes32 sn, uint32 obligor);
+    event AddObligorIntoOpt(bytes32 sn, uint40 obligor);
 
-    event RemoveObligorFromOpt(bytes32 sn, uint32 obligor);
+    event RemoveObligorFromOpt(bytes32 sn, uint40 obligor);
 
     // event SetState(bytes32 indexed sn, uint8 state);
 
@@ -168,8 +168,8 @@ contract BookOfOptions is BOSSetting {
 
     function createOption(
         uint8 typeOfOpt,
-        uint32 rightholder,
-        uint32 obligor,
+        uint40 rightholder,
+        uint40 obligor,
         uint32 triggerDate,
         uint8 exerciseDays,
         uint8 closingDays,
@@ -216,7 +216,7 @@ contract BookOfOptions is BOSSetting {
         emit CreateOpt(sn, rightholder, obligor, parValue, paidPar);
     }
 
-    function addObligorIntoOpt(bytes6 ssn, uint32 obligor)
+    function addObligorIntoOpt(bytes6 ssn, uint40 obligor)
         public
         onlyKeeper
         optionExist(ssn)
@@ -231,7 +231,7 @@ contract BookOfOptions is BOSSetting {
         emit AddObligorIntoOpt(opt.sn, obligor);
     }
 
-    function removeObligorFromOpt(bytes6 ssn, uint32 obligor)
+    function removeObligorFromOpt(bytes6 ssn, uint40 obligor)
         external
         onlyKeeper
         optionExist(ssn)
@@ -284,7 +284,7 @@ contract BookOfOptions is BOSSetting {
 
             opt.rightholder = IOptions(opts).rightholder(ssn);
 
-            uint32[] memory obligors = IOptions(opts).getObligors(ssn);
+            uint40[] memory obligors = IOptions(opts).getObligors(ssn);
             for (uint256 j = 0; j < obligors.length; j++)
                 opt.obligors.addMember(obligors[j]);
 
@@ -365,7 +365,7 @@ contract BookOfOptions is BOSSetting {
         bytes32 sn = opt.sn;
 
         uint8 typeOfOpt = sn.typeOfOpt();
-        // uint32[] obligors = opt.obligors;
+        // uint40[] obligors = opt.obligors;
 
         bytes6 shortOfShare = shareNumber.short();
 
@@ -438,7 +438,7 @@ contract BookOfOptions is BOSSetting {
 
         bytes32 sn = opt.sn;
         uint8 typeOfOpt = sn.typeOfOpt();
-        // uint32 obligor = sn.obligorOfOpt();
+        // uint40 obligor = sn.obligorOfOpt();
 
         // bytes6 shortOfShare = shareNumber.short();
 
@@ -526,7 +526,7 @@ contract BookOfOptions is BOSSetting {
         optionExist(ssn)
         returns (
             bytes32 sn,
-            uint32 rightholder,
+            uint40 rightholder,
             uint32 closingDate,
             uint256 parValue,
             uint256 paidPar,
@@ -544,11 +544,11 @@ contract BookOfOptions is BOSSetting {
         state = opt.state;
     }
 
-    function isObligor(bytes6 ssn, uint32 acct) external view returns (bool) {
+    function isObligor(bytes6 ssn, uint40 acct) external view returns (bool) {
         return _options[ssn].obligors.isMember[acct];
     }
 
-    function obligors(bytes6 ssn) external view returns (uint32[]) {
+    function obligors(bytes6 ssn) external view returns (uint40[]) {
         return _options[ssn].obligors.members;
     }
 

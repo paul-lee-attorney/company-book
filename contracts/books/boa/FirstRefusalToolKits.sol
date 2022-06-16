@@ -41,7 +41,7 @@ contract FirstRefusalToolKits is InvestmentAgreement {
 
     event UpdateFRDeal(bytes32 indexed sn, uint256 parValue, uint256 paidPar);
 
-    event AcceptFR(bytes32 indexed sn, uint32 sender);
+    event AcceptFR(bytes32 indexed sn, uint40 sender);
 
     //##################
     //##    写接口    ##
@@ -50,7 +50,7 @@ contract FirstRefusalToolKits is InvestmentAgreement {
     function execFirstRefusalRight(
         uint16 ssn,
         bool basedOnPar,
-        uint32 acct,
+        uint40 acct,
         uint32 execDate,
         bytes32 sigHash
     ) external onlyKeeper dealExist(ssn) returns (bytes32) {
@@ -122,7 +122,7 @@ contract FirstRefusalToolKits is InvestmentAgreement {
 
     function acceptFR(
         uint16 ssn,
-        uint32 acct,
+        uint40 acct,
         uint32 acceptDate,
         bytes32 sigHash
     ) external onlyDirectKeeper dealExist(ssn) {

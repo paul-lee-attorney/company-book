@@ -11,7 +11,7 @@ import "./SNParser.sol";
 library ObjGroup {
     using ArrayUtils for uint8[];
     using ArrayUtils for uint16[];
-    using ArrayUtils for uint32[];
+    using ArrayUtils for uint40[];
     using ArrayUtils for bytes32[];
     using ArrayUtils for address[];
 
@@ -136,11 +136,11 @@ library ObjGroup {
     // ======== UserGroup ========
 
     struct UserGroup {
-        mapping(uint32 => bool) isMember;
-        uint32[] members;
+        mapping(uint40 => bool) isMember;
+        uint40[] members;
     }
 
-    function addMember(UserGroup storage group, uint32 acct)
+    function addMember(UserGroup storage group, uint40 acct)
         internal
         returns (bool flag)
     {
@@ -151,7 +151,7 @@ library ObjGroup {
         }
     }
 
-    function removeMember(UserGroup storage group, uint32 acct)
+    function removeMember(UserGroup storage group, uint40 acct)
         internal
         returns (bool flag)
     {
@@ -165,18 +165,18 @@ library ObjGroup {
     // ======== SignerGroup ========
 
     struct SignerGroup {
-        mapping(uint32 => mapping(uint16 => uint16)) dealToSN;
-        mapping(uint32 => mapping(uint16 => bytes32)) sigHash;
-        mapping(uint32 => mapping(uint16 => uint32)) sigDate;
-        mapping(uint32 => uint16) counterOfSig;
-        mapping(uint32 => uint16) counterOfBlank;
+        mapping(uint40 => mapping(uint16 => uint16)) dealToSN;
+        mapping(uint40 => mapping(uint16 => bytes32)) sigHash;
+        mapping(uint40 => mapping(uint16 => uint32)) sigDate;
+        mapping(uint40 => uint16) counterOfSig;
+        mapping(uint40 => uint16) counterOfBlank;
         uint16 balance;
-        uint32[] parties;
+        uint40[] parties;
     }
 
     function addBlank(
         SignerGroup storage group,
-        uint32 acct,
+        uint40 acct,
         uint16 snOfDeal
     ) internal returns (bool flag) {
         if (group.dealToSN[acct][snOfDeal] == 0) {
@@ -191,7 +191,7 @@ library ObjGroup {
         }
     }
 
-    function removeParty(SignerGroup storage group, uint32 acct)
+    function removeParty(SignerGroup storage group, uint40 acct)
         internal
         returns (bool flag)
     {
@@ -214,7 +214,7 @@ library ObjGroup {
 
     function signDeal(
         SignerGroup storage group,
-        uint32 acct,
+        uint40 acct,
         uint16 snOfDeal,
         uint32 sigDate,
         bytes32 sigHash
@@ -240,16 +240,16 @@ library ObjGroup {
     // ======== VoterGroup ========
 
     struct VoterGroup {
-        mapping(uint32 => uint32) sigDate;
-        mapping(uint32 => bytes32) sigHash;
-        mapping(uint32 => uint256) amtOfVoter;
+        mapping(uint40 => uint32) sigDate;
+        mapping(uint40 => bytes32) sigHash;
+        mapping(uint40 => uint256) amtOfVoter;
         uint256 sumOfAmt;
-        uint32[] voters;
+        uint40[] voters;
     }
 
     function addVote(
         VoterGroup storage group,
-        uint32 acct,
+        uint40 acct,
         uint256 amount,
         uint32 sigDate,
         bytes32 sigHash

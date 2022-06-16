@@ -7,7 +7,7 @@ pragma solidity ^0.4.24;
 
 interface IBookOfShares {
     function issueShare(
-        uint32 shareholder,
+        uint40 shareholder,
         uint8 class,
         uint256 parValue,
         uint256 paidInAmount,
@@ -26,7 +26,7 @@ interface IBookOfShares {
         bytes32 shareNumber,
         uint256 parValue,
         uint256 paidInAmount,
-        uint32 to,
+        uint40 to,
         uint256 closingDate,
         uint256 unitPrice
     ) external;
@@ -45,9 +45,9 @@ interface IBookOfShares {
 
     function decreaseCleanPar(bytes6 ssn, uint256 parValue) external;
 
-    function addMemberToGroup(uint32 acct, uint16 group) external;
+    function addMemberToGroup(uint40 acct, uint16 group) external;
 
-    function removeMemberFromGroup(uint32 acct, uint16 group) external;
+    function removeMemberFromGroup(uint40 acct, uint16 group) external;
 
     function setController(uint16 group) external;
 
@@ -87,9 +87,9 @@ interface IBookOfShares {
 
     function isGroup(uint16 group) external view returns (bool);
 
-    function membersOfGroup(uint16 group) external view returns (uint32[]);
+    function membersOfGroup(uint16 group) external view returns (uint40[]);
 
-    function groupNo(uint32 acct) external view returns (uint16);
+    function groupNo(uint40 acct) external view returns (uint16);
 
     function counterOfGroups() external view returns (uint16);
 
@@ -99,15 +99,15 @@ interface IBookOfShares {
 
     // ========== MembersRepo ==============
 
-    function isMember(uint32 acct) external view returns (bool);
+    function isMember(uint40 acct) external view returns (bool);
 
-    function sharesInHand(uint32 acct) external view returns (bytes32[]);
+    function sharesInHand(uint40 acct) external view returns (bytes32[]);
 
-    function parInHand(uint32 acct) external view returns (uint256);
+    function parInHand(uint40 acct) external view returns (uint256);
 
-    function paidInHand(uint32 acct) external view returns (uint256);
+    function paidInHand(uint40 acct) external view returns (uint256);
 
     function maxQtyOfMembers() external view returns (uint8);
 
-    function membersList() external view returns (uint32[]);
+    function membersList() external view returns (uint40[]);
 }

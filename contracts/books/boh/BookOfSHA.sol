@@ -22,8 +22,8 @@ contract BookOfSHA is BookOfDocuments {
 
     // constructor(
     //     string _bookName,
-    //     uint32 _owner,
-    //     uint32 _bookeeper
+    //     uint40 _owner,
+    //     uint40 _bookeeper
     // ) public BookOfDocuments(_bookName, _admin, _bookeeper, _rc) {}
 
     //##############
@@ -38,7 +38,7 @@ contract BookOfSHA is BookOfDocuments {
 
     function changePointer(
         address body,
-        uint32 caller,
+        uint40 caller,
         uint32 sigDate
     ) external onlyDirectKeeper onlyRegistered(body) {
         if (pointer != address(0)) pushToNextState(pointer, sigDate, caller);

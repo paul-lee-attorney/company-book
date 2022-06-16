@@ -14,28 +14,28 @@ interface IBookOfSHA {
 
     function createDoc(
         uint8 docType,
-        uint32 creator,
+        uint40 creator,
         uint32 createDate
     ) external returns (address body);
 
-    function removeDoc(address body, uint32 caller) external;
+    function removeDoc(address body, uint40 caller) external;
 
     function circulateDoc(
         address body,
         bytes32 rule,
-        uint32 submitter,
+        uint40 submitter,
         uint32 circulateDate
     ) external;
 
     function pushToNextState(
         address body,
         uint32 sigDate,
-        uint32 caller
+        uint40 caller
     ) external;
 
     function changePointer(
         address body,
-        uint32 caller,
+        uint40 caller,
         uint32 sigDate
     ) external;
 

@@ -23,7 +23,7 @@ contract GeneralKeeper is AccessControl {
     IBOOKeeper private _BOOKeeper;
     IBOPKeeper private _BOPKeeper;
 
-    constructor(uint32 bookeeper, address regCenter) public {
+    constructor(uint40 bookeeper, address regCenter) public {
         init(_msgSender(), bookeeper, regCenter);
     }
 
@@ -178,7 +178,7 @@ contract GeneralKeeper is AccessControl {
     function acceptTagAlong(
         address ia,
         bytes32 sn,
-        uint32 drager,
+        uint40 drager,
         uint32 sigDate,
         bytes32 sigHash
     ) external {
@@ -352,7 +352,7 @@ contract GeneralKeeper is AccessControl {
         address ia,
         bytes32 sn,
         uint32 exerciseDate,
-        uint32 againstVoter
+        uint40 againstVoter
     ) external {
         _BOMKeeper.requestToBuy(
             ia,
@@ -373,7 +373,7 @@ contract GeneralKeeper is AccessControl {
 
     function createOption(
         uint8 typeOfOpt,
-        uint32 rightholder,
+        uint40 rightholder,
         uint32 triggerDate,
         uint8 exerciseDays,
         uint8 closingDays,
@@ -398,7 +398,7 @@ contract GeneralKeeper is AccessControl {
         _BOOKeeper.joinOptionAsObligor(sn, _msgSender());
     }
 
-    function releaseObligorFromOption(bytes32 sn, uint32 obligor) external {
+    function releaseObligorFromOption(bytes32 sn, uint40 obligor) external {
         _BOOKeeper.releaseObligorFromOption(sn, obligor, _msgSender());
     }
 
@@ -454,8 +454,8 @@ contract GeneralKeeper is AccessControl {
         uint32 createDate,
         bytes32 shareNumber,
         uint256 pledgedPar,
-        uint32 creditor,
-        uint32 debtor,
+        uint40 creditor,
+        uint40 debtor,
         uint256 guaranteedAmt
     ) external {
         _BOPKeeper.createPledge(
@@ -471,7 +471,7 @@ contract GeneralKeeper is AccessControl {
 
     function updatePledge(
         bytes32 sn,
-        uint32 creditor,
+        uint40 creditor,
         uint256 pledgedPar,
         uint256 guaranteedAmt
     ) external {

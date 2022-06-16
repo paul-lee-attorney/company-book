@@ -53,7 +53,7 @@ contract BookOfDocuments is CloneFactory, SHASetting, BOSSetting {
     //     uint8 docType;           1
     //     uint16 sequence;         2
     //     uint32 createDate;       4
-    //     uint32 creator;          4
+    //     uint40 creator;          4
     //     address addrOfDoc;       20
     // }
 
@@ -69,8 +69,8 @@ contract BookOfDocuments is CloneFactory, SHASetting, BOSSetting {
 
     constructor(
         string _bookName,
-        uint32 _owner,
-        uint32 _bookeeper,
+        uint40 _owner,
+        uint40 _bookeeper,
         address _rc
     ) public {
         bookName = _bookName;
@@ -83,9 +83,9 @@ contract BookOfDocuments is CloneFactory, SHASetting, BOSSetting {
 
     event SetTemplate(address temp);
 
-    event UpdateStateOfDoc(bytes32 indexed sn, uint8 state, uint32 caller);
+    event UpdateStateOfDoc(bytes32 indexed sn, uint8 state, uint40 caller);
 
-    event RemoveDoc(bytes32 indexed sn, uint32 caller);
+    event RemoveDoc(bytes32 indexed sn, uint40 caller);
 
     //####################
     //##    modifier    ##
@@ -132,7 +132,7 @@ contract BookOfDocuments is CloneFactory, SHASetting, BOSSetting {
         uint8 docType,
         uint16 sequence,
         uint32 createDate,
-        uint32 creator,
+        uint40 creator,
         address body
     ) private pure returns (bytes32 sn) {
         bytes memory _sn = new bytes(32);
@@ -140,15 +140,15 @@ contract BookOfDocuments is CloneFactory, SHASetting, BOSSetting {
         _sn[0] = bytes1(docType);
         _sn = _sn.sequenceToSN(1, sequence);
         _sn = _sn.dateToSN(3, createDate);
-        _sn = _sn.dateToSN(7, creator);
-        _sn = _sn.addrToSN(11, body);
+        _sn = _sn.acctToSN(7, creator);
+        _sn = _sn.addrToSN(12, body);
 
         sn = _sn.bytesToBytes32();
     }
 
     function createDoc(
         uint8 docType,
-        uint32 creator,
+        uint40 creator,
         uint32 createDate
     ) external onlyDirectKeeper tempReady returns (address body) {
         body = createClone(template);
@@ -174,7 +174,7 @@ contract BookOfDocuments is CloneFactory, SHASetting, BOSSetting {
         emit UpdateStateOfDoc(sn, doc.states.currentState, creator);
     }
 
-    function removeDoc(address body, uint32 caller)
+    function removeDoc(address body, uint40 caller)
         external
         onlyDirectKeeper
         onlyRegistered(body)
@@ -193,7 +193,7 @@ contract BookOfDocuments is CloneFactory, SHASetting, BOSSetting {
     function circulateDoc(
         address body,
         bytes32 rule,
-        uint32 submitter,
+        uint40 submitter,
         uint32 circulateDate
     ) public onlyDirectKeeper onlyRegistered(body) onlyForPending(body) {
         Doc storage doc = _docs[body];
@@ -218,7 +218,7 @@ contract BookOfDocuments is CloneFactory, SHASetting, BOSSetting {
     function pushToNextState(
         address body,
         uint32 sigDate,
-        uint32 caller
+        uint40 caller
     ) public onlyKeeper onlyRegistered(body) {
         Doc storage doc = _docs[body];
 

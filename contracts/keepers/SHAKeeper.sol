@@ -63,7 +63,7 @@ contract SHAKeeper is BOASetting, SHASetting, BOSSetting {
         bytes32 shareNumber,
         uint256 parValue,
         uint256 paidPar,
-        uint32 caller,
+        uint40 caller,
         uint32 sigDate,
         bytes32 sigHash
     )
@@ -106,10 +106,10 @@ contract SHAKeeper is BOASetting, SHASetting, BOSSetting {
         bytes32 shareNumber,
         uint256 parValue,
         uint256 paidPar,
-        uint32 caller,
+        uint40 caller,
         uint32 sigDate
     ) private {
-        uint32 drager = IInvestmentAgreement(ia)
+        uint40 drager = IInvestmentAgreement(ia)
             .shareNumberOfDeal(sn.sequenceOfDeal())
             .shareholder();
 
@@ -220,9 +220,9 @@ contract SHAKeeper is BOASetting, SHASetting, BOSSetting {
     function acceptAlongDeal(
         address ia,
         bytes32 sn,
-        uint32 drager,
+        uint40 drager,
         bool dragAlong,
-        uint32 caller,
+        uint40 caller,
         uint32 sigDate,
         bytes32 sigHash
     )
@@ -243,7 +243,7 @@ contract SHAKeeper is BOASetting, SHASetting, BOSSetting {
         address ia,
         bytes32 sn,
         bytes32 shareNumber,
-        uint32 caller,
+        uint40 caller,
         uint32 sigDate,
         bytes32 sigHash
     )
@@ -268,7 +268,7 @@ contract SHAKeeper is BOASetting, SHASetting, BOSSetting {
         );
 
         uint256 giftPar = IAntiDilution(ad).giftPar(ia, sn, shareNumber);
-        uint32[] memory obligors = IAntiDilution(ad).obligors(
+        uint40[] memory obligors = IAntiDilution(ad).obligors(
             shareNumber.class()
         );
 
@@ -287,8 +287,8 @@ contract SHAKeeper is BOASetting, SHASetting, BOSSetting {
         address ia,
         uint16 ssn,
         uint256 giftPar,
-        uint32[] obligors,
-        uint32 caller,
+        uint40[] obligors,
+        uint40 caller,
         uint32 sigDate,
         bytes32 sigHash
     ) private {
@@ -332,7 +332,7 @@ contract SHAKeeper is BOASetting, SHASetting, BOSSetting {
         uint16 ssn,
         bytes32 shareNumber,
         uint256 giftPar,
-        uint32 caller,
+        uint40 caller,
         uint32 sigDate
     ) private returns (bytes32 snOfGiftDeal, uint256 result) {
         uint256 targetCleanPar = _bos.cleanPar(shareNumber.short());
@@ -394,7 +394,7 @@ contract SHAKeeper is BOASetting, SHASetting, BOSSetting {
     function takeGiftShares(
         address ia,
         bytes32 sn,
-        uint32 caller,
+        uint40 caller,
         uint32 sigDate
     ) external currentDate(sigDate) onlyDirectKeeper {
         require(caller == sn.buyerOfDeal(), "caller is not buyer");
@@ -406,7 +406,7 @@ contract SHAKeeper is BOASetting, SHASetting, BOSSetting {
     function execFirstRefusal(
         address ia,
         bytes32 sn,
-        uint32 caller,
+        uint40 caller,
         uint32 sigDate,
         bytes32 sigHash
     )
@@ -438,7 +438,7 @@ contract SHAKeeper is BOASetting, SHASetting, BOSSetting {
     function acceptFirstRefusal(
         address ia,
         bytes32 sn,
-        uint32 caller,
+        uint40 caller,
         uint32 acceptDate,
         bytes32 sigHash
     )

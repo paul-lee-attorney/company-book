@@ -22,7 +22,7 @@ import "../../../common/components/interfaces/ISigPage.sol";
 
 contract FirstRefusal is BOSSetting, BOMSetting, DraftControl {
     // using ArrayUtils for uint256[];
-    using ArrayUtils for uint32[];
+    using ArrayUtils for uint40[];
     using SNFactory for bytes;
     using SNParser for bytes32;
     using ObjGroup for ObjGroup.UserGroup;
@@ -53,9 +53,9 @@ contract FirstRefusal is BOSSetting, BOMSetting, DraftControl {
 
     event SetFirstRefusal(uint8 indexed typeOfDeal, bytes32 rule);
 
-    event AddRightholder(uint8 indexed typeOfDeal, uint32 rightholder);
+    event AddRightholder(uint8 indexed typeOfDeal, uint40 rightholder);
 
-    event RemoveRightholder(uint8 indexed typeOfDeal, uint32 rightholder);
+    event RemoveRightholder(uint8 indexed typeOfDeal, uint40 rightholder);
 
     event DelFirstRefusal(uint8 indexed typeOfDeal);
 
@@ -120,7 +120,7 @@ contract FirstRefusal is BOSSetting, BOMSetting, DraftControl {
         emit DelFirstRefusal(typeOfDeal);
     }
 
-    function addRightholder(uint8 typeOfDeal, uint32 rightholder)
+    function addRightholder(uint8 typeOfDeal, uint40 rightholder)
         external
         onlyAttorney
         beRestricted(typeOfDeal)
@@ -135,7 +135,7 @@ contract FirstRefusal is BOSSetting, BOMSetting, DraftControl {
             emit AddRightholder(typeOfDeal, rightholder);
     }
 
-    function removeRightholder(uint8 typeOfDeal, uint32 acct)
+    function removeRightholder(uint8 typeOfDeal, uint40 acct)
         external
         onlyAttorney
         beRestricted(typeOfDeal)
@@ -159,7 +159,7 @@ contract FirstRefusal is BOSSetting, BOMSetting, DraftControl {
         return _firstRefusals[typeOfDeal].rule;
     }
 
-    function isRightholder(uint8 typeOfDeal, uint32 acct)
+    function isRightholder(uint8 typeOfDeal, uint40 acct)
         public
         view
         beRestricted(typeOfDeal)
@@ -175,7 +175,7 @@ contract FirstRefusal is BOSSetting, BOMSetting, DraftControl {
         public
         view
         beRestricted(typeOfDeal)
-        returns (uint32[])
+        returns (uint40[])
     {
         FR storage fr = _firstRefusals[typeOfDeal];
 
@@ -210,11 +210,11 @@ contract FirstRefusal is BOSSetting, BOMSetting, DraftControl {
         if (!isTriggered(ia, sn)) return true;
         bytes32 rule = _firstRefusals[sn.typeOfDeal()].rule;
 
-        (uint32[] memory consentParties, ) = _bom.getYea(ia);
+        (uint40[] memory consentParties, ) = _bom.getYea(ia);
 
-        uint32[] memory signers = ISigPage(ia).parties();
+        uint40[] memory signers = ISigPage(ia).parties();
 
-        uint32[] memory agreedParties = consentParties.combine(signers);
+        uint40[] memory agreedParties = consentParties.combine(signers);
 
         if (rule.membersEqualOfFR())
             return _bos.membersList().fullyCoveredBy(agreedParties);

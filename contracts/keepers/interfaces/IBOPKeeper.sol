@@ -14,19 +14,19 @@ interface IBOPKeeper {
         uint32 createDate,
         bytes32 shareNumber,
         uint256 pledgedPar,
-        uint32 creditor,
-        uint32 debtor,
+        uint40 creditor,
+        uint40 debtor,
         uint256 guaranteedAmt,
-        uint32 caller
+        uint40 caller
     ) external;
 
     function updatePledge(
         bytes32 sn,
-        uint32 creditor,
+        uint40 creditor,
         uint256 pledgedPar,
         uint256 guaranteedAmt,
-        uint32 caller
+        uint40 caller
     ) external;
 
-    function delPledge(bytes32 sn, uint32 caller) external;
+    function delPledge(bytes32 sn, uint40 caller) external;
 }

@@ -15,7 +15,7 @@ interface ISHAKeeper {
         bytes32 shareNumber,
         uint256 parValue,
         uint256 paidPar,
-        uint32 caller,
+        uint40 caller,
         uint32 sigDate,
         bytes32 sigHash
     ) external;
@@ -23,9 +23,9 @@ interface ISHAKeeper {
     function acceptAlongDeal(
         address ia,
         bytes32 sn,
-        uint32 drager,
+        uint40 drager,
         bool dragAlong,
-        uint32 caller,
+        uint40 caller,
         uint32 sigDate,
         bytes32 sigHash
     ) external;
@@ -36,7 +36,7 @@ interface ISHAKeeper {
         address ia,
         bytes32 sn,
         bytes32 shareNumber,
-        uint32 caller,
+        uint40 caller,
         uint32 sigDate,
         bytes32 sigHash
     ) external;
@@ -44,7 +44,7 @@ interface ISHAKeeper {
     function takeGiftShares(
         address ia,
         bytes32 sn,
-        uint32 caller,
+        uint40 caller,
         uint32 sigDate
     ) external;
 
@@ -53,7 +53,7 @@ interface ISHAKeeper {
     function execFirstRefusal(
         address ia,
         bytes32 sn,
-        uint32 caller,
+        uint40 caller,
         uint32 sigDate,
         bytes32 sigHash
     ) external;
@@ -61,7 +61,7 @@ interface ISHAKeeper {
     function acceptFirstRefusal(
         address ia,
         bytes32 sn,
-        uint32 caller,
+        uint40 caller,
         uint32 acceptDate,
         bytes32 sigHash
     ) external;

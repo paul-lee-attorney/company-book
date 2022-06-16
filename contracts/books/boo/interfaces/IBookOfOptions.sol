@@ -22,8 +22,8 @@ interface IBookOfOptions {
 
     function createOption(
         uint8 typeOfOpt,
-        uint32 rightholder,
-        uint32 obligor,
+        uint40 rightholder,
+        uint40 obligor,
         uint32 triggerDate,
         uint8 exerciseDays,
         uint8 closingDays,
@@ -34,14 +34,14 @@ interface IBookOfOptions {
 
     function updateOption(
         bytes6 ssn,
-        uint32 rightholder,
+        uint40 rightholder,
         uint256 parValue,
         uint256 paidPar
     ) external;
 
-    function addObligorIntoOpt(bytes6 ssn, uint32 obligor) external;
+    function addObligorIntoOpt(bytes6 ssn, uint40 obligor) external;
 
-    function removeObligorFromOpt(bytes6 ssn, uint32 obligor) external;
+    function removeObligorFromOpt(bytes6 ssn, uint40 obligor) external;
 
     function registerOption(address opts) external;
 
@@ -83,7 +83,7 @@ interface IBookOfOptions {
         view
         returns (
             bytes32 sn,
-            uint32 rightholder,
+            uint40 rightholder,
             uint32 closingDate,
             uint256 parValue,
             uint256 paidPar,
@@ -91,9 +91,9 @@ interface IBookOfOptions {
             uint8 state
         );
 
-    function isObligor(bytes6 ssn, uint32 acct) external view returns (bool);
+    function isObligor(bytes6 ssn, uint40 acct) external view returns (bool);
 
-    function obligors(bytes6 ssn) external view returns (uint32[]);
+    function obligors(bytes6 ssn) external view returns (uint40[]);
 
     function stateOfOption(bytes6 ssn) external view returns (uint8);
 }

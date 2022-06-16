@@ -34,6 +34,17 @@ library SNFactory {
         return sn;
     }
 
+    function acctToSN(
+        bytes sn,
+        uint8 pointer,
+        uint40 input
+    ) internal pure returns (bytes) {
+        for (uint8 i = 0; i < 5; i++)
+            sn[i + pointer] = bytes1(input << (i * 8));
+
+        return sn;
+    }
+
     function sequenceToSN(
         bytes sn,
         uint8 pointer,

@@ -53,6 +53,6 @@ interface IAlongs {
         address ia,
         bytes32 sn,
         bytes32 shareNumber,
-        uint32 caller
+        uint40 caller
     ) external view returns (bool);
 }

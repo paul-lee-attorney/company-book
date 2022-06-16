@@ -22,5 +22,5 @@ interface IDraftControl {
 
     function ATTORNEYS() external returns (bytes32);
 
-    function getGC() external view returns (uint32);
+    function getGC() external view returns (uint40);
 }

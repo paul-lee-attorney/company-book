@@ -15,7 +15,7 @@ contract Roles is RegCenterSetting {
 
     struct RoleData {
         ObjGroup.UserGroup roleGroup;
-        uint32 admin;
+        uint40 admin;
     }
 
     // NameOfRole => RoleData
@@ -25,25 +25,25 @@ contract Roles is RegCenterSetting {
     // ##   Event      ##
     // ##################
 
-    event SetRoleAdmin(bytes32 indexed role, uint32 indexed admin);
+    event SetRoleAdmin(bytes32 indexed role, uint40 indexed admin);
 
     event RoleGranted(
         bytes32 indexed role,
-        uint32 indexed member,
-        uint32 indexed sender
+        uint40 indexed member,
+        uint40 indexed sender
     );
 
     event RoleRevoked(
         bytes32 indexed role,
-        uint32 indexed member,
-        uint32 indexed sender
+        uint40 indexed member,
+        uint40 indexed sender
     );
 
     // ##################
     // ##    写端口    ##
     // ##################
 
-    function grantRole(bytes32 role, uint32 user)
+    function grantRole(bytes32 role, uint40 user)
         external
         theUser(roleAdmin(role))
     {
@@ -51,7 +51,7 @@ contract Roles is RegCenterSetting {
             emit RoleGranted(role, user, _msgSender());
     }
 
-    function revokeRole(bytes32 role, uint32 user)
+    function revokeRole(bytes32 role, uint40 user)
         external
         theUser(roleAdmin(role))
     {
@@ -67,7 +67,7 @@ contract Roles is RegCenterSetting {
     }
 
     // very important API for role admin setting, which shall be only exposed to AccessControl func.
-    function _setRoleAdmin(bytes32 role, uint32 acct) internal {
+    function _setRoleAdmin(bytes32 role, uint40 acct) internal {
         require(acct > 0, "zero acct");
         require(roleAdmin(role) == 0, "already set role admin");
 
@@ -75,13 +75,13 @@ contract Roles is RegCenterSetting {
         emit SetRoleAdmin(role, acct);
     }
 
-    function _removeRole(bytes32 role, uint32 acct) private {
+    function _removeRole(bytes32 role, uint40 acct) private {
         if (_roles[role].roleGroup.removeMember(acct))
             emit RoleRevoked(role, acct, _msgSender());
     }
 
     function _copyRoleTo(address target, bytes32 role) internal {
-        uint32[] memory users = roleMembers(role);
+        uint40[] memory users = roleMembers(role);
         uint256 len = users.length;
         for (uint256 i = 0; i < len; i++)
             IRoles(target).grantRole(role, users[i]);
@@ -91,15 +91,15 @@ contract Roles is RegCenterSetting {
     // ##   查询端口   ##
     // ##################
 
-    function hasRole(bytes32 role, uint32 acct) public view returns (bool) {
+    function hasRole(bytes32 role, uint40 acct) public view returns (bool) {
         return _roles[role].roleGroup.isMember[acct];
     }
 
-    function roleMembers(bytes32 role) public view returns (uint32[]) {
+    function roleMembers(bytes32 role) public view returns (uint40[]) {
         return _roles[role].roleGroup.members;
     }
 
-    function roleAdmin(bytes32 role) public view returns (uint32) {
+    function roleAdmin(bytes32 role) public view returns (uint40) {
         return _roles[role].admin;
     }
 }

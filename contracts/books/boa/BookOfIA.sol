@@ -21,7 +21,7 @@ import "../../common/lib/EnumsRepo.sol";
 contract BookOfIA is BookOfDocuments {
     using SNParser for bytes32;
     using ObjGroup for ObjGroup.SeqList;
-    using ArrayUtils for uint32[];
+    using ArrayUtils for uint40[];
 
     struct Amt {
         uint256 selAmt;
@@ -80,7 +80,7 @@ contract BookOfIA is BookOfDocuments {
 
     function circulateIA(
         address ia,
-        uint32 submitter,
+        uint40 submitter,
         uint32 submitDate
     ) external onlyDirectKeeper {
         bytes32 rule = _getSHA().votingRules(typeOfIA(ia));
@@ -90,7 +90,7 @@ contract BookOfIA is BookOfDocuments {
 
     function mockDealOfSell(
         address ia,
-        uint32 seller,
+        uint40 seller,
         uint256 amount
     ) external onlyDirectKeeper {
         uint16 sellerGroup = _bos.groupNo(seller);
@@ -101,7 +101,7 @@ contract BookOfIA is BookOfDocuments {
     function mockDealOfBuy(
         address ia,
         uint16 ssn,
-        uint32 buyer,
+        uint40 buyer,
         uint256 amount
     ) external onlyDirectKeeper {
         uint16 buyerGroup = _bos.groupNo(buyer);
@@ -194,7 +194,7 @@ contract BookOfIA is BookOfDocuments {
     function proposeIA(
         address ia,
         uint32 proposeDate,
-        uint32 caller
+        uint40 caller
     )
         public
         onlyDirectKeeper
@@ -215,7 +215,7 @@ contract BookOfIA is BookOfDocuments {
         bytes32 shareNumber,
         uint256 parValue,
         uint256 paidPar,
-        uint32 caller,
+        uint40 caller,
         uint32 execDate
     ) external onlyDirectKeeper currentDate(execDate) {
         uint16 drager = rule.dragerOfLink();
@@ -260,7 +260,7 @@ contract BookOfIA is BookOfDocuments {
     function acceptAlongDeal(
         address ia,
         bytes32 sn,
-        uint32 drager,
+        uint40 drager,
         bool dragAlong
     ) external onlyKeeper {
         uint16 buyerGroup = _bos.groupNo(sn.buyerOfDeal());
@@ -391,10 +391,10 @@ contract BookOfIA is BookOfDocuments {
         external
         view
         onlyUser
-        returns (uint32[])
+        returns (uint40[])
     {
-        uint32[] memory signers = ISigPage(ia).parties();
-        uint32[] memory members = _bos.membersList();
+        uint40[] memory signers = ISigPage(ia).parties();
+        uint40[] memory members = _bos.membersList();
 
         return members.minus(signers);
     }

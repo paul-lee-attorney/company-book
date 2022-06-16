@@ -56,7 +56,7 @@ contract BookOfShares is MembersRepo {
     /// @param issuePrice - 发行价格（用于判断“反稀释”等价格相关《股东协议》条款,
     /// 公链应用时，出于保密考虑可设置为“1”）
     function issueShare(
-        uint32 shareholder,
+        uint40 shareholder,
         uint8 class,
         uint256 parValue,
         uint256 paidPar,
@@ -135,7 +135,7 @@ contract BookOfShares is MembersRepo {
         bytes6 ssn,
         uint256 parValue,
         uint256 paidPar,
-        uint32 to,
+        uint40 to,
         uint32 closingDate,
         uint256 unitPrice
     ) external onlyKeeper {

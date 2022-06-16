@@ -30,12 +30,12 @@ library SNParser {
         return bytes6(shareNumber << 8);
     }
 
-    function shareholder(bytes32 shareNumber) internal pure returns (uint32) {
-        return uint32(bytes4(shareNumber << 56));
+    function shareholder(bytes32 shareNumber) internal pure returns (uint40) {
+        return uint40(bytes5(shareNumber << 56));
     }
 
     function preSSN(bytes32 shareNumber) internal pure returns (bytes6) {
-        return bytes6(shareNumber << 88);
+        return bytes6(shareNumber << 96);
     }
 
     // ======== DealSN ========
@@ -52,20 +52,20 @@ library SNParser {
         return uint16(bytes2(sn << 16));
     }
 
-    function buyerOfDeal(bytes32 sn) internal pure returns (uint32) {
-        return uint32(bytes4(sn << 32));
+    function buyerOfDeal(bytes32 sn) internal pure returns (uint40) {
+        return uint40(bytes5(sn << 32));
     }
 
     function groupOfBuyer(bytes32 sn) internal pure returns (uint16) {
-        return uint16(bytes2(sn << 64));
+        return uint16(bytes2(sn << 72));
     }
 
     function shortShareNumberOfDeal(bytes32 sn) internal pure returns (bytes6) {
-        return bytes6(sn << 80);
+        return bytes6(sn << 88);
     }
 
     function preSSNOfDeal(bytes32 sn) internal pure returns (uint16) {
-        return uint16(bytes2(sn << 128));
+        return uint16(bytes2(sn << 136));
     }
 
     // ======== DocSN ========
@@ -82,12 +82,12 @@ library SNParser {
         return uint32(bytes4(sn << 24));
     }
 
-    function creatorOfDoc(bytes32 sn) internal pure returns (uint32) {
-        return uint32(bytes4(sn << 56));
+    function creatorOfDoc(bytes32 sn) internal pure returns (uint40) {
+        return uint40(bytes5(sn << 56));
     }
 
     function addrOfDoc(bytes32 sn) internal pure returns (address) {
-        return address(bytes20(sn << 88));
+        return address(bytes20(sn << 96));
     }
 
     // ======== FirstRefusalRule ========
@@ -118,8 +118,8 @@ library SNParser {
         return uint16(bytes2(sn << 8));
     }
 
-    function memberOfGUO(bytes32 sn) internal pure returns (uint32) {
-        return uint32(bytes4(sn << 24));
+    function memberOfGUO(bytes32 sn) internal pure returns (uint40) {
+        return uint40(bytes5(sn << 24));
     }
 
     // ======== LinkRule ========
@@ -268,16 +268,12 @@ library SNParser {
         return bytes6(sn << 56);
     }
 
-    // function shortOfPledge(bytes32 sn) internal pure returns (bytes6) {
-    //     return bytes6(sn << 48);
-    // }
-
-    function pledgorOfPledge(bytes32 sn) internal pure returns (uint32) {
-        return uint32(bytes4(sn << 104));
+    function pledgorOfPledge(bytes32 sn) internal pure returns (uint40) {
+        return uint40(bytes5(sn << 104));
     }
 
-    function debtorOfPledge(bytes32 sn) internal pure returns (uint32) {
-        return uint32(bytes4(sn << 136));
+    function debtorOfPledge(bytes32 sn) internal pure returns (uint40) {
+        return uint40(bytes5(sn << 144));
     }
 
     // ========= VotingRule ========
@@ -324,12 +320,12 @@ library SNParser {
 
     // ======== MotionSN ========
 
-    function submitterOfMotion(bytes32 sn) internal pure returns (uint32) {
-        return uint32(bytes4(sn));
+    function submitterOfMotion(bytes32 sn) internal pure returns (uint40) {
+        return uint40(bytes5(sn));
     }
 
     function proposeDateOfMotion(bytes32 sn) internal pure returns (uint32) {
-        return uint32(bytes4(sn << 32));
+        return uint32(bytes4(sn << 40));
     }
 
     function votingDeadlineOfMotion(bytes32 sn) internal pure returns (uint32) {

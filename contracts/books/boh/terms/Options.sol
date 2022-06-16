@@ -22,7 +22,7 @@ contract Options is BOSSetting, DraftControl {
 
     struct Option {
         bytes32 sn;
-        uint32 rightholder;
+        uint40 rightholder;
         ObjGroup.UserGroup obligors;
         // mapping(address => bool) isObligor;
         // address[] obligors;
@@ -60,11 +60,11 @@ contract Options is BOSSetting, DraftControl {
     // ##   Event    ##
     // ################
 
-    event CreateOpt(bytes32 indexed sn, uint32 rightholder, uint32 obligor);
+    event CreateOpt(bytes32 indexed sn, uint40 rightholder, uint40 obligor);
 
-    event AddObligorIntoOpt(bytes32 sn, uint32 obligor);
+    event AddObligorIntoOpt(bytes32 sn, uint40 obligor);
 
-    event RemoveObligorFromOpt(bytes32 sn, uint32 obligor);
+    event RemoveObligorFromOpt(bytes32 sn, uint40 obligor);
 
     event DelOpt(bytes32 indexed sn);
 
@@ -109,8 +109,8 @@ contract Options is BOSSetting, DraftControl {
 
     function createOption(
         uint8 typeOfOpt,
-        uint32 rightholder,
-        uint32 obligor,
+        uint40 rightholder,
+        uint40 obligor,
         uint32 triggerDate,
         uint8 exerciseDays,
         uint8 closingDays,
@@ -207,7 +207,7 @@ contract Options is BOSSetting, DraftControl {
         emit AddConditions(sn);
     }
 
-    function addObligorIntoOpt(bytes6 ssn, uint32 obligor)
+    function addObligorIntoOpt(bytes6 ssn, uint40 obligor)
         external
         onlyAttorney
         optionExist(ssn)
@@ -221,7 +221,7 @@ contract Options is BOSSetting, DraftControl {
         // opt.obligors.push(obligor);
     }
 
-    function removeObligorFromOpt(bytes6 ssn, uint32 obligor)
+    function removeObligorFromOpt(bytes6 ssn, uint40 obligor)
         external
         onlyAttorney
         optionExist(ssn)
@@ -273,12 +273,12 @@ contract Options is BOSSetting, DraftControl {
         external
         view
         optionExist(ssn)
-        returns (uint32[])
+        returns (uint40[])
     {
         return _options[ssn].obligors.members;
     }
 
-    function isRightholder(bytes6 ssn, uint32 acct)
+    function isRightholder(bytes6 ssn, uint40 acct)
         external
         view
         optionExist(ssn)
@@ -291,7 +291,7 @@ contract Options is BOSSetting, DraftControl {
         external
         view
         optionExist(ssn)
-        returns (uint32)
+        returns (uint40)
     {
         return _options[ssn].rightholder;
     }

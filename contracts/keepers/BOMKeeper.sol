@@ -32,12 +32,12 @@ contract BOMKeeper is
     // ##   Modifier   ##
     // ##################
 
-    modifier onlyPartyOf(address body, uint32 caller) {
+    modifier onlyPartyOf(address body, uint40 caller) {
         require(ISigPage(body).isParty(caller), "NOT Party of Doc");
         _;
     }
 
-    modifier notPartyOf(address body, uint32 caller) {
+    modifier notPartyOf(address body, uint40 caller) {
         require(!ISigPage(body).isParty(caller), "Party has no voting right");
         _;
     }
@@ -49,7 +49,7 @@ contract BOMKeeper is
     function proposeMotion(
         address ia,
         uint32 proposeDate,
-        uint32 caller
+        uint40 caller
     )
         external
         onlyDirectKeeper
@@ -81,7 +81,7 @@ contract BOMKeeper is
 
     function supportMotion(
         address ia,
-        uint32 caller,
+        uint40 caller,
         uint32 sigDate,
         bytes32 sigHash
     ) external onlyDirectKeeper currentDate(sigDate) notPartyOf(ia, caller) {
@@ -91,7 +91,7 @@ contract BOMKeeper is
 
     function againstMotion(
         address ia,
-        uint32 caller,
+        uint40 caller,
         uint32 sigDate,
         bytes32 sigHash
     ) external onlyDirectKeeper currentDate(sigDate) notPartyOf(ia, caller) {
@@ -101,7 +101,7 @@ contract BOMKeeper is
 
     function voteCounting(
         address ia,
-        uint32 caller,
+        uint40 caller,
         uint32 sigDate
     ) external onlyDirectKeeper onlyPartyOf(ia, caller) currentDate(sigDate) {
         _bom.voteCounting(ia, sigDate);
@@ -112,8 +112,8 @@ contract BOMKeeper is
         address ia,
         bytes32 sn,
         uint32 exerciseDate,
-        uint32 againstVoter,
-        uint32 caller
+        uint40 againstVoter,
+        uint40 caller
     ) external onlyDirectKeeper currentDate(exerciseDate) {
         require(
             _bom.state(ia) == uint8(EnumsRepo.StateOfMotion.Rejected_ToBuy),

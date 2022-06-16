@@ -10,7 +10,7 @@ import "./AccessControl.sol";
 contract DraftControl is AccessControl {
     bool public finalized;
 
-    uint32 private _generalCounsel;
+    uint40 private _generalCounsel;
 
     bytes32 public constant ATTORNEYS = bytes32("Attorneys");
 
@@ -18,7 +18,7 @@ contract DraftControl is AccessControl {
     // ##   Event      ##
     // ##################
 
-    event SetGeneralCounsel(uint32 indexed gc);
+    event SetGeneralCounsel(uint40 indexed gc);
 
     event LockContents();
 
@@ -58,7 +58,7 @@ contract DraftControl is AccessControl {
     // ##    写端口    ##
     // ##################
 
-    function setGeneralCounsel(uint32 gc)
+    function setGeneralCounsel(uint40 gc)
         public
         onlyPending
         ownerOrDirectKeeper
@@ -81,7 +81,7 @@ contract DraftControl is AccessControl {
     // ##   查询端口   ##
     // ##################
 
-    function getGC() public view returns (uint32) {
+    function getGC() public view returns (uint40) {
         return _generalCounsel;
     }
 }

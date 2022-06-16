@@ -14,8 +14,8 @@ interface IOptions {
 
     function createOption(
         uint8 typeOfOpt,
-        uint32 rightholder,
-        uint32 obligor,
+        uint40 rightholder,
+        uint40 obligor,
         uint32 triggerDate,
         uint8 exerciseDays,
         uint8 closingDays,
@@ -33,9 +33,9 @@ interface IOptions {
         uint32 para_2
     ) external;
 
-    function addObligorIntoOpt(bytes6 ssn, uint32 obligor) external;
+    function addObligorIntoOpt(bytes6 ssn, uint40 obligor) external;
 
-    function removeObligorFromOpt(bytes6 ssn, uint32 obligor) external;
+    function removeObligorFromOpt(bytes6 ssn, uint40 obligor) external;
 
     function delOption(bytes6 ssn) external;
 
@@ -47,16 +47,16 @@ interface IOptions {
 
     function isOption(bytes6 ssn) external view returns (bool);
 
-    function isObligor(bytes6 ssn, uint32 acct) external view returns (bool);
+    function isObligor(bytes6 ssn, uint40 acct) external view returns (bool);
 
-    function getObligors(bytes6 ssn) external view returns (uint32[]);
+    function getObligors(bytes6 ssn) external view returns (uint40[]);
 
-    function isRightholder(bytes6 ssn, uint32 acct)
+    function isRightholder(bytes6 ssn, uint40 acct)
         external
         view
         returns (bool);
 
-    function rightholder(bytes6 ssn) external view returns (uint32);
+    function rightholder(bytes6 ssn) external view returns (uint40);
 
     function snList() external returns (bytes32[] list);
 }

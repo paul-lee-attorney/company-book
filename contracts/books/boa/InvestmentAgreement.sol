@@ -26,7 +26,7 @@ contract InvestmentAgreement is BOSSetting, SigPage {
         uint8 class; 1
         uint8 typeOfDeal; 1    
         uint16 sequence; 2
-        uint32 buyer; 4
+        uint40 buyer; 4
         uint16 group; 2
         bytes6 shortShareNumber; 6
         uint16 preSN; 2
@@ -81,10 +81,10 @@ contract InvestmentAgreement is BOSSetting, SigPage {
     // ======== Parties ========
 
     // party => seq
-    mapping(uint32 => ObjGroup.SeqList) private _dealsConcerned;
+    mapping(uint40 => ObjGroup.SeqList) private _dealsConcerned;
 
     // party => seq => buyer?
-    mapping(uint32 => mapping(uint16 => bool)) private _isBuyerOfDeal;
+    mapping(uint40 => mapping(uint16 => bool)) private _isBuyerOfDeal;
 
     //##################
     //##    Event     ##
@@ -143,7 +143,7 @@ contract InvestmentAgreement is BOSSetting, SigPage {
         uint8 class,
         uint8 typeOfDeal,
         uint16 sequence,
-        uint32 buyer,
+        uint40 buyer,
         uint16 group,
         bytes32 shareNumber,
         uint16 preSSN
@@ -153,10 +153,10 @@ contract InvestmentAgreement is BOSSetting, SigPage {
         _sn[0] = bytes1(class);
         _sn[1] = bytes1(typeOfDeal);
         _sn = _sn.sequenceToSN(2, sequence);
-        _sn = _sn.dateToSN(4, buyer);
-        _sn = _sn.sequenceToSN(8, group);
-        _sn = _sn.bytes32ToSN(10, shareNumber, 1, 6);
-        _sn = _sn.sequenceToSN(16, preSSN);
+        _sn = _sn.acctToSN(4, buyer);
+        _sn = _sn.sequenceToSN(9, group);
+        _sn = _sn.shortToSN(11, shareNumber.short());
+        _sn = _sn.sequenceToSN(17, preSSN);
 
         return _sn.bytesToBytes32();
     }
@@ -165,7 +165,7 @@ contract InvestmentAgreement is BOSSetting, SigPage {
         uint8 typeOfDeal,
         bytes32 shareNumber,
         uint8 class,
-        uint32 buyer,
+        uint40 buyer,
         uint16 group,
         uint16 preSSN
     ) public attorneyOrKeeper returns (bytes32) {
@@ -503,7 +503,7 @@ contract InvestmentAgreement is BOSSetting, SigPage {
         return _dealsList;
     }
 
-    function dealsConcerned(uint32 acct)
+    function dealsConcerned(uint40 acct)
         external
         view
         onlyUser
@@ -513,7 +513,7 @@ contract InvestmentAgreement is BOSSetting, SigPage {
         return _dealsConcerned[acct].items;
     }
 
-    function isBuyerOfDeal(uint32 acct, uint16 seq)
+    function isBuyerOfDeal(uint40 acct, uint16 seq)
         external
         view
         onlyUser

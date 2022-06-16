@@ -205,16 +205,63 @@ library ArrayUtils {
         }
     }
 
-    function combine(uint32[] arrA, uint32[] arrB)
+    // ======== uint40 ========
+
+    function firstIndexOf(uint40[] storage array, uint40 key)
+        internal
+        view
+        returns (bool, uint256)
+    {
+        if (array.length == 0) {
+            return (false, 0);
+        }
+
+        for (uint256 i = 0; i < array.length; i++) {
+            if (array[i] == key) {
+                return (true, i);
+            }
+        }
+        return (false, 0);
+    }
+
+    function removeByIndex(uint40[] storage array, uint256 index) internal {
+        require(index < array.length, "ArrayForUint8: index out of bounds");
+
+        while (index < array.length - 1) {
+            array[index] = array[index + 1];
+            index++;
+        }
+        array.length--;
+    }
+
+    function removeByValue(uint40[] storage array, uint40 value) internal {
+        uint256 index;
+        bool isIn;
+        (isIn, index) = firstIndexOf(array, value);
+        if (isIn) {
+            removeByIndex(array, index);
+        }
+    }
+
+    function addValue(uint40[] storage array, uint40 value) internal {
+        uint256 index;
+        bool isIn;
+        (isIn, index) = firstIndexOf(array, value);
+        if (!isIn) {
+            array.push(value);
+        }
+    }
+
+    function combine(uint40[] arrA, uint40[] arrB)
         internal
         pure
-        returns (uint32[])
+        returns (uint40[])
     {
         uint256 lenA = arrA.length;
         uint256 lenB = arrB.length;
         uint256 i;
 
-        uint32[] memory arrC = new uint32[](lenA + lenB);
+        uint40[] memory arrC = new uint40[](lenA + lenB);
 
         for (i = 0; i < lenA; i++) arrC[i] = arrA[i];
         for (i = 0; i < lenB; i++) arrC[lenA + i] = arrB[i];
@@ -222,11 +269,11 @@ library ArrayUtils {
         return arrC;
     }
 
-    function minus(uint32[] arrA, uint32[] arrB) internal returns (uint32[]) {
+    function minus(uint40[] arrA, uint40[] arrB) internal returns (uint40[]) {
         uint256 lenA = arrA.length;
         uint256 lenB = arrB.length;
 
-        uint32[] storage arrC;
+        uint40[] storage arrC;
 
         for (uint256 i = 0; i < lenA; i++) {
             bool flag = false;
@@ -242,7 +289,7 @@ library ArrayUtils {
         return arrC;
     }
 
-    function fullyCoveredBy(uint32[] arrA, uint32[] arrB)
+    function fullyCoveredBy(uint40[] arrA, uint40[] arrB)
         internal
         pure
         returns (bool)
@@ -357,22 +404,5 @@ library ArrayUtils {
         if (!isIn) {
             array.push(value);
         }
-    }
-
-    function combine(bytes32[] arrA, bytes32[] arrB)
-        internal
-        pure
-        returns (bytes32[])
-    {
-        uint256 lenA = arrA.length;
-        uint256 lenB = arrB.length;
-        uint256 i;
-
-        bytes32[] memory arrC = new bytes32[](lenA + lenB);
-
-        for (i = 0; i < lenA; i++) arrC[i] = arrA[i];
-        for (i = 0; i < lenB; i++) arrC[lenA + i] = arrB[i];
-
-        return arrC;
     }
 }

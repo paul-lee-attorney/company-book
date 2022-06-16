@@ -15,14 +15,14 @@ interface IInvestmentAgreement {
     function execFirstRefusalRight(
         uint16 ssn,
         bool basedOnPar,
-        uint32 acct,
+        uint40 acct,
         uint32 execDate,
         bytes32 sigHash
     ) external returns (bytes32);
 
     function acceptFR(
         uint16 ssn,
-        uint32 acct,
+        uint40 acct,
         uint32 acceptDate,
         bytes32 sigHash
     ) external;
@@ -33,7 +33,7 @@ interface IInvestmentAgreement {
         uint8 typeOfDeal,
         bytes32 shareNumber,
         uint8 class,
-        uint32 buyer,
+        uint40 buyer,
         uint16 group,
         uint16 preSSN
     ) external returns (bytes32 sn);
@@ -120,9 +120,9 @@ interface IInvestmentAgreement {
 
     function dealsList() external view returns (bytes32[]);
 
-    function dealsConcerned(uint32 acct) external view returns (uint16[]);
+    function dealsConcerned(uint40 acct) external view returns (uint16[]);
 
-    function isBuyerOfDeal(uint32 acct, uint16 seq)
+    function isBuyerOfDeal(uint40 acct, uint16 seq)
         external
         view
         returns (bool);

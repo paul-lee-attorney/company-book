@@ -48,7 +48,7 @@ contract BookOfMotions is SHASetting, BOASetting, BOSSetting {
 
     event ProposeMotion(address indexed ia, bytes32 sn);
 
-    event Vote(address indexed ia, uint32 voter, bool support, uint256 voteAmt);
+    event Vote(address indexed ia, uint40 voter, bool support, uint256 voteAmt);
 
     event VoteCounting(address indexed ia, uint8 result);
 
@@ -77,7 +77,7 @@ contract BookOfMotions is SHASetting, BOASetting, BOSSetting {
         _;
     }
 
-    modifier notVotedTo(address ia, uint32 caller) {
+    modifier notVotedTo(address ia, uint40 caller) {
         require(!isVoted(ia, caller), "HAVE voted for the IA");
         _;
     }
@@ -88,16 +88,16 @@ contract BookOfMotions is SHASetting, BOASetting, BOSSetting {
 
     function _createSN(
         address ia,
-        uint32 submitter,
+        uint40 submitter,
         uint32 proposeDate,
         uint32 votingDeadline
     ) private pure returns (bytes32 sn) {
         bytes memory _sn = new bytes(32);
 
-        _sn = _sn.dateToSN(0, submitter);
-        _sn = _sn.dateToSN(4, proposeDate);
-        _sn = _sn.dateToSN(8, votingDeadline);
-        _sn = _sn.addrToSN(12, ia);
+        _sn = _sn.acctToSN(0, submitter);
+        _sn = _sn.dateToSN(5, proposeDate);
+        _sn = _sn.dateToSN(9, votingDeadline);
+        _sn = _sn.addrToSN(13, ia);
 
         sn = _sn.bytesToBytes32();
     }
@@ -105,7 +105,7 @@ contract BookOfMotions is SHASetting, BOASetting, BOSSetting {
     function proposeMotion(
         address ia,
         uint32 proposeDate,
-        uint32 submitter
+        uint40 submitter
     ) external onlyDirectKeeper {
         require(ISigPage(ia).established(), "doc is not established");
 
@@ -127,7 +127,7 @@ contract BookOfMotions is SHASetting, BOASetting, BOSSetting {
         if (_ias.addItem(ia)) emit ProposeMotion(ia, motion.sn);
     }
 
-    function _getVoteAmount(address ia, uint32 caller)
+    function _getVoteAmount(address ia, uint40 caller)
         private
         view
         returns (uint256 amount)
@@ -141,7 +141,7 @@ contract BookOfMotions is SHASetting, BOASetting, BOSSetting {
 
     function supportMotion(
         address ia,
-        uint32 caller,
+        uint40 caller,
         uint32 sigDate,
         bytes32 sigHash
     )
@@ -164,7 +164,7 @@ contract BookOfMotions is SHASetting, BOASetting, BOSSetting {
 
     function againstMotion(
         address ia,
-        uint32 caller,
+        uint40 caller,
         uint32 sigDate,
         bytes32 sigHash
     )
@@ -191,7 +191,7 @@ contract BookOfMotions is SHASetting, BOASetting, BOSSetting {
         if (motion.votingRule.onlyAttendanceOfVR()) {
             totalHead = motion.allVoters.voters.length;
         } else {
-            uint32[] memory voters = motion.votingRule.partyAsConsentOfVR()
+            uint40[] memory voters = motion.votingRule.partyAsConsentOfVR()
                 ? _bos.membersList()
                 : _boa.otherMembers(ia);
 
@@ -265,7 +265,7 @@ contract BookOfMotions is SHASetting, BOASetting, BOSSetting {
         emit VoteCounting(ia, motion.state);
     }
 
-    function _ratioOfNay(address ia, uint32 againstVoter)
+    function _ratioOfNay(address ia, uint40 againstVoter)
         private
         view
         returns (uint256)
@@ -286,7 +286,7 @@ contract BookOfMotions is SHASetting, BOASetting, BOSSetting {
         address ia,
         bytes32 sn,
         uint32 execDate,
-        uint32 againstVoter
+        uint40 againstVoter
     )
         external
         view
@@ -334,18 +334,18 @@ contract BookOfMotions is SHASetting, BOASetting, BOSSetting {
         return _motions[ia].state;
     }
 
-    function votedYea(address ia, uint32 acct) external view returns (bool) {
+    function votedYea(address ia, uint40 acct) external view returns (bool) {
         return _motions[ia].supportVoters.isMember[acct];
     }
 
-    function votedNay(address ia, uint32 acct) external view returns (bool) {
+    function votedNay(address ia, uint40 acct) external view returns (bool) {
         return _motions[ia].againstVoters.isMember[acct];
     }
 
     function getYea(address ia)
         external
         view
-        returns (uint32[] membersOfYea, uint256 supportPar)
+        returns (uint40[] membersOfYea, uint256 supportPar)
     {
         membersOfYea = _motions[ia].supportVoters.members;
         supportPar = _motions[ia].sumOfYea;
@@ -354,7 +354,7 @@ contract BookOfMotions is SHASetting, BOASetting, BOSSetting {
     function getNay(address ia)
         external
         view
-        returns (uint32[] membersOfNay, uint256 againstPar)
+        returns (uint40[] membersOfNay, uint256 againstPar)
     {
         membersOfNay = _motions[ia].againstVoters.members;
         againstPar = _motions[ia].sumOfNay;
@@ -364,11 +364,11 @@ contract BookOfMotions is SHASetting, BOASetting, BOSSetting {
         return _motions[ia].allVoters.sumOfAmt;
     }
 
-    function isVoted(address ia, uint32 acct) public view returns (bool) {
+    function isVoted(address ia, uint40 acct) public view returns (bool) {
         return _motions[ia].allVoters.sigDate[acct] > 0;
     }
 
-    function getVote(address ia, uint32 acct)
+    function getVote(address ia, uint40 acct)
         external
         view
         returns (

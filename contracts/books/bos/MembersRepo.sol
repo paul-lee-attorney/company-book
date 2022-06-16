@@ -12,7 +12,7 @@ import "../../common/lib/SNParser.sol";
 import "./GroupsRepo.sol";
 
 contract MembersRepo is GroupsRepo {
-    using ArrayUtils for uint32[];
+    using ArrayUtils for bytes32[];
     using SNParser for bytes32;
     using ObjGroup for ObjGroup.UserGroup;
 
@@ -24,11 +24,11 @@ contract MembersRepo is GroupsRepo {
 
     ObjGroup.UserGroup private _shareholders;
 
-    // mapping(uint32 => bool) public isMember;
+    // mapping(uint40 => bool) public isMember;
 
-    mapping(uint32 => Member) internal _members;
+    mapping(uint40 => Member) internal _members;
 
-    // uint32[] private _membersList;
+    // uint40[] private _membersList;
 
     uint8 public maxQtyOfMembers;
 
@@ -38,22 +38,22 @@ contract MembersRepo is GroupsRepo {
 
     event SetMaxQtyOfMembers(uint8 max);
 
-    event AddMember(uint32 indexed acct, uint256 qtyOfMembers);
+    event AddMember(uint40 indexed acct, uint256 qtyOfMembers);
 
-    event RemoveMember(uint32 indexed acct, uint256 qtyOfMembers);
+    event RemoveMember(uint40 indexed acct, uint256 qtyOfMembers);
 
-    event AddShareToMember(bytes32 indexed sn, uint32 acct);
+    event AddShareToMember(bytes32 indexed sn, uint40 acct);
 
-    event RemoveShareFromMember(bytes32 indexed sn, uint32 acct);
+    event RemoveShareFromMember(bytes32 indexed sn, uint40 acct);
 
     event IncreaseAmountToMember(
-        uint32 indexed acct,
+        uint40 indexed acct,
         uint256 parValue,
         uint256 paidPar
     );
 
     event DecreaseAmountFromMember(
-        uint32 indexed acct,
+        uint40 indexed acct,
         uint256 parValue,
         uint256 paidPar
     );
@@ -67,7 +67,7 @@ contract MembersRepo is GroupsRepo {
         _;
     }
 
-    modifier memberExist(uint32 acct) {
+    modifier memberExist(uint40 acct) {
         require(_shareholders.isMember[acct], "Acct is NOT Member");
         _;
     }
@@ -85,7 +85,7 @@ contract MembersRepo is GroupsRepo {
         emit SetMaxQtyOfMembers(max);
     }
 
-    function _addMember(uint32 acct) internal {
+    function _addMember(uint40 acct) internal {
         require(
             _shareholders.members.length < maxQtyOfMembers,
             "Qty of Members overflow"
@@ -95,7 +95,7 @@ contract MembersRepo is GroupsRepo {
             emit AddMember(acct, _shareholders.members.length);
     }
 
-    function _removeMember(uint32 acct) internal {
+    function _removeMember(uint40 acct) internal {
         if (_shareholders.removeMember(acct)) {
             delete _members[acct];
             if (groupNo[acct] > 0) removeMemberFromGroup(acct, groupNo[acct]);
@@ -103,7 +103,7 @@ contract MembersRepo is GroupsRepo {
         }
     }
 
-    function _addShareToMember(bytes6 ssn, uint32 acct)
+    function _addShareToMember(bytes6 ssn, uint40 acct)
         internal
         shareExist(ssn)
         memberExist(acct)
@@ -116,7 +116,7 @@ contract MembersRepo is GroupsRepo {
         emit AddShareToMember(share.shareNumber, acct);
     }
 
-    function _removeShareFromMember(bytes6 ssn, uint32 acct)
+    function _removeShareFromMember(bytes6 ssn, uint40 acct)
         internal
         shareExist(ssn)
         memberExist(acct)
@@ -133,7 +133,7 @@ contract MembersRepo is GroupsRepo {
     }
 
     function _increaseAmountToMember(
-        uint32 acct,
+        uint40 acct,
         uint256 parValue,
         uint256 paidPar
     ) internal {
@@ -145,7 +145,7 @@ contract MembersRepo is GroupsRepo {
     }
 
     function _decreaseAmountFromMember(
-        uint32 acct,
+        uint40 acct,
         uint256 parValue,
         uint256 paidPar
     ) internal {
@@ -164,15 +164,15 @@ contract MembersRepo is GroupsRepo {
     //##   查询接口   ##
     //##################
 
-    function isMember(uint32 acct) public view returns (bool) {
+    function isMember(uint40 acct) public view returns (bool) {
         return _shareholders.isMember[acct];
     }
 
-    function membersList() external view returns (uint32[]) {
+    function membersList() external view returns (uint40[]) {
         return _shareholders.members;
     }
 
-    function parInHand(uint32 acct)
+    function parInHand(uint40 acct)
         external
         view
         memberExist(acct)
@@ -181,7 +181,7 @@ contract MembersRepo is GroupsRepo {
         return _members[acct].parInHand;
     }
 
-    function paidInHand(uint32 acct)
+    function paidInHand(uint40 acct)
         external
         view
         memberExist(acct)
@@ -190,7 +190,7 @@ contract MembersRepo is GroupsRepo {
         return _members[acct].paidInHand;
     }
 
-    function sharesInHand(uint32 acct)
+    function sharesInHand(uint40 acct)
         external
         view
         memberExist(acct)

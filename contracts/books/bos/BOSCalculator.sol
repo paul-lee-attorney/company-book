@@ -11,20 +11,19 @@ import "../../common/lib/SNParser.sol";
 import "../../common/ruting/BOSSetting.sol";
 
 contract BOSCalculator is BOSSetting {
-    // using ArrayUtils for uint32[];
     using SNParser for bytes32;
 
     //##################
     //##   查询接口   ##
     //##################
 
-    function membersOfClass(uint8 class) external view returns (uint32[]) {
+    function membersOfClass(uint8 class) external view returns (uint40[]) {
         require(class < _bos.counterOfClasses(), "class over flow");
 
         bytes32[] memory list = _bos.snList();
 
         uint256 len = list.length;
-        uint32[] storage members;
+        uint40[] storage members;
 
         for (uint256 i = 0; i < len; i++)
             if (list[i].class() == class) members.push(list[i].shareholder());
@@ -49,7 +48,7 @@ contract BOSCalculator is BOSSetting {
     function parOfGroup(uint16 group) public view returns (uint256 parValue) {
         require(_bos.isGroup(group), "GROUP not exist");
 
-        uint32[] memory members = _bos.membersOfGroup(group);
+        uint40[] memory members = _bos.membersOfGroup(group);
 
         uint256 len = members.length;
 
@@ -60,7 +59,7 @@ contract BOSCalculator is BOSSetting {
     function paidOfGroup(uint16 group) public view returns (uint256 paidPar) {
         require(_bos.isGroup(group), "GROUP not exist");
 
-        uint32[] memory members = _bos.membersOfGroup(group);
+        uint40[] memory members = _bos.membersOfGroup(group);
 
         uint256 len = members.length;
 

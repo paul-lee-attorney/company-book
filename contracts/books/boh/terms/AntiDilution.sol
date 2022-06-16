@@ -22,7 +22,6 @@ import "../../../common/components/interfaces/ISigPage.sol";
 
 contract AntiDilution is BOSSetting, BOMSetting, DraftControl {
     using SNFactory for bytes;
-    // using ArrayUtils for uint32[];
     using ArrayUtils for bytes32[];
     using SNParser for bytes32;
     using ObjGroup for ObjGroup.UserGroup;
@@ -46,9 +45,9 @@ contract AntiDilution is BOSSetting, BOMSetting, DraftControl {
 
     event DelBenchmark(uint8 indexed class);
 
-    event AddObligor(uint256 indexed class, uint32 obligor);
+    event AddObligor(uint256 indexed class, uint40 obligor);
 
-    event RemoveObligor(uint256 indexed class, uint32 obligor);
+    event RemoveObligor(uint256 indexed class, uint40 obligor);
 
     // #################
     // ##   修饰器    ##
@@ -97,7 +96,7 @@ contract AntiDilution is BOSSetting, BOMSetting, DraftControl {
         emit DelBenchmark(class);
     }
 
-    function addObligor(uint8 class, uint32 acct)
+    function addObligor(uint8 class, uint40 acct)
         external
         onlyAttorney
         onlyMarked(class)
@@ -106,7 +105,7 @@ contract AntiDilution is BOSSetting, BOMSetting, DraftControl {
             emit AddObligor(class, acct);
     }
 
-    function removeObligor(uint8 class, uint32 acct)
+    function removeObligor(uint8 class, uint40 acct)
         external
         onlyAttorney
         onlyMarked(class)
@@ -123,7 +122,7 @@ contract AntiDilution is BOSSetting, BOMSetting, DraftControl {
         external
         view
         onlyMarked(class)
-        returns (uint32[])
+        returns (uint40[])
     {
         return _obligors[classToMark[class]].members;
     }
@@ -170,7 +169,7 @@ contract AntiDilution is BOSSetting, BOMSetting, DraftControl {
         else return false;
     }
 
-    function _isExempted(uint256 price, uint32[] consentParties)
+    function _isExempted(uint256 price, uint40[] consentParties)
         private
         view
         returns (bool)
@@ -180,7 +179,7 @@ contract AntiDilution is BOSSetting, BOMSetting, DraftControl {
         uint8 i = uint8(_benchmarks.length);
 
         while (i > 0 && uint256(bytes31(_benchmarks[i - 1])) > price) {
-            uint32[] memory classMember = _bosCal.membersOfClass(
+            uint40[] memory classMember = _bosCal.membersOfClass(
                 uint8(_benchmarks[i - 1][31])
             );
 
@@ -213,7 +212,7 @@ contract AntiDilution is BOSSetting, BOMSetting, DraftControl {
     {
         if (!isTriggered(ia, sn)) return true;
 
-        (uint32[] memory consentParties, ) = _bom.getYea(ia);
+        (uint40[] memory consentParties, ) = _bom.getYea(ia);
 
         uint256 unitPrice = IInvestmentAgreement(ia).unitPrice(
             sn.sequenceOfDeal()

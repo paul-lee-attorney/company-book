@@ -37,7 +37,7 @@ contract SharesRepo is AccessControl {
     //     uint8 class; //股份类别（投资轮次）
     //     uint16 sequence; //顺序编码
     //     uint32 issueDate; //发行日期
-    //     uint32 shareholder; //股东编号
+    //     uint40 shareholder; //股东编号
     //     bytes5 preSN; //来源股票编号索引（sequence + issueDate(前24位, 精度误差256秒))
     // }
 
@@ -132,7 +132,7 @@ contract SharesRepo is AccessControl {
         uint8 class,
         uint16 sequenceNumber,
         uint32 issueDate,
-        uint32 shareholder,
+        uint40 shareholder,
         bytes6 preSN
     ) internal pure returns (bytes32 sn) {
         bytes memory _sn = new bytes(32);
@@ -140,8 +140,8 @@ contract SharesRepo is AccessControl {
         _sn[0] = bytes1(class);
         _sn = _sn.sequenceToSN(1, sequenceNumber);
         _sn = _sn.dateToSN(3, issueDate);
-        _sn = _sn.dateToSN(7, shareholder);
-        _sn = _sn.shortToSN(11, preSN);
+        _sn = _sn.acctToSN(7, shareholder);
+        _sn = _sn.shortToSN(12, preSN);
 
         sn = _sn.bytesToBytes32();
     }

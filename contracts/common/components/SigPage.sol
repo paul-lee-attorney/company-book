@@ -34,15 +34,15 @@ contract SigPage is DraftControl {
 
     event SetClosingDeadline(uint32 deadline);
 
-    event AddParty(uint32 acct);
+    event AddParty(uint40 acct);
 
-    event RemoveParty(uint32 acct);
+    event RemoveParty(uint40 acct);
 
-    event AddBlank(uint32 acct, uint16 sn);
+    event AddBlank(uint40 acct, uint16 sn);
 
-    event SignDeal(uint32 acct, uint16 sn, uint32 sigDate, bytes32 sigHash);
+    event SignDeal(uint40 acct, uint16 sn, uint32 sigDate, bytes32 sigHash);
 
-    event SignDoc(uint32 acct, uint32 sigDate, bytes32 sigHash);
+    event SignDoc(uint40 acct, uint32 sigDate, bytes32 sigHash);
 
     //####################
     //##    modifier    ##
@@ -92,7 +92,7 @@ contract SigPage is DraftControl {
         emit SetClosingDeadline(deadline);
     }
 
-    function removePartyFromDoc(uint32 acct) public onlyPending onlyAttorney {
+    function removePartyFromDoc(uint40 acct) public onlyPending onlyAttorney {
         if (_signatures.removeParty(acct)) emit RemoveParty(acct);
     }
 
@@ -103,7 +103,7 @@ contract SigPage is DraftControl {
     }
 
     function signDoc(
-        uint32 caller,
+        uint40 caller,
         uint32 sigDate,
         bytes32 sigHash
     ) public onlyFinalized {
@@ -124,7 +124,7 @@ contract SigPage is DraftControl {
         }
     }
 
-    function addBlank(uint32 acct, uint16 ssn) public {
+    function addBlank(uint40 acct, uint16 ssn) public {
         if (!finalized)
             require(
                 hasRole(ATTORNEYS, _msgSender()),
@@ -143,7 +143,7 @@ contract SigPage is DraftControl {
 
     function signDeal(
         uint16 ssn,
-        uint32 caller,
+        uint40 caller,
         uint32 sigDate,
         bytes32 sigHash
     ) public onlyKeeper {
@@ -170,19 +170,19 @@ contract SigPage is DraftControl {
     //##    查询接口    ##
     //####################
 
-    function isParty(uint32 acct) public view returns (bool) {
+    function isParty(uint40 acct) public view returns (bool) {
         return _signatures.counterOfBlank[acct] > 0;
     }
 
-    function isSigner(uint32 acct) external view returns (bool) {
+    function isSigner(uint40 acct) external view returns (bool) {
         return _signatures.counterOfSig[acct] > 0;
     }
 
-    function isInitSigner(uint32 acct) public view returns (bool) {
+    function isInitSigner(uint40 acct) public view returns (bool) {
         return _signatures.sigDate[acct][0] > 0;
     }
 
-    function parties() external view returns (uint32[]) {
+    function parties() external view returns (uint40[]) {
         return _signatures.parties;
     }
 
@@ -190,15 +190,15 @@ contract SigPage is DraftControl {
         return _signatures.parties.length;
     }
 
-    function qtyOfBlankForParty(uint32 acct) external view returns (uint16) {
+    function qtyOfBlankForParty(uint40 acct) external view returns (uint16) {
         return _signatures.counterOfBlank[acct];
     }
 
-    function qtyOfSigForParty(uint32 acct) external view returns (uint16) {
+    function qtyOfSigForParty(uint40 acct) external view returns (uint16) {
         return _signatures.counterOfSig[acct];
     }
 
-    function sigDateOfDeal(uint32 acct, uint16 sn)
+    function sigDateOfDeal(uint40 acct, uint16 sn)
         external
         view
         returns (uint32)
@@ -208,7 +208,7 @@ contract SigPage is DraftControl {
         else revert("party did not sign this deal");
     }
 
-    function sigHashOfDeal(uint32 acct, uint16 sn)
+    function sigHashOfDeal(uint40 acct, uint16 sn)
         external
         view
         returns (bytes32)
@@ -218,7 +218,7 @@ contract SigPage is DraftControl {
         else revert("party did not sign this deal");
     }
 
-    function sigDateOfDoc(uint32 acct)
+    function sigDateOfDoc(uint40 acct)
         external
         view
         onlyInitSigner
@@ -227,7 +227,7 @@ contract SigPage is DraftControl {
         return _signatures.sigDate[acct][0];
     }
 
-    function sigHashOfDoc(uint32 acct)
+    function sigHashOfDoc(uint40 acct)
         external
         view
         onlyInitSigner
@@ -237,7 +237,7 @@ contract SigPage is DraftControl {
     }
 
     function dealSigVerify(
-        uint32 acct,
+        uint40 acct,
         uint16 sn,
         string src
     ) external view returns (bool) {
@@ -245,7 +245,7 @@ contract SigPage is DraftControl {
         return _signatures.sigHash[acct][seq] == keccak256(bytes(src));
     }
 
-    function partyDulySigned(uint32 acct) external view returns (bool) {
+    function partyDulySigned(uint40 acct) external view returns (bool) {
         return
             _signatures.counterOfBlank[acct] == _signatures.counterOfSig[acct];
     }

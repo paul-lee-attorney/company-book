@@ -48,11 +48,6 @@ contract BOAKeeper is BOASetting, SHASetting, BOMSetting, BOSSetting {
     // ##   Modifier   ##
     // ##################
 
-    modifier beEstablished(address body) {
-        require(ISigPage(body).established(), "Doc NOT Established");
-        _;
-    }
-
     modifier notEstablished(address body) {
         require(!ISigPage(body).established(), "Doc ALREADY Established");
         _;
@@ -93,7 +88,13 @@ contract BOAKeeper is BOASetting, SHASetting, BOMSetting, BOSSetting {
         address ia,
         uint40 caller,
         uint32 sigDate
-    ) external onlyDirectKeeper onlyOwnerOf(ia, caller) notEstablished(ia) {
+    )
+        external
+        onlyDirectKeeper
+        onlyOwnerOf(ia, caller)
+        notEstablished(ia)
+        currentDate(sigDate)
+    {
         _releaseCleanParOfIA(ia, sigDate);
         _boa.removeDoc(ia);
         IInvestmentAgreement(ia).kill();

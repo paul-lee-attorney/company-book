@@ -117,10 +117,15 @@ contract BOOKeeper is
 
     function execOption(
         bytes32 sn,
-        uint32 exerciseDate,
+        uint32 sigDate,
         uint40 caller
-    ) external onlyDirectKeeper onlyRightholder(sn, caller) {
-        _boo.execOption(sn.shortOfOpt(), exerciseDate);
+    )
+        external
+        onlyDirectKeeper
+        onlyRightholder(sn, caller)
+        currentDate(sigDate)
+    {
+        _boo.execOption(sn.shortOfOpt(), sigDate);
     }
 
     function addFuture(
@@ -177,7 +182,7 @@ contract BOOKeeper is
         string hashKey,
         uint32 closingDate,
         uint40 caller
-    ) external onlyDirectKeeper onlyBuyer(sn, caller) {
+    ) external onlyDirectKeeper onlyBuyer(sn, caller) currentDate(closingDate) {
         uint256 price = sn.rateOfOpt();
 
         _boo.closeOption(sn.shortOfOpt(), hashKey, closingDate);
@@ -204,7 +209,12 @@ contract BOOKeeper is
         bytes32 sn,
         uint32 revokeDate,
         uint40 caller
-    ) external onlyDirectKeeper onlyRightholder(sn, caller) {
+    )
+        external
+        onlyDirectKeeper
+        onlyRightholder(sn, caller)
+        currentDate(revokeDate)
+    {
         _boo.revokeOption(sn.shortOfOpt(), revokeDate);
 
         if (sn.typeOfOpt() > 0) _recoverCleanPar(_boo.futures(sn.shortOfOpt()));

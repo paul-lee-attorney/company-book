@@ -217,7 +217,7 @@ contract BookOfIA is BookOfDocuments {
         uint256 paidPar,
         uint32 caller,
         uint32 execDate
-    ) external onlyDirectKeeper {
+    ) external onlyDirectKeeper currentDate(execDate) {
         uint16 drager = rule.dragerOfLink();
         uint16 follower = _bos.groupNo(shareNumber.shareholder());
 
@@ -312,6 +312,7 @@ contract BookOfIA is BookOfDocuments {
         view
         onlyRegistered(ia)
         onlyForCirculated(ia)
+        onlyUser
         returns (
             uint16 groupNum,
             uint256 amount,
@@ -351,7 +352,7 @@ contract BookOfIA is BookOfDocuments {
     }
 
     // 1-CI 2-ST(to 3rd) 3-ST(internal) 4-(1&3) 5-(2&3) 6-(1&2&3) 7-(1&2)
-    function typeOfIA(address ia) public view returns (uint8 output) {
+    function typeOfIA(address ia) public view onlyUser returns (uint8 output) {
         bytes32[] memory dealsList = IInvestmentAgreement(ia).dealsList();
         uint256 len = dealsList.length;
         uint8[3] memory signal;
@@ -386,7 +387,12 @@ contract BookOfIA is BookOfDocuments {
         output = sumOfSignal == 3 ? signal[2] == 0 ? 7 : 3 : sumOfSignal;
     }
 
-    function otherMembers(address ia) external view returns (uint32[]) {
+    function otherMembers(address ia)
+        external
+        view
+        onlyUser
+        returns (uint32[])
+    {
         uint32[] memory signers = ISigPage(ia).parties();
         uint32[] memory members = _bos.membersList();
 

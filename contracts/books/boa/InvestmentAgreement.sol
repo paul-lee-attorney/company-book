@@ -435,12 +435,6 @@ contract InvestmentAgreement is BOSSetting, SigPage {
         emit CloseDeal(deal.sn, "0");
     }
 
-    function signIA(
-        uint32 caller,
-        uint32 sigDate,
-        bytes32 sigHash
-    ) external {}
-
     //  #################################
     //  ##       查询接口              ##
     //  #################################

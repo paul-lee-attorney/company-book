@@ -24,6 +24,7 @@ interface IBookOfIA {
 
     function circulateIA(
         address ia,
+        bytes32 rule,
         uint32 submitter,
         uint32 submitDate
     ) external;

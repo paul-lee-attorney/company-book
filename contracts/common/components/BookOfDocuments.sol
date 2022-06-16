@@ -192,12 +192,13 @@ contract BookOfDocuments is CloneFactory, SHASetting, BOSSetting {
 
     function circulateDoc(
         address body,
+        bytes32 rule,
         uint32 submitter,
         uint32 circulateDate
     ) public onlyDirectKeeper onlyRegistered(body) onlyForPending(body) {
         Doc storage doc = _docs[body];
 
-        bytes32 rule = _getSHA().votingRules(doc.sn.typeOfDoc());
+        // bytes32 rule = _getSHA().votingRules(doc.sn.typeOfDoc());
 
         doc.reviewDeadline =
             circulateDate +

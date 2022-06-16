@@ -83,8 +83,9 @@ contract BookOfIA is BookOfDocuments {
         uint32 submitter,
         uint32 submitDate
     ) external onlyDirectKeeper {
-        require(typeOfIA(ia) == _docs[ia].sn.typeOfDoc(), "typeOfIA wrong");
-        circulateDoc(ia, submitter, submitDate);
+        bytes32 rule = _getSHA().votingRules(typeOfIA(ia));
+
+        circulateDoc(ia, rule, submitter, submitDate);
     }
 
     function mockDealOfSell(
@@ -355,9 +356,30 @@ contract BookOfIA is BookOfDocuments {
         uint256 len = dealsList.length;
         uint8[3] memory signal;
 
-        for (uint256 i = 0; i < len; i++) {
-            uint8 typeOfDeal = dealsList[i].typeOfDeal();
-            signal[typeOfDeal - 1] = typeOfDeal;
+        while (len > 0) {
+            uint8 typeOfDeal = dealsList[len - 1].typeOfDeal();
+            len--;
+
+            (, , , uint8 state, ) = IInvestmentAgreement(ia).getDeal(
+                dealsList[len - 1].sequenceOfDeal()
+            );
+
+            if (state == uint8(EnumsRepo.StateOfDeal.Terminated)) continue;
+
+            if (
+                typeOfDeal == uint8(EnumsRepo.TypeOfDeal.CapitalIncrease) ||
+                typeOfDeal == uint8(EnumsRepo.TypeOfDeal.PreEmptive)
+            ) signal[0] = 1;
+            else if (
+                typeOfDeal == uint8(EnumsRepo.TypeOfDeal.ShareTransferExt) ||
+                typeOfDeal == uint8(EnumsRepo.TypeOfDeal.TagAlong) ||
+                typeOfDeal == uint8(EnumsRepo.TypeOfDeal.DragAlong)
+            ) signal[1] = 2;
+            else if (
+                typeOfDeal == uint8(EnumsRepo.TypeOfDeal.ShareTransferInt) ||
+                typeOfDeal == uint8(EnumsRepo.TypeOfDeal.FirstRefusal) ||
+                typeOfDeal == uint8(EnumsRepo.TypeOfDeal.FreeGift)
+            ) signal[2] = 3;
         }
         // 协议类别计算
         uint8 sumOfSignal = signal[0] + signal[1] + signal[2];

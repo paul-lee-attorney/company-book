@@ -71,7 +71,11 @@ contract BOMKeeper is
             "missed votingDeadline"
         );
 
-        _bom.proposeMotion(ia, proposeDate, caller);
+        bytes32 vr = _getSHA().votingRules(_boa.typeOfIA(ia));
+
+        if (vr.ratioHeadOfVR() > 0 || vr.ratioAmountOfVR() > 0)
+            _bom.proposeMotion(ia, proposeDate, caller);
+
         _boa.pushToNextState(ia, proposeDate, caller);
     }
 
@@ -139,7 +143,7 @@ contract BOMKeeper is
         uint8 closingDays = uint8((closingDate - exerciseDate + 42300) / 84600);
 
         bytes32 snOfOpt = _boo.createOption(
-            uint8(EnumsRepo.TypeOfOption.PutOption),
+            uint8(EnumsRepo.TypeOfOption.Put_Price),
             caller,
             againstVoter,
             exerciseDate,

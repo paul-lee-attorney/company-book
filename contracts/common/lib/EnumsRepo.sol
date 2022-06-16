@@ -63,8 +63,14 @@ library EnumsRepo {
     }
 
     enum TypeOfOption {
-        CallOption,
-        PutOption
+        Call_Price,
+        Put_Price,
+        Call_ROE,
+        Put_ROE,
+        Call_PriceAndConditions,
+        Put_PriceAndConditions,
+        Call_ROEAndConditions,
+        Put_ROEAndConditions
     }
 
     enum StateOfOption {

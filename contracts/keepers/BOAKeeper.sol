@@ -144,7 +144,9 @@ contract BOAKeeper is BOASetting, SHASetting, BOMSetting, BOSSetting {
 
         IAccessControl(ia).abandonOwnership();
 
-        _boa.circulateIA(ia, submitter, submitDate);
+        bytes32 rule = _getSHA().votingRules(_boa.typeOfIA(ia));
+
+        _boa.circulateIA(ia, rule, submitter, submitDate);
     }
 
     // ======== Sign IA ========
@@ -224,6 +226,11 @@ contract BOAKeeper is BOASetting, SHASetting, BOMSetting, BOSSetting {
         uint32 caller,
         uint32 sigDate
     ) external onlyDirectKeeper currentDate(sigDate) {
+        require(
+            _boa.currentState(ia) == uint8(EnumsRepo.BODStates.Voted),
+            "wrong state of BOD"
+        );
+
         if (sn.typeOfDeal() > uint8(EnumsRepo.TypeOfDeal.PreEmptive))
             require(
                 caller ==
@@ -296,6 +303,27 @@ contract BOAKeeper is BOASetting, SHASetting, BOMSetting, BOSSetting {
         );
 
         transferTargetShare(ia, sn, closingDate);
+
+        _checkCompletionOfIA(ia, closingDate, caller);
+    }
+
+    function _checkCompletionOfIA(
+        address ia,
+        uint32 sigDate,
+        uint32 caller
+    ) private {
+        bytes32[] memory snList = IInvestmentAgreement(ia).dealsList();
+
+        uint256 len = snList.length;
+        while (len > 0) {
+            (, , , uint8 state, ) = IInvestmentAgreement(ia).getDeal(
+                snList[len - 1].sequenceOfDeal()
+            );
+            if (state < uint8(EnumsRepo.StateOfDeal.Closed)) break;
+            len--;
+        }
+
+        if (len == 0) _boa.pushToNextState(ia, sigDate, caller);
     }
 
     function transferTargetShare(
@@ -351,13 +379,17 @@ contract BOAKeeper is BOASetting, SHASetting, BOMSetting, BOSSetting {
         string hashKey
     ) external onlyDirectKeeper currentDate(sigDate) {
         require(_boa.isRegistered(ia), "IA NOT registered");
+        require(
+            _boa.currentState(ia) == uint8(EnumsRepo.BODStates.Voted),
+            "wrong State"
+        );
 
         require(
             caller ==
                 IInvestmentAgreement(ia)
                     .shareNumberOfDeal(sn.sequenceOfDeal())
                     .shareholder(),
-            "NOT seller or bookeeper"
+            "NOT seller"
         );
 
         IInvestmentAgreement(ia).revokeDeal(
@@ -367,5 +399,7 @@ contract BOAKeeper is BOASetting, SHASetting, BOMSetting, BOSSetting {
         );
 
         _releaseCleanParOfDeal(ia, sn, sigDate);
+
+        _checkCompletionOfIA(ia, sigDate, caller);
     }
 }

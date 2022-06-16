@@ -393,6 +393,11 @@ contract InvestmentAgreement is BOSSetting, SigPage {
         );
 
         require(
+            deal.states.currentState == uint8(EnumsRepo.StateOfDeal.Cleared),
+            "wrong state of Deal"
+        );
+
+        require(
             deal.hashLock == keccak256(bytes(hashKey)),
             "hashKey NOT correct"
         );

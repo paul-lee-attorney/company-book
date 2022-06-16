@@ -6,8 +6,6 @@
 pragma solidity ^0.4.24;
 
 interface IOptions {
-    function isOption(uint16 ssn) external view returns (bool);
-
     function counterOfOptions() external view returns (uint16);
 
     // ################
@@ -35,31 +33,30 @@ interface IOptions {
         uint32 para_2
     ) external;
 
-    function addObligorIntoOpt(uint16 sequence, uint32 obligor) external;
+    function addObligorIntoOpt(bytes6 ssn, uint32 obligor) external;
 
-    function removeObligorFromOpt(uint16 sequence, uint32 obligor) external;
+    function removeObligorFromOpt(bytes6 ssn, uint32 obligor) external;
 
-    function delOption(uint16 sequence) external;
+    function delOption(bytes6 ssn) external;
 
     // ################
     // ##  查询接口  ##
     // ################
 
-    function sn(uint16 sequence) external view returns (bytes32);
+    function sn(bytes6 ssn) external view returns (bytes32);
 
-    function isObligor(uint16 sequence, uint32 acct)
+    function isOption(bytes6 ssn) external view returns (bool);
+
+    function isObligor(bytes6 ssn, uint32 acct) external view returns (bool);
+
+    function getObligors(bytes6 ssn) external view returns (uint32[]);
+
+    function isRightholder(bytes6 ssn, uint32 acct)
         external
         view
         returns (bool);
 
-    function getObligors(uint16 sequence) external view returns (uint32[]);
-
-    function isRightholder(uint16 sequence, uint32 acct)
-        external
-        view
-        returns (bool);
-
-    function rightholder(uint16 sequence) external view returns (uint32);
+    function rightholder(bytes6 ssn) external view returns (uint32);
 
     function snList() external returns (bytes32[] list);
 }

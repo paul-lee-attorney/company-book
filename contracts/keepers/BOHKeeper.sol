@@ -39,11 +39,6 @@ contract BOHKeeper is BOSSetting, SHASetting, BOMSetting, BOOSetting {
     // ##   Modifier   ##
     // ##################
 
-    modifier beEstablished(address body) {
-        require(ISigPage(body).established(), "Doc NOT Established");
-        _;
-    }
-
     modifier notEstablished(address body) {
         require(!ISigPage(body).established(), "Doc ALREADY Established");
         _;
@@ -78,7 +73,7 @@ contract BOHKeeper is BOSSetting, SHASetting, BOMSetting, BOOSetting {
         uint8 docType,
         uint32 caller,
         uint32 createDate
-    ) external onlyDirectKeeper {
+    ) external onlyDirectKeeper currentDate(createDate) {
         require(_bos.isMember(caller), "not MEMBER");
         address sha = _boh.createDoc(docType, caller, createDate);
 
@@ -142,7 +137,7 @@ contract BOHKeeper is BOSSetting, SHASetting, BOMSetting, BOOSetting {
         address sha,
         uint32 caller,
         uint32 sigDate
-    ) external onlyDirectKeeper onlyPartyOf(sha, caller) {
+    ) external onlyDirectKeeper onlyPartyOf(sha, caller) currentDate(sigDate) {
         require(
             _boh.currentState(sha) == uint8(EnumsRepo.BODStates.Executed),
             "SHA not executed yet"

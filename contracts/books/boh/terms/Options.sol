@@ -15,11 +15,10 @@ import "../../../common/lib/SNFactory.sol";
 import "../../../common/lib/SNParser.sol";
 
 contract Options is BOSSetting, DraftControl {
-    using ArrayUtils for bytes32[];
-    using ArrayUtils for uint32[];
     using SNFactory for bytes;
     using SNParser for bytes32;
     using ObjGroup for ObjGroup.UserGroup;
+    using ObjGroup for ObjGroup.SNList;
 
     struct Option {
         bytes32 sn;
@@ -45,13 +44,15 @@ contract Options is BOSSetting, DraftControl {
     //      uint32 para_2; 28, 4
     // }
 
-    // sequence => Option
-    mapping(uint16 => Option) private _options;
+    // ssn => Option
+    mapping(bytes6 => Option) private _options;
 
-    // sequence => bool
-    mapping(uint16 => bool) public isOption;
+    // ssn => bool
+    // mapping(bytes6 => bool) private _isOption;
 
-    bytes32[] private _snList;
+    // bytes32[] private _snList;
+
+    ObjGroup.SNList private _snList;
 
     uint16 public counterOfOptions;
 
@@ -73,8 +74,8 @@ contract Options is BOSSetting, DraftControl {
     // ##  Modifier  ##
     // ################
 
-    modifier optionExist(uint16 ssn) {
-        require(isOption[ssn], "option NOT exist");
+    modifier optionExist(bytes6 ssn) {
+        require(_snList.isItem[ssn], "option NOT exist");
         _;
     }
 
@@ -138,7 +139,7 @@ contract Options is BOSSetting, DraftControl {
             paidPar
         );
 
-        Option storage opt = _options[counterOfOptions];
+        Option storage opt = _options[sn.short()];
 
         opt.sn = sn;
         opt.rightholder = rightholder;
@@ -148,8 +149,10 @@ contract Options is BOSSetting, DraftControl {
         // opt.isObligor[obligor] = true;
         // opt.obligors.push(obligor);
 
-        isOption[counterOfOptions] = true;
-        _snList.push(sn);
+        _snList.addItem(sn);
+
+        // isOption[counterOfOptions] = true;
+        // _snList.push(sn);
 
         emit CreateOpt(sn, rightholder, obligor);
     }
@@ -175,14 +178,14 @@ contract Options is BOSSetting, DraftControl {
     }
 
     function addConditions(
-        uint16 sequence,
+        bytes6 ssn,
         uint8 logicOperator,
         uint8 compareOperator_1,
         uint32 para_1,
         uint8 compareOperator_2,
         uint32 para_2
     ) external onlyAttorney {
-        Option storage opt = _options[sequence];
+        Option storage opt = _options[ssn];
 
         require(opt.sn.typeOfOpt() > 3, "WRONG typeOfOption");
 
@@ -195,20 +198,21 @@ contract Options is BOSSetting, DraftControl {
             para_2
         );
 
-        _snList.removeByValue(opt.sn);
+        _snList.removeItem(opt.sn);
 
         opt.sn = sn;
-        _snList.push(sn);
+
+        _snList.addItem(sn);
 
         emit AddConditions(sn);
     }
 
-    function addObligorIntoOpt(uint16 sequence, uint32 obligor)
+    function addObligorIntoOpt(bytes6 ssn, uint32 obligor)
         external
         onlyAttorney
-        optionExist(sequence)
+        optionExist(ssn)
     {
-        Option storage opt = _options[sequence];
+        Option storage opt = _options[ssn];
 
         require(opt.obligors.addMember(obligor), "obligor ALREADY registered");
         emit AddObligorIntoOpt(opt.sn, obligor);
@@ -217,12 +221,12 @@ contract Options is BOSSetting, DraftControl {
         // opt.obligors.push(obligor);
     }
 
-    function removeObligorFromOpt(uint16 sequence, uint32 obligor)
+    function removeObligorFromOpt(bytes6 ssn, uint32 obligor)
         external
         onlyAttorney
-        optionExist(sequence)
+        optionExist(ssn)
     {
-        Option storage opt = _options[sequence];
+        Option storage opt = _options[ssn];
 
         require(opt.obligors.removeMember(obligor), "obligor NOT registered");
         emit RemoveObligorFromOpt(opt.sn, obligor);
@@ -231,18 +235,15 @@ contract Options is BOSSetting, DraftControl {
         // opt.obligors.removeByValue(obligor);
     }
 
-    function delOption(uint16 sequence)
-        external
-        onlyAttorney
-        optionExist(sequence)
-    {
-        Option storage opt = _options[sequence];
+    function delOption(bytes6 ssn) external onlyAttorney optionExist(ssn) {
+        Option storage opt = _options[ssn];
 
-        delete isOption[sequence];
+        // delete isOption[ssn];
+        // _snList.removeByValue(opt.sn);
 
-        _snList.removeByValue(opt.sn);
+        _snList.removeItem(opt.sn);
 
-        delete _options[sequence];
+        delete _options[ssn];
 
         emit DelOpt(opt.sn);
     }
@@ -251,52 +252,51 @@ contract Options is BOSSetting, DraftControl {
     // ##  查询接口  ##
     // ################
 
-    function sn(uint16 sequence)
-        external
-        view
-        optionExist(sequence)
-        returns (bytes32)
-    {
-        return _options[sequence].sn;
+    function sn(bytes6 ssn) external view optionExist(ssn) returns (bytes32) {
+        return _options[ssn].sn;
     }
 
-    function isObligor(uint16 sequence, uint32 acct)
+    function isOption(bytes6 ssn) external view returns (bool) {
+        return _snList.isItem[ssn];
+    }
+
+    function isObligor(bytes6 ssn, uint32 acct)
         external
         view
-        optionExist(sequence)
+        optionExist(ssn)
         returns (bool)
     {
-        return _options[sequence].obligors.isMember[acct];
+        return _options[ssn].obligors.isMember[acct];
     }
 
-    function getObligors(uint16 sequence)
+    function getObligors(bytes6 ssn)
         external
         view
-        optionExist(sequence)
+        optionExist(ssn)
         returns (uint32[])
     {
-        return _options[sequence].obligors.members;
+        return _options[ssn].obligors.members;
     }
 
-    function isRightholder(uint16 sequence, uint32 acct)
+    function isRightholder(bytes6 ssn, uint32 acct)
         external
         view
-        optionExist(sequence)
+        optionExist(ssn)
         returns (bool)
     {
-        return _options[sequence].rightholder == acct;
+        return _options[ssn].rightholder == acct;
     }
 
-    function rightholder(uint16 sequence)
+    function rightholder(bytes6 ssn)
         external
         view
-        optionExist(sequence)
+        optionExist(ssn)
         returns (uint32)
     {
-        return _options[sequence].rightholder;
+        return _options[ssn].rightholder;
     }
 
     function snList() external view returns (bytes32[] list) {
-        list = _snList;
+        list = _snList.items;
     }
 }

@@ -263,13 +263,15 @@ contract BookOfOptions is BOSSetting {
         bytes32[] memory snList = IOptions(opts).snList();
         uint256 len = snList.length;
 
-        for (uint256 i = 0; i < len; i++) {
-            uint16 ssn = snList[i].sequenceOfOpt();
+        while (len > 0) {
+            bytes6 ssn = snList[len - 1].short();
+            len--;
+
             if (!IOptions(opts).isOption(ssn)) continue;
 
             counterOfOptions++;
 
-            bytes32 sn = _replaceSequence(snList[i], counterOfOptions);
+            bytes32 sn = _replaceSequence(snList[len - 1], counterOfOptions);
 
             Option storage opt = _options[sn.shortOfOpt()];
 

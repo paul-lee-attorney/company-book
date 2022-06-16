@@ -74,92 +74,126 @@ contract BOHKeeper is BOSSetting, SHASetting, BOMSetting, BOOSetting {
         emit AddTemplate(title, add);
     }
 
-    function createSHA(uint8 docType, uint32 caller) external onlyDirectKeeper {
+    function createSHA(
+        uint8 docType,
+        uint32 caller,
+        uint32 createDate
+    ) external onlyDirectKeeper {
         require(_bos.isMember(caller), "not MEMBER");
-        address body = _boh.createDoc(docType);
+        address sha = _boh.createDoc(docType, caller, createDate);
 
-        IAccessControl(body).init(caller, _rc.userNo(this), address(_rc));
+        IAccessControl(sha).init(caller, _rc.userNo(this), address(_rc));
 
-        IShareholdersAgreement(body).setTermsTemplate(termsTemplate);
-        IBookSetting(body).setBOM(address(_bom));
-        IBookSetting(body).setBOS(address(_bos));
-        IBookSetting(body).setBOSCal(address(_bosCal));
+        IShareholdersAgreement(sha).setTermsTemplate(termsTemplate);
+        IBookSetting(sha).setBOM(address(_bom));
+        IBookSetting(sha).setBOS(address(_bos));
+        IBookSetting(sha).setBOSCal(address(_bosCal));
 
-        _copyRoleTo(body, KEEPERS);
+        _copyRoleTo(sha, KEEPERS);
     }
 
-    function removeSHA(address body, uint32 caller)
+    function removeSHA(address sha, uint32 caller)
         external
         onlyDirectKeeper
-        onlyOwnerOf(body, caller)
-        notEstablished(body)
+        onlyOwnerOf(sha, caller)
+        notEstablished(sha)
     {
-        _boh.removeDoc(body);
-        IShareholdersAgreement(body).kill();
+        _boh.removeDoc(sha, caller);
+        IShareholdersAgreement(sha).kill();
     }
 
-    function submitSHA(
-        address body,
+    function circulateSHA(
+        address sha,
         uint32 caller,
-        uint32 submitDate,
-        bytes32 docHash
+        uint32 submitDate
     )
         external
         onlyDirectKeeper
-        onlyOwnerOf(body, caller)
-        beEstablished(body)
+        onlyOwnerOf(sha, caller)
         currentDate(submitDate)
     {
-        _boh.submitDoc(body, caller, submitDate, docHash);
+        require(IDraftControl(sha).finalized(), "let GC finalize SHA first");
 
-        IAccessControl(body).abandonOwnership();
+        IAccessControl(sha).abandonOwnership();
+
+        _boh.circulateDoc(sha, bytes32(0), caller, submitDate);
+    }
+
+    // ======== Sign SHA ========
+
+    function signSHA(
+        address sha,
+        uint32 caller,
+        uint32 sigDate,
+        bytes32 sigHash
+    ) external onlyDirectKeeper onlyPartyOf(sha, caller) currentDate(sigDate) {
+        require(
+            _boh.currentState(sha) == uint8(EnumsRepo.BODStates.Circulated),
+            "SHA not in Circulated State"
+        );
+
+        ISigPage(sha).signDoc(caller, sigDate, sigHash);
+
+        if (ISigPage(sha).established())
+            _boh.pushToNextState(sha, sigDate, caller);
     }
 
     function effectiveSHA(
-        address body,
+        address sha,
         uint32 caller,
         uint32 sigDate
-    ) external onlyDirectKeeper onlyPartyOf(body, caller) {
+    ) external onlyDirectKeeper onlyPartyOf(sha, caller) {
         require(
-            _boh.currentState(body) == uint8(EnumsRepo.BODStates.Voted),
-            "SHA not submitted yet"
+            _boh.currentState(sha) == uint8(EnumsRepo.BODStates.Executed),
+            "SHA not executed yet"
         );
 
-        _boh.changePointer(body, caller, sigDate);
+        uint32[] memory members = _bos.membersList();
+        uint256 len = members.length;
+        while (len > 0) {
+            require(
+                ISigPage(sha).isParty(members[len - 1]),
+                "left member for SHA"
+            );
+            len--;
+        }
+
+        _boh.changePointer(sha, caller, sigDate);
 
         if (
-            IShareholdersAgreement(body).hasTitle(
+            IShareholdersAgreement(sha).hasTitle(
                 uint8(EnumsRepo.TermTitle.OPTIONS)
             )
         )
             _boo.registerOption(
-                IShareholdersAgreement(body).getTerm(
+                IShareholdersAgreement(sha).getTerm(
                     uint8(EnumsRepo.TermTitle.OPTIONS)
                 )
             );
 
         if (
-            IShareholdersAgreement(body).hasTitle(
+            IShareholdersAgreement(sha).hasTitle(
                 uint8(EnumsRepo.TermTitle.GROUPS_UPDATE)
             )
         ) {
             bytes32[] memory guo = IGroupsUpdate(
-                IShareholdersAgreement(body).getTerm(
+                IShareholdersAgreement(sha).getTerm(
                     uint8(EnumsRepo.TermTitle.GROUPS_UPDATE)
                 )
             ).orders();
-            uint256 len = guo.length;
-            for (uint256 i = 0; i < len; i++) {
-                if (guo[i].addMemberOfGUO())
+            len = guo.length;
+            while (len > 0) {
+                if (guo[len - 1].addMemberOfGUO())
                     _bos.addMemberToGroup(
-                        guo[i].memberOfGUO(),
-                        guo[i].groupNoOfGUO()
+                        guo[len - 1].memberOfGUO(),
+                        guo[len - 1].groupNoOfGUO()
                     );
                 else
                     _bos.removeMemberFromGroup(
-                        guo[i].memberOfGUO(),
-                        guo[i].groupNoOfGUO()
+                        guo[len - 1].memberOfGUO(),
+                        guo[len - 1].groupNoOfGUO()
                     );
+                len--;
             }
         }
     }

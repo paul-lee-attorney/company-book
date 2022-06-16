@@ -16,17 +16,18 @@ interface IBOHKeeper {
         uint32 caller
     ) external;
 
-    function createSHA(uint8 docType, uint32 caller)
-        external
-        returns (address body);
+    function createSHA(
+        uint8 docType,
+        uint32 caller,
+        uint32 createDate
+    ) external returns (address body);
 
     function removeSHA(address body, uint32 caller) external;
 
-    function submitSHA(
+    function circulateSHA(
         address body,
         uint32 caller,
-        uint32 submitDate,
-        bytes32 docHash
+        uint32 submitDate
     ) external;
 
     function effectiveSHA(address body, uint32 caller) external;

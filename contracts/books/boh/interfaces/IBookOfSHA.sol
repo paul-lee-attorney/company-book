@@ -12,18 +12,26 @@ interface IBookOfSHA {
 
     function setTemplate(address body) external;
 
-    function createDoc(uint8 docType) external returns (address body);
+    function createDoc(
+        uint8 docType,
+        uint32 creator,
+        uint32 createDate
+    ) external returns (address body);
 
-    function removeDoc(address body) external;
+    function removeDoc(address body, uint32 caller) external;
 
-    function submitDoc(
+    function circulateDoc(
         address body,
+        bytes32 rule,
         uint32 submitter,
-        uint32 submitDate,
-        bytes32 docHash
+        uint32 circulateDate
     ) external;
 
-    function updateStateOfDoc(address body, uint8 newState) external;
+    function pushToNextState(
+        address body,
+        uint32 sigDate,
+        uint32 caller
+    ) external;
 
     function changePointer(
         address body,
@@ -41,26 +49,29 @@ interface IBookOfSHA {
 
     function isRegistered(address body) external view returns (bool);
 
-    function isRegisteredTerm(address term) external view returns (bool);
+    function passedReview(address body) external view returns (bool);
 
     function isCirculated(address body) external view returns (bool);
 
-    function qtyOfDocuments() external view returns (uint256);
+    function qtyOfDocs() external view returns (uint256);
 
-    function docs() external view returns (bytes32[]);
+    function docsList() external view returns (bytes32[]);
 
-    function getDoc(bytes32 sn)
+    function getDoc(address sha)
         external
         view
-        returns (
-            address body,
-            bytes32 docHash,
-            uint8 state
-        );
+        returns (bytes32 sn, bytes32 docHash);
 
     function currentState(address body) external view returns (uint8);
 
-    function bodyToSN(address body) external view returns (bytes32);
+    function startDateOf(address body, uint8 state)
+        external
+        view
+        returns (uint32);
+
+    function reviewDeadlineOf(address body) external view returns (uint32);
+
+    function votingDeadlineOf(address body) external view returns (uint32);
 
     function pointer() external view returns (address);
 }

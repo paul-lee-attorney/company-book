@@ -296,20 +296,19 @@ contract GeneralKeeper is AccessControl {
         _BOHKeeper.addTermTemplate(title, addr, _msgSender());
     }
 
-    function createSHA(uint8 docType) external {
-        _BOHKeeper.createSHA(docType, _msgSender());
+    function createSHA(uint8 docType, uint32 createDate) external {
+        _BOHKeeper.createSHA(docType, _msgSender(), createDate);
     }
 
     function removeSHA(address body) external {
         _BOHKeeper.removeSHA(body, _msgSender());
     }
 
-    function submitSHA(
+    function circulateSHA(
         address body,
-        uint32 submitDate,
-        bytes32 docHash
+        uint32 submitDate
     ) external {
-        _BOHKeeper.submitSHA(body, _msgSender(), submitDate, docHash);
+        _BOHKeeper.circulateSHA(body, _msgSender(), submitDate);
     }
 
     function effectiveSHA(address body) external {

@@ -40,12 +40,13 @@ contract BookOfSHA is BookOfDocuments {
         address body,
         uint32 caller,
         uint32 sigDate
-    ) external onlyKeeper onlyRegistered(body) onlyForCirculated(body) {
+    ) external onlyDirectKeeper onlyRegistered(body) {
         if (pointer != address(0)) pushToNextState(pointer, sigDate, caller);
 
         pushToNextState(body, sigDate, caller);
-        emit ChangePointer(pointer, body);
 
         pointer = body;
+
+        emit ChangePointer(pointer, body);
     }
 }

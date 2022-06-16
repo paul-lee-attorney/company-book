@@ -224,12 +224,7 @@ contract BOAKeeper is BOASetting, SHASetting, BOMSetting, BOSSetting {
         uint32 caller,
         uint32 sigDate
     ) external onlyDirectKeeper currentDate(sigDate) {
-        bytes32 vr = _getSHA().votingRules(_boa.typeOfIA(ia));
-
-        if (vr.ratioHeadOfVR() > 0 || vr.ratioAmountOfVR() > 0)
-            require(_bom.isPassed(ia), "Motion NOT passed");
-
-        if (sn.typeOfDeal() > 1) {
+        if (sn.typeOfDeal() > uint8(EnumsRepo.TypeOfDeal.PreEmptive))
             require(
                 caller ==
                     IInvestmentAgreement(ia)
@@ -237,10 +232,20 @@ contract BOAKeeper is BOASetting, SHASetting, BOMSetting, BOSSetting {
                         .shareholder(),
                 "NOT seller"
             );
+        else
+            require(
+                _bos.controller() == _bos.groupNo(caller),
+                "caller is not controller"
+            );
 
-            _checkSHA(_termsForShareTransfer, ia, sn);
-        } else {
-            _checkSHA(_termsForCapitalIncrease, ia, sn);
+        bytes32 vr = _getSHA().votingRules(_boa.typeOfIA(ia));
+
+        if (vr.ratioHeadOfVR() > 0 || vr.ratioAmountOfVR() > 0) {
+            require(_bom.isPassed(ia), "Motion NOT passed");
+
+            if (sn.typeOfDeal() > uint8(EnumsRepo.TypeOfDeal.PreEmptive))
+                _checkSHA(_termsForShareTransfer, ia, sn);
+            else _checkSHA(_termsForCapitalIncrease, ia, sn);
         }
 
         IInvestmentAgreement(ia).clearDealCP(
@@ -257,12 +262,15 @@ contract BOAKeeper is BOASetting, SHASetting, BOMSetting, BOSSetting {
         bytes32 sn
     ) private {
         uint256 len = terms.length;
-        for (uint256 i = 0; i < len; i++)
-            if (_getSHA().hasTitle(uint8(terms[i])))
+
+        while (len > 0) {
+            if (_getSHA().hasTitle(uint8(terms[len - 1])))
                 require(
-                    _getSHA().termIsExempted(uint8(terms[i]), ia, sn),
+                    _getSHA().termIsExempted(uint8(terms[len - 1]), ia, sn),
                     "SHA check failed"
                 );
+            len--;
+        }
     }
 
     function closeDeal(

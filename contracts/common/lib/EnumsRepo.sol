@@ -46,14 +46,37 @@ library EnumsRepo {
         Exercised
     }
 
-    // enum BOAStates {
-    //     ZeroPoint,
-    //     Created,
-    //     Circulated,
-    //     Proposed,
-    //     Voted,
-    //     Exercised
-    // }
+    enum TermState {
+        DRAFTING,
+        VOTING,
+        REJECTED,
+        EFFECTIVE,
+        REVOKED
+    }
+
+    enum StateOfMotion {
+        Pending,
+        Proposed,
+        Passed,
+        Rejected_NotToBuy,
+        Rejected_ToBuy
+    }
+
+    enum TypeOfOption {
+        CallOption,
+        PutOption
+    }
+
+    enum StateOfOption {
+        Pending,
+        Issued,
+        Executed,
+        Futured,
+        Pledged,
+        Closed,
+        Revoked,
+        Expired
+    }
 
     enum ActionType {
         CAPITAL_INCREASE,
@@ -74,26 +97,5 @@ library EnumsRepo {
         LOCKUP_EXEMPT,
         ANTIDILUTION_EXEMPT,
         CONVENE_GM
-    }
-
-    enum TermState {
-        DRAFTING,
-        VOTING,
-        REJECTED,
-        EFFECTIVE,
-        REVOKED
-    }
-
-    enum StateOfMotion {
-        Pending,
-        Proposed,
-        Passed,
-        Rejected_NotToBuy,
-        Rejected_ToBuy
-    }
-
-    enum TypeOfOption {
-        CallOption,
-        PutOption
     }
 }

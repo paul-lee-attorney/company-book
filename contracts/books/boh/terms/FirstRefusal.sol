@@ -18,8 +18,6 @@ import "../../../common/lib/SNParser.sol";
 
 import "../../../common/components/interfaces/ISigPage.sol";
 
-// import "../../../common/interfaces/IMotion.sol";
-
 contract FirstRefusal is BOSSetting, BOMSetting, DraftControl {
     // using ArrayUtils for uint256[];
     using ArrayUtils for uint40[];
@@ -30,8 +28,6 @@ contract FirstRefusal is BOSSetting, BOMSetting, DraftControl {
     struct FR {
         bytes32 rule;
         ObjGroup.UserGroup rightholders;
-        // mapping(address => bool) isRightholder;
-        // address[] rightholders;
     }
 
     // struct ruleInfo {
@@ -45,7 +41,7 @@ contract FirstRefusal is BOSSetting, BOMSetting, DraftControl {
     mapping(uint8 => FR) private _firstRefusals;
 
     // typeOfDeal => bool
-    mapping(uint8 => bool) public isSubject;
+    mapping(uint8 => bool) private _isSubject;
 
     // ################
     // ##   Event   ##
@@ -64,7 +60,7 @@ contract FirstRefusal is BOSSetting, BOMSetting, DraftControl {
     // ################
 
     modifier beRestricted(uint8 typeOfDeal) {
-        require(isSubject[typeOfDeal], "deal NOT restricted");
+        require(_isSubject[typeOfDeal], "deal NOT restricted");
         _;
     }
 
@@ -104,7 +100,7 @@ contract FirstRefusal is BOSSetting, BOMSetting, DraftControl {
         );
 
         _firstRefusals[typeOfDeal].rule = rule;
-        isSubject[typeOfDeal] = true;
+        _isSubject[typeOfDeal] = true;
 
         emit SetFirstRefusal(typeOfDeal, rule);
     }
@@ -115,7 +111,7 @@ contract FirstRefusal is BOSSetting, BOMSetting, DraftControl {
         beRestricted(typeOfDeal)
     {
         delete _firstRefusals[typeOfDeal];
-        delete isSubject[typeOfDeal];
+        delete _isSubject[typeOfDeal];
 
         emit DelFirstRefusal(typeOfDeal);
     }
@@ -149,6 +145,10 @@ contract FirstRefusal is BOSSetting, BOMSetting, DraftControl {
     // ################
     // ##  查询接口  ##
     // ################
+
+    function isSubject(uint8 typeOfDeal) public view onlyUser returns (bool) {
+        return _isSubject[typeOfDeal];
+    }
 
     function ruleOfFR(uint8 typeOfDeal)
         public
@@ -201,7 +201,7 @@ contract FirstRefusal is BOSSetting, BOMSetting, DraftControl {
             "deal not exist"
         );
 
-        return isSubject[sn.typeOfDeal()];
+        return _isSubject[sn.typeOfDeal()];
     }
 
     function isExempted(address ia, bytes32 sn)

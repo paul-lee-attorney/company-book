@@ -145,10 +145,6 @@ contract ShareholdersAgreement is
         finalizeDoc();
     }
 
-    function kill() external onlyDirectKeeper {
-        selfdestruct(getDirectKeeper());
-    }
-
     //##################
     //##    读接口    ##
     //##################

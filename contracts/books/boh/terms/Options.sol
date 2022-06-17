@@ -24,8 +24,6 @@ contract Options is BOSSetting, DraftControl {
         bytes32 sn;
         uint40 rightholder;
         ObjGroup.UserGroup obligors;
-        // mapping(address => bool) isObligor;
-        // address[] obligors;
     }
 
     // bytes32 snInfo{
@@ -46,11 +44,6 @@ contract Options is BOSSetting, DraftControl {
 
     // ssn => Option
     mapping(bytes6 => Option) private _options;
-
-    // ssn => bool
-    // mapping(bytes6 => bool) private _isOption;
-
-    // bytes32[] private _snList;
 
     ObjGroup.SNList private _snList;
 
@@ -146,13 +139,7 @@ contract Options is BOSSetting, DraftControl {
 
         opt.obligors.addMember(obligor);
 
-        // opt.isObligor[obligor] = true;
-        // opt.obligors.push(obligor);
-
         _snList.addItem(sn);
-
-        // isOption[counterOfOptions] = true;
-        // _snList.push(sn);
 
         emit CreateOpt(sn, rightholder, obligor);
     }
@@ -216,9 +203,6 @@ contract Options is BOSSetting, DraftControl {
 
         require(opt.obligors.addMember(obligor), "obligor ALREADY registered");
         emit AddObligorIntoOpt(opt.sn, obligor);
-
-        // opt.isObligor[obligor] = true;
-        // opt.obligors.push(obligor);
     }
 
     function removeObligorFromOpt(bytes6 ssn, uint40 obligor)
@@ -230,16 +214,10 @@ contract Options is BOSSetting, DraftControl {
 
         require(opt.obligors.removeMember(obligor), "obligor NOT registered");
         emit RemoveObligorFromOpt(opt.sn, obligor);
-
-        // delete opt.isObligor[obligor];
-        // opt.obligors.removeByValue(obligor);
     }
 
     function delOption(bytes6 ssn) external onlyAttorney optionExist(ssn) {
         Option storage opt = _options[ssn];
-
-        // delete isOption[ssn];
-        // _snList.removeByValue(opt.sn);
 
         _snList.removeItem(opt.sn);
 

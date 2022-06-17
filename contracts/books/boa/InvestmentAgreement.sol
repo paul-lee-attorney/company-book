@@ -290,10 +290,6 @@ contract InvestmentAgreement is BOSSetting, SigPage {
         emit DelDeal(sn);
     }
 
-    function kill() external onlyDirectKeeper {
-        selfdestruct(getDirectKeeper());
-    }
-
     function lockDealSubject(uint16 ssn, uint32 lockDate)
         public
         onlyKeeper

@@ -97,7 +97,6 @@ contract BOAKeeper is BOASetting, SHASetting, BOMSetting, BOSSetting {
     {
         _releaseCleanParOfIA(ia, sigDate);
         _boa.removeDoc(ia);
-        IInvestmentAgreement(ia).kill();
     }
 
     function _releaseCleanParOfIA(address ia, uint32 releaseDate) private {

@@ -18,8 +18,6 @@ interface IShareholdersAgreement {
 
     function finalizeSHA() external;
 
-    function kill() external;
-
     // ======== VotingRule ========
 
     function setVotingBaseOnPar() external;

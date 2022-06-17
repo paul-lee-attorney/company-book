@@ -48,8 +48,6 @@ interface IInvestmentAgreement {
 
     function delDeal(uint16 sn) external;
 
-    function kill() external;
-
     function lockDealSubject(uint16 ssn, uint32 lockDate)
         external
         returns (bool flag);

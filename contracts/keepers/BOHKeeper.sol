@@ -94,7 +94,6 @@ contract BOHKeeper is BOSSetting, SHASetting, BOMSetting, BOOSetting {
         notEstablished(sha)
     {
         _boh.removeDoc(sha, caller);
-        IShareholdersAgreement(sha).kill();
     }
 
     function circulateSHA(

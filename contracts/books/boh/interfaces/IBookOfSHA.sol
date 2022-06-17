@@ -33,6 +33,8 @@ interface IBookOfSHA {
         uint40 caller
     ) external;
 
+    // ======== BookOfSHA ========
+
     function changePointer(
         address body,
         uint40 caller,
@@ -43,11 +45,13 @@ interface IBookOfSHA {
     //##    读接口    ##
     //##################
 
-    function template() external view returns (address);
-
     function bookName() external view returns (string);
 
+    function template() external view returns (address);
+
     function isRegistered(address body) external view returns (bool);
+
+    function counterOfDocs() external view returns (uint16);
 
     function passedReview(address body) external view returns (bool);
 
@@ -72,6 +76,8 @@ interface IBookOfSHA {
     function reviewDeadlineOf(address body) external view returns (uint32);
 
     function votingDeadlineOf(address body) external view returns (uint32);
+
+    // ======== BookOfSHA ========
 
     function pointer() external view returns (address);
 }

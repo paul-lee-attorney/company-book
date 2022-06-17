@@ -18,7 +18,7 @@ contract BookOfSHA is BookOfDocuments {
         Revoked
     }
 
-    address public pointer;
+    address private _pointer;
 
     // constructor(
     //     string _bookName,
@@ -41,12 +41,20 @@ contract BookOfSHA is BookOfDocuments {
         uint40 caller,
         uint32 sigDate
     ) external onlyDirectKeeper onlyRegistered(body) {
-        if (pointer != address(0)) pushToNextState(pointer, sigDate, caller);
+        if (_pointer != address(0)) pushToNextState(_pointer, sigDate, caller);
 
         pushToNextState(body, sigDate, caller);
 
-        pointer = body;
+        _pointer = body;
 
-        emit ChangePointer(pointer, body);
+        emit ChangePointer(_pointer, body);
+    }
+
+    //##################
+    //##    读接口    ##
+    //##################
+
+    function pointer() external view onlyUser returns (address) {
+        return _pointer;
     }
 }

@@ -14,17 +14,22 @@ interface IBookOfIA {
 
     function createDoc(
         uint8 docType,
-        uint40 caller,
+        uint40 creator,
         uint32 createDate
     ) external returns (address body);
 
     function removeDoc(address body) external;
 
+    function pushToNextState(
+        address body,
+        uint32 sigDate,
+        uint40 caller
+    ) external;
+
     // ======== BookOfIA ========
 
     function circulateIA(
         address ia,
-        bytes32 rule,
         uint40 submitter,
         uint32 submitDate
     ) external;
@@ -44,6 +49,12 @@ interface IBookOfIA {
 
     function calculateMockResult(address ia) external;
 
+    function proposeIA(
+        address ia,
+        uint32 proposeDate,
+        uint40 caller
+    ) external;
+
     function addAlongDeal(
         address ia,
         bytes32 rule,
@@ -61,23 +72,9 @@ interface IBookOfIA {
         bool dragAlong
     ) external;
 
-    function proposeDoc(
-        address body,
-        uint32 sigDate,
-        uint40 caller
-    ) external;
-
-    function pushToNextState(
-        address body,
-        uint32 sigDate,
-        uint40 caller
-    ) external;
-
     //##################
     //##    读接口    ##
     //##################
-
-    function passedReview(address ia) external returns (bool);
 
     function bookName() external view returns (string);
 
@@ -86,6 +83,8 @@ interface IBookOfIA {
     function isRegistered(address body) external view returns (bool);
 
     function counterOfDocs() external view returns (uint16);
+
+    function passedReview(address ia) external returns (bool);
 
     function isCirculated(address body) external view returns (bool);
 
@@ -126,9 +125,9 @@ interface IBookOfIA {
             uint256 shareRatio
         );
 
-    function topAmount(address ia) external view returns (uint256);
+    // function topAmount(address ia) external view returns (uint256);
 
-    function netIncreasedAmount(address ia) external view returns (uint256);
+    // function netIncreasedAmount(address ia) external view returns (uint256);
 
     function mockResults(address ia, uint16 group)
         external

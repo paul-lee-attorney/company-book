@@ -25,8 +25,8 @@ contract BookOfDocuments is CloneFactory, SHASetting, BOSSetting {
     using ObjGroup for ObjGroup.TimeLine;
     using ArrayUtils for bytes32[];
 
-    string public bookName;
-    address public template;
+    string private _bookName;
+    address private _template;
 
     /*
     enum BODStates {
@@ -61,19 +61,19 @@ contract BookOfDocuments is CloneFactory, SHASetting, BOSSetting {
     mapping(address => Doc) internal _docs;
 
     // addrOfBody => bool
-    mapping(address => bool) public isRegistered;
+    mapping(address => bool) private _isRegistered;
 
     bytes32[] private _docsList;
 
-    uint16 public counterOfDocs;
+    uint16 private _counterOfDocs;
 
     constructor(
-        string _bookName,
+        string bookName,
         uint40 _owner,
         uint40 _bookeeper,
         address _rc
     ) public {
-        bookName = _bookName;
+        _bookName = bookName;
         init(_owner, _bookeeper, _rc);
     }
 
@@ -92,12 +92,12 @@ contract BookOfDocuments is CloneFactory, SHASetting, BOSSetting {
     //####################
 
     modifier tempReady() {
-        require(template != address(0), "template NOT set");
+        require(_template != address(0), "template NOT set");
         _;
     }
 
     modifier onlyRegistered(address body) {
-        require(isRegistered[body], "doc NOT registered");
+        require(_isRegistered[body], "doc NOT registered");
         _;
     }
 
@@ -124,7 +124,7 @@ contract BookOfDocuments is CloneFactory, SHASetting, BOSSetting {
     //##################
 
     function setTemplate(address body) external onlyOwner {
-        template = body;
+        _template = body;
         emit SetTemplate(body);
     }
 
@@ -151,13 +151,13 @@ contract BookOfDocuments is CloneFactory, SHASetting, BOSSetting {
         uint40 creator,
         uint32 createDate
     ) external onlyDirectKeeper tempReady returns (address body) {
-        body = createClone(template);
+        body = createClone(_template);
 
-        counterOfDocs++;
+        _counterOfDocs++;
 
         bytes32 sn = _createSN(
             docType,
-            counterOfDocs,
+            _counterOfDocs,
             createDate,
             creator,
             body
@@ -168,7 +168,7 @@ contract BookOfDocuments is CloneFactory, SHASetting, BOSSetting {
         doc.sn = sn;
         doc.states.pushToNextState(createDate);
 
-        isRegistered[body] = true;
+        _isRegistered[body] = true;
         sn.insertToQue(_docsList);
 
         emit UpdateStateOfDoc(sn, doc.states.currentState, creator);
@@ -185,7 +185,7 @@ contract BookOfDocuments is CloneFactory, SHASetting, BOSSetting {
         _docsList.removeByValue(sn);
 
         delete _docs[body];
-        delete isRegistered[body];
+        delete _isRegistered[body];
 
         emit RemoveDoc(sn, caller);
     }
@@ -230,6 +230,22 @@ contract BookOfDocuments is CloneFactory, SHASetting, BOSSetting {
     //##################
     //##    读接口    ##
     //##################
+
+    function bookName() external view onlyUser returns (string) {
+        return _bookName;
+    }
+
+    function template() external view onlyUser returns (address) {
+        return _template;
+    }
+
+    function isRegistered(address body) external view onlyUser returns (bool) {
+        return _isRegistered[body];
+    }
+
+    function counterOfDocs() external view onlyUser returns (uint16) {
+        return _counterOfDocs;
+    }
 
     function passedReview(address body)
         external

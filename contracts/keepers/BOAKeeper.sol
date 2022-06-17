@@ -145,9 +145,7 @@ contract BOAKeeper is BOASetting, SHASetting, BOMSetting, BOSSetting {
 
         IAccessControl(ia).abandonOwnership();
 
-        bytes32 rule = _getSHA().votingRules(_boa.typeOfIA(ia));
-
-        _boa.circulateIA(ia, rule, submitter, submitDate);
+        _boa.circulateIA(ia, submitter, submitDate);
     }
 
     // ======== Sign IA ========

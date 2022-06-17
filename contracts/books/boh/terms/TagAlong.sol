@@ -33,11 +33,7 @@ contract TagAlong is BOMSetting, DragAlong {
     // ##  Term接口  ##
     // ################
 
-    function isExempted(address ia, bytes32 sn)
-        public
-        onlyKeeper
-        returns (bool)
-    {
+    function isExempted(address ia, bytes32 sn) public onlyUser returns (bool) {
         require(_bom.isPassed(ia), "motion NOT passed");
 
         if (!isTriggered(ia, sn)) return true;

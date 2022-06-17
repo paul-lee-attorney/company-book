@@ -164,11 +164,11 @@ contract MembersRepo is GroupsRepo {
     //##   查询接口   ##
     //##################
 
-    function isMember(uint40 acct) public view returns (bool) {
+    function isMember(uint40 acct) public view onlyUser returns (bool) {
         return _shareholders.isMember[acct];
     }
 
-    function membersList() external view returns (uint40[]) {
+    function membersList() external view onlyUser returns (uint40[]) {
         return _shareholders.members;
     }
 
@@ -176,6 +176,7 @@ contract MembersRepo is GroupsRepo {
         external
         view
         memberExist(acct)
+        onlyUser
         returns (uint256)
     {
         return _members[acct].parInHand;
@@ -185,6 +186,7 @@ contract MembersRepo is GroupsRepo {
         external
         view
         memberExist(acct)
+        onlyUser
         returns (uint256)
     {
         return _members[acct].paidInHand;
@@ -194,6 +196,7 @@ contract MembersRepo is GroupsRepo {
         external
         view
         memberExist(acct)
+        onlyUser
         returns (bytes32[])
     {
         return _members[acct].sharesInHand;

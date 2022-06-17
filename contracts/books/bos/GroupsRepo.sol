@@ -94,7 +94,7 @@ contract GroupsRepo is SharesRepo {
     // ##  查询接口  ##
     // ################
 
-    function groupsList() external view returns (uint16[]) {
+    function groupsList() external view onlyUser returns (uint16[]) {
         return _groupsList;
     }
 }

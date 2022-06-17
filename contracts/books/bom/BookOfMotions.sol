@@ -325,26 +325,44 @@ contract BookOfMotions is SHASetting, BOASetting, BOSSetting {
         external
         view
         onlyProposed(ia)
+        onlyUser
         returns (bytes32)
     {
         return _motions[ia].votingRule;
     }
 
-    function state(address ia) external view onlyProposed(ia) returns (uint8) {
+    function state(address ia)
+        external
+        view
+        onlyProposed(ia)
+        onlyUser
+        returns (uint8)
+    {
         return _motions[ia].state;
     }
 
-    function votedYea(address ia, uint40 acct) external view returns (bool) {
+    function votedYea(address ia, uint40 acct)
+        external
+        view
+        onlyUser
+        returns (bool)
+    {
         return _motions[ia].supportVoters.isMember[acct];
     }
 
-    function votedNay(address ia, uint40 acct) external view returns (bool) {
+    function votedNay(address ia, uint40 acct)
+        external
+        view
+        onlyUser
+        returns (bool)
+    {
         return _motions[ia].againstVoters.isMember[acct];
     }
 
     function getYea(address ia)
         external
         view
+        onlyUser
         returns (uint40[] membersOfYea, uint256 supportPar)
     {
         membersOfYea = _motions[ia].supportVoters.members;
@@ -354,23 +372,30 @@ contract BookOfMotions is SHASetting, BOASetting, BOSSetting {
     function getNay(address ia)
         external
         view
+        onlyUser
         returns (uint40[] membersOfNay, uint256 againstPar)
     {
         membersOfNay = _motions[ia].againstVoters.members;
         againstPar = _motions[ia].sumOfNay;
     }
 
-    function sumOfVoteAmt(address ia) external view returns (uint256) {
+    function sumOfVoteAmt(address ia) external view onlyUser returns (uint256) {
         return _motions[ia].allVoters.sumOfAmt;
     }
 
-    function isVoted(address ia, uint40 acct) public view returns (bool) {
+    function isVoted(address ia, uint40 acct)
+        public
+        view
+        onlyUser
+        returns (bool)
+    {
         return _motions[ia].allVoters.sigDate[acct] > 0;
     }
 
     function getVote(address ia, uint40 acct)
         external
         view
+        onlyUser
         returns (
             bool attitude,
             uint32 date,
@@ -391,6 +416,7 @@ contract BookOfMotions is SHASetting, BOASetting, BOSSetting {
     function isPassed(address ia)
         external
         view
+        onlyUser
         onlyProposed(ia)
         returns (bool)
     {
@@ -400,6 +426,7 @@ contract BookOfMotions is SHASetting, BOASetting, BOSSetting {
     function isRejected(address ia)
         external
         view
+        onlyUser
         onlyProposed(ia)
         returns (bool)
     {

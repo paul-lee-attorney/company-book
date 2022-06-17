@@ -122,12 +122,13 @@ contract AntiDilution is BOSSetting, BOMSetting, DraftControl {
         external
         view
         onlyMarked(class)
+        onlyUser
         returns (uint40[])
     {
         return _obligors[classToMark[class]].members;
     }
 
-    function benchmarks() external view returns (bytes32[] marks) {
+    function benchmarks() external view onlyUser returns (bytes32[] marks) {
         return marks = _benchmarks;
     }
 
@@ -135,7 +136,7 @@ contract AntiDilution is BOSSetting, BOMSetting, DraftControl {
         address ia,
         bytes32 snOfDeal,
         bytes32 shareNumber
-    ) external view onlyMarked(shareNumber.class()) returns (uint256) {
+    ) external view onlyMarked(shareNumber.class()) onlyUser returns (uint256) {
         uint256 markPrice = classToMark[shareNumber.class()].priceOfMark();
 
         uint256 dealPrice = IInvestmentAgreement(ia).unitPrice(
@@ -156,7 +157,7 @@ contract AntiDilution is BOSSetting, BOMSetting, DraftControl {
     function isTriggered(address ia, bytes32 sn)
         public
         view
-        onlyKeeper
+        onlyUser
         returns (bool)
     {
         uint256 unitPrice = IInvestmentAgreement(ia).unitPrice(
@@ -207,7 +208,7 @@ contract AntiDilution is BOSSetting, BOMSetting, DraftControl {
     function isExempted(address ia, bytes32 sn)
         public
         view
-        onlyKeeper
+        onlyUser
         returns (bool)
     {
         if (!isTriggered(ia, sn)) return true;

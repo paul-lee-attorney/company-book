@@ -115,6 +115,7 @@ contract LockUp is BOSSetting, BOMSetting, DraftControl {
         public
         view
         beLocked(ssn)
+        onlyUser
         returns (uint256 dueDate, uint40[] keyHolders)
     {
         dueDate = _lockers[ssn].dueDate;
@@ -128,7 +129,7 @@ contract LockUp is BOSSetting, BOMSetting, DraftControl {
     function isTriggered(address ia, bytes32 sn)
         external
         view
-        onlyKeeper
+        onlyUser
         returns (bool)
     {
         uint256 closingDate = IInvestmentAgreement(ia).closingDate(
@@ -178,7 +179,7 @@ contract LockUp is BOSSetting, BOMSetting, DraftControl {
     function isExempted(address ia, bytes32 sn)
         external
         view
-        onlyKeeper
+        onlyUser
         returns (bool)
     {
         (uint40[] memory consentParties, ) = _bom.getYea(ia);

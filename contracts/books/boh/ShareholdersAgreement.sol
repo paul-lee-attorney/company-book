@@ -153,23 +153,23 @@ contract ShareholdersAgreement is
     //##    读接口    ##
     //##################
 
-    function hasTitle(uint8 title) external view returns (bool) {
+    function hasTitle(uint8 title) external view onlyUser returns (bool) {
         return _titleToBody[title] != address(0);
     }
 
-    function isTitle(uint8 title) external view returns (bool) {
+    function isTitle(uint8 title) external view onlyUser returns (bool) {
         return _titles.isItem[title];
     }
 
-    function isBody(address addr) external view returns (bool) {
+    function isBody(address addr) external view onlyUser returns (bool) {
         return _bodies.isItem[addr];
     }
 
-    function titles() external view returns (uint8[]) {
+    function titles() external view onlyUser returns (uint8[]) {
         return _titles.items;
     }
 
-    function bodies() external view returns (address[]) {
+    function bodies() external view onlyUser returns (address[]) {
         return _bodies.items;
     }
 
@@ -177,6 +177,7 @@ contract ShareholdersAgreement is
         external
         view
         titleExist(title)
+        onlyUser
         returns (address body)
     {
         body = _titleToBody[title];
@@ -186,7 +187,7 @@ contract ShareholdersAgreement is
         uint8 title,
         address ia,
         uint8 snOfDeal
-    ) public view titleExist(title) returns (bool) {
+    ) public view titleExist(title) onlyUser returns (bool) {
         return ITerm(_titleToBody[title]).isTriggered(ia, snOfDeal);
     }
 
@@ -194,7 +195,7 @@ contract ShareholdersAgreement is
         uint8 title,
         address ia,
         uint8 snOfDeal
-    ) external view titleExist(title) returns (bool) {
+    ) external view titleExist(title) onlyUser returns (bool) {
         if (!termIsTriggered(title, ia, snOfDeal)) return true;
 
         return ITerm(_titleToBody[title]).isExempted(ia, snOfDeal);

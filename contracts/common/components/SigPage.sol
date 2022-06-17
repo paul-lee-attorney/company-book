@@ -170,37 +170,48 @@ contract SigPage is DraftControl {
     //##    查询接口    ##
     //####################
 
-    function isParty(uint40 acct) public view returns (bool) {
+    function isParty(uint40 acct) public view onlyUser returns (bool) {
         return _signatures.counterOfBlank[acct] > 0;
     }
 
-    function isSigner(uint40 acct) external view returns (bool) {
+    function isSigner(uint40 acct) external view onlyUser returns (bool) {
         return _signatures.counterOfSig[acct] > 0;
     }
 
-    function isInitSigner(uint40 acct) public view returns (bool) {
+    function isInitSigner(uint40 acct) public view onlyUser returns (bool) {
         return _signatures.sigDate[acct][0] > 0;
     }
 
-    function parties() external view returns (uint40[]) {
+    function parties() external view onlyUser returns (uint40[]) {
         return _signatures.parties;
     }
 
-    function qtyOfParties() external view returns (uint256) {
+    function qtyOfParties() external view onlyUser returns (uint256) {
         return _signatures.parties.length;
     }
 
-    function qtyOfBlankForParty(uint40 acct) external view returns (uint16) {
+    function qtyOfBlankForParty(uint40 acct)
+        external
+        view
+        onlyUser
+        returns (uint16)
+    {
         return _signatures.counterOfBlank[acct];
     }
 
-    function qtyOfSigForParty(uint40 acct) external view returns (uint16) {
+    function qtyOfSigForParty(uint40 acct)
+        external
+        view
+        onlyUser
+        returns (uint16)
+    {
         return _signatures.counterOfSig[acct];
     }
 
     function sigDateOfDeal(uint40 acct, uint16 sn)
         external
         view
+        onlyUser
         returns (uint32)
     {
         uint16 seq = _signatures.dealToSN[acct][sn];
@@ -211,6 +222,7 @@ contract SigPage is DraftControl {
     function sigHashOfDeal(uint40 acct, uint16 sn)
         external
         view
+        onlyUser
         returns (bytes32)
     {
         uint16 seq = _signatures.dealToSN[acct][sn];
@@ -240,12 +252,17 @@ contract SigPage is DraftControl {
         uint40 acct,
         uint16 sn,
         string src
-    ) external view returns (bool) {
+    ) external view onlyUser returns (bool) {
         uint16 seq = _signatures.dealToSN[acct][sn];
         return _signatures.sigHash[acct][seq] == keccak256(bytes(src));
     }
 
-    function partyDulySigned(uint40 acct) external view returns (bool) {
+    function partyDulySigned(uint40 acct)
+        external
+        view
+        onlyUser
+        returns (bool)
+    {
         return
             _signatures.counterOfBlank[acct] == _signatures.counterOfSig[acct];
     }

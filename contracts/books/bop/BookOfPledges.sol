@@ -182,11 +182,11 @@ contract BookOfPledges is BOSSetting {
     //##    读接口    ##
     //##################
 
-    function isPledge(bytes6 ssn) external view returns (bool) {
+    function isPledge(bytes6 ssn) external view onlyUser returns (bool) {
         return _snList.isItem[ssn];
     }
 
-    function snList() external view returns (bytes32[]) {
+    function snList() external view onlyUser returns (bytes32[]) {
         return _snList.items;
     }
 
@@ -194,6 +194,7 @@ contract BookOfPledges is BOSSetting {
         external
         view
         pledgeExist(ssn)
+        onlyUser
         returns (
             bytes32 sn,
             uint256 pledgedPar,

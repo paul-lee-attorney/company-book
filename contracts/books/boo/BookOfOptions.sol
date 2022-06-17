@@ -516,7 +516,7 @@ contract BookOfOptions is BOSSetting {
     // ##  查询接口  ##
     // ################
 
-    function isOption(bytes6 ssn) public view returns (bool) {
+    function isOption(bytes6 ssn) public view onlyUser returns (bool) {
         return _snList.isItem[ssn];
     }
 
@@ -524,6 +524,7 @@ contract BookOfOptions is BOSSetting {
         external
         view
         optionExist(ssn)
+        onlyUser
         returns (
             bytes32 sn,
             uint40 rightholder,
@@ -544,23 +545,28 @@ contract BookOfOptions is BOSSetting {
         state = opt.state;
     }
 
-    function isObligor(bytes6 ssn, uint40 acct) external view returns (bool) {
+    function isObligor(bytes6 ssn, uint40 acct)
+        external
+        view
+        onlyUser
+        returns (bool)
+    {
         return _options[ssn].obligors.isMember[acct];
     }
 
-    function obligors(bytes6 ssn) external view returns (uint40[]) {
+    function obligors(bytes6 ssn) external view onlyUser returns (uint40[]) {
         return _options[ssn].obligors.members;
     }
 
-    function stateOfOption(bytes6 ssn) external view returns (uint8) {
+    function stateOfOption(bytes6 ssn) external view onlyUser returns (uint8) {
         return _options[ssn].state;
     }
 
-    function snList() external view returns (bytes32[] list) {
+    function snList() external view onlyUser returns (bytes32[] list) {
         list = _snList.items;
     }
 
-    function oracles() external view returns (uint256 d1, uint256 d2) {
+    function oracles() external view onlyUser returns (uint256 d1, uint256 d2) {
         d1 = _oracles.data_1;
         d2 = _oracles.data_2;
     }

@@ -252,11 +252,17 @@ contract Options is BOSSetting, DraftControl {
     // ##  查询接口  ##
     // ################
 
-    function sn(bytes6 ssn) external view optionExist(ssn) returns (bytes32) {
+    function sn(bytes6 ssn)
+        external
+        view
+        optionExist(ssn)
+        onlyUser
+        returns (bytes32)
+    {
         return _options[ssn].sn;
     }
 
-    function isOption(bytes6 ssn) external view returns (bool) {
+    function isOption(bytes6 ssn) external view onlyUser returns (bool) {
         return _snList.isItem[ssn];
     }
 
@@ -264,6 +270,7 @@ contract Options is BOSSetting, DraftControl {
         external
         view
         optionExist(ssn)
+        onlyUser
         returns (bool)
     {
         return _options[ssn].obligors.isMember[acct];
@@ -273,6 +280,7 @@ contract Options is BOSSetting, DraftControl {
         external
         view
         optionExist(ssn)
+        onlyUser
         returns (uint40[])
     {
         return _options[ssn].obligors.members;
@@ -282,6 +290,7 @@ contract Options is BOSSetting, DraftControl {
         external
         view
         optionExist(ssn)
+        onlyUser
         returns (bool)
     {
         return _options[ssn].rightholder == acct;
@@ -291,12 +300,13 @@ contract Options is BOSSetting, DraftControl {
         external
         view
         optionExist(ssn)
+        onlyUser
         returns (uint40)
     {
         return _options[ssn].rightholder;
     }
 
-    function snList() external view returns (bytes32[] list) {
+    function snList() external view onlyUser returns (bytes32[] list) {
         list = _snList.items;
     }
 }

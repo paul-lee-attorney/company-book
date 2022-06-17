@@ -17,7 +17,12 @@ contract BOSCalculator is BOSSetting {
     //##   查询接口   ##
     //##################
 
-    function membersOfClass(uint8 class) external view returns (uint40[]) {
+    function membersOfClass(uint8 class)
+        external
+        view
+        onlyUser
+        returns (uint40[])
+    {
         require(class < _bos.counterOfClasses(), "class over flow");
 
         bytes32[] memory list = _bos.snList();
@@ -31,7 +36,12 @@ contract BOSCalculator is BOSSetting {
         return members;
     }
 
-    function sharesOfClass(uint8 class) external view returns (bytes32[]) {
+    function sharesOfClass(uint8 class)
+        external
+        view
+        onlyUser
+        returns (bytes32[])
+    {
         require(class < _bos.counterOfClasses(), "class over flow");
 
         bytes32[] memory list = _bos.snList();
@@ -45,7 +55,12 @@ contract BOSCalculator is BOSSetting {
         return shares;
     }
 
-    function parOfGroup(uint16 group) public view returns (uint256 parValue) {
+    function parOfGroup(uint16 group)
+        public
+        view
+        onlyUser
+        returns (uint256 parValue)
+    {
         require(_bos.isGroup(group), "GROUP not exist");
 
         uint40[] memory members = _bos.membersOfGroup(group);
@@ -56,7 +71,12 @@ contract BOSCalculator is BOSSetting {
             parValue += _bos.parInHand(members[i]);
     }
 
-    function paidOfGroup(uint16 group) public view returns (uint256 paidPar) {
+    function paidOfGroup(uint16 group)
+        public
+        view
+        onlyUser
+        returns (uint256 paidPar)
+    {
         require(_bos.isGroup(group), "GROUP not exist");
 
         uint40[] memory members = _bos.membersOfGroup(group);

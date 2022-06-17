@@ -91,15 +91,20 @@ contract Roles is RegCenterSetting {
     // ##   查询端口   ##
     // ##################
 
-    function hasRole(bytes32 role, uint40 acct) public view returns (bool) {
+    function hasRole(bytes32 role, uint40 acct)
+        public
+        view
+        onlyUser
+        returns (bool)
+    {
         return _roles[role].roleGroup.isMember[acct];
     }
 
-    function roleMembers(bytes32 role) public view returns (uint40[]) {
+    function roleMembers(bytes32 role) public view onlyUser returns (uint40[]) {
         return _roles[role].roleGroup.members;
     }
 
-    function roleAdmin(bytes32 role) public view returns (uint40) {
+    function roleAdmin(bytes32 role) public view onlyUser returns (uint40) {
         return _roles[role].admin;
     }
 }

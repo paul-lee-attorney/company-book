@@ -100,11 +100,11 @@ contract AccessControl is Roles {
     // ##   查询端口   ##
     // ##################
 
-    function getOwner() public view returns (uint40) {
+    function getOwner() public view onlyUser returns (uint40) {
         return _owner;
     }
 
-    function getDirectKeeper() public view returns (uint40) {
+    function getDirectKeeper() public view onlyUser returns (uint40) {
         return _directKeeper;
     }
 }

@@ -311,15 +311,15 @@ contract SharesRepo is AccessControl {
     //##    读接口    ##
     //##################
 
-    function isShare(bytes6 ssn) external view returns (bool) {
+    function isShare(bytes6 ssn) external view onlyUser returns (bool) {
         return _snList.isItem[ssn];
     }
 
-    function snList() external view returns (bytes32[]) {
+    function snList() external view onlyUser returns (bytes32[]) {
         return _snList.items;
     }
 
-    function cleanPar(bytes6 ssn) external view returns (uint256) {
+    function cleanPar(bytes6 ssn) external view onlyUser returns (uint256) {
         return _shares[ssn].cleanPar;
     }
 
@@ -327,6 +327,7 @@ contract SharesRepo is AccessControl {
         public
         view
         shareExist(ssn)
+        onlyUser
         returns (
             bytes32 shareNumber,
             uint256 parValue,

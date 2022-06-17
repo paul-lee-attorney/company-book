@@ -154,6 +154,7 @@ contract FirstRefusal is BOSSetting, BOMSetting, DraftControl {
         public
         view
         beRestricted(typeOfDeal)
+        onlyUser
         returns (bytes32)
     {
         return _firstRefusals[typeOfDeal].rule;
@@ -163,6 +164,7 @@ contract FirstRefusal is BOSSetting, BOMSetting, DraftControl {
         public
         view
         beRestricted(typeOfDeal)
+        onlyUser
         returns (bool)
     {
         FR storage fr = _firstRefusals[typeOfDeal];
@@ -175,6 +177,7 @@ contract FirstRefusal is BOSSetting, BOMSetting, DraftControl {
         public
         view
         beRestricted(typeOfDeal)
+        onlyUser
         returns (uint40[])
     {
         FR storage fr = _firstRefusals[typeOfDeal];
@@ -190,7 +193,7 @@ contract FirstRefusal is BOSSetting, BOMSetting, DraftControl {
     function isTriggered(address ia, bytes32 sn)
         public
         view
-        onlyKeeper
+        onlyUser
         returns (bool)
     {
         require(
@@ -204,7 +207,7 @@ contract FirstRefusal is BOSSetting, BOMSetting, DraftControl {
     function isExempted(address ia, bytes32 sn)
         external
         view
-        onlyKeeper
+        onlyUser
         returns (bool)
     {
         if (!isTriggered(ia, sn)) return true;

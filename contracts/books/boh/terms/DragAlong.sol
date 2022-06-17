@@ -208,7 +208,7 @@ contract DragAlong is BOSSetting, BOASetting, DraftControl {
     function isTriggered(address ia, bytes32 sn)
         public
         view
-        onlyKeeper
+        onlyUser
         returns (bool)
     {
         if (_boa.currentState(ia) != uint8(EnumsRepo.BODStates.Circulated))

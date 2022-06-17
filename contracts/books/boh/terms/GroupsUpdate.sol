@@ -82,7 +82,7 @@ contract GroupsUpdate is BOSSetting, DraftControl {
     //##    读接口    ##
     //##################
 
-    function orders() external view returns (bytes32[]) {
+    function orders() external view onlyUser returns (bytes32[]) {
         return _orders;
     }
 }

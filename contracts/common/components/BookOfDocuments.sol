@@ -222,11 +222,6 @@ contract BookOfDocuments is CloneFactory, SHASetting, BOSSetting {
     ) public onlyKeeper onlyRegistered(body) {
         Doc storage doc = _docs[body];
 
-        // require(
-        //     doc.states.currentState >= uint8(EnumsRepo.BODStates.Proposed),
-        //     "not after Proposed"
-        // );
-
         doc.states.pushToNextState(sigDate);
 
         emit UpdateStateOfDoc(doc.sn, doc.states.currentState, caller);
@@ -240,6 +235,7 @@ contract BookOfDocuments is CloneFactory, SHASetting, BOSSetting {
         external
         view
         onlyRegistered(body)
+        onlyUser
         returns (bool)
     {
         Doc storage doc = _docs[body];
@@ -264,11 +260,11 @@ contract BookOfDocuments is CloneFactory, SHASetting, BOSSetting {
             uint8(EnumsRepo.BODStates.Circulated);
     }
 
-    function qtyOfDocs() external view returns (uint256) {
+    function qtyOfDocs() external view onlyUser returns (uint256) {
         return _docsList.length;
     }
 
-    function docsList() external view returns (bytes32[]) {
+    function docsList() external view onlyUser returns (bytes32[]) {
         return _docsList;
     }
 
@@ -276,6 +272,7 @@ contract BookOfDocuments is CloneFactory, SHASetting, BOSSetting {
         external
         view
         onlyRegistered(body)
+        onlyUser
         returns (bytes32 sn, bytes32 docHash)
     {
         Doc storage doc = _docs[body];
@@ -288,6 +285,7 @@ contract BookOfDocuments is CloneFactory, SHASetting, BOSSetting {
         external
         view
         onlyRegistered(body)
+        onlyUser
         returns (uint8)
     {
         return _docs[body].states.currentState;
@@ -297,6 +295,7 @@ contract BookOfDocuments is CloneFactory, SHASetting, BOSSetting {
         external
         view
         onlyRegistered(body)
+        onlyUser
         returns (uint32)
     {
         require(state <= _docs[body].states.currentState, "state overflow");
@@ -307,6 +306,7 @@ contract BookOfDocuments is CloneFactory, SHASetting, BOSSetting {
         external
         view
         onlyRegistered(body)
+        onlyUser
         returns (uint32)
     {
         return _docs[body].reviewDeadline;
@@ -316,6 +316,7 @@ contract BookOfDocuments is CloneFactory, SHASetting, BOSSetting {
         external
         view
         onlyRegistered(body)
+        onlyUser
         returns (uint32)
     {
         return _docs[body].votingDeadline;

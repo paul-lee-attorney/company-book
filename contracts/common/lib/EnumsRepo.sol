@@ -84,6 +84,13 @@ library EnumsRepo {
         Expired
     }
 
+    enum TriggerTypeOfAlongs {
+        NoConditions,
+        ControlChanged,
+        ControlChangedWithHigherPrice,
+        ControlChangedWithHigherROE
+    }
+
     enum ActionType {
         CAPITAL_INCREASE,
         SHARE_TRANSFER,

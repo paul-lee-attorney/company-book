@@ -7,28 +7,25 @@ pragma solidity ^0.4.24;
 
 import "../../boa/interfaces/IInvestmentAgreement.sol";
 
-import "../../boa/BookOfIA.sol";
-
 import "../../../common/ruting/BOSSetting.sol";
 import "../../../common/ruting/BOASetting.sol";
 import "../../../common/access/DraftControl.sol";
 
-import "../../../common/access/DraftControl.sol";
-
 import "../../../common/lib/ArrayUtils.sol";
-
 import "../../../common/lib/SNParser.sol";
 import "../../../common/lib/SNFactory.sol";
+import "../../../common/lib/ObjGroup.sol";
+import "../../../common/lib/EnumsRepo.sol";
 
 contract DragAlong is BOSSetting, BOASetting, DraftControl {
     using ArrayUtils for address[];
     using ArrayUtils for uint16[];
     using SNParser for bytes32;
     using SNFactory for bytes;
+    using ObjGroup for ObjGroup.SeqList;
 
     struct Link {
-        mapping(uint16 => bool) isFollower;
-        uint16[] followers;
+        ObjGroup.SeqList followerGroups;
         bytes32 rule;
     }
 
@@ -45,30 +42,29 @@ contract DragAlong is BOSSetting, BOASetting, DraftControl {
     //     uint32 ROE;
     // }
 
-    // drager => bool
-    mapping(uint16 => bool) public isDrager;
+    ObjGroup.SeqList private _dragerGroups;
 
-    // drager => Link
+    // dragerGroup => Link
     mapping(uint16 => Link) internal _links;
 
     // ################
     // ##   Event    ##
     // ################
 
-    event SetLink(uint16 indexed drager, bytes32 rule);
+    event SetLink(uint16 indexed dragerGroup, bytes32 rule);
 
-    event AddFollower(uint16 indexed drager, uint32 follower);
+    event AddFollower(uint16 indexed dragerGroup, uint16 followerGroup);
 
-    event RemoveFollower(uint16 indexed drager, uint32 follower);
+    event RemoveFollower(uint16 indexed dragerGroup, uint16 followerGroup);
 
-    event DelLink(uint16 indexed drager);
+    event DelLink(uint16 indexed dragerGroup);
 
     // ################
     // ##  modifier  ##
     // ################
 
-    modifier dragerExist(uint16 drager) {
-        require(isDrager[drager], "WRONG drager ID");
+    modifier dragerGroupExist(uint16 group) {
+        require(_dragerGroups.isItem[group], "WRONG drager ID");
         _;
     }
 
@@ -77,7 +73,7 @@ contract DragAlong is BOSSetting, BOASetting, DraftControl {
     // ################
 
     function _createLinkRule(
-        uint16 drager,
+        uint16 dragerGroup,
         uint8 triggerType,
         uint32 threshold,
         bool proRata,
@@ -86,7 +82,7 @@ contract DragAlong is BOSSetting, BOASetting, DraftControl {
     ) private pure returns (bytes32 sn) {
         bytes memory _sn = new bytes(32);
 
-        _sn = _sn.sequenceToSN(0, drager);
+        _sn = _sn.sequenceToSN(0, dragerGroup);
         _sn[2] = bytes1(triggerType);
         _sn = _sn.intToSN(3, threshold, 4);
         _sn = _sn.boolToSN(7, proRata);
@@ -97,7 +93,7 @@ contract DragAlong is BOSSetting, BOASetting, DraftControl {
     }
 
     function createLink(
-        uint16 drager,
+        uint16 dragerGroup,
         uint8 triggerType,
         uint32 threshold,
         bool proRata,
@@ -106,10 +102,13 @@ contract DragAlong is BOSSetting, BOASetting, DraftControl {
     ) external onlyAttorney {
         require(triggerType < 4, "WRONG trigger type");
         require(threshold <= 5000, "WRONG ratio of threshold");
-        require(_links[drager].rule == bytes32(0), "tag rule ALREADY EXIST");
+        require(
+            _links[dragerGroup].rule == bytes32(0),
+            "tag rule ALREADY EXIST"
+        );
 
         bytes32 rule = _createLinkRule(
-            drager,
+            dragerGroup,
             triggerType,
             threshold,
             proRata,
@@ -117,88 +116,96 @@ contract DragAlong is BOSSetting, BOASetting, DraftControl {
             roe
         );
 
-        isDrager[drager] = true;
-        _links[drager].rule = rule;
+        _dragerGroups.addItem(dragerGroup);
 
-        emit SetLink(drager, rule);
+        _links[dragerGroup].rule = rule;
+
+        emit SetLink(dragerGroup, rule);
     }
 
-    function addFollower(uint16 drager, uint16 follower)
+    function addFollowerGroup(uint16 dragerGroup, uint16 followerGroup)
         external
         onlyAttorney
-        dragerExist(drager)
+        dragerGroupExist(dragerGroup)
     {
-        require(!_links[drager].isFollower[follower], "already followed");
-
-        _links[drager].isFollower[follower] = true;
-        _links[drager].followers.push(follower);
-
-        emit AddFollower(drager, follower);
+        if (_links[dragerGroup].followerGroups.addItem(followerGroup))
+            emit AddFollower(dragerGroup, followerGroup);
     }
 
-    function removeFollower(uint16 drager, uint16 follower)
+    function removeFollower(uint16 dragerGroup, uint16 followerGroup)
         external
         onlyAttorney
-        dragerExist(drager)
+        dragerGroupExist(dragerGroup)
     {
-        require(_links[drager].isFollower[follower], "not followed");
-
-        delete _links[drager].isFollower[follower];
-
-        _links[drager].followers.removeByValue(follower);
-
-        emit RemoveFollower(drager, follower);
+        if (_links[dragerGroup].followerGroups.removeItem(followerGroup))
+            emit RemoveFollower(dragerGroup, followerGroup);
     }
 
-    function delLink(uint16 drager) external onlyAttorney dragerExist(drager) {
-        delete _links[drager];
-        delete isDrager[drager];
+    function delLink(uint16 dragerGroup)
+        external
+        onlyAttorney
+        dragerGroupExist(dragerGroup)
+    {
+        delete _links[dragerGroup];
 
-        emit DelLink(drager);
+        _dragerGroups.removeItem(dragerGroup);
+        // delete _isDragerGroup[dragerGroup];
+
+        emit DelLink(dragerGroup);
     }
 
     // ################
     // ##  查询接口  ##
     // ################
 
-    function linkRule(uint16 drager)
+    function linkRule(uint16 dragerGroup)
         external
         view
-        dragerExist(drager)
+        dragerGroupExist(dragerGroup)
+        onlyUser
         returns (bytes32)
     {
-        return _links[drager].rule;
+        return _links[dragerGroup].rule;
     }
 
-    function isFollower(uint16 drager, uint16 follower)
+    function isFollowerGroup(uint16 dragerGroup, uint16 followerGroup)
         public
         view
-        onlyKeeper
-        dragerExist(drager)
+        onlyUser
+        dragerGroupExist(dragerGroup)
         returns (bool)
     {
-        return _links[drager].isFollower[follower];
+        return _links[dragerGroup].followerGroups.isItem[followerGroup];
     }
 
-    function isLinked(uint40 dragerAddr, uint40 followerAddr)
+    function isLinked(uint40 drager, uint40 follower)
         public
         view
-        onlyKeeper
+        onlyUser
         returns (bool)
     {
-        uint16 drager = _bos.groupNo(dragerAddr);
-        uint16 follower = _bos.groupNo(followerAddr);
+        uint16 dragerGroup = _bos.groupNo(drager);
+        uint16 followerGroup = _bos.groupNo(follower);
 
-        return isFollower(drager, follower);
+        return isFollowerGroup(dragerGroup, followerGroup);
     }
 
-    function followers(uint16 drager)
+    function isDragerGroup(uint16 group) external view onlyUser returns (bool) {
+        return _dragerGroups.isItem[group];
+    }
+
+    function dragerGroups() external view onlyUser returns (uint16[]) {
+        return _dragerGroups.items;
+    }
+
+    function followerGroups(uint16 dragerGroup)
         external
         view
-        dragerExist(drager)
+        dragerGroupExist(dragerGroup)
+        onlyUser
         returns (uint16[])
     {
-        return _links[drager].followers;
+        return _links[dragerGroup].followerGroups.items;
     }
 
     // ################
@@ -214,25 +221,23 @@ contract DragAlong is BOSSetting, BOASetting, DraftControl {
         if (_boa.currentState(ia) != uint8(EnumsRepo.BODStates.Circulated))
             return false;
 
-        if (sn.typeOfDeal() == 1) return false;
+        if (sn.typeOfDeal() <= uint8(EnumsRepo.TypeOfDeal.PreEmptive))
+            return false;
 
         uint40 seller = IInvestmentAgreement(ia)
             .shareNumberOfDeal(sn.sequenceOfDeal())
             .shareholder();
 
-        // (, uint256 dealPrice, , , uint32 closingDate, , ) = IInvestmentAgreement(ia)
-        //     .getDeal(sn.sequenceOfDeal());
-
         uint16 sellerGroup = _bos.groupNo(seller);
 
-        if (!isDrager[sellerGroup]) return false;
+        if (!_dragerGroups.isItem[sellerGroup]) return false;
 
         bytes32 rule = _links[sellerGroup].rule;
 
-        if (rule.triggerTypeOfLink() == 0) return true;
-
-        // if (rule.triggerTypeOfLink() == 2 && dealPrice < rule.unitPriceOfLink())
-        //     return false;
+        if (
+            rule.triggerTypeOfLink() ==
+            uint8(EnumsRepo.TriggerTypeOfAlongs.NoConditions)
+        ) return true;
 
         if (_bos.controller() != sellerGroup) return false;
 
@@ -290,9 +295,15 @@ contract DragAlong is BOSSetting, BOASetting, DraftControl {
 
         bytes32 rule = _links[_bos.groupNo(drager)].rule;
 
-        if (rule.triggerTypeOfLink() < 2) return true;
+        if (
+            rule.triggerTypeOfLink() <
+            uint8(EnumsRepo.TriggerTypeOfAlongs.ControlChangedWithHigherPrice)
+        ) return true;
 
-        if (rule.triggerTypeOfLink() == 2) {
+        if (
+            rule.triggerTypeOfLink() ==
+            uint8(EnumsRepo.TriggerTypeOfAlongs.ControlChangedWithHigherPrice)
+        ) {
             if (dealPrice >= rule.unitPriceOfLink()) return true;
             else return false;
         }

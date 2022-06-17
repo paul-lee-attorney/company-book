@@ -9,11 +9,17 @@ import "../../boa/interfaces/IInvestmentAgreement.sol";
 
 import "../../../common/ruting/BOMSetting.sol";
 
+import "../../../common/lib/ObjGroup.sol";
+import "../../../common/lib/ArrayUtils.sol";
+
 import "./DragAlong.sol";
 
 import "../../../common/components/interfaces/ISigPage.sol";
 
 contract TagAlong is BOMSetting, DragAlong {
+    using ObjGroup for ObjGroup.SeqList;
+    using ArrayUtils for uint40[];
+
     // struct linkRule {
     //     uint16 drager;
     //     // 0-no condition; 1- biggest && shareRatio > threshold;
@@ -27,7 +33,7 @@ contract TagAlong is BOMSetting, DragAlong {
     //     uint32 ROE;
     // }
 
-    mapping(uint16 => bool) internal _exemptedGroups;
+    ObjGroup.SeqList private _supportGroups;
 
     // ################
     // ##  Term接口  ##
@@ -40,15 +46,18 @@ contract TagAlong is BOMSetting, DragAlong {
 
         (uint40[] memory consentParties, ) = _bom.getYea(ia);
 
-        uint256 i;
-
-        for (i = 0; i < consentParties.length; i++)
-            _exemptedGroups[_bos.groupNo(consentParties[i])] = true;
-
         uint40[] memory signers = ISigPage(ia).parties();
 
-        for (i = 0; i < signers.length; i++)
-            _exemptedGroups[_bos.groupNo(signers[i])] = true;
+        uint40[] memory supporters = consentParties.combine(signers);
+
+        uint256 len = supporters.length;
+
+        _supportGroups.emptyItems();
+
+        while (len > 0) {
+            _supportGroups.addItem(_bos.groupNo(supporters[len - 1]));
+            len--;
+        }
 
         uint16[] memory rightholders = _links[
             _bos.groupNo(
@@ -56,10 +65,14 @@ contract TagAlong is BOMSetting, DragAlong {
                     .shareNumberOfDeal(sn.sequenceOfDeal())
                     .shareholder()
             )
-        ].followers;
+        ].followerGroups.items;
 
-        for (i = 0; i < rightholders.length; i++)
-            if (!_exemptedGroups[rightholders[i]]) return false;
+        len = rightholders.length;
+
+        while (len > 0) {
+            if (!_supportGroups.isItem[rightholders[len - 1]]) return false;
+            len--;
+        }
 
         return true;
     }

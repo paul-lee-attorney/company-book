@@ -104,6 +104,15 @@ library ObjGroup {
         }
     }
 
+    function emptyItems(SeqList storage list) internal {
+        uint256 len = list.items.length;
+
+        while (len > 0) {
+            removeItem(list, list.items[len - 1]);
+            len--;
+        }
+    }
+
     // ======== AddrList ========
 
     struct AddrList {

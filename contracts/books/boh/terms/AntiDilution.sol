@@ -14,15 +14,14 @@ import "../../../common/ruting/BOMSetting.sol";
 import "../../../common/access/DraftControl.sol";
 
 import "../../../common/lib/ArrayUtils.sol";
-// import "../../../common/lib/SafeMath.sol";
 import "../../../common/lib/SNFactory.sol";
 import "../../../common/lib/SNParser.sol";
-
-import "../../../common/components/interfaces/ISigPage.sol";
+import "../../../common/lib/EnumsRepo.sol";
 
 contract AntiDilution is BOSSetting, BOMSetting, DraftControl {
     using SNFactory for bytes;
     using ArrayUtils for bytes32[];
+    using ArrayUtils for uint40[];
     using SNParser for bytes32;
     using ObjGroup for ObjGroup.UserGroup;
 
@@ -30,10 +29,10 @@ contract AntiDilution is BOSSetting, BOMSetting, DraftControl {
     mapping(bytes32 => ObjGroup.UserGroup) private _obligors;
 
     // class => bool
-    mapping(uint8 => bool) public isMarked;
+    mapping(uint8 => bool) private _isMarked;
 
     // class => benchmark
-    mapping(uint8 => bytes32) public classToMark;
+    mapping(uint8 => bytes32) private _classToMark;
 
     bytes32[] private _benchmarks;
 
@@ -54,7 +53,7 @@ contract AntiDilution is BOSSetting, BOMSetting, DraftControl {
     // #################
 
     modifier onlyMarked(uint8 class) {
-        require(isMarked[class], "股价基准 不存在");
+        require(_isMarked[class], "no priced maked for the class");
         _;
     }
 
@@ -77,19 +76,19 @@ contract AntiDilution is BOSSetting, BOMSetting, DraftControl {
     function setBenchmark(uint8 class, uint256 price) external onlyAttorney {
         bytes32 sn = _createSN(class, price);
 
-        isMarked[class] = true;
-        classToMark[class] = sn;
+        _isMarked[class] = true;
+        _classToMark[class] = sn;
         sn.insertToQue(_benchmarks);
 
         emit SetBenchmark(class, price);
     }
 
     function delBenchmark(uint8 class) external onlyAttorney onlyMarked(class) {
-        bytes32 mark = classToMark[class];
+        bytes32 mark = _classToMark[class];
 
         delete _obligors[mark];
-        delete isMarked[class];
-        delete classToMark[class];
+        delete _isMarked[class];
+        delete _classToMark[class];
 
         _benchmarks.removeByValue(mark);
 
@@ -101,7 +100,7 @@ contract AntiDilution is BOSSetting, BOMSetting, DraftControl {
         onlyAttorney
         onlyMarked(class)
     {
-        if (_obligors[classToMark[class]].addMember(acct))
+        if (_obligors[_classToMark[class]].addMember(acct))
             emit AddObligor(class, acct);
     }
 
@@ -110,13 +109,21 @@ contract AntiDilution is BOSSetting, BOMSetting, DraftControl {
         onlyAttorney
         onlyMarked(class)
     {
-        if (_obligors[classToMark[class]].removeMember(acct))
+        if (_obligors[_classToMark[class]].removeMember(acct))
             emit RemoveObligor(class, acct);
     }
 
     // ################
     // ##  查询接口  ##
     // ################
+
+    function isMarked(uint8 class) external view onlyUser returns (bool) {
+        return _isMarked[class];
+    }
+
+    function classToMark(uint8 class) external view onlyUser returns (bytes32) {
+        return _classToMark[class];
+    }
 
     function obligors(uint8 class)
         external
@@ -125,7 +132,7 @@ contract AntiDilution is BOSSetting, BOMSetting, DraftControl {
         onlyUser
         returns (uint40[])
     {
-        return _obligors[classToMark[class]].members;
+        return _obligors[_classToMark[class]].members;
     }
 
     function benchmarks() external view onlyUser returns (bytes32[] marks) {
@@ -137,7 +144,7 @@ contract AntiDilution is BOSSetting, BOMSetting, DraftControl {
         bytes32 snOfDeal,
         bytes32 shareNumber
     ) external view onlyMarked(shareNumber.class()) onlyUser returns (uint256) {
-        uint256 markPrice = classToMark[shareNumber.class()].priceOfMark();
+        uint256 markPrice = _classToMark[shareNumber.class()].priceOfMark();
 
         uint256 dealPrice = IInvestmentAgreement(ia).unitPrice(
             snOfDeal.sequenceOfDeal()
@@ -145,9 +152,9 @@ contract AntiDilution is BOSSetting, BOMSetting, DraftControl {
 
         require(markPrice > dealPrice, "AntiDilution not triggered");
 
-        (, uint256 parValue, , , , ) = _bos.getShare(shareNumber.short());
+        (, , uint256 paidPar, , , ) = _bos.getShare(shareNumber.short());
 
-        return (parValue * markPrice) / dealPrice - parValue;
+        return (paidPar * markPrice) / dealPrice - paidPar;
     }
 
     // ################
@@ -164,7 +171,8 @@ contract AntiDilution is BOSSetting, BOMSetting, DraftControl {
             sn.sequenceOfDeal()
         );
 
-        if (sn.typeOfDeal() > 1) return false;
+        if (sn.typeOfDeal() > uint8(EnumsRepo.TypeOfDeal.PreEmptive))
+            return false;
         if (unitPrice < _benchmarks[_benchmarks.length - 1].priceOfMark())
             return true;
         else return false;
@@ -175,31 +183,21 @@ contract AntiDilution is BOSSetting, BOMSetting, DraftControl {
         view
         returns (bool)
     {
-        require(consentParties.length > 0, "豁免方人数应大于“0”");
+        require(consentParties.length > 0, "zero consentParties");
 
-        uint8 i = uint8(_benchmarks.length);
+        uint256 len = _benchmarks.length;
 
-        while (i > 0 && uint256(bytes31(_benchmarks[i - 1])) > price) {
+        while (len > 0) {
+            if (_benchmarks[len - 1].priceOfMark() <= price) break;
+
             uint40[] memory classMember = _bosCal.membersOfClass(
-                uint8(_benchmarks[i - 1][31])
+                _benchmarks[len - 1].classOfMark()
             );
 
-            if (classMember.length > consentParties.length) {
-                return false;
-            } else {
-                bool flag;
-                for (uint256 j = 0; j < classMember.length; j++) {
-                    flag = false;
-                    for (uint256 k = 0; k < consentParties.length; k++) {
-                        if (consentParties[k] == classMember[j]) {
-                            flag = true;
-                            break;
-                        }
-                    }
-                    if (!flag) return false;
-                }
-            }
-            if (i > 0) i--;
+            if (classMember.length > consentParties.length) return false;
+            else if (!classMember.fullyCoveredBy(consentParties)) return false;
+
+            len--;
         }
 
         return true;

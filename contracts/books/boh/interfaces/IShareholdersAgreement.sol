@@ -16,7 +16,12 @@ interface IShareholdersAgreement {
 
     function removeTerm(uint8 title) external;
 
+    function finalizeSHA() external;
+
+    function kill() external;
+
     // ======== VotingRule ========
+
     function setVotingBaseOnPar() external;
 
     function setRule(
@@ -30,13 +35,11 @@ interface IShareholdersAgreement {
         uint8 execDaysForPutOpt
     ) external;
 
-    function finalizeSHA() external;
-
-    function kill() external;
-
     //##################
     //##    读接口    ##
     //##################
+
+    function tempOfTitle(uint8 title) external view returns (address);
 
     function hasTitle(uint8 title) external view returns (bool);
 
@@ -50,14 +53,6 @@ interface IShareholdersAgreement {
 
     function getTerm(uint8 title) external view returns (address body);
 
-    function tempOfTitle(uint8 title) external view returns (address);
-
-    // ======== VotingRule ========
-
-    function votingRules(uint8 typeOfVote) external view returns (bytes32);
-
-    function basedOnPar() external view returns (bool);
-
     function termIsTriggered(
         uint8 title,
         address ia,
@@ -69,4 +64,10 @@ interface IShareholdersAgreement {
         address ia,
         bytes32 snOfDeal
     ) external returns (bool);
+
+    // ======== VotingRule ========
+
+    function votingRules(uint8 typeOfVote) external view returns (bytes32);
+
+    function basedOnPar() external view returns (bool);
 }

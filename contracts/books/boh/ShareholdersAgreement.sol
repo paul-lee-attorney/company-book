@@ -35,7 +35,7 @@ contract ShareholdersAgreement is
     using ObjGroup for ObjGroup.EnumList;
 
     // title => template address
-    mapping(uint8 => address) public tempOfTitle;
+    mapping(uint8 => address) private _tempOfTitle;
 
     // title => body
     mapping(uint8 => address) private _titleToBody;
@@ -69,7 +69,7 @@ contract ShareholdersAgreement is
     }
 
     modifier tempReadyFor(uint8 title) {
-        require(tempOfTitle[title] != address(0), "Template NOT ready");
+        require(_tempOfTitle[title] != address(0), "Template NOT ready");
         _;
     }
 
@@ -93,7 +93,7 @@ contract ShareholdersAgreement is
             title == uint8(EnumsRepo.TermTitle.DRAG_ALONG) ||
             title == uint8(EnumsRepo.TermTitle.OPTIONS)
         ) {
-            tempOfTitle[title] = tempAdd;
+            _tempOfTitle[title] = tempAdd;
 
             emit SetTemplate(title, tempAdd);
         }
@@ -105,7 +105,7 @@ contract ShareholdersAgreement is
         tempReadyFor(title)
         returns (address body)
     {
-        body = createClone(tempOfTitle[title]);
+        body = createClone(_tempOfTitle[title]);
 
         IAccessControl(body).init(getOwner(), _rc.userNo(this), address(_rc));
 
@@ -152,6 +152,10 @@ contract ShareholdersAgreement is
     //##################
     //##    读接口    ##
     //##################
+
+    function tempOfTitle(uint8 title) external view onlyUser returns (address) {
+        return _tempOfTitle[title];
+    }
 
     function hasTitle(uint8 title) external view onlyUser returns (bool) {
         return _titleToBody[title] != address(0);

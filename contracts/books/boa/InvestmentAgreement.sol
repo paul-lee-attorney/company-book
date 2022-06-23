@@ -11,6 +11,7 @@ import "../../common/lib/ArrayUtils.sol";
 import "../../common/lib/SNFactory.sol";
 import "../../common/lib/SNParser.sol";
 import "../../common/lib/ObjGroup.sol";
+import "../../common/lib/EnumerableSet.sol";
 import "../../common/lib/EnumsRepo.sol";
 
 import "../../common/components/SigPage.sol";
@@ -20,7 +21,7 @@ contract InvestmentAgreement is BOSSetting, SigPage {
     using SNParser for bytes32;
     using ArrayUtils for bytes32[];
     using ObjGroup for ObjGroup.TimeLine;
-    using ObjGroup for ObjGroup.SeqList;
+    using EnumerableSet for EnumerableSet.UintSet;
 
     /* struct sn{
         uint8 class; 1
@@ -81,7 +82,7 @@ contract InvestmentAgreement is BOSSetting, SigPage {
     // ======== Parties ========
 
     // party => seq
-    mapping(uint40 => ObjGroup.SeqList) private _dealsConcerned;
+    mapping(uint40 => EnumerableSet.UintSet) private _dealsConcerned;
 
     // party => seq => buyer?
     mapping(uint40 => mapping(uint16 => bool)) private _isBuyerOfDeal;
@@ -236,9 +237,11 @@ contract InvestmentAgreement is BOSSetting, SigPage {
         }
 
         if (shareNumber > bytes32(0))
-            _dealsConcerned[shareNumber.shareholder()].addItem(_counterOfDeals);
+            _dealsConcerned[shareNumber.shareholder()].add(
+                uint256(_counterOfDeals)
+            );
 
-        _dealsConcerned[buyer].addItem(_counterOfDeals);
+        _dealsConcerned[buyer].add(uint256(_counterOfDeals));
         _isBuyerOfDeal[buyer][_counterOfDeals] = true;
 
         emit CreateDeal(sn, shareNumber);
@@ -506,7 +509,7 @@ contract InvestmentAgreement is BOSSetting, SigPage {
         returns (uint16[])
     {
         require(isParty(acct), "not a party");
-        return _dealsConcerned[acct].items;
+        return _dealsConcerned[acct].valuesToUint16();
     }
 
     function isBuyerOfDeal(uint40 acct, uint16 seq)

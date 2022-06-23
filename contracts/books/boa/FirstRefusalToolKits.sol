@@ -75,9 +75,7 @@ contract FirstRefusalToolKits is InvestmentAgreement {
                 execDate
             );
 
-        uint256 weight = basedOnPar
-            ? _bos.parInHand(acct)
-            : _bos.paidInHand(acct);
+        uint256 weight = _bos.voteInHand(acct);
         require(weight > 0, "first refusal request has ZERO weight");
 
         Record storage record = _records[ssn][_counterOfFR[ssn]];

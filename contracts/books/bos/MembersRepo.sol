@@ -5,32 +5,37 @@
 
 pragma solidity ^0.4.24;
 
-import "../../common/lib/ObjGroup.sol";
-import "../../common/lib/ArrayUtils.sol";
+import "../../common/lib/EnumerableSet.sol";
+import "../../common/lib/Checkpoints.sol";
+// import "../../common/lib/ArrayUtils.sol";
 import "../../common/lib/SNParser.sol";
 
 import "./GroupsRepo.sol";
 
 contract MembersRepo is GroupsRepo {
-    using ArrayUtils for bytes32[];
+    // using ArrayUtils for bytes32[];
     using SNParser for bytes32;
-    using ObjGroup for ObjGroup.UserGroup;
+    using EnumerableSet for EnumerableSet.Bytes32Set;
+    using EnumerableSet for EnumerableSet.UintSet;
+    using Checkpoints for Checkpoints.History;
 
-    struct Member {
-        bytes32[] sharesInHand;
-        uint256 parInHand;
-        uint256 paidInHand;
-    }
+    // struct Member {
+    //     bytes32[] sharesInHand;
+    //     uint256 parInHand;
+    //     uint256 paidInHand;
+    // }
 
-    ObjGroup.UserGroup private _shareholders;
+    EnumerableSet.UintSet private _members;
 
     // mapping(uint40 => bool) public isMember;
 
-    mapping(uint40 => Member) internal _members;
+    mapping(uint40 => EnumerableSet.Bytes32Set) internal _sharesInHand;
+
+    mapping(uint40 => Checkpoints.History) private _votesInHand;
 
     // uint40[] private _membersList;
 
-    uint8 public maxQtyOfMembers;
+    uint8 private _maxQtyOfMembers;
 
     //##################
     //##    Event    ##
@@ -49,13 +54,15 @@ contract MembersRepo is GroupsRepo {
     event IncreaseAmountToMember(
         uint40 indexed acct,
         uint256 parValue,
-        uint256 paidPar
+        uint256 paidPar,
+        uint256 blocknumber
     );
 
     event DecreaseAmountFromMember(
         uint40 indexed acct,
         uint256 parValue,
-        uint256 paidPar
+        uint256 paidPar,
+        uint256 blocknumber
     );
 
     //##################
@@ -63,12 +70,12 @@ contract MembersRepo is GroupsRepo {
     //##################
 
     modifier onlyMember() {
-        require(_shareholders.isMember[_msgSender()], "NOT Member");
+        require(_members.contains(uint256(_msgSender())), "NOT Member");
         _;
     }
 
     modifier memberExist(uint40 acct) {
-        require(_shareholders.isMember[acct], "Acct is NOT Member");
+        require(_members.contains(uint256(acct)), "Acct is NOT Member");
         _;
     }
 
@@ -77,29 +84,29 @@ contract MembersRepo is GroupsRepo {
     //##################
 
     constructor(uint8 max) public {
-        maxQtyOfMembers = max;
+        _maxQtyOfMembers = max;
     }
 
     function setMaxQtyOfMembers(uint8 max) external onlyOwner {
-        maxQtyOfMembers = max;
+        _maxQtyOfMembers = max;
         emit SetMaxQtyOfMembers(max);
     }
 
     function _addMember(uint40 acct) internal {
         require(
-            _shareholders.members.length < maxQtyOfMembers,
+            _members.length() < _maxQtyOfMembers,
             "Qty of Members overflow"
         );
 
-        if (_shareholders.addMember(acct))
-            emit AddMember(acct, _shareholders.members.length);
+        if (_members.add(uint256(acct)))
+            emit AddMember(acct, _members.length());
     }
 
     function _removeMember(uint40 acct) internal {
-        if (_shareholders.removeMember(acct)) {
-            delete _members[acct];
-            if (groupNo[acct] > 0) removeMemberFromGroup(acct, groupNo[acct]);
-            emit RemoveMember(acct, _shareholders.members.length);
+        if (_members.remove(uint256(acct))) {
+            delete _sharesInHand[acct];
+            if (_groupNo[acct] > 0) removeMemberFromGroup(acct, _groupNo[acct]);
+            emit RemoveMember(acct, _members.length());
         }
     }
 
@@ -111,7 +118,7 @@ contract MembersRepo is GroupsRepo {
         Share storage share = _shares[ssn];
 
         _increaseAmountToMember(acct, share.parValue, share.paidPar);
-        _members[acct].sharesInHand.push(share.shareNumber);
+        _sharesInHand[acct].add(share.shareNumber);
 
         emit AddShareToMember(share.shareNumber, acct);
     }
@@ -121,12 +128,11 @@ contract MembersRepo is GroupsRepo {
         shareExist(ssn)
         memberExist(acct)
     {
-        Member storage member = _members[acct];
         Share storage share = _shares[ssn];
 
-        member.sharesInHand.removeByValue(share.shareNumber);
+        _sharesInHand[acct].remove(share.shareNumber);
 
-        if (member.sharesInHand.length == 0) _removeMember(acct);
+        if (_sharesInHand[acct].length() == 0) _removeMember(acct);
         else _decreaseAmountFromMember(acct, share.parValue, share.paidPar);
 
         emit RemoveShareFromMember(share.shareNumber, acct);
@@ -137,11 +143,14 @@ contract MembersRepo is GroupsRepo {
         uint256 parValue,
         uint256 paidPar
     ) internal {
-        Member storage member = _members[acct];
-        member.parInHand += parValue;
-        member.paidInHand += paidPar;
+        (uint256 oldPar, uint256 oldPaid) = _votesInHand[acct].latest();
 
-        emit IncreaseAmountToMember(acct, parValue, paidPar);
+        uint256 blocknumber = _votesInHand[acct].push(
+            oldPar + parValue,
+            oldPaid + paidPar
+        );
+
+        emit IncreaseAmountToMember(acct, parValue, paidPar, blocknumber);
     }
 
     function _decreaseAmountFromMember(
@@ -149,27 +158,33 @@ contract MembersRepo is GroupsRepo {
         uint256 parValue,
         uint256 paidPar
     ) internal {
-        Member storage member = _members[acct];
+        (uint256 oldPar, uint256 oldPaid) = _votesInHand[acct].latest();
 
-        require(member.parInHand >= parValue, "parValue over flow");
-        require(member.paidInHand >= paidPar, "paidPar over flow");
+        require(oldPar >= parValue, "parValue over flow");
+        require(oldPaid >= paidPar, "paidPar over flow");
 
-        member.parInHand -= parValue;
-        member.paidInHand -= paidPar;
+        uint256 blocknumber = _votesInHand[acct].push(
+            oldPar - parValue,
+            oldPaid - paidPar
+        );
 
-        emit DecreaseAmountFromMember(acct, parValue, paidPar);
+        emit DecreaseAmountFromMember(acct, parValue, paidPar, blocknumber);
     }
 
     //##################
     //##   查询接口   ##
     //##################
 
-    function isMember(uint40 acct) public view onlyUser returns (bool) {
-        return _shareholders.isMember[acct];
+    function maxQtyOfMembers() external view onlyUser returns (uint8) {
+        return _maxQtyOfMembers;
     }
 
-    function membersList() external view onlyUser returns (uint40[]) {
-        return _shareholders.members;
+    function isMember(uint40 acct) public view onlyUser returns (bool) {
+        return _members.contains(uint256(acct));
+    }
+
+    function members() external view onlyUser returns (uint40[]) {
+        return _members.valuesToUint40();
     }
 
     function parInHand(uint40 acct)
@@ -177,9 +192,9 @@ contract MembersRepo is GroupsRepo {
         view
         memberExist(acct)
         onlyUser
-        returns (uint256)
+        returns (uint256 par)
     {
-        return _members[acct].parInHand;
+        (par, ) = _votesInHand[acct].latest();
     }
 
     function paidInHand(uint40 acct)
@@ -187,9 +202,31 @@ contract MembersRepo is GroupsRepo {
         view
         memberExist(acct)
         onlyUser
-        returns (uint256)
+        returns (uint256 paid)
     {
-        return _members[acct].paidInHand;
+        (, paid) = _votesInHand[acct].latest();
+    }
+
+    function voteInHand(uint40 acct)
+        external
+        view
+        memberExist(acct)
+        onlyUser
+        returns (uint256 vote)
+    {
+        if (_getSHA().basedOnPar()) (vote, ) = _votesInHand[acct].latest();
+        else (, vote) = _votesInHand[acct].latest();
+    }
+
+    function voteAtBlock(uint40 acct, uint256 blockNumber)
+        external
+        view
+        onlyUser
+        returns (uint256 vote)
+    {
+        if (_getSHA().basedOnPar())
+            (vote, ) = _votesInHand[acct].getAtBlock(blockNumber);
+        else (, vote) = _votesInHand[acct].getAtBlock(blockNumber);
     }
 
     function sharesInHand(uint40 acct)
@@ -199,6 +236,6 @@ contract MembersRepo is GroupsRepo {
         onlyUser
         returns (bytes32[])
     {
-        return _members[acct].sharesInHand;
+        return _sharesInHand[acct].values();
     }
 }

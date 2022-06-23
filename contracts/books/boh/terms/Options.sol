@@ -9,7 +9,7 @@ import "../../../common/ruting/BOSSetting.sol";
 import "../../../common/access/DraftControl.sol";
 
 import "../../../common/lib/ArrayUtils.sol";
-import "../../../common/lib/ObjGroup.sol";
+import "../../../common/lib/EnumerableSet.sol";
 
 import "../../../common/lib/SNFactory.sol";
 import "../../../common/lib/SNParser.sol";
@@ -17,13 +17,13 @@ import "../../../common/lib/SNParser.sol";
 contract Options is BOSSetting, DraftControl {
     using SNFactory for bytes;
     using SNParser for bytes32;
-    using ObjGroup for ObjGroup.UserGroup;
-    using ObjGroup for ObjGroup.SNList;
+    using EnumerableSet for EnumerableSet.UintSet;
+    using EnumerableSet for EnumerableSet.SNList;
 
     struct Option {
         bytes32 sn;
         uint40 rightholder;
-        ObjGroup.UserGroup obligors;
+        EnumerableSet.UintSet obligors;
     }
 
     // bytes32 snInfo{
@@ -45,7 +45,7 @@ contract Options is BOSSetting, DraftControl {
     // ssn => Option
     mapping(bytes6 => Option) private _options;
 
-    ObjGroup.SNList private _snList;
+    EnumerableSet.SNList private _snList;
 
     uint16 public counterOfOptions;
 
@@ -68,7 +68,7 @@ contract Options is BOSSetting, DraftControl {
     // ################
 
     modifier optionExist(bytes6 ssn) {
-        require(_snList.isItem[ssn], "option NOT exist");
+        require(_snList.contains(ssn), "option NOT exist");
         _;
     }
 
@@ -137,9 +137,9 @@ contract Options is BOSSetting, DraftControl {
         opt.sn = sn;
         opt.rightholder = rightholder;
 
-        opt.obligors.addMember(obligor);
+        opt.obligors.add(uint256(obligor));
 
-        _snList.addItem(sn);
+        _snList.add(sn);
 
         emit CreateOpt(sn, rightholder, obligor);
     }
@@ -185,11 +185,11 @@ contract Options is BOSSetting, DraftControl {
             para_2
         );
 
-        _snList.removeItem(opt.sn);
+        _snList.remove(opt.sn);
 
         opt.sn = sn;
 
-        _snList.addItem(sn);
+        _snList.add(sn);
 
         emit AddConditions(sn);
     }
@@ -201,7 +201,10 @@ contract Options is BOSSetting, DraftControl {
     {
         Option storage opt = _options[ssn];
 
-        require(opt.obligors.addMember(obligor), "obligor ALREADY registered");
+        require(
+            opt.obligors.add(uint256(obligor)),
+            "obligor ALREADY registered"
+        );
         emit AddObligorIntoOpt(opt.sn, obligor);
     }
 
@@ -212,14 +215,17 @@ contract Options is BOSSetting, DraftControl {
     {
         Option storage opt = _options[ssn];
 
-        require(opt.obligors.removeMember(obligor), "obligor NOT registered");
+        require(
+            opt.obligors.remove(uint256(obligor)),
+            "obligor NOT registered"
+        );
         emit RemoveObligorFromOpt(opt.sn, obligor);
     }
 
     function delOption(bytes6 ssn) external onlyAttorney optionExist(ssn) {
         Option storage opt = _options[ssn];
 
-        _snList.removeItem(opt.sn);
+        _snList.remove(opt.sn);
 
         delete _options[ssn];
 
@@ -241,7 +247,7 @@ contract Options is BOSSetting, DraftControl {
     }
 
     function isOption(bytes6 ssn) external view onlyUser returns (bool) {
-        return _snList.isItem[ssn];
+        return _snList.contains(ssn);
     }
 
     function isObligor(bytes6 ssn, uint32 acct)
@@ -251,7 +257,7 @@ contract Options is BOSSetting, DraftControl {
         onlyUser
         returns (bool)
     {
-        return _options[ssn].obligors.isMember[acct];
+        return _options[ssn].obligors.contains(uint256(acct));
     }
 
     function getObligors(bytes6 ssn)
@@ -261,7 +267,7 @@ contract Options is BOSSetting, DraftControl {
         onlyUser
         returns (uint40[])
     {
-        return _options[ssn].obligors.members;
+        return _options[ssn].obligors.valuesToUint40();
     }
 
     function isRightholder(bytes6 ssn, uint40 acct)
@@ -284,7 +290,7 @@ contract Options is BOSSetting, DraftControl {
         return _options[ssn].rightholder;
     }
 
-    function snList() external view onlyUser returns (bytes32[] list) {
-        list = _snList.items;
+    function snList() external view onlyUser returns (bytes32[]) {
+        return _snList.values();
     }
 }

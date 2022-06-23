@@ -12,7 +12,7 @@ import "../../../common/ruting/BOMSetting.sol";
 import "../../../common/access/DraftControl.sol";
 
 import "../../../common/lib/ArrayUtils.sol";
-import "../../../common/lib/ObjGroup.sol";
+import "../../../common/lib/EnumerableSet.sol";
 import "../../../common/lib/SNFactory.sol";
 import "../../../common/lib/SNParser.sol";
 
@@ -23,11 +23,11 @@ contract FirstRefusal is BOSSetting, BOMSetting, DraftControl {
     using ArrayUtils for uint40[];
     using SNFactory for bytes;
     using SNParser for bytes32;
-    using ObjGroup for ObjGroup.UserGroup;
+    using EnumerableSet for EnumerableSet.UintSet;
 
     struct FR {
         bytes32 rule;
-        ObjGroup.UserGroup rightholders;
+        EnumerableSet.UintSet rightholders;
     }
 
     // struct ruleInfo {
@@ -127,7 +127,7 @@ contract FirstRefusal is BOSSetting, BOMSetting, DraftControl {
 
         require(!rule.membersEqualOfFR(), "Members' right are equal");
 
-        if (fr.rightholders.addMember(rightholder))
+        if (fr.rightholders.add(uint256(rightholder)))
             emit AddRightholder(typeOfDeal, rightholder);
     }
 
@@ -138,7 +138,7 @@ contract FirstRefusal is BOSSetting, BOMSetting, DraftControl {
     {
         FR storage fr = _firstRefusals[typeOfDeal];
 
-        if (fr.rightholders.removeMember(acct))
+        if (fr.rightholders.remove(uint256(acct)))
             emit RemoveRightholder(typeOfDeal, acct);
     }
 
@@ -170,7 +170,7 @@ contract FirstRefusal is BOSSetting, BOMSetting, DraftControl {
         FR storage fr = _firstRefusals[typeOfDeal];
 
         if (fr.rule.membersEqualOfFR()) return _bos.isMember(acct);
-        else return fr.rightholders.isMember[acct];
+        else return fr.rightholders.contains(uint256(acct));
     }
 
     function rightholders(uint8 typeOfDeal)
@@ -182,8 +182,8 @@ contract FirstRefusal is BOSSetting, BOMSetting, DraftControl {
     {
         FR storage fr = _firstRefusals[typeOfDeal];
 
-        if (fr.rule.membersEqualOfFR()) return _bos.membersList();
-        else return fr.rightholders.members;
+        if (fr.rule.membersEqualOfFR()) return _bos.members();
+        else return fr.rightholders.valuesToUint40();
     }
 
     // ################
@@ -220,12 +220,12 @@ contract FirstRefusal is BOSSetting, BOMSetting, DraftControl {
         uint40[] memory agreedParties = consentParties.combine(signers);
 
         if (rule.membersEqualOfFR())
-            return _bos.membersList().fullyCoveredBy(agreedParties);
+            return _bos.members().fullyCoveredBy(agreedParties);
         else
             return
                 _firstRefusals[sn.typeOfDeal()]
                     .rightholders
-                    .members
+                    .valuesToUint40()
                     .fullyCoveredBy(agreedParties);
     }
 }

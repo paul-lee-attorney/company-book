@@ -5,7 +5,7 @@
 
 pragma solidity ^0.4.24;
 
-import "../../../common/lib/ObjGroup.sol";
+// import "../../../common/lib/EnumerableSet.sol";
 
 import "../../boa/interfaces/IInvestmentAgreement.sol";
 
@@ -17,16 +17,17 @@ import "../../../common/lib/ArrayUtils.sol";
 import "../../../common/lib/SNFactory.sol";
 import "../../../common/lib/SNParser.sol";
 import "../../../common/lib/EnumsRepo.sol";
+import "../../../common/lib/EnumerableSet.sol";
 
 contract AntiDilution is BOSSetting, BOMSetting, DraftControl {
     using SNFactory for bytes;
     using ArrayUtils for bytes32[];
     using ArrayUtils for uint40[];
     using SNParser for bytes32;
-    using ObjGroup for ObjGroup.UserGroup;
+    using EnumerableSet for EnumerableSet.UintSet;
 
     // benchmark => _obligors
-    mapping(bytes32 => ObjGroup.UserGroup) private _obligors;
+    mapping(bytes32 => EnumerableSet.UintSet) private _obligors;
 
     // class => bool
     mapping(uint8 => bool) private _isMarked;
@@ -100,7 +101,7 @@ contract AntiDilution is BOSSetting, BOMSetting, DraftControl {
         onlyAttorney
         onlyMarked(class)
     {
-        if (_obligors[_classToMark[class]].addMember(acct))
+        if (_obligors[_classToMark[class]].add(uint256(acct)))
             emit AddObligor(class, acct);
     }
 
@@ -109,7 +110,7 @@ contract AntiDilution is BOSSetting, BOMSetting, DraftControl {
         onlyAttorney
         onlyMarked(class)
     {
-        if (_obligors[_classToMark[class]].removeMember(acct))
+        if (_obligors[_classToMark[class]].remove(uint256(acct)))
             emit RemoveObligor(class, acct);
     }
 
@@ -132,7 +133,7 @@ contract AntiDilution is BOSSetting, BOMSetting, DraftControl {
         onlyUser
         returns (uint40[])
     {
-        return _obligors[_classToMark[class]].members;
+        return _obligors[_classToMark[class]].valuesToUint40();
     }
 
     function benchmarks() external view onlyUser returns (bytes32[] marks) {

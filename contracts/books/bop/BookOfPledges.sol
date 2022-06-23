@@ -8,14 +8,14 @@ pragma solidity ^0.4.24;
 import "../../common/lib/ArrayUtils.sol";
 import "../../common/lib/SNFactory.sol";
 import "../../common/lib/SNParser.sol";
-import "../../common/lib/ObjGroup.sol";
+import "../../common/lib/EnumerableSet.sol";
 
 import "../../common/ruting/BOSSetting.sol";
 
 contract BookOfPledges is BOSSetting {
     using SNFactory for bytes;
     using SNParser for bytes32;
-    using ObjGroup for ObjGroup.SNList;
+    using EnumerableSet for EnumerableSet.SNList;
     using ArrayUtils for bytes32[];
 
     //Pledge 质权
@@ -43,7 +43,7 @@ contract BookOfPledges is BOSSetting {
 
     uint16 public counterOfPledges;
 
-    ObjGroup.SNList private _snList;
+    EnumerableSet.SNList private _snList;
 
     constructor(uint40 bookeeper, address regCenter) public {
         init(_msgSender(), bookeeper, regCenter);
@@ -74,7 +74,7 @@ contract BookOfPledges is BOSSetting {
     //##################
 
     modifier pledgeExist(bytes6 ssn) {
-        require(_snList.isItem[ssn], "pledge NOT exist");
+        require(_snList.contains(ssn), "pledge NOT exist");
         _;
     }
 
@@ -135,7 +135,7 @@ contract BookOfPledges is BOSSetting {
         // isPledge[ssn] = true;
         // sn.insertToQue(snList);
 
-        _snList.addItem(sn);
+        _snList.add(sn);
 
         sn.insertToQue(pledgesOf[shareNumber.short()]);
 
@@ -154,7 +154,7 @@ contract BookOfPledges is BOSSetting {
 
         // delete isPledge[ssn];
 
-        _snList.removeItem(pld.sn);
+        _snList.remove(pld.sn);
 
         delete _pledges[ssn];
 
@@ -183,11 +183,11 @@ contract BookOfPledges is BOSSetting {
     //##################
 
     function isPledge(bytes6 ssn) external view onlyUser returns (bool) {
-        return _snList.isItem[ssn];
+        return _snList.contains(ssn);
     }
 
     function snList() external view onlyUser returns (bytes32[]) {
-        return _snList.items;
+        return _snList.values();
     }
 
     function getPledge(bytes6 ssn)

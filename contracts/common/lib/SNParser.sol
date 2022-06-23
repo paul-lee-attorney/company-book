@@ -1,7 +1,15 @@
+/**
+ * Copyright 2021-2022 LI LI of JINGTIAN & GONGCHENG.
+ * All Rights Reserved.
+ ***/
+
 pragma solidity ^0.4.24;
 
 library SNParser {
-    function insertToQue(bytes32 sn, bytes32[] storage que) internal {
+    function insertToQue(bytes32 sn, bytes32[] storage que)
+        internal
+        returns (uint256)
+    {
         uint256 len = que.length;
         que.push(sn);
 
@@ -10,6 +18,8 @@ library SNParser {
             (que[len - 1], que[len]) = (que[len], que[len - 1]);
             len--;
         }
+
+        return len;
     }
 
     // ======== ShareNumber ========

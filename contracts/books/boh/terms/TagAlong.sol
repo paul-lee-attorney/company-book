@@ -9,7 +9,7 @@ import "../../boa/interfaces/IInvestmentAgreement.sol";
 
 import "../../../common/ruting/BOMSetting.sol";
 
-import "../../../common/lib/ObjGroup.sol";
+import "../../../common/lib/EnumerableSet.sol";
 import "../../../common/lib/ArrayUtils.sol";
 
 import "./DragAlong.sol";
@@ -17,7 +17,7 @@ import "./DragAlong.sol";
 import "../../../common/components/interfaces/ISigPage.sol";
 
 contract TagAlong is BOMSetting, DragAlong {
-    using ObjGroup for ObjGroup.SeqList;
+    using EnumerableSet for EnumerableSet.UintSet;
     using ArrayUtils for uint40[];
 
     // struct linkRule {
@@ -33,7 +33,7 @@ contract TagAlong is BOMSetting, DragAlong {
     //     uint32 ROE;
     // }
 
-    ObjGroup.SeqList private _supportGroups;
+    EnumerableSet.UintSet private _supportGroups;
 
     // ################
     // ##  Term接口  ##
@@ -55,7 +55,7 @@ contract TagAlong is BOMSetting, DragAlong {
         _supportGroups.emptyItems();
 
         while (len > 0) {
-            _supportGroups.addItem(_bos.groupNo(supporters[len - 1]));
+            _supportGroups.add(_bos.groupNo(supporters[len - 1]));
             len--;
         }
 
@@ -65,12 +65,13 @@ contract TagAlong is BOMSetting, DragAlong {
                     .shareNumberOfDeal(sn.sequenceOfDeal())
                     .shareholder()
             )
-        ].followerGroups.items;
+        ].followerGroups.valuesToUint16();
 
         len = rightholders.length;
 
         while (len > 0) {
-            if (!_supportGroups.isItem[rightholders[len - 1]]) return false;
+            if (!_supportGroups.contains(uint256(rightholders[len - 1])))
+                return false;
             len--;
         }
 

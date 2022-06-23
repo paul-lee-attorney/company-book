@@ -142,7 +142,7 @@ contract BOHKeeper is BOSSetting, SHASetting, BOMSetting, BOOSetting {
             "SHA not executed yet"
         );
 
-        uint40[] memory members = _bos.membersList();
+        uint40[] memory members = _bos.members();
         uint256 len = members.length;
         while (len > 0) {
             require(

@@ -1,7 +1,7 @@
-/*
+/**
  * Copyright 2021-2022 LI LI of JINGTIAN & GONGCHENG.
  * All Rights Reserved.
- * */
+ ***/
 
 pragma solidity ^0.4.24;
 
@@ -9,167 +9,11 @@ import "./ArrayUtils.sol";
 import "./SNParser.sol";
 
 library ObjGroup {
-    using ArrayUtils for uint8[];
-    using ArrayUtils for uint16[];
     using ArrayUtils for uint40[];
     using ArrayUtils for bytes32[];
     using ArrayUtils for address[];
 
     using SNParser for bytes32;
-
-    // ======== SNList ========
-
-    struct SNList {
-        mapping(bytes6 => bool) isItem;
-        bytes32[] items;
-    }
-
-    function addItem(SNList storage list, bytes32 sn)
-        internal
-        returns (bool flag)
-    {
-        if (!list.isItem[sn.short()]) {
-            list.isItem[sn.short()] = true;
-            sn.insertToQue(list.items);
-            flag = true;
-        }
-    }
-
-    function removeItem(SNList storage list, bytes32 sn)
-        internal
-        returns (bool flag)
-    {
-        if (list.isItem[sn.short()]) {
-            list.isItem[sn.short()] = false;
-            list.items.removeByValue(sn);
-            flag = true;
-        }
-    }
-
-    // ======== EnumList ========
-
-    struct EnumList {
-        mapping(uint8 => bool) isItem;
-        uint8[] items;
-    }
-
-    function addItem(EnumList storage list, uint8 title)
-        internal
-        returns (bool flag)
-    {
-        if (!list.isItem[title]) {
-            list.isItem[title] = true;
-            list.items.push(title);
-            flag = true;
-        }
-    }
-
-    function removeItem(EnumList storage list, uint8 title)
-        internal
-        returns (bool flag)
-    {
-        if (list.isItem[title]) {
-            list.isItem[title] = false;
-            list.items.removeByValue(title);
-            flag = true;
-        }
-    }
-
-    // ======== SeqList ========
-
-    struct SeqList {
-        mapping(uint16 => bool) isItem;
-        uint16[] items;
-    }
-
-    function addItem(SeqList storage list, uint16 seqNo)
-        internal
-        returns (bool flag)
-    {
-        if (!list.isItem[seqNo]) {
-            list.isItem[seqNo] = true;
-            list.items.push(seqNo);
-            flag = true;
-        }
-    }
-
-    function removeItem(SeqList storage list, uint16 seqNo)
-        internal
-        returns (bool flag)
-    {
-        if (list.isItem[seqNo]) {
-            list.isItem[seqNo] = false;
-            list.items.removeByValue(seqNo);
-            flag = true;
-        }
-    }
-
-    function emptyItems(SeqList storage list) internal {
-        uint256 len = list.items.length;
-
-        while (len > 0) {
-            removeItem(list, list.items[len - 1]);
-            len--;
-        }
-    }
-
-    // ======== AddrList ========
-
-    struct AddrList {
-        mapping(address => bool) isItem;
-        address[] items;
-    }
-
-    function addItem(AddrList storage list, address addr)
-        internal
-        returns (bool flag)
-    {
-        if (!list.isItem[addr]) {
-            list.isItem[addr] = true;
-            list.items.push(addr);
-            flag = true;
-        }
-    }
-
-    function removeItem(AddrList storage list, address addr)
-        internal
-        returns (bool flag)
-    {
-        if (list.isItem[addr]) {
-            list.isItem[addr] = false;
-            list.items.removeByValue(addr);
-            flag = true;
-        }
-    }
-
-    // ======== UserGroup ========
-
-    struct UserGroup {
-        mapping(uint40 => bool) isMember;
-        uint40[] members;
-    }
-
-    function addMember(UserGroup storage group, uint40 acct)
-        internal
-        returns (bool flag)
-    {
-        if (!group.isMember[acct]) {
-            group.isMember[acct] = true;
-            group.members.push(acct);
-            flag = true;
-        }
-    }
-
-    function removeMember(UserGroup storage group, uint40 acct)
-        internal
-        returns (bool flag)
-    {
-        if (group.isMember[acct]) {
-            group.isMember[acct] = false;
-            group.members.removeByValue(acct);
-            flag = true;
-        }
-    }
 
     // ======== SignerGroup ========
 

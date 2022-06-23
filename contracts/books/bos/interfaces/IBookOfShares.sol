@@ -99,7 +99,11 @@ interface IBookOfShares {
 
     // ========== MembersRepo ==============
 
+    function maxQtyOfMembers() external view returns (uint8);
+
     function isMember(uint40 acct) external view returns (bool);
+
+    function members() external view returns (uint40[]);
 
     function sharesInHand(uint40 acct) external view returns (bytes32[]);
 
@@ -107,7 +111,10 @@ interface IBookOfShares {
 
     function paidInHand(uint40 acct) external view returns (uint256);
 
-    function maxQtyOfMembers() external view returns (uint8);
+    function voteInHand(uint40 acct) external view returns (uint256 vote);
 
-    function membersList() external view returns (uint40[]);
+    function voteAtBlock(uint40 acct, uint256 blockNumber)
+        external
+        view
+        returns (uint256 vote);
 }

@@ -14,13 +14,13 @@ import "../../common/components/BookOfDocuments.sol";
 import "../../common/ruting/SHASetting.sol";
 
 import "../../common/lib/ArrayUtils.sol";
-import "../../common/lib/ObjGroup.sol";
 import "../../common/lib/SNParser.sol";
 import "../../common/lib/EnumsRepo.sol";
+import "../../common/lib/EnumerableSet.sol";
 
 contract BookOfIA is BookOfDocuments {
     using SNParser for bytes32;
-    using ObjGroup for ObjGroup.SeqList;
+    using EnumerableSet for EnumerableSet.UintSet;
     using ArrayUtils for uint40[];
 
     struct Amt {
@@ -33,8 +33,8 @@ contract BookOfIA is BookOfDocuments {
     // IA address => group => Amt
     mapping(address => mapping(uint16 => Amt)) private _mockResults;
 
-    // IA address => SeqList
-    mapping(address => ObjGroup.SeqList) private _groupsConcerned;
+    // IA address => UintSet
+    mapping(address => EnumerableSet.UintSet) private _groupsConcerned;
 
     // IA address => deal seq => bool
     mapping(address => mapping(uint16 => bool)) private _isMocked;
@@ -95,7 +95,7 @@ contract BookOfIA is BookOfDocuments {
     ) external onlyDirectKeeper {
         uint16 sellerGroup = _bos.groupNo(seller);
         _mockResults[ia][sellerGroup].selAmt += amount;
-        _groupsConcerned[ia].addItem(sellerGroup);
+        _groupsConcerned[ia].add(uint256(sellerGroup));
     }
 
     function mockDealOfBuy(
@@ -108,14 +108,14 @@ contract BookOfIA is BookOfDocuments {
 
         if (!_isMocked[ia][ssn]) {
             _mockResults[ia][buyerGroup].buyAmt += amount;
-            _groupsConcerned[ia].addItem(buyerGroup);
+            _groupsConcerned[ia].add(uint256(buyerGroup));
 
             _isMocked[ia][ssn] = true;
         }
     }
 
     function calculateMockResult(address ia) external onlyDirectKeeper {
-        uint16[] storage groups = _groupsConcerned[ia].items;
+        uint256[] memory groups = _groupsConcerned[ia].values();
 
         delete _topGroups[ia];
         TopGroup storage top = _topGroups[ia];
@@ -124,7 +124,7 @@ contract BookOfIA is BookOfDocuments {
         bool basedOnPar = _getSHA().basedOnPar();
 
         while (len > 0) {
-            uint16 groupNum = groups[len - 1];
+            uint16 groupNum = uint16(groups[len - 1]);
 
             Amt storage group = _mockResults[ia][groupNum];
 
@@ -173,7 +173,7 @@ contract BookOfIA is BookOfDocuments {
         uint256 amtOfCorp = basedOnPar ? _bos.regCap() : _bos.paidCap();
         amtOfCorp += top.sumOfIA.rstAmt;
 
-        if (_groupsConcerned[ia].isItem[controller]) {
+        if (_groupsConcerned[ia].contains(uint256(controller))) {
             if (top.groupNum == controller) top.isOrgController = true;
         } else {
             uint256 amtOfController = basedOnPar
@@ -223,7 +223,7 @@ contract BookOfIA is BookOfDocuments {
 
         Amt storage fAmt = _mockResults[ia][follower];
 
-        if (_groupsConcerned[ia].addItem(follower))
+        if (_groupsConcerned[ia].add(follower))
             fAmt.orgAmt = _getSHA().basedOnPar()
                 ? _bosCal.parOfGroup(follower)
                 : _bosCal.paidOfGroup(follower);
@@ -295,7 +295,16 @@ contract BookOfIA is BookOfDocuments {
         onlyUser
         returns (uint16[])
     {
-        return _groupsConcerned[ia].items;
+        uint256[] memory rawValues = _groupsConcerned[ia].values();
+        uint256 len = rawValues.length;
+        uint16[] memory outputs = new uint16[](len);
+
+        while (len > 0) {
+            outputs[len - 1] = uint16(rawValues[len - 1]);
+            len--;
+        }
+
+        return outputs;
     }
 
     function isConcernedGroup(address ia, uint16 group)
@@ -304,7 +313,7 @@ contract BookOfIA is BookOfDocuments {
         onlyUser
         returns (bool)
     {
-        return _groupsConcerned[ia].isItem[group];
+        return _groupsConcerned[ia].contains(uint256(group));
     }
 
     function topGroup(address ia)
@@ -342,7 +351,10 @@ contract BookOfIA is BookOfDocuments {
             uint256 rstAmt
         )
     {
-        require(_groupsConcerned[ia].isItem[group], "NOT concerned group");
+        require(
+            _groupsConcerned[ia].contains(uint256(group)),
+            "NOT concerned group"
+        );
 
         Amt storage amt = _mockResults[ia][group];
         selAmt = amt.selAmt;
@@ -394,7 +406,7 @@ contract BookOfIA is BookOfDocuments {
         returns (uint40[])
     {
         uint40[] memory signers = ISigPage(ia).parties();
-        uint40[] memory members = _bos.membersList();
+        uint40[] memory members = _bos.members();
 
         return members.minus(signers);
     }

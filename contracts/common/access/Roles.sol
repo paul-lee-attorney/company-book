@@ -8,13 +8,13 @@ pragma solidity ^0.4.24;
 import "./RegCenterSetting.sol";
 import "./interfaces/IRoles.sol";
 
-import "../lib/ObjGroup.sol";
+import "../lib/EnumerableSet.sol";
 
 contract Roles is RegCenterSetting {
-    using ObjGroup for ObjGroup.UserGroup;
+    using EnumerableSet for EnumerableSet.UintSet;
 
     struct RoleData {
-        ObjGroup.UserGroup roleGroup;
+        EnumerableSet.UintSet roleGroup;
         uint40 admin;
     }
 
@@ -47,7 +47,7 @@ contract Roles is RegCenterSetting {
         external
         theUser(roleAdmin(role))
     {
-        if (_roles[role].roleGroup.addMember(user))
+        if (_roles[role].roleGroup.add(uint256(user)))
             emit RoleGranted(role, user, _msgSender());
     }
 
@@ -76,7 +76,7 @@ contract Roles is RegCenterSetting {
     }
 
     function _removeRole(bytes32 role, uint40 acct) private {
-        if (_roles[role].roleGroup.removeMember(acct))
+        if (_roles[role].roleGroup.remove(uint256(acct)))
             emit RoleRevoked(role, acct, _msgSender());
     }
 
@@ -97,11 +97,11 @@ contract Roles is RegCenterSetting {
         onlyUser
         returns (bool)
     {
-        return _roles[role].roleGroup.isMember[acct];
+        return _roles[role].roleGroup.contains(uint256(acct));
     }
 
     function roleMembers(bytes32 role) public view onlyUser returns (uint40[]) {
-        return _roles[role].roleGroup.members;
+        return _roles[role].roleGroup.valuesToUint40();
     }
 
     function roleAdmin(bytes32 role) public view onlyUser returns (uint40) {

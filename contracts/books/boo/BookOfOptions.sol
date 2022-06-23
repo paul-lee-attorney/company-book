@@ -14,10 +14,11 @@ import "../../common/lib/ObjGroup.sol";
 import "../../common/lib/SNFactory.sol";
 import "../../common/lib/SNParser.sol";
 import "../../common/lib/ObjGroup.sol";
+import "../../common/lib/EnumerableSet.sol";
 
 contract BookOfOptions is BOSSetting {
-    using ObjGroup for ObjGroup.UserGroup;
-    using ObjGroup for ObjGroup.SNList;
+    using EnumerableSet for EnumerableSet.UintSet;
+    using EnumerableSet for EnumerableSet.SNList;
     using ArrayUtils for bytes32[];
     // using ArrayUtils for uint32[];
     using SNFactory for bytes;
@@ -26,7 +27,7 @@ contract BookOfOptions is BOSSetting {
     struct Option {
         bytes32 sn;
         uint40 rightholder;
-        ObjGroup.UserGroup obligors;
+        EnumerableSet.UintSet obligors;
         uint32 closingDate;
         uint256 parValue;
         uint256 paidPar;
@@ -80,7 +81,7 @@ contract BookOfOptions is BOSSetting {
 
     // bytes32[] private _snList;
 
-    ObjGroup.SNList private _snList;
+    EnumerableSet.SNList private _snList;
 
     uint16 public counterOfOptions;
 
@@ -138,7 +139,7 @@ contract BookOfOptions is BOSSetting {
     // ################
 
     modifier optionExist(bytes6 ssn) {
-        require(_snList.isItem[ssn], "option NOT exist");
+        require(_snList.contains(ssn), "option NOT exist");
         _;
     }
 
@@ -203,7 +204,7 @@ contract BookOfOptions is BOSSetting {
         opt.sn = sn;
         opt.rightholder = rightholder;
 
-        opt.obligors.addMember(obligor);
+        opt.obligors.add(uint256(obligor));
         opt.parValue = parValue;
         opt.paidPar = paidPar;
         opt.state = 1;
@@ -211,7 +212,7 @@ contract BookOfOptions is BOSSetting {
         // isOption[ssn] = true;
         // _snList.push(sn);
 
-        _snList.addItem(sn);
+        _snList.add(sn);
 
         emit CreateOpt(sn, rightholder, obligor, parValue, paidPar);
     }
@@ -223,7 +224,10 @@ contract BookOfOptions is BOSSetting {
     {
         Option storage opt = _options[ssn];
 
-        require(opt.obligors.addMember(obligor), "obligor ALREADY registered");
+        require(
+            opt.obligors.add(uint256(obligor)),
+            "obligor ALREADY registered"
+        );
 
         // opt.isObligor[obligor] = true;
         // opt.obligors.push(obligor);
@@ -238,7 +242,10 @@ contract BookOfOptions is BOSSetting {
     {
         Option storage opt = _options[ssn];
 
-        require(opt.obligors.removeMember(obligor), "obligor NOT registered");
+        require(
+            opt.obligors.remove(uint256(obligor)),
+            "obligor NOT registered"
+        );
 
         // delete opt.isObligor[obligor];
         // opt.obligors.removeByValue(obligor);
@@ -277,7 +284,7 @@ contract BookOfOptions is BOSSetting {
 
             opt.sn = sn;
 
-            _snList.addItem(sn);
+            _snList.add(sn);
 
             // isOption[sn.shortOfOpt()] = true;
             // _snList.push(sn);
@@ -286,7 +293,7 @@ contract BookOfOptions is BOSSetting {
 
             uint40[] memory obligors = IOptions(opts).getObligors(ssn);
             for (uint256 j = 0; j < obligors.length; j++)
-                opt.obligors.addMember(obligors[j]);
+                opt.obligors.add(uint256(obligors[j]));
 
             opt.parValue = sn.parValueOfOpt();
             opt.paidPar = sn.paidParOfOpt();
@@ -378,7 +385,7 @@ contract BookOfOptions is BOSSetting {
             );
         else
             require(
-                opt.obligors.isMember[shareNumber.shareholder()],
+                opt.obligors.contains(uint256(shareNumber.shareholder())),
                 "WRONG sharehoder"
             );
 
@@ -444,7 +451,7 @@ contract BookOfOptions is BOSSetting {
 
         if (typeOfOpt == 1)
             require(
-                opt.obligors.isMember[shareNumber.shareholder()],
+                opt.obligors.contains(uint256(shareNumber.shareholder())),
                 "WRONG shareholder"
             );
         else
@@ -517,7 +524,7 @@ contract BookOfOptions is BOSSetting {
     // ################
 
     function isOption(bytes6 ssn) public view onlyUser returns (bool) {
-        return _snList.isItem[ssn];
+        return _snList.contains(ssn);
     }
 
     function getOption(bytes6 ssn)
@@ -551,11 +558,11 @@ contract BookOfOptions is BOSSetting {
         onlyUser
         returns (bool)
     {
-        return _options[ssn].obligors.isMember[acct];
+        return _options[ssn].obligors.contains(uint256(acct));
     }
 
     function obligors(bytes6 ssn) external view onlyUser returns (uint40[]) {
-        return _options[ssn].obligors.members;
+        return _options[ssn].obligors.valuesToUint40();
     }
 
     function stateOfOption(bytes6 ssn) external view onlyUser returns (uint8) {
@@ -563,7 +570,7 @@ contract BookOfOptions is BOSSetting {
     }
 
     function snList() external view onlyUser returns (bytes32[] list) {
-        list = _snList.items;
+        list = _snList.values();
     }
 
     function oracles() external view onlyUser returns (uint256 d1, uint256 d2) {

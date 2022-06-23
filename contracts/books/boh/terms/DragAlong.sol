@@ -14,18 +14,18 @@ import "../../../common/access/DraftControl.sol";
 import "../../../common/lib/ArrayUtils.sol";
 import "../../../common/lib/SNParser.sol";
 import "../../../common/lib/SNFactory.sol";
-import "../../../common/lib/ObjGroup.sol";
+import "../../../common/lib/EnumerableSet.sol";
 import "../../../common/lib/EnumsRepo.sol";
 
 contract DragAlong is BOSSetting, BOASetting, DraftControl {
     using ArrayUtils for address[];
-    using ArrayUtils for uint16[];
+    // using ArrayUtils for uint16[];
     using SNParser for bytes32;
     using SNFactory for bytes;
-    using ObjGroup for ObjGroup.SeqList;
+    using EnumerableSet for EnumerableSet.UintSet;
 
     struct Link {
-        ObjGroup.SeqList followerGroups;
+        EnumerableSet.UintSet followerGroups;
         bytes32 rule;
     }
 
@@ -42,7 +42,7 @@ contract DragAlong is BOSSetting, BOASetting, DraftControl {
     //     uint32 ROE;
     // }
 
-    ObjGroup.SeqList private _dragerGroups;
+    EnumerableSet.UintSet private _dragerGroups;
 
     // dragerGroup => Link
     mapping(uint16 => Link) internal _links;
@@ -64,7 +64,7 @@ contract DragAlong is BOSSetting, BOASetting, DraftControl {
     // ################
 
     modifier dragerGroupExist(uint16 group) {
-        require(_dragerGroups.isItem[group], "WRONG drager ID");
+        require(_dragerGroups.contains(uint256(group)), "WRONG drager ID");
         _;
     }
 
@@ -116,7 +116,7 @@ contract DragAlong is BOSSetting, BOASetting, DraftControl {
             roe
         );
 
-        _dragerGroups.addItem(dragerGroup);
+        _dragerGroups.add(uint256(dragerGroup));
 
         _links[dragerGroup].rule = rule;
 
@@ -128,7 +128,7 @@ contract DragAlong is BOSSetting, BOASetting, DraftControl {
         onlyAttorney
         dragerGroupExist(dragerGroup)
     {
-        if (_links[dragerGroup].followerGroups.addItem(followerGroup))
+        if (_links[dragerGroup].followerGroups.add(uint256(followerGroup)))
             emit AddFollower(dragerGroup, followerGroup);
     }
 
@@ -137,7 +137,7 @@ contract DragAlong is BOSSetting, BOASetting, DraftControl {
         onlyAttorney
         dragerGroupExist(dragerGroup)
     {
-        if (_links[dragerGroup].followerGroups.removeItem(followerGroup))
+        if (_links[dragerGroup].followerGroups.remove(uint256(followerGroup)))
             emit RemoveFollower(dragerGroup, followerGroup);
     }
 
@@ -148,7 +148,7 @@ contract DragAlong is BOSSetting, BOASetting, DraftControl {
     {
         delete _links[dragerGroup];
 
-        _dragerGroups.removeItem(dragerGroup);
+        _dragerGroups.remove(uint256(dragerGroup));
         // delete _isDragerGroup[dragerGroup];
 
         emit DelLink(dragerGroup);
@@ -175,7 +175,8 @@ contract DragAlong is BOSSetting, BOASetting, DraftControl {
         dragerGroupExist(dragerGroup)
         returns (bool)
     {
-        return _links[dragerGroup].followerGroups.isItem[followerGroup];
+        return
+            _links[dragerGroup].followerGroups.contains(uint256(followerGroup));
     }
 
     function isLinked(uint40 drager, uint40 follower)
@@ -191,11 +192,11 @@ contract DragAlong is BOSSetting, BOASetting, DraftControl {
     }
 
     function isDragerGroup(uint16 group) external view onlyUser returns (bool) {
-        return _dragerGroups.isItem[group];
+        return _dragerGroups.contains(uint256(group));
     }
 
     function dragerGroups() external view onlyUser returns (uint16[]) {
-        return _dragerGroups.items;
+        return _dragerGroups.valuesToUint16();
     }
 
     function followerGroups(uint16 dragerGroup)
@@ -205,7 +206,7 @@ contract DragAlong is BOSSetting, BOASetting, DraftControl {
         onlyUser
         returns (uint16[])
     {
-        return _links[dragerGroup].followerGroups.items;
+        return _links[dragerGroup].followerGroups.valuesToUint16();
     }
 
     // ################
@@ -230,7 +231,7 @@ contract DragAlong is BOSSetting, BOASetting, DraftControl {
 
         uint16 sellerGroup = _bos.groupNo(seller);
 
-        if (!_dragerGroups.isItem[sellerGroup]) return false;
+        if (!_dragerGroups.contains(uint256(sellerGroup))) return false;
 
         bytes32 rule = _links[sellerGroup].rule;
 

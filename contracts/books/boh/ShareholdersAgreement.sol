@@ -12,9 +12,8 @@ import "../../common/ruting/interfaces/IBookSetting.sol";
 import "../../common/ruting/BOSSetting.sol";
 import "../../common/ruting/BOMSetting.sol";
 
-// import "../../common/lib/AddrGroup.sol";
-import "../../common/lib/ObjGroup.sol";
 import "../../common/lib/EnumsRepo.sol";
+import "../../common/lib/EnumerableSet.sol";
 
 import "../../common/components/SigPage.sol";
 
@@ -31,8 +30,8 @@ contract ShareholdersAgreement is
     BOSSetting,
     SigPage
 {
-    using ObjGroup for ObjGroup.AddrList;
-    using ObjGroup for ObjGroup.EnumList;
+    using EnumerableSet for EnumerableSet.AddressSet;
+    using EnumerableSet for EnumerableSet.UintSet;
 
     // title => template address
     mapping(uint8 => address) private _tempOfTitle;
@@ -41,10 +40,10 @@ contract ShareholdersAgreement is
     mapping(uint8 => address) private _titleToBody;
 
     // titles
-    ObjGroup.EnumList private _titles;
+    EnumerableSet.UintSet private _titles;
 
     // bodys
-    ObjGroup.AddrList private _bodies;
+    EnumerableSet.AddressSet private _bodies;
 
     //##############
     //##  Event   ##
@@ -119,15 +118,17 @@ contract ShareholdersAgreement is
 
         _titleToBody[title] = body;
 
-        _titles.addItem(title);
-        _bodies.addItem(body);
+        _titles.add(uint256(title));
+
+        _bodies.add(body);
 
         emit CreateTerm(title, body, _msgSender());
     }
 
     function removeTerm(uint8 title) external onlyAttorney {
-        _titles.removeItem(title);
-        _bodies.removeItem(_titleToBody[title]);
+        _titles.remove(uint256(title));
+
+        _bodies.remove(_titleToBody[title]);
 
         delete _titleToBody[title];
 
@@ -135,7 +136,7 @@ contract ShareholdersAgreement is
     }
 
     function finalizeSHA() external onlyGC {
-        address[] memory clauses = _bodies.items;
+        address[] memory clauses = _bodies.values();
         uint256 len = clauses.length;
 
         for (uint256 i = 0; i < len; i++) {
@@ -158,19 +159,19 @@ contract ShareholdersAgreement is
     }
 
     function isTitle(uint8 title) external view onlyUser returns (bool) {
-        return _titles.isItem[title];
+        return _titles.contains(uint256(title));
     }
 
     function isBody(address addr) external view onlyUser returns (bool) {
-        return _bodies.isItem[addr];
+        return _bodies.contains(addr);
     }
 
     function titles() external view onlyUser returns (uint8[]) {
-        return _titles.items;
+        return _titles.valuesToUint8();
     }
 
     function bodies() external view onlyUser returns (address[]) {
-        return _bodies.items;
+        return _bodies.values();
     }
 
     function getTerm(uint8 title)

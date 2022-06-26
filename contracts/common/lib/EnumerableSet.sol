@@ -342,33 +342,6 @@ library EnumerableSet {
         return _values(list._inner);
     }
 
-    // ======== VoterGroup ========
-
-    struct VoterGroup {
-        mapping(uint256 => uint256) sigDate;
-        mapping(uint256 => bytes32) sigHash;
-        mapping(uint256 => uint256) amtOfVoter;
-        uint256 sumOfAmt;
-        uint256[] voters;
-    }
-
-    function add(
-        VoterGroup storage group,
-        uint256 acct,
-        uint256 amount,
-        uint256 sigDate,
-        bytes32 sigHash
-    ) internal returns (bool flag) {
-        if (group.sigDate[acct] == 0) {
-            group.sigDate[acct] = sigDate;
-            group.sigHash[acct] = sigHash;
-            group.amtOfVoter[acct] = amount;
-            group.sumOfAmt += amount;
-            group.voters.push(acct);
-            flag = true;
-        }
-    }
-
     // ======== SignerGroup ========
 
     struct Signature {
@@ -459,6 +432,48 @@ library EnumerableSet {
 
             group.counterOfSig[acct]++;
             group.balance--;
+
+            flag = true;
+        }
+    }
+
+    // ======== BallotsBox ========
+
+    struct Ballot {
+        uint40 voter;
+        uint64 weight;
+        uint8 attitude;
+        uint32 blockNumber;
+        uint32 sigDate;
+        bytes32 sigHash;
+    }
+
+    struct BallotsBox {
+        mapping(uint256 => Ballot) ballots;
+        uint256 sumOfWeight;
+        uint256[] voters;
+    }
+
+    function add(
+        BallotsBox storage box,
+        uint256 acct,
+        uint8 attitude,
+        uint256 amount,
+        bytes32 sigHash
+    ) internal returns (bool flag) {
+        if (box.ballots[acct].sigDate == 0) {
+            Ballot storage ballot = box.ballots[acct];
+
+            ballot.voter = uint40(acct);
+            ballot.weight = uint64(amount);
+            ballot.attitude = attitude;
+            ballot.blockNumber = uint32(block.number);
+            ballot.sigDate = uint32(block.timestamp);
+            ballot.sigHash = sigHash;
+
+            box.sumOfWeight += amount;
+
+            box.voters.push(acct);
 
             flag = true;
         }

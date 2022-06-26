@@ -22,7 +22,7 @@ contract BookOfMotions is SHASetting, BOASetting, BOSSetting {
     using SNFactory for bytes;
     using SNParser for bytes32;
     using EnumerableSet for EnumerableSet.UintSet;
-    using EnumerableSet for EnumerableSet.VoterGroup;
+    using EnumerableSet for EnumerableSet.BallotsBox;
     using EnumerableSet for EnumerableSet.AddressSet;
 
     struct Motion {
@@ -34,7 +34,7 @@ contract BookOfMotions is SHASetting, BOASetting, BOSSetting {
         uint256 sumOfNay;
         EnumerableSet.UintSet abstainVoters;
         uint256 sumOfAbs;
-        EnumerableSet.VoterGroup allVoters;
+        EnumerableSet.BallotsBox ballotsBox;
         uint8 state; // 0-pending 1-proposed  2-passed 3-rejected(not to buy) 4-rejected (to buy)
     }
 
@@ -162,7 +162,7 @@ contract BookOfMotions is SHASetting, BOASetting, BOSSetting {
 
         Motion storage motion = _motions[ia];
 
-        if (motion.allVoters.add(caller, voteAmt, sigDate, sigHash)) {
+        if (motion.ballotsBox.add(caller, attitude, voteAmt, sigHash)) {
             if (attitude == uint8(EnumsRepo.AttitudeOfVote.Support)) {
                 motion.supportVoters.add(caller);
                 motion.sumOfYea += voteAmt;
@@ -191,8 +191,8 @@ contract BookOfMotions is SHASetting, BOASetting, BOSSetting {
         uint256 blockNumber = _boa.reviewDeadlineOf(ia);
 
         if (motion.votingRule.onlyAttendanceOfVR()) {
-            totalHead = motion.allVoters.voters.length;
-            totalAmt = motion.allVoters.sumOfAmt;
+            totalHead = motion.ballotsBox.voters.length;
+            totalAmt = motion.ballotsBox.sumOfWeight;
         } else {
             // members hold voting rights at block
             totalHead = _bos.qtyOfMembersAtBlock(blockNumber);
@@ -224,8 +224,8 @@ contract BookOfMotions is SHASetting, BOASetting, BOSSetting {
 
             // members not cast vote
             if (motion.votingRule.impliedConsentOfVR()) {
-                consentHead += (totalHead - motion.allVoters.voters.length);
-                consentAmt += (totalAmt - motion.allVoters.sumOfAmt);
+                consentHead += (totalHead - motion.ballotsBox.voters.length);
+                consentAmt += (totalAmt - motion.ballotsBox.sumOfWeight);
             }
         }
     }
@@ -287,8 +287,8 @@ contract BookOfMotions is SHASetting, BOASetting, BOSSetting {
             "NOT NAY voter"
         );
 
-        return ((motion.allVoters.amtOfVoter[againstVoter] * 10000) /
-            motion.sumOfNay);
+        return ((motion.ballotsBox.ballots[uint256(againstVoter)].weight *
+            10000) / motion.sumOfNay);
     }
 
     function requestToBuy(
@@ -389,7 +389,7 @@ contract BookOfMotions is SHASetting, BOASetting, BOSSetting {
     }
 
     function sumOfVoteAmt(address ia) external view onlyUser returns (uint256) {
-        return _motions[ia].allVoters.sumOfAmt;
+        return _motions[ia].ballotsBox.sumOfWeight;
     }
 
     function isVoted(address ia, uint40 acct)
@@ -398,7 +398,7 @@ contract BookOfMotions is SHASetting, BOASetting, BOSSetting {
         onlyUser
         returns (bool)
     {
-        return _motions[ia].allVoters.sigDate[acct] > 0;
+        return _motions[ia].ballotsBox.ballots[acct].sigDate > 0;
     }
 
     function getVote(address ia, uint40 acct)
@@ -406,9 +406,10 @@ contract BookOfMotions is SHASetting, BOASetting, BOSSetting {
         view
         onlyUser
         returns (
-            bool attitude,
-            uint32 date,
-            uint256 amount,
+            uint64 weight,
+            uint8 attitude,
+            uint32 blockNumber,
+            uint32 sigDate,
             bytes32 sigHash
         )
     {
@@ -416,10 +417,13 @@ contract BookOfMotions is SHASetting, BOASetting, BOSSetting {
 
         Motion storage motion = _motions[ia];
 
-        attitude = motion.supportVoters.contains(uint256(acct));
-        date = uint32(motion.allVoters.sigDate[acct]);
-        amount = motion.allVoters.amtOfVoter[acct];
-        sigHash = motion.allVoters.sigHash[acct];
+        EnumerableSet.Ballot storage ballot = motion.ballotsBox.ballots[acct];
+
+        weight = ballot.weight;
+        attitude = ballot.attitude;
+        blockNumber = ballot.blockNumber;
+        sigDate = ballot.sigDate;
+        sigHash = ballot.sigHash;
     }
 
     function isPassed(address ia)

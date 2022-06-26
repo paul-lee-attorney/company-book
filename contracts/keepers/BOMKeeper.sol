@@ -62,12 +62,12 @@ contract BOMKeeper is
         );
 
         require(
-            _boa.reviewDeadlineOf(ia) < proposeDate,
+            _boa.reviewDeadlineOf(ia) < block.number,
             "InvestmentAgreement not passed review procesedure"
         );
 
         require(
-            _boa.votingDeadlineOf(ia) >= proposeDate,
+            _boa.votingDeadlineOf(ia) >= block.number,
             "missed votingDeadline"
         );
 
@@ -79,24 +79,15 @@ contract BOMKeeper is
         _boa.pushToNextState(ia, proposeDate, caller);
     }
 
-    function supportMotion(
+    function castVote(
         address ia,
+        uint8 attitude,
         uint40 caller,
         uint32 sigDate,
         bytes32 sigHash
     ) external onlyDirectKeeper currentDate(sigDate) notPartyOf(ia, caller) {
         require(_bos.isMember(caller), "not a shareholder");
-        _bom.supportMotion(ia, caller, sigDate, sigHash);
-    }
-
-    function againstMotion(
-        address ia,
-        uint40 caller,
-        uint32 sigDate,
-        bytes32 sigHash
-    ) external onlyDirectKeeper currentDate(sigDate) notPartyOf(ia, caller) {
-        require(_bos.isMember(caller), "not a shareholder");
-        _bom.againstMotion(ia, caller, sigDate, sigHash);
+        _bom.castVote(ia, attitude, caller, sigDate, sigHash);
     }
 
     function voteCounting(

@@ -328,20 +328,13 @@ contract GeneralKeeper is AccessControl {
         _BOMKeeper.proposeMotion(ia, proposeDate, _msgSender());
     }
 
-    function supportMotion(
+    function castVote(
         address ia,
+        uint8 attitude,
         uint32 sigDate,
         bytes32 sigHash
     ) external {
-        _BOMKeeper.supportMotion(ia, _msgSender(), sigDate, sigHash);
-    }
-
-    function againstMotion(
-        address ia,
-        uint32 sigDate,
-        bytes32 sigHash
-    ) external {
-        _BOMKeeper.againstMotion(ia, _msgSender(), sigDate, sigHash);
+        _BOMKeeper.castVote(ia, attitude, _msgSender(), sigDate, sigHash);
     }
 
     function voteCounting(address ia) external {

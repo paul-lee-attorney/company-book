@@ -201,14 +201,14 @@ contract BookOfDocuments is CloneFactory, SHASetting, BOSSetting {
         // bytes32 rule = _getSHA().votingRules(doc.sn.typeOfDoc());
 
         doc.reviewDeadline =
-            circulateDate +
+            uint32(block.number) +
             uint32(rule.reviewDaysOfVR()) *
-            86400;
+            5760;
 
         doc.votingDeadline =
             doc.reviewDeadline +
             uint32(rule.votingDaysOfVR()) *
-            86400;
+            5760;
 
         doc.states.pushToNextState(circulateDate);
 
@@ -260,7 +260,7 @@ contract BookOfDocuments is CloneFactory, SHASetting, BOSSetting {
             return false;
         else if (doc.states.currentState > uint8(EnumsRepo.BODStates.Executed))
             return true;
-        else if (doc.reviewDeadline > now + 15 minutes) return false;
+        else if (doc.reviewDeadline > block.number) return false;
         else return true;
     }
 

@@ -54,6 +54,13 @@ library EnumsRepo {
         REVOKED
     }
 
+    enum AttitudeOfVote {
+        ZeroPoint,
+        Support,
+        Against,
+        Abstain
+    }
+
     enum StateOfMotion {
         Pending,
         Proposed,

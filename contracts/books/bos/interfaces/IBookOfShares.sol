@@ -59,6 +59,16 @@ interface IBookOfShares {
 
     function paidCap() external view returns (uint256);
 
+    function capAtBlock(uint256 blocknumber)
+        external
+        view
+        returns (uint256 par, uint256 paid);
+
+    function totalVoteAtBlock(uint256 blocknumber)
+        external
+        view
+        returns (uint256 vote);
+
     function isShare(bytes6 ssn) external view returns (bool);
 
     function counterOfShares() external view returns (uint256);
@@ -104,6 +114,11 @@ interface IBookOfShares {
     function isMember(uint40 acct) external view returns (bool);
 
     function members() external view returns (uint40[]);
+
+    function qtyOfMembersAtBlock(uint256 blockNumber)
+        external
+        view
+        returns (uint256);
 
     function sharesInHand(uint40 acct) external view returns (bytes32[]);
 

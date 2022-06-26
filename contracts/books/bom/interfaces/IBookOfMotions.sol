@@ -16,15 +16,9 @@ interface IBookOfMotions {
         uint40 submitter
     ) external;
 
-    function supportMotion(
+    function castVote(
         address ia,
-        uint40 caller,
-        uint32 sigDate,
-        bytes32 sigHash
-    ) external;
-
-    function againstMotion(
-        address ia,
+        uint8 attitude,
         uint40 caller,
         uint32 sigDate,
         bytes32 sigHash

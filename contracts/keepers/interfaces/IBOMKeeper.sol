@@ -16,8 +16,9 @@ interface IBOMKeeper {
         uint40 caller
     ) external;
 
-    function supportMotion(
+    function castVote(
         address ia,
+        uint8 attitude,
         uint40 caller,
         uint32 sigDate,
         bytes32 sigHash

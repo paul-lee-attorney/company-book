@@ -13,7 +13,6 @@ import "../../common/ruting/BOSSetting.sol";
 
 import "../../common/lib/SNFactory.sol";
 import "../../common/lib/SNParser.sol";
-import "../../common/lib/ObjGroup.sol";
 import "../../common/lib/EnumsRepo.sol";
 import "../../common/lib/EnumerableSet.sol";
 
@@ -23,7 +22,7 @@ contract BookOfMotions is SHASetting, BOASetting, BOSSetting {
     using SNFactory for bytes;
     using SNParser for bytes32;
     using EnumerableSet for EnumerableSet.UintSet;
-    using ObjGroup for ObjGroup.VoterGroup;
+    using EnumerableSet for EnumerableSet.VoterGroup;
     using EnumerableSet for EnumerableSet.AddressSet;
 
     struct Motion {
@@ -33,7 +32,9 @@ contract BookOfMotions is SHASetting, BOASetting, BOSSetting {
         uint256 sumOfYea;
         EnumerableSet.UintSet againstVoters;
         uint256 sumOfNay;
-        ObjGroup.VoterGroup allVoters;
+        EnumerableSet.UintSet abstainVoters;
+        uint256 sumOfAbs;
+        EnumerableSet.VoterGroup allVoters;
         uint8 state; // 0-pending 1-proposed  2-passed 3-rejected(not to buy) 4-rejected (to buy)
     }
 
@@ -49,7 +50,12 @@ contract BookOfMotions is SHASetting, BOASetting, BOSSetting {
 
     event ProposeMotion(address indexed ia, bytes32 sn);
 
-    event Vote(address indexed ia, uint40 voter, bool support, uint256 voteAmt);
+    event Vote(
+        address indexed ia,
+        uint40 voter,
+        uint8 atitude,
+        uint256 voteAmt
+    );
 
     event VoteCounting(address indexed ia, uint8 result);
 
@@ -131,105 +137,95 @@ contract BookOfMotions is SHASetting, BOASetting, BOSSetting {
         if (_ias.add(ia)) emit ProposeMotion(ia, motion.sn);
     }
 
-    function _getVoteAmount(address ia, uint40 caller)
+    function castVote(
+        address ia,
+        uint8 attitude,
+        uint40 caller,
+        uint32 sigDate,
+        bytes32 sigHash
+    )
+        external
+        onlyDirectKeeper
+        notVotedTo(ia, caller)
+        onlyOnVoting(ia)
+        beforeExpire(ia, sigDate)
+    {
+        require(
+            attitude > uint8(EnumsRepo.AttitudeOfVote.ZeroPoint) &&
+                attitude <= uint8(EnumsRepo.AttitudeOfVote.Abstain),
+            "attitude overflow"
+        );
+
+        uint32 regBlock = _boa.reviewDeadlineOf(ia);
+
+        uint256 voteAmt = _bos.voteAtBlock(caller, regBlock);
+
+        Motion storage motion = _motions[ia];
+
+        if (motion.allVoters.add(caller, voteAmt, sigDate, sigHash)) {
+            if (attitude == uint8(EnumsRepo.AttitudeOfVote.Support)) {
+                motion.supportVoters.add(caller);
+                motion.sumOfYea += voteAmt;
+            } else if (attitude == uint8(EnumsRepo.AttitudeOfVote.Against)) {
+                motion.againstVoters.add(caller);
+                motion.sumOfNay += voteAmt;
+            } else if (attitude == uint8(EnumsRepo.AttitudeOfVote.Abstain)) {
+                motion.abstainVoters.add(caller);
+                motion.sumOfAbs += voteAmt;
+            }
+            emit Vote(ia, caller, attitude, voteAmt);
+        }
+    }
+
+    function _getParas(address ia)
         private
-        view
-        returns (uint256 amount)
+        returns (
+            uint256 totalHead,
+            uint256 totalAmt,
+            uint256 consentHead,
+            uint256 consentAmt
+        )
     {
-        if (_getSHA().basedOnPar()) {
-            amount = _bos.parInHand(caller);
-        } else {
-            amount = _bos.paidInHand(caller);
-        }
-    }
-
-    function supportMotion(
-        address ia,
-        uint40 caller,
-        uint32 sigDate,
-        bytes32 sigHash
-    )
-        external
-        onlyDirectKeeper
-        notVotedTo(ia, caller)
-        onlyOnVoting(ia)
-        beforeExpire(ia, sigDate)
-    {
-        uint256 voteAmt = _getVoteAmount(ia, caller);
-
         Motion storage motion = _motions[ia];
 
-        if (motion.allVoters.addVote(caller, voteAmt, sigDate, sigHash)) {
-            motion.supportVoters.add(caller);
-            motion.sumOfYea += voteAmt;
-            emit Vote(ia, caller, true, voteAmt);
-        }
-    }
-
-    function againstMotion(
-        address ia,
-        uint40 caller,
-        uint32 sigDate,
-        bytes32 sigHash
-    )
-        external
-        onlyDirectKeeper
-        notVotedTo(ia, caller)
-        onlyOnVoting(ia)
-        beforeExpire(ia, sigDate)
-    {
-        uint256 voteAmt = _getVoteAmount(ia, caller);
-
-        Motion storage motion = _motions[ia];
-
-        if (motion.allVoters.addVote(caller, voteAmt, sigDate, sigHash)) {
-            motion.againstVoters.add(caller);
-            motion.sumOfNay += voteAmt;
-            emit Vote(ia, caller, false, voteAmt);
-        }
-    }
-
-    function _getParas(address ia) private returns (uint256 totalHead) {
-        Motion storage motion = _motions[ia];
+        uint256 blockNumber = _boa.reviewDeadlineOf(ia);
 
         if (motion.votingRule.onlyAttendanceOfVR()) {
             totalHead = motion.allVoters.voters.length;
+            totalAmt = motion.allVoters.sumOfAmt;
         } else {
-            uint40[] memory voters = motion.votingRule.partyAsConsentOfVR()
-                ? _bos.members()
-                : _boa.otherMembers(ia);
+            // members hold voting rights at block
+            totalHead = _bos.qtyOfMembersAtBlock(blockNumber);
+            totalAmt = _bos.totalVoteAtBlock(blockNumber);
 
-            totalHead = voters.length;
+            // minus parties of IA;
+            uint40[] memory parties = ISigPage(ia).parties();
+            uint256 len = parties.length;
 
-            uint256 i;
-            uint256 voteAmt;
+            while (len > 0) {
+                uint256 voteAmt = _bos.voteAtBlock(
+                    parties[len - 1],
+                    blockNumber
+                );
 
-            for (i = 0; i < totalHead; i++) {
-                if (_getSHA().basedOnPar()) {
-                    voteAmt = _bos.parInHand(voters[i]);
-                } else {
-                    voteAmt = _bos.paidInHand(voters[i]);
-                }
-
-                if (
-                    motion.allVoters.addVote(
-                        voters[i],
-                        voteAmt,
-                        19450908,
-                        bytes32(0)
-                    )
-                ) {
-                    if (motion.votingRule.impliedConsentOfVR()) {
-                        motion.supportVoters.add(voters[i]);
-                        motion.sumOfYea += voteAmt;
-                    } else if (
-                        motion.votingRule.partyAsConsentOfVR() &&
-                        ISigPage(ia).isParty(voters[i])
-                    ) {
-                        motion.supportVoters.add(voters[i]);
-                        motion.sumOfYea += voteAmt;
+                // party has voting right at block
+                if (voteAmt > 0) {
+                    if (motion.votingRule.partyAsConsentOfVR()) {
+                        consentHead++;
+                        consentAmt += voteAmt;
+                    } else {
+                        totalHead--;
+                        totalAmt -= voteAmt;
                     }
                 }
+
+                len--;
+            }
+
+            // members not cast vote
+            if (motion.votingRule.impliedConsentOfVR()) {
+                consentHead += (totalHead - motion.allVoters.voters.length);
+                consentAmt += (totalAmt - motion.allVoters.sumOfAmt);
             }
         }
     }
@@ -244,18 +240,24 @@ contract BookOfMotions is SHASetting, BOASetting, BOSSetting {
 
         require(sigDate > motion.sn.votingDeadlineOfMotion(), "voting NOT end");
 
-        uint256 totalHead = _getParas(ia);
+        (
+            uint256 totalHead,
+            uint256 totalAmt,
+            uint256 consentHead,
+            uint256 consentAmt
+        ) = _getParas(ia);
 
         bool flag1 = motion.votingRule.ratioHeadOfVR() > 0
             ? totalHead > 0
-                ? (motion.supportVoters.length() * 10000) / totalHead >=
+                ? ((motion.supportVoters.length() + consentHead) * 10000) /
+                    totalHead >=
                     motion.votingRule.ratioHeadOfVR()
                 : false
             : true;
 
         bool flag2 = motion.votingRule.ratioAmountOfVR() > 0
-            ? motion.allVoters.sumOfAmt > 0
-                ? (motion.sumOfYea * 10000) / motion.allVoters.sumOfAmt >=
+            ? totalAmt > 0
+                ? ((motion.sumOfYea + consentAmt) * 10000) / totalAmt >=
                     motion.votingRule.ratioAmountOfVR()
                 : false
             : true;
@@ -415,7 +417,7 @@ contract BookOfMotions is SHASetting, BOASetting, BOSSetting {
         Motion storage motion = _motions[ia];
 
         attitude = motion.supportVoters.contains(uint256(acct));
-        date = motion.allVoters.sigDate[acct];
+        date = uint32(motion.allVoters.sigDate[acct]);
         amount = motion.allVoters.amtOfVoter[acct];
         sigHash = motion.allVoters.sigHash[acct];
     }

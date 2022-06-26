@@ -18,6 +18,7 @@ contract MembersRepo is GroupsRepo {
     using EnumerableSet for EnumerableSet.Bytes32Set;
     using EnumerableSet for EnumerableSet.UintSet;
     using Checkpoints for Checkpoints.History;
+    using Checkpoints for Checkpoints.Evolution;
 
     // struct Member {
     //     bytes32[] sharesInHand;
@@ -26,6 +27,8 @@ contract MembersRepo is GroupsRepo {
     // }
 
     EnumerableSet.UintSet private _members;
+
+    Checkpoints.History private _qtyOfMembers;
 
     // mapping(uint40 => bool) public isMember;
 
@@ -98,14 +101,17 @@ contract MembersRepo is GroupsRepo {
             "Qty of Members overflow"
         );
 
-        if (_members.add(uint256(acct)))
+        if (_members.add(uint256(acct))) {
+            _qtyOfMembers.push(_members.length(), 1);
             emit AddMember(acct, _members.length());
+        }
     }
 
     function _removeMember(uint40 acct) internal {
         if (_members.remove(uint256(acct))) {
             delete _sharesInHand[acct];
             if (_groupNo[acct] > 0) removeMemberFromGroup(acct, _groupNo[acct]);
+            _qtyOfMembers.push(_members.length(), 0);
             emit RemoveMember(acct, _members.length());
         }
     }
@@ -185,6 +191,15 @@ contract MembersRepo is GroupsRepo {
 
     function members() external view onlyUser returns (uint40[]) {
         return _members.valuesToUint40();
+    }
+
+    function qtyOfmembersAtBlock(uint256 blockNumber)
+        external
+        view
+        onlyUser
+        returns (uint256 qty)
+    {
+        (qty, ) = _qtyOfMembers.getAtBlock(blockNumber);
     }
 
     function parInHand(uint40 acct)

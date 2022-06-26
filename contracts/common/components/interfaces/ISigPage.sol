@@ -31,11 +31,8 @@ interface ISigPage {
     function signDeal(
         uint16 ssn,
         uint40 caller,
-        uint32 sigDate,
         bytes32 sigHash
     ) external;
-
-    // function backToFinalized(uint32 reviewDeadline) external;
 
     //####################
     //##    查询接口    ##

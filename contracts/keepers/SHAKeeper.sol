@@ -91,12 +91,7 @@ contract SHAKeeper is BOASetting, SHASetting, BOSSetting {
         _lockDealSubject(ia, alongSN, parValue, sigDate);
 
         if (!dragAlong)
-            ISigPage(ia).signDeal(
-                alongSN.sequenceOfDeal(),
-                caller,
-                sigDate,
-                sigHash
-            );
+            ISigPage(ia).signDeal(alongSN.sequenceOfDeal(), caller, sigHash);
     }
 
     function _addAlongDeal(
@@ -234,7 +229,7 @@ contract SHAKeeper is BOASetting, SHASetting, BOSSetting {
     {
         require(caller == sn.buyerOfDeal(), "caller NOT buyer");
         _boa.acceptAlongDeal(ia, sn, drager, dragAlong);
-        ISigPage(ia).signDeal(sn.sequenceOfDeal(), caller, sigDate, sigHash);
+        ISigPage(ia).signDeal(sn.sequenceOfDeal(), caller, sigHash);
     }
 
     // ======== AntiDilution ========
@@ -308,7 +303,6 @@ contract SHAKeeper is BOASetting, SHASetting, BOSSetting {
                 ISigPage(ia).signDeal(
                     snOfGiftDeal.sequenceOfDeal(),
                     caller,
-                    sigDate,
                     sigHash
                 );
 

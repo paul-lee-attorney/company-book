@@ -204,7 +204,7 @@ contract BookOfIA is BookOfDocuments {
     {
         Doc storage doc = _docs[ia];
 
-        require(doc.reviewDeadline <= proposeDate, "still in review period");
+        require(doc.reviewDeadline <= block.number, "still in review period");
 
         pushToNextState(ia, proposeDate, caller);
     }

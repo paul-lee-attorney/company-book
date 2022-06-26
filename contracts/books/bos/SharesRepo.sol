@@ -14,11 +14,15 @@ import "../../common/access/AccessControl.sol";
 
 import "../../common/ruting/SHASetting.sol";
 
+import "../../common/lib/Checkpoints.sol";
+
 contract SharesRepo is SHASetting {
     using SNFactory for bytes;
     // using SNFactory for bytes32;
     using SNParser for bytes32;
     using EnumerableSet for EnumerableSet.SNList;
+    using Checkpoints for Checkpoints.History;
+
     // using ArrayUtils for uint256[];
     // using ArrayUtils for address[];
     // using ArrayUtils for bytes32[];
@@ -43,11 +47,13 @@ contract SharesRepo is SHASetting {
     //     bytes5 preSN; //来源股票编号索引（sequence + issueDate(前24位, 精度误差256秒))
     // }
 
-    //注册资本总额
-    uint256 private _regCap;
+    Checkpoints.History private _ownersEquity;
 
-    //实缴出资总额
-    uint256 private _paidCap;
+    // //注册资本总额
+    // uint256 private _regCap;
+
+    // //实缴出资总额
+    // uint256 private _paidCap;
 
     //ssn => Share
     mapping(bytes6 => Share) internal _shares;
@@ -90,14 +96,16 @@ contract SharesRepo is SHASetting {
         uint256 parValue,
         uint256 regCap,
         uint256 paidPar,
-        uint256 paiInCap
+        uint256 paiInCap,
+        uint256 blocknumber
     );
 
     event CapDecrease(
         uint256 parValue,
         uint256 regCap,
         uint256 paidPar,
-        uint256 paidCap
+        uint256 paidCap,
+        uint256 blocknumber
     );
 
     event DeregisterShare(bytes32 indexed shareNumber);
@@ -232,18 +240,26 @@ contract SharesRepo is SHASetting {
         emit SubAmountFromShare(ssn, parValue, paidPar);
     }
 
-    function _capIncrease(uint256 parValue, uint256 paidPar) internal {
-        _regCap += parValue;
-        _paidCap += paidPar;
+    function _capIncrease(uint256 par, uint256 paid) internal {
+        (uint256 regCap, uint256 paidCap) = _ownersEquity.latest();
 
-        emit CapIncrease(parValue, _regCap, paidPar, _paidCap);
+        regCap += par;
+        paidCap += paid;
+
+        uint256 blocknumber = _ownersEquity.push(regCap, paidCap);
+
+        emit CapIncrease(par, regCap, paid, paidCap, blocknumber);
     }
 
-    function _capDecrease(uint256 parValue, uint256 paidPar) internal {
-        _regCap -= parValue;
-        _paidCap -= paidPar;
+    function _capDecrease(uint256 par, uint256 paid) internal {
+        (uint256 regCap, uint256 paidCap) = _ownersEquity.latest();
 
-        emit CapDecrease(parValue, _regCap, paidPar, _paidCap);
+        regCap -= par;
+        paidCap -= paid;
+
+        uint256 blocknumber = _ownersEquity.push(regCap, paidCap);
+
+        emit CapDecrease(par, regCap, paid, paidCap, blocknumber);
     }
 
     function decreaseCleanPar(bytes6 ssn, uint256 parValue)
@@ -313,12 +329,32 @@ contract SharesRepo is SHASetting {
     //##    读接口    ##
     //##################
 
-    function regCap() external view onlyUser returns (uint256) {
-        return _regCap;
+    function regCap() external view onlyUser returns (uint256 par) {
+        (par, ) = _ownersEquity.latest();
     }
 
-    function paidCap() external view onlyUser returns (uint256) {
-        return _paidCap;
+    function paidCap() external view onlyUser returns (uint256 paid) {
+        (, paid) = _ownersEquity.latest();
+    }
+
+    function capAtBlock(uint256 blocknumber)
+        external
+        view
+        onlyUser
+        returns (uint256 par, uint256 paid)
+    {
+        (par, paid) = _ownersEquity.getAtBlock(blocknumber);
+    }
+
+    function totalVoteAtBlock(uint256 blocknumber)
+        external
+        view
+        onlyUser
+        returns (uint256 vote)
+    {
+        if (_getSHA().basedOnPar())
+            (vote, ) = _ownersEquity.getAtBlock(blocknumber);
+        else (, vote) = _ownersEquity.getAtBlock(blocknumber);
     }
 
     function isShare(bytes6 ssn) external view onlyUser returns (bool) {

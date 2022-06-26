@@ -342,5 +342,125 @@ library EnumerableSet {
         return _values(list._inner);
     }
 
+    // ======== VoterGroup ========
+
+    struct VoterGroup {
+        mapping(uint256 => uint256) sigDate;
+        mapping(uint256 => bytes32) sigHash;
+        mapping(uint256 => uint256) amtOfVoter;
+        uint256 sumOfAmt;
+        uint256[] voters;
+    }
+
+    function add(
+        VoterGroup storage group,
+        uint256 acct,
+        uint256 amount,
+        uint256 sigDate,
+        bytes32 sigHash
+    ) internal returns (bool flag) {
+        if (group.sigDate[acct] == 0) {
+            group.sigDate[acct] = sigDate;
+            group.sigHash[acct] = sigHash;
+            group.amtOfVoter[acct] = amount;
+            group.sumOfAmt += amount;
+            group.voters.push(acct);
+            flag = true;
+        }
+    }
+
     // ======== SignerGroup ========
+
+    struct Signature {
+        uint16 dealSN;
+        uint32 blockNumber;
+        uint32 sigDate;
+        bytes32 sigHash;
+    }
+
+    struct SignerGroup {
+        // acct => sigSN => sig
+        mapping(uint256 => mapping(uint256 => Signature)) signatures;
+        // acct => dealSN => sigSN
+        mapping(uint256 => mapping(uint256 => uint256)) dealToSN;
+        mapping(uint256 => uint256) counterOfSig;
+        mapping(uint256 => uint256) counterOfBlank;
+        uint256 balance;
+        UintSet parties;
+    }
+
+    function addBlank(
+        SignerGroup storage group,
+        uint256 acct,
+        uint256 snOfDeal
+    ) internal returns (bool flag) {
+        if (group.dealToSN[acct][snOfDeal] == 0) {
+            add(group.parties, acct);
+
+            group.counterOfBlank[acct]++;
+            uint256 sn = group.counterOfBlank[acct];
+
+            group.dealToSN[acct][snOfDeal] = sn;
+            group.signatures[acct][sn].dealSN = uint16(snOfDeal);
+
+            group.balance++;
+
+            flag = true;
+        }
+    }
+
+    function removeParty(SignerGroup storage group, uint256 acct)
+        internal
+        returns (bool flag)
+    {
+        uint256 len = group.counterOfBlank[acct];
+
+        if (len > 0 && group.counterOfSig[acct] == 0) {
+            group.balance -= len;
+
+            while (len > 0) {
+                uint256 snOfDeal = uint256(
+                    group.signatures[acct][len - 1].dealSN
+                );
+                delete group.dealToSN[acct][snOfDeal];
+                delete group.signatures[acct][len - 1];
+                len--;
+            }
+
+            delete group.counterOfBlank[acct];
+
+            remove(group.parties, acct);
+
+            flag = true;
+        }
+    }
+
+    function signDeal(
+        SignerGroup storage group,
+        uint40 acct,
+        uint16 snOfDeal,
+        bytes32 sigHash
+    ) internal returns (bool flag) {
+        uint256 sn = group.dealToSN[acct][snOfDeal];
+
+        if (sn > 0 && group.signatures[acct][sn].sigDate == 0) {
+            Signature storage sig = group.signatures[acct][sn];
+
+            sig.blockNumber = uint32(block.number);
+            sig.sigDate = uint32(block.timestamp);
+            sig.sigHash = sigHash;
+
+            if (snOfDeal == 0) {
+                Signature storage docSig = group.signatures[acct][0];
+                docSig.blockNumber = uint32(block.number);
+                docSig.sigDate = uint32(block.timestamp);
+                docSig.sigHash = sigHash;
+            }
+
+            group.counterOfSig[acct]++;
+            group.balance--;
+
+            flag = true;
+        }
+    }
 }

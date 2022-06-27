@@ -138,7 +138,7 @@ contract BOHKeeper is BOSSetting, SHASetting, BOMSetting, BOOSetting {
         uint32 sigDate
     ) external onlyDirectKeeper onlyPartyOf(sha, caller) currentDate(sigDate) {
         require(
-            _boh.currentState(sha) == uint8(EnumsRepo.BODStates.Executed),
+            _boh.currentState(sha) == uint8(EnumsRepo.BODStates.Established),
             "SHA not executed yet"
         );
 

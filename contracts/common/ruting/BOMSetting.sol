@@ -5,7 +5,7 @@
 
 pragma solidity ^0.4.24;
 
-import "../../books/bom/interfaces/IBookOfMotions.sol";
+import "../../books/bom/IBookOfMotions.sol";
 
 import "../access/AccessControl.sol";
 

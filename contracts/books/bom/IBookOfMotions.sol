@@ -6,6 +6,21 @@
 pragma solidity ^0.4.24;
 
 interface IBookOfMotions {
+    //##############
+    //##  Event   ##
+    //##############
+
+    event ProposeMotion(address indexed ia, bytes32 sn);
+
+    event Vote(
+        address indexed ia,
+        uint40 voter,
+        uint8 atitude,
+        uint256 voteAmt
+    );
+
+    event VoteCounting(address indexed ia, uint8 result);
+
     //##################
     //##    写接口    ##
     //##################
@@ -29,27 +44,20 @@ interface IBookOfMotions {
     function requestToBuy(
         address ia,
         bytes32 sn,
-        uint32 exerciseDate,
-        uint40 agianstVoter
-    ) external returns (uint256 parValue, uint256 paidPar);
-
-    function suspendVoting(address ia) external;
-
-    function resumeVoting(address ia) external;
+        uint32 exerciseDate
+    ) external view returns (uint256 parValue, uint256 paidPar);
 
     //##################
     //##    读接口    ##
     //##################
 
-    function votingRule(address ia) external view returns (uint32);
-
-    function votingDeadline(address ia) external view returns (uint256);
+    function votingRule(address ia) external view returns (bytes32);
 
     function state(address ia) external view returns (uint8);
 
-    function votedYea(address ia, uint40 acct) external returns (bool);
+    function votedYea(address ia, uint40 acct) external view returns (bool);
 
-    function votedNay(address ia, uint40 acct) external returns (bool);
+    function votedNay(address ia, uint40 acct) external view returns (bool);
 
     function getYea(address ia)
         external
@@ -69,12 +77,12 @@ interface IBookOfMotions {
         external
         view
         returns (
-            bool attitude,
-            uint256 date,
-            uint256 amount
+            uint64 weight,
+            uint8 attitude,
+            uint32 blockNumber,
+            uint32 sigDate,
+            bytes32 sigHash
         );
-
-    function isProposed(address ia) external view returns (bool);
 
     function isPassed(address ia) external view returns (bool);
 

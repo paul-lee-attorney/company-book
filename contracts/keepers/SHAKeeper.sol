@@ -44,7 +44,7 @@ contract SHAKeeper is BOASetting, SHASetting, BOSSetting {
 
     modifier onlyExecuted(address ia) {
         require(
-            _boa.currentState(ia) == uint8(EnumsRepo.BODStates.Executed),
+            _boa.currentState(ia) == uint8(EnumsRepo.BODStates.Established),
             "IA not established"
         );
         _;

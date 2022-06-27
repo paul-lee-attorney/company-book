@@ -57,8 +57,8 @@ contract BOMKeeper is
         currentDate(proposeDate)
     {
         require(
-            _boa.currentState(ia) == uint8(EnumsRepo.BODStates.Executed),
-            "InvestmentAgreement not on Executed state"
+            _boa.currentState(ia) == uint8(EnumsRepo.BODStates.Established),
+            "InvestmentAgreement not on Established"
         );
 
         require(
@@ -127,8 +127,7 @@ contract BOMKeeper is
         (uint256 parValue, uint256 paidPar) = _bom.requestToBuy(
             ia,
             sn,
-            exerciseDate,
-            againstVoter
+            exerciseDate
         );
 
         uint8 closingDays = uint8((closingDate - exerciseDate + 42300) / 84600);

@@ -18,7 +18,9 @@ import "../../common/lib/EnumerableSet.sol";
 
 import "../../common/components/interfaces/ISigPage.sol";
 
-contract BookOfMotions is SHASetting, BOASetting, BOSSetting {
+import "./IBookOfMotions.sol";
+
+contract BookOfMotions is IBookOfMotions, SHASetting, BOASetting, BOSSetting {
     using SNFactory for bytes;
     using SNParser for bytes32;
     using EnumerableSet for EnumerableSet.UintSet;
@@ -43,21 +45,6 @@ contract BookOfMotions is SHASetting, BOASetting, BOSSetting {
 
     // Investment Agreements Subject to voting
     EnumerableSet.AddressSet private _ias;
-
-    //##############
-    //##  Event   ##
-    //##############
-
-    event ProposeMotion(address indexed ia, bytes32 sn);
-
-    event Vote(
-        address indexed ia,
-        uint40 voter,
-        uint8 atitude,
-        uint256 voteAmt
-    );
-
-    event VoteCounting(address indexed ia, uint8 result);
 
     //####################
     //##    modifier    ##
@@ -294,8 +281,7 @@ contract BookOfMotions is SHASetting, BOASetting, BOSSetting {
     function requestToBuy(
         address ia,
         bytes32 sn,
-        uint32 execDate,
-        uint40 againstVoter
+        uint32 execDate
     )
         external
         view

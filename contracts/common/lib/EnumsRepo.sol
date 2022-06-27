@@ -40,10 +40,10 @@ library EnumsRepo {
         ZeroPoint,
         Created,
         Circulated,
-        Executed,
+        Established,
         Proposed,
         Voted,
-        Exercised
+        Executed
     }
 
     enum TermState {

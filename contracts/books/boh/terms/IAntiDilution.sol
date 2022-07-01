@@ -5,8 +5,6 @@
 
 pragma solidity ^0.4.24;
 
-import "../AntiDilution.sol";
-
 interface IAntiDilution {
     function setBenchmark(uint8 class, uint256 price) external;
 

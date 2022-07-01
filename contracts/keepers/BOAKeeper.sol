@@ -5,22 +5,22 @@
 
 pragma solidity ^0.4.24;
 
-import "../books/boh/terms/interfaces/IAntiDilution.sol";
+import "../books/boh/terms//IAntiDilution.sol";
 import "../books/boh/ShareholdersAgreement.sol";
-import "../books/boh/interfaces/ITerm.sol";
+import "../books/boh//ITerm.sol";
 
-import "../books/boa/interfaces/IInvestmentAgreement.sol";
+import "../books/boa//IInvestmentAgreement.sol";
 import "../books/boa/InvestmentAgreement.sol";
 
-import "../books/boh/terms/interfaces/IAlongs.sol";
+import "../books/boh/terms//IAlongs.sol";
 import "../books/boh/terms/interfaces/IFirstRefusal.sol";
 
-import "../common/access/interfaces/IRoles.sol";
-import "../common/access/interfaces/IAccessControl.sol";
+import "../common/access//IRoles.sol";
+import "../common/access//IAccessControl.sol";
 
-import "../common/components/interfaces/ISigPage.sol";
+import "../common/components//ISigPage.sol";
 
-import "../common/ruting/interfaces/IBookSetting.sol";
+import "../common/ruting/IBookSetting.sol";
 import "../common/ruting/BOASetting.sol";
 import "../common/ruting/BOMSetting.sol";
 import "../common/ruting/BOSSetting.sol";
@@ -29,7 +29,15 @@ import "../common/ruting/SHASetting.sol";
 import "../common/lib/SNParser.sol";
 import "../common/lib/EnumsRepo.sol";
 
-contract BOAKeeper is BOASetting, SHASetting, BOMSetting, BOSSetting {
+import "./IBOAKeeper.sol";
+
+contract BOAKeeper is
+    IBOAKeeper,
+    BOASetting,
+    SHASetting,
+    BOMSetting,
+    BOSSetting
+{
     using SNParser for bytes32;
 
     EnumsRepo.TermTitle[] private _termsForCapitalIncrease = [
@@ -67,14 +75,10 @@ contract BOAKeeper is BOASetting, SHASetting, BOMSetting, BOSSetting {
     // ##   InvestmentAgreement   ##
     // #############################
 
-    function createIA(
-        uint8 typOfIA,
-        uint40 caller,
-        uint32 createDate
-    ) external onlyDirectKeeper currentDate(createDate) {
+    function createIA(uint8 typOfIA, uint40 caller) external onlyDirectKeeper {
         require(_bos.isMember(caller), "caller not MEMBER");
 
-        address ia = _boa.createDoc(typOfIA, caller, createDate);
+        address ia = _boa.createDoc(typOfIA, caller);
 
         IAccessControl(ia).init(caller, _rc.userNo(this), address(_rc));
 
@@ -84,67 +88,49 @@ contract BOAKeeper is BOASetting, SHASetting, BOMSetting, BOSSetting {
         _copyRoleTo(ia, KEEPERS);
     }
 
-    function removeIA(
-        address ia,
-        uint40 caller,
-        uint32 sigDate
-    )
+    function removeIA(address ia, uint40 caller)
         external
         onlyDirectKeeper
         onlyOwnerOf(ia, caller)
         notEstablished(ia)
-        currentDate(sigDate)
     {
-        _releaseCleanParOfIA(ia, sigDate);
+        _releaseCleanParOfIA(ia);
         _boa.removeDoc(ia);
     }
 
-    function _releaseCleanParOfIA(address ia, uint32 releaseDate) private {
+    function _releaseCleanParOfIA(address ia) private {
         bytes32[] memory snList = IInvestmentAgreement(ia).dealsList();
         uint256 len = snList.length;
 
         while (len > 0) {
             bytes32 sn = snList[len - 1];
             if (sn.typeOfDeal() > uint8(EnumsRepo.TypeOfDeal.PreEmptive))
-                _releaseCleanParOfDeal(ia, sn, releaseDate);
+                _releaseCleanParOfDeal(ia, sn);
             len--;
         }
     }
 
-    function _releaseCleanParOfDeal(
-        address ia,
-        bytes32 sn,
-        uint32 releaseDate
-    ) private {
+    function _releaseCleanParOfDeal(address ia, bytes32 sn) private {
         (, uint256 parValue, , , ) = IInvestmentAgreement(ia).getDeal(
             sn.sequenceOfDeal()
         );
 
-        if (
-            IInvestmentAgreement(ia).releaseDealSubject(
-                sn.sequenceOfDeal(),
-                releaseDate
-            )
-        ) _bos.increaseCleanPar(sn.shortShareNumberOfDeal(), parValue);
+        if (IInvestmentAgreement(ia).releaseDealSubject(sn.sequenceOfDeal()))
+            _bos.increaseCleanPar(sn.shortShareNumberOfDeal(), parValue);
     }
 
     // ======== Circulate IA ========
 
-    function circulateIA(
-        address ia,
-        uint40 submitter,
-        uint32 submitDate
-    )
+    function circulateIA(address ia, uint40 submitter)
         external
         onlyDirectKeeper
         onlyOwnerOf(ia, submitter)
-        currentDate(submitDate)
     {
         require(IDraftControl(ia).finalized(), "let GC finalize IA first");
 
         IAccessControl(ia).abandonOwnership();
 
-        _boa.circulateIA(ia, submitter, submitDate);
+        _boa.circulateIA(ia, submitter);
     }
 
     // ======== Sign IA ========
@@ -152,29 +138,24 @@ contract BOAKeeper is BOASetting, SHASetting, BOMSetting, BOSSetting {
     function signIA(
         address ia,
         uint40 caller,
-        uint32 sigDate,
         bytes32 sigHash
-    ) external onlyDirectKeeper onlyPartyOf(ia, caller) currentDate(sigDate) {
+    ) external onlyDirectKeeper onlyPartyOf(ia, caller) {
         require(
             _boa.currentState(ia) == uint8(EnumsRepo.BODStates.Circulated),
             "IA not in Circulated State"
         );
 
-        _mockDealsOfParty(ia, caller, sigDate);
+        _mockDealsOfParty(ia, caller);
 
-        ISigPage(ia).signDoc(caller, sigDate, sigHash);
+        ISigPage(ia).signDoc(caller, sigHash);
 
         if (ISigPage(ia).established()) {
             _boa.calculateMockResult(ia);
-            _boa.pushToNextState(ia, sigDate, caller);
+            _boa.pushToNextState(ia, caller);
         }
     }
 
-    function _mockDealsOfParty(
-        address ia,
-        uint40 caller,
-        uint32 sigDate
-    ) private onlyKeeper {
+    function _mockDealsOfParty(address ia, uint40 caller) private onlyKeeper {
         uint16[] memory seqList = IInvestmentAgreement(ia).dealsConcerned(
             caller
         );
@@ -195,7 +176,7 @@ contract BOAKeeper is BOASetting, SHASetting, BOMSetting, BOSSetting {
             amount = _getSHA().basedOnPar() ? parValue : paidPar;
 
             if (!IInvestmentAgreement(ia).isBuyerOfDeal(caller, seq)) {
-                if (IInvestmentAgreement(ia).lockDealSubject(seq, sigDate)) {
+                if (IInvestmentAgreement(ia).lockDealSubject(seq)) {
                     _bos.decreaseCleanPar(
                         sn.shortShareNumberOfDeal(),
                         parValue
@@ -206,7 +187,7 @@ contract BOAKeeper is BOASetting, SHASetting, BOMSetting, BOSSetting {
                 if (
                     sn.typeOfDeal() ==
                     uint8(EnumsRepo.TypeOfDeal.CapitalIncrease)
-                ) IInvestmentAgreement(ia).lockDealSubject(seq, sigDate);
+                ) IInvestmentAgreement(ia).lockDealSubject(seq);
                 _boa.mockDealOfBuy(ia, seq, caller, amount);
             }
 
@@ -221,9 +202,8 @@ contract BOAKeeper is BOASetting, SHASetting, BOMSetting, BOSSetting {
         bytes32 sn,
         bytes32 hashLock,
         uint256 closingDate,
-        uint40 caller,
-        uint32 sigDate
-    ) external onlyDirectKeeper currentDate(sigDate) {
+        uint40 caller
+    ) external onlyDirectKeeper {
         require(
             _boa.currentState(ia) == uint8(EnumsRepo.BODStates.Voted),
             "wrong state of BOD"
@@ -246,7 +226,7 @@ contract BOAKeeper is BOASetting, SHASetting, BOMSetting, BOSSetting {
         bytes32 vr = _getSHA().votingRules(_boa.typeOfIA(ia));
 
         if (vr.ratioHeadOfVR() > 0 || vr.ratioAmountOfVR() > 0) {
-            require(_bom.isPassed(ia), "Motion NOT passed");
+            require(_bom.isPassed(uint256(ia)), "Motion NOT passed");
 
             if (sn.typeOfDeal() > uint8(EnumsRepo.TypeOfDeal.PreEmptive))
                 _checkSHA(_termsForShareTransfer, ia, sn);
@@ -255,7 +235,6 @@ contract BOAKeeper is BOASetting, SHASetting, BOMSetting, BOSSetting {
 
         IInvestmentAgreement(ia).clearDealCP(
             sn.sequenceOfDeal(),
-            sigDate,
             hashLock,
             closingDate
         );
@@ -281,10 +260,9 @@ contract BOAKeeper is BOASetting, SHASetting, BOMSetting, BOSSetting {
     function closeDeal(
         address ia,
         bytes32 sn,
-        uint32 closingDate,
         string hashKey,
         uint40 caller
-    ) external onlyDirectKeeper currentDate(closingDate) {
+    ) external onlyDirectKeeper {
         require(
             _boa.currentState(ia) == uint8(EnumsRepo.BODStates.Voted),
             "InvestmentAgreement NOT in voted state"
@@ -294,22 +272,14 @@ contract BOAKeeper is BOASetting, SHASetting, BOMSetting, BOSSetting {
         require(sn.buyerOfDeal() == caller, "caller is NOT buyer");
 
         //验证hashKey, 执行Deal
-        IInvestmentAgreement(ia).closeDeal(
-            sn.sequenceOfDeal(),
-            closingDate,
-            hashKey
-        );
+        IInvestmentAgreement(ia).closeDeal(sn.sequenceOfDeal(), hashKey);
 
-        transferTargetShare(ia, sn, closingDate);
+        transferTargetShare(ia, sn);
 
-        _checkCompletionOfIA(ia, closingDate, caller);
+        _checkCompletionOfIA(ia, caller);
     }
 
-    function _checkCompletionOfIA(
-        address ia,
-        uint32 sigDate,
-        uint40 caller
-    ) private {
+    function _checkCompletionOfIA(address ia, uint40 caller) private {
         bytes32[] memory snList = IInvestmentAgreement(ia).dealsList();
 
         uint256 len = snList.length;
@@ -321,14 +291,13 @@ contract BOAKeeper is BOASetting, SHASetting, BOMSetting, BOSSetting {
             len--;
         }
 
-        if (len == 0) _boa.pushToNextState(ia, sigDate, caller);
+        if (len == 0) _boa.pushToNextState(ia, caller);
     }
 
-    function transferTargetShare(
-        address ia,
-        bytes32 sn,
-        uint32 closingDate
-    ) public onlyDirectKeeper {
+    function transferTargetShare(address ia, bytes32 sn)
+        public
+        onlyDirectKeeper
+    {
         bytes32 shareNumber = IInvestmentAgreement(ia).shareNumberOfDeal(
             sn.sequenceOfDeal()
         );
@@ -348,7 +317,6 @@ contract BOAKeeper is BOASetting, SHASetting, BOMSetting, BOSSetting {
                 parValue,
                 paidPar,
                 sn.buyerOfDeal(),
-                closingDate,
                 unitPrice
             );
         } else {
@@ -357,8 +325,8 @@ contract BOAKeeper is BOASetting, SHASetting, BOMSetting, BOSSetting {
                 sn.classOfDeal(),
                 parValue,
                 paidPar,
-                closingDate, //paidInDeadline
-                closingDate, //issueDate
+                block.timestamp, //paidInDeadline
+                block.timestamp, //issueDate
                 unitPrice //issuePrice
             );
         }
@@ -373,9 +341,9 @@ contract BOAKeeper is BOASetting, SHASetting, BOMSetting, BOSSetting {
         address ia,
         bytes32 sn,
         uint40 caller,
-        uint32 sigDate,
+        // uint32 sigDate,
         string hashKey
-    ) external onlyDirectKeeper currentDate(sigDate) {
+    ) external onlyDirectKeeper {
         require(_boa.isRegistered(ia), "IA NOT registered");
         require(
             _boa.currentState(ia) == uint8(EnumsRepo.BODStates.Voted),
@@ -392,12 +360,12 @@ contract BOAKeeper is BOASetting, SHASetting, BOMSetting, BOSSetting {
 
         IInvestmentAgreement(ia).revokeDeal(
             sn.sequenceOfDeal(),
-            sigDate,
+            // sigDate,
             hashKey
         );
 
-        _releaseCleanParOfDeal(ia, sn, sigDate);
+        _releaseCleanParOfDeal(ia, sn);
 
-        _checkCompletionOfIA(ia, sigDate, caller);
+        _checkCompletionOfIA(ia, caller);
     }
 }

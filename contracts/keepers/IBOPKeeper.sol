@@ -11,7 +11,7 @@ interface IBOPKeeper {
     // ###################
 
     function createPledge(
-        uint32 createDate,
+        // uint32 createDate,
         bytes32 shareNumber,
         uint256 pledgedPar,
         uint40 creditor,

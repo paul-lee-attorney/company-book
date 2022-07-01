@@ -22,6 +22,8 @@ interface IShareholdersAgreement {
 
     function setVotingBaseOnPar() external;
 
+    function setProposalThreshold(uint256 threshold) external;
+
     function setRule(
         uint8 typeOfVote,
         uint256 ratioHead,
@@ -68,4 +70,6 @@ interface IShareholdersAgreement {
     function votingRules(uint8 typeOfVote) external view returns (bytes32);
 
     function basedOnPar() external view returns (bool);
+
+    function proposalThreshold() external view returns (uint256);
 }

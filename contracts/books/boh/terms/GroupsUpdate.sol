@@ -12,7 +12,9 @@ import "../../../common/lib/SNParser.sol";
 import "../../../common/ruting/BOSSetting.sol";
 import "../../../common/access/DraftControl.sol";
 
-contract GroupsUpdate is BOSSetting, DraftControl {
+import "./IGroupsUpdate.sol";
+
+contract GroupsUpdate is IGroupsUpdate, BOSSetting, DraftControl {
     using SNFactory for bytes;
     using SNParser for bytes32;
     using ArrayUtils for bytes32[];

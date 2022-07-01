@@ -6,8 +6,9 @@
 pragma solidity ^0.4.24;
 
 import "./AccessControl.sol";
+import "./IDraftControl.sol";
 
-contract DraftControl is AccessControl {
+contract DraftControl is IDraftControl, AccessControl {
     bool public finalized;
 
     uint40 private _generalCounsel;

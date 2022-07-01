@@ -12,26 +12,19 @@ interface IBookOfSHA {
 
     function setTemplate(address body) external;
 
-    function createDoc(
-        uint8 docType,
-        uint40 creator,
-        uint32 createDate
-    ) external returns (address body);
+    function createDoc(uint8 docType, uint40 creator)
+        external
+        returns (address body);
 
     function removeDoc(address body, uint40 caller) external;
 
     function circulateDoc(
         address body,
         bytes32 rule,
-        uint40 submitter,
-        uint32 circulateDate
+        uint40 submitter
     ) external;
 
-    function pushToNextState(
-        address body,
-        uint32 sigDate,
-        uint40 caller
-    ) external;
+    function pushToNextState(address body, uint40 caller) external;
 
     // ======== BookOfSHA ========
 
@@ -73,9 +66,9 @@ interface IBookOfSHA {
         view
         returns (uint32);
 
-    function reviewDeadlineOf(address body) external view returns (uint32);
+    function reviewDeadlineBNOf(address body) external view returns (uint32);
 
-    function votingDeadlineOf(address body) external view returns (uint32);
+    function votingDeadlineBNOf(address body) external view returns (uint32);
 
     // ======== BookOfSHA ========
 

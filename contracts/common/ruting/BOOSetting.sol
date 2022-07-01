@@ -5,11 +5,13 @@
 
 pragma solidity ^0.4.24;
 
-import "../../books/boo/interfaces/IBookOfOptions.sol";
+import "../../books/boo/IBookOfOptions.sol";
 
 import "../access/AccessControl.sol";
 
-contract BOOSetting is AccessControl {
+import "./IBookSetting.sol";
+
+contract BOOSetting is IBookSetting, AccessControl {
     IBookOfOptions internal _boo;
 
     event SetBOO(address boo);

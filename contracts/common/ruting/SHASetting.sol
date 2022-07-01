@@ -5,12 +5,14 @@
 
 pragma solidity ^0.4.24;
 
-import "../../books/boh/interfaces/IShareholdersAgreement.sol";
-import "../../books/boh/interfaces/IBookOfSHA.sol";
+import "../../books/boh//IShareholdersAgreement.sol";
+import "../../books/boh//IBookOfSHA.sol";
 
 import "../access/AccessControl.sol";
 
-contract SHASetting is AccessControl {
+import "./IBookSetting.sol";
+
+contract SHASetting is IBookSetting, AccessControl {
     IBookOfSHA internal _boh;
 
     event SetBOH(address boh);

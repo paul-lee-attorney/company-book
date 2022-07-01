@@ -14,7 +14,9 @@ import "../../../common/lib/EnumerableSet.sol";
 import "../../../common/lib/SNFactory.sol";
 import "../../../common/lib/SNParser.sol";
 
-contract Options is BOSSetting, DraftControl {
+import "./IOptions.sol";
+
+contract Options is IOptions, BOSSetting, DraftControl {
     using SNFactory for bytes;
     using SNParser for bytes32;
     using EnumerableSet for EnumerableSet.UintSet;

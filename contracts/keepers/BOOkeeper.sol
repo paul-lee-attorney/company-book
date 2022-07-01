@@ -5,7 +5,7 @@
 
 pragma solidity ^0.4.24;
 
-import "../books/boa/interfaces/IInvestmentAgreement.sol";
+import "../books/boa//IInvestmentAgreement.sol";
 
 import "../common/access/AccessControl.sol";
 
@@ -18,11 +18,14 @@ import "../common/ruting/BOSSetting.sol";
 
 import "../common/lib/SNParser.sol";
 
-import "../common/ruting/interfaces/IBookSetting.sol";
-import "../common/access/interfaces/IAccessControl.sol";
-import "../common/components/interfaces/ISigPage.sol";
+import "../common/ruting/IBookSetting.sol";
+import "../common/access//IAccessControl.sol";
+import "../common/components//ISigPage.sol";
+
+import "./IBOOKeeper.sol";
 
 contract BOOKeeper is
+    IBOOKeeper,
     BOASetting,
     SHASetting,
     BOMSetting,
@@ -115,17 +118,12 @@ contract BOOKeeper is
         _boo.removeObligorFromOpt(sn.shortOfOpt(), obligor);
     }
 
-    function execOption(
-        bytes32 sn,
-        uint32 sigDate,
-        uint40 caller
-    )
+    function execOption(bytes32 sn, uint40 caller)
         external
         onlyDirectKeeper
         onlyRightholder(sn, caller)
-        currentDate(sigDate)
     {
-        _boo.execOption(sn.shortOfOpt(), sigDate);
+        _boo.execOption(sn.shortOfOpt());
     }
 
     function addFuture(
@@ -180,12 +178,12 @@ contract BOOKeeper is
     function closeOption(
         bytes32 sn,
         string hashKey,
-        uint32 closingDate,
+        // uint32 closingDate,
         uint40 caller
-    ) external onlyDirectKeeper onlyBuyer(sn, caller) currentDate(closingDate) {
+    ) external onlyDirectKeeper onlyBuyer(sn, caller) {
         uint256 price = sn.rateOfOpt();
 
-        _boo.closeOption(sn.shortOfOpt(), hashKey, closingDate);
+        _boo.closeOption(sn.shortOfOpt(), hashKey);
 
         bytes32[] memory fts = _boo.futures(sn.shortOfOpt());
 
@@ -197,7 +195,6 @@ contract BOOKeeper is
                 fts[i].parValueOfFt(),
                 fts[i].paidParOfFt(),
                 caller,
-                closingDate,
                 price
             );
         }
@@ -205,17 +202,12 @@ contract BOOKeeper is
         _recoverCleanPar(_boo.pledges(sn.shortOfOpt()));
     }
 
-    function revokeOption(
-        bytes32 sn,
-        uint32 revokeDate,
-        uint40 caller
-    )
+    function revokeOption(bytes32 sn, uint40 caller)
         external
         onlyDirectKeeper
         onlyRightholder(sn, caller)
-        currentDate(revokeDate)
     {
-        _boo.revokeOption(sn.shortOfOpt(), revokeDate);
+        _boo.revokeOption(sn.shortOfOpt());
 
         if (sn.typeOfOpt() > 0) _recoverCleanPar(_boo.futures(sn.shortOfOpt()));
         else _recoverCleanPar(_boo.pledges(sn.shortOfOpt()));

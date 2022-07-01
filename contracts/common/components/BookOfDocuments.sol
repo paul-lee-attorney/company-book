@@ -10,9 +10,9 @@ import "../lib/SNFactory.sol";
 import "../lib/SNParser.sol";
 // import "../lib/SafeMath.sol";
 import "../lib/ArrayUtils.sol";
-import "../lib/ObjGroup.sol";
+import "../lib/EnumerableSet.sol";
 
-import "./interfaces/ISigPage.sol";
+import ".//ISigPage.sol";
 
 import "../ruting/BOSSetting.sol";
 import "../ruting/SHASetting.sol";
@@ -22,7 +22,7 @@ import "../utils/CloneFactory.sol";
 contract BookOfDocuments is CloneFactory, SHASetting, BOSSetting {
     using SNFactory for bytes;
     using SNParser for bytes32;
-    using ObjGroup for ObjGroup.TimeLine;
+    using EnumerableSet for EnumerableSet.TimeLine;
     using ArrayUtils for bytes32[];
 
     string private _bookName;
@@ -44,9 +44,9 @@ contract BookOfDocuments is CloneFactory, SHASetting, BOSSetting {
     struct Doc {
         bytes32 sn;
         bytes32 docHash;
-        uint32 reviewDeadline;
-        uint32 votingDeadline;
-        ObjGroup.TimeLine states;
+        uint32 reviewDeadlineBN;
+        uint32 votingDeadlineBN;
+        EnumerableSet.TimeLine states;
     }
 
     // struct snInfo {
@@ -146,11 +146,12 @@ contract BookOfDocuments is CloneFactory, SHASetting, BOSSetting {
         sn = _sn.bytesToBytes32();
     }
 
-    function createDoc(
-        uint8 docType,
-        uint40 creator,
-        uint32 createDate
-    ) external onlyDirectKeeper tempReady returns (address body) {
+    function createDoc(uint8 docType, uint40 creator)
+        external
+        onlyDirectKeeper
+        tempReady
+        returns (address body)
+    {
         body = createClone(_template);
 
         _counterOfDocs++;
@@ -158,7 +159,7 @@ contract BookOfDocuments is CloneFactory, SHASetting, BOSSetting {
         bytes32 sn = _createSN(
             docType,
             _counterOfDocs,
-            createDate,
+            uint32(block.timestamp),
             creator,
             body
         );
@@ -166,7 +167,7 @@ contract BookOfDocuments is CloneFactory, SHASetting, BOSSetting {
         Doc storage doc = _docs[body];
 
         doc.sn = sn;
-        doc.states.pushToNextState(createDate);
+        doc.states.pushToNextState();
 
         _isRegistered[body] = true;
         sn.insertToQue(_docsList);
@@ -193,36 +194,37 @@ contract BookOfDocuments is CloneFactory, SHASetting, BOSSetting {
     function circulateDoc(
         address body,
         bytes32 rule,
-        uint40 submitter,
-        uint32 circulateDate
+        uint40 submitter
     ) public onlyDirectKeeper onlyRegistered(body) onlyForPending(body) {
         Doc storage doc = _docs[body];
 
         // bytes32 rule = _getSHA().votingRules(doc.sn.typeOfDoc());
 
-        doc.reviewDeadline =
+        doc.reviewDeadlineBN =
             uint32(block.number) +
             uint32(rule.reviewDaysOfVR()) *
-            5760;
+            24 *
+            _rc.blocksPerHour();
 
-        doc.votingDeadline =
-            doc.reviewDeadline +
+        doc.votingDeadlineBN =
+            doc.reviewDeadlineBN +
             uint32(rule.votingDaysOfVR()) *
-            5760;
+            24 *
+            _rc.blocksPerHour();
 
-        doc.states.pushToNextState(circulateDate);
+        doc.states.pushToNextState();
 
         emit UpdateStateOfDoc(doc.sn, doc.states.currentState, submitter);
     }
 
-    function pushToNextState(
-        address body,
-        uint32 sigDate,
-        uint40 caller
-    ) public onlyKeeper onlyRegistered(body) {
+    function pushToNextState(address body, uint40 caller)
+        public
+        onlyKeeper
+        onlyRegistered(body)
+    {
         Doc storage doc = _docs[body];
 
-        doc.states.pushToNextState(sigDate);
+        doc.states.pushToNextState();
 
         emit UpdateStateOfDoc(doc.sn, doc.states.currentState, caller);
     }
@@ -258,9 +260,10 @@ contract BookOfDocuments is CloneFactory, SHASetting, BOSSetting {
 
         if (doc.states.currentState < uint8(EnumsRepo.BODStates.Established))
             return false;
-        else if (doc.states.currentState > uint8(EnumsRepo.BODStates.Established))
-            return true;
-        else if (doc.reviewDeadline > block.number) return false;
+        else if (
+            doc.states.currentState > uint8(EnumsRepo.BODStates.Established)
+        ) return true;
+        else if (doc.reviewDeadlineBN > block.number) return false;
         else return true;
     }
 
@@ -315,26 +318,26 @@ contract BookOfDocuments is CloneFactory, SHASetting, BOSSetting {
         returns (uint32)
     {
         require(state <= _docs[body].states.currentState, "state overflow");
-        return _docs[body].states.startDateOf[state];
+        return uint32(_docs[body].states.startDateOf[state]);
     }
 
-    function reviewDeadlineOf(address body)
+    function reviewDeadlineBNOf(address body)
         external
         view
         onlyRegistered(body)
         onlyUser
         returns (uint32)
     {
-        return _docs[body].reviewDeadline;
+        return _docs[body].reviewDeadlineBN;
     }
 
-    function votingDeadlineOf(address body)
+    function votingDeadlineBNOf(address body)
         external
         view
         onlyRegistered(body)
         onlyUser
         returns (uint32)
     {
-        return _docs[body].votingDeadline;
+        return _docs[body].votingDeadlineBN;
     }
 }

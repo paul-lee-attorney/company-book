@@ -58,5 +58,5 @@ interface IOptions {
 
     function rightholder(bytes6 ssn) external view returns (uint40);
 
-    function snList() external returns (bytes32[] list);
+    function snList() external view returns (bytes32[] list);
 }

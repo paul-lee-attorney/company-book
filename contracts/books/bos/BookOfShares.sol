@@ -8,6 +8,8 @@ pragma solidity ^0.4.24;
 import "./MembersRepo.sol";
 import "../../common/lib/SNParser.sol";
 
+import "./IBookOfShares.sol";
+
 /// @author 李力@北京市竞天公诚律师事务所
 /// @notice 包括《股权登记簿》和《股东名册》两个组成部分。
 /// (1) 《股权登记簿》可适用于“有限责任公司”和“股份有限公司”，
@@ -29,7 +31,7 @@ import "../../common/lib/SNParser.sol";
 /// 因此，本系统即便在公链环境下使用，也并不会给公司、股东带来泄密、数据安全受损的问题。
 /// 出于后续开发考虑，本系统预留了各类“交易价格”属性，此类信息不建议在公链或许可链等环境下直接以明文披露，
 /// 否则将给相关的利害关系方，造成不可估量的经济损失及负面影响。
-contract BookOfShares is MembersRepo {
+contract BookOfShares is IBookOfShares, MembersRepo {
     using SNParser for bytes32;
 
     //公司注册号哈希值（统一社会信用号码的“加盐”哈希值）
@@ -65,8 +67,7 @@ contract BookOfShares is MembersRepo {
         uint256 issuePrice
     ) external onlyKeeper {
         require(shareholder != address(0), "shareholder address is ZERO");
-        require(issueDate > 0, "ZERO issueDate");
-        require(issueDate <= now + 2 hours, "issueDate NOT a PAST time");
+        require(issueDate <= now + 15 minutes, "issueDate NOT a PAST time");
         require(
             issueDate <= paidInDeadline,
             "issueDate LATER than paidInDeadline"
@@ -77,17 +78,15 @@ contract BookOfShares is MembersRepo {
         // 判断是否需要添加新股东，若添加是否会超过法定人数上限
         _addMember(shareholder);
 
-        counterOfShares++;
+        _counterOfShares++;
 
-        require(class <= counterOfClasses, "class OVER FLOW");
-        if (class == counterOfClasses) counterOfClasses++;
-
-        // if (issuePrice == 0) issuePrice = 100;
+        require(class <= _counterOfClasses, "class OVER FLOW");
+        if (class == _counterOfClasses) _counterOfClasses++;
 
         bytes32 shareNumber = _createShareNumber(
             class,
-            counterOfShares,
-            issueDate,
+            _counterOfShares,
+            (issueDate == 0) ? uint32(block.timestamp) : issueDate,
             shareholder,
             0
         );
@@ -129,37 +128,31 @@ contract BookOfShares is MembersRepo {
     /// @param parValue - 股票面值（认缴出资金额）
     /// @param paidPar - 转让的实缴金额（实缴出资金额）
     /// @param to - 受让方账户地址
-    /// @param closingDate - 交割日（秒计时间戳）
     /// @param unitPrice - 转让价格（可用于判断“优先权”等条款，公链应用可设定为“1”）
     function transferShare(
         bytes6 ssn,
         uint256 parValue,
         uint256 paidPar,
         uint40 to,
-        uint32 closingDate,
         uint256 unitPrice
     ) external onlyKeeper {
         bytes32 shareNumber = _shares[ssn].shareNumber;
 
-        require(to != 0, "shareholder address is ZERO");
-        require(closingDate <= now + 15 minutes, "closingDate NOT a PAST time");
-        require(
-            closingDate > shareNumber.issueDate(),
-            "closingDate EARLIER than issueDate"
-        );
+        require(to > 0, "shareholder userNo is ZERO");
+        require(to <= _rc.counterOfUsers(), "shareholder userNo overflow");
 
         // 判断是否需要新增股东，若需要判断是否超过法定人数上限
         _addMember(to);
 
         _decreaseShareAmount(ssn, parValue, paidPar);
 
-        counterOfShares++;
+        _counterOfShares++;
 
         // 在“新股东”名下增加新的股票
         bytes32 shareNumber_1 = _createShareNumber(
             shareNumber.class(),
-            counterOfShares,
-            closingDate,
+            _counterOfShares,
+            uint32(block.timestamp),
             to,
             bytes5(shareNumber << 8)
         );

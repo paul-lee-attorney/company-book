@@ -47,7 +47,7 @@ interface IBookOfOptions {
 
     function setState(bytes32 sn, uint8 state) external;
 
-    function execOption(bytes32 sn, uint32 exerciseDate) external;
+    function execOption(bytes32 sn) external;
 
     function addFuture(
         bytes6 ssn,
@@ -66,13 +66,9 @@ interface IBookOfOptions {
 
     function lockOption(bytes6 ssn, bytes32 hashLock) external;
 
-    function closeOption(
-        bytes6 ssn,
-        string hashKey,
-        uint32 closingDate
-    ) external;
+    function closeOption(bytes6 ssn, string hashKey) external;
 
-    function revokeOption(bytes6 ssn, uint32 revokeDate) external;
+    function revokeOption(bytes6 ssn) external;
 
     // ################
     // ##  查询接口  ##

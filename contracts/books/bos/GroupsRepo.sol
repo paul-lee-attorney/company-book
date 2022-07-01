@@ -5,25 +5,18 @@
 
 pragma solidity ^0.4.24;
 
-// import "../../common/lib/ArrayUtils.sol";
 import "../../common/lib/SNParser.sol";
 import "../../common/lib/EnumerableSet.sol";
 
 import "./SharesRepo.sol";
 
 contract GroupsRepo is SharesRepo {
-    // using ArrayUtils for uint16[];
-    // using ArrayUtils for uint40[];
     using SNParser for bytes32;
     using EnumerableSet for EnumerableSet.UintSet;
-
-    // mapping(uint16 => bool) public isGroup;
 
     mapping(uint16 => EnumerableSet.UintSet) private _membersOfGroup;
 
     mapping(uint40 => uint16) internal _groupNo;
-
-    // uint16[] internal _groupsList;
 
     EnumerableSet.UintSet private _groupsList;
 
@@ -43,7 +36,7 @@ contract GroupsRepo is SharesRepo {
     //##################
 
     modifier groupExist(uint16 group) {
-        require(_groupsList.contains(uint256(group)), "group is NOT exist");
+        require(_groupsList.contains(group), "group is NOT exist");
         _;
     }
 
@@ -56,18 +49,13 @@ contract GroupsRepo is SharesRepo {
         require(group <= counterOfGroups + 1, "group OVER FLOW");
         require(_groupNo[acct] == 0, "belongs to another group");
 
-        _groupsList.add(uint256(group));
-
-        // if (!isGroup[group]) {
-        //     isGroup[group] = true;
-        //     _groupsList.push(group);
-        // }
+        _groupsList.add(group);
 
         if (group > counterOfGroups) counterOfGroups = group;
 
         _groupNo[acct] = group;
 
-        _membersOfGroup[group].add(uint256(acct));
+        _membersOfGroup[group].add(acct);
 
         emit AddMemberToGroup(acct, group);
     }
@@ -79,14 +67,11 @@ contract GroupsRepo is SharesRepo {
     {
         require(_groupNo[acct] == group, "WRONG group number");
 
-        _membersOfGroup[group].remove(uint256(acct));
+        _membersOfGroup[group].remove(acct);
 
         if (_membersOfGroup[group].length() == 0) {
             delete _membersOfGroup[group];
-            // delete isGroup[group];
-            // _groupsList.removeByValue(group);
-
-            _groupsList.remove(uint256(group));
+            _groupsList.remove(group);
         }
 
         _groupNo[acct] == 0;
@@ -117,7 +102,7 @@ contract GroupsRepo is SharesRepo {
     }
 
     function isGroup(uint16 group) external view onlyUser returns (bool) {
-        return _groupsList.contains(uint256(group));
+        return _groupsList.contains(group);
     }
 
     function groupsList() external view onlyUser returns (uint16[]) {

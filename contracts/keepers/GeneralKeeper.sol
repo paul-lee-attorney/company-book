@@ -6,14 +6,14 @@
 pragma solidity ^0.4.24;
 
 import "../common/access/AccessControl.sol";
-import "../common/access/interfaces/IAccessControl.sol";
+import "../common/access//IAccessControl.sol";
 
-import "./interfaces/IBOAKeeper.sol";
-import "./interfaces/ISHAKeeper.sol";
-import "./interfaces/IBOHKeeper.sol";
-import "./interfaces/IBOMKeeper.sol";
-import "./interfaces/IBOOKeeper.sol";
-import "./interfaces/IBOPKeeper.sol";
+import "./IBOAKeeper.sol";
+import "./ISHAKeeper.sol";
+import "./IBOHKeeper.sol";
+import "./IBOMKeeper.sol";
+import "./IBOOKeeper.sol";
+import "./IBOPKeeper.sol";
 
 contract GeneralKeeper is AccessControl {
     IBOAKeeper private _BOAKeeper;
@@ -91,24 +91,20 @@ contract GeneralKeeper is AccessControl {
     // ##   BOAKeeper   ##
     // ###################
 
-    function createIA(uint8 typeOfIA, uint32 createDate) external {
-        _BOAKeeper.createIA(typeOfIA, _msgSender(), createDate);
+    function createIA(uint8 typeOfIA) external {
+        _BOAKeeper.createIA(typeOfIA, _msgSender());
     }
 
-    function removeIA(address body, uint32 sigDate) external {
-        _BOAKeeper.removeIA(body, _msgSender(), sigDate);
+    function removeIA(address body) external {
+        _BOAKeeper.removeIA(body, _msgSender());
     }
 
-    function circulateIA(address body, uint32 submitDate) external {
-        _BOAKeeper.circulateIA(body, _msgSender(), submitDate);
+    function circulateIA(address body) external {
+        _BOAKeeper.circulateIA(body, _msgSender());
     }
 
-    function signIA(
-        address ia,
-        uint32 sigDate,
-        bytes32 sigHash
-    ) external {
-        _BOAKeeper.signIA(ia, _msgSender(), sigDate, sigHash);
+    function signIA(address ia, bytes32 sigHash) external {
+        _BOAKeeper.signIA(ia, _msgSender(), sigHash);
     }
 
     // ======== Deal Closing ========
@@ -117,26 +113,17 @@ contract GeneralKeeper is AccessControl {
         address ia,
         bytes32 sn,
         bytes32 hashLock,
-        uint256 closingDate,
-        uint32 sigDate
+        uint32 closingDate
     ) external {
-        _BOAKeeper.pushToCoffer(
-            ia,
-            sn,
-            hashLock,
-            closingDate,
-            _msgSender(),
-            sigDate
-        );
+        _BOAKeeper.pushToCoffer(ia, sn, hashLock, closingDate, _msgSender());
     }
 
     function closeDeal(
         address ia,
         bytes32 sn,
-        uint32 closingDate,
         string hashKey
     ) external {
-        _BOAKeeper.closeDeal(ia, sn, closingDate, hashKey, _msgSender());
+        _BOAKeeper.closeDeal(ia, sn, hashKey, _msgSender());
     }
 
     function revokeDeal(
@@ -159,7 +146,6 @@ contract GeneralKeeper is AccessControl {
         bytes32 shareNumber,
         uint256 parValue,
         uint256 paidPar,
-        uint32 sigDate,
         bytes32 sigHash
     ) external {
         _SHAKeeper.execAlongRight(
@@ -170,7 +156,6 @@ contract GeneralKeeper is AccessControl {
             parValue,
             paidPar,
             _msgSender(),
-            sigDate,
             sigHash
         );
     }
@@ -179,7 +164,6 @@ contract GeneralKeeper is AccessControl {
         address ia,
         bytes32 sn,
         uint40 drager,
-        uint32 sigDate,
         bytes32 sigHash
     ) external {
         _SHAKeeper.acceptAlongDeal(
@@ -188,7 +172,6 @@ contract GeneralKeeper is AccessControl {
             drager,
             false,
             _msgSender(),
-            sigDate,
             sigHash
         );
     }
@@ -201,7 +184,6 @@ contract GeneralKeeper is AccessControl {
         bytes32 shareNumber,
         uint256 parValue,
         uint256 paidPar,
-        uint32 sigDate,
         bytes32 sigHash
     ) external {
         _SHAKeeper.execAlongRight(
@@ -212,7 +194,6 @@ contract GeneralKeeper is AccessControl {
             parValue,
             paidPar,
             _msgSender(),
-            sigDate,
             sigHash
         );
     }
@@ -220,7 +201,7 @@ contract GeneralKeeper is AccessControl {
     function acceptDragAlong(
         address ia,
         bytes32 sn,
-        uint32 sigDate,
+        // uint32 sigDate,
         bytes32 sigHash
     ) external {
         _SHAKeeper.acceptAlongDeal(
@@ -229,7 +210,7 @@ contract GeneralKeeper is AccessControl {
             _msgSender(),
             true,
             _msgSender(),
-            sigDate,
+            // sigDate,
             sigHash
         );
     }
@@ -240,7 +221,7 @@ contract GeneralKeeper is AccessControl {
         address ia,
         bytes32 sn,
         bytes32 shareNumber,
-        uint32 sigDate,
+        // uint32 sigDate,
         bytes32 sigHash
     ) external {
         _SHAKeeper.execAntiDilution(
@@ -248,18 +229,14 @@ contract GeneralKeeper is AccessControl {
             sn,
             shareNumber,
             _msgSender(),
-            sigDate,
+            // sigDate,
             sigHash
         );
     }
 
-    function takeGiftShares(
-        address ia,
-        bytes32 sn,
-        uint32 sigDate
-    ) external {
-        _SHAKeeper.takeGiftShares(ia, sn, _msgSender(), sigDate);
-        _BOAKeeper.transferTargetShare(ia, sn, sigDate);
+    function takeGiftShares(address ia, bytes32 sn) external {
+        _SHAKeeper.takeGiftShares(ia, sn, _msgSender());
+        _BOAKeeper.transferTargetShare(ia, sn);
     }
 
     // ======== First Refusal ========
@@ -267,23 +244,23 @@ contract GeneralKeeper is AccessControl {
     function execFirstRefusal(
         address ia,
         bytes32 sn,
-        uint32 execDate,
+        // uint32 execDate,
         bytes32 sigHash
     ) external {
-        _SHAKeeper.execFirstRefusal(ia, sn, _msgSender(), execDate, sigHash);
+        _SHAKeeper.execFirstRefusal(ia, sn, _msgSender(), sigHash);
     }
 
     function acceptFirstRefusal(
         address ia,
         bytes32 sn,
-        uint32 acceptDate,
+        // uint32 acceptDate,
         bytes32 sigHash
     ) external {
         _SHAKeeper.acceptFirstRefusal(
             ia,
             sn,
             _msgSender(),
-            acceptDate,
+            // acceptDate,
             sigHash
         );
     }
@@ -296,24 +273,20 @@ contract GeneralKeeper is AccessControl {
         _BOHKeeper.addTermTemplate(title, addr, _msgSender());
     }
 
-    function createSHA(uint8 docType, uint32 createDate) external {
-        _BOHKeeper.createSHA(docType, _msgSender(), createDate);
+    function createSHA(uint8 docType) external {
+        _BOHKeeper.createSHA(docType, _msgSender());
     }
 
     function removeSHA(address body) external {
         _BOHKeeper.removeSHA(body, _msgSender());
     }
 
-    function circulateSHA(address body, uint32 submitDate) external {
-        _BOHKeeper.circulateSHA(body, _msgSender(), submitDate);
+    function circulateSHA(address body) external {
+        _BOHKeeper.circulateSHA(body, _msgSender());
     }
 
-    function signSHA(
-        address sha,
-        uint32 sigDate,
-        bytes32 sigHash
-    ) external {
-        _BOHKeeper.signSHA(sha, _msgSender(), sigDate, sigHash);
+    function signSHA(address sha, bytes32 sigHash) external {
+        _BOHKeeper.signSHA(sha, _msgSender(), sigHash);
     }
 
     function effectiveSHA(address body) external {
@@ -324,17 +297,16 @@ contract GeneralKeeper is AccessControl {
     // ##   BOMKeeper   ##
     // ###################
 
-    function proposeMotion(address ia, uint32 proposeDate) external {
-        _BOMKeeper.proposeMotion(ia, proposeDate, _msgSender());
+    function proposeMotion(address ia) external {
+        _BOMKeeper.proposeMotion(ia, _msgSender());
     }
 
     function castVote(
         address ia,
         uint8 attitude,
-        uint32 sigDate,
         bytes32 sigHash
     ) external {
-        _BOMKeeper.castVote(ia, attitude, _msgSender(), sigDate, sigHash);
+        _BOMKeeper.castVote(ia, attitude, _msgSender(), sigHash);
     }
 
     function voteCounting(address ia) external {
@@ -344,16 +316,9 @@ contract GeneralKeeper is AccessControl {
     function requestToBuy(
         address ia,
         bytes32 sn,
-        uint32 exerciseDate,
         uint40 againstVoter
     ) external {
-        _BOMKeeper.requestToBuy(
-            ia,
-            sn,
-            exerciseDate,
-            againstVoter,
-            _msgSender()
-        );
+        _BOMKeeper.requestToBuy(ia, sn, againstVoter, _msgSender());
     }
 
     // #################
@@ -395,8 +360,8 @@ contract GeneralKeeper is AccessControl {
         _BOOKeeper.releaseObligorFromOption(sn, obligor, _msgSender());
     }
 
-    function execOption(bytes32 sn, uint32 exerciseDate) external {
-        _BOOKeeper.execOption(sn, exerciseDate, _msgSender());
+    function execOption(bytes32 sn) external {
+        _BOOKeeper.execOption(sn, _msgSender());
     }
 
     function addFuture(
@@ -423,16 +388,12 @@ contract GeneralKeeper is AccessControl {
         _BOOKeeper.lockOption(sn, hashLock, _msgSender());
     }
 
-    function closeOption(
-        bytes32 sn,
-        string hashKey,
-        uint32 closingDate
-    ) external {
-        _BOOKeeper.closeOption(sn, hashKey, closingDate, _msgSender());
+    function closeOption(bytes32 sn, string hashKey) external {
+        _BOOKeeper.closeOption(sn, hashKey, _msgSender());
     }
 
-    function revokeOption(bytes32 sn, uint32 revokeDate) external {
-        _BOOKeeper.revokeOption(sn, revokeDate, _msgSender());
+    function revokeOption(bytes32 sn) external {
+        _BOOKeeper.revokeOption(sn, _msgSender());
     }
 
     function releasePledges(bytes32 sn) external {
@@ -444,7 +405,7 @@ contract GeneralKeeper is AccessControl {
     // ###################
 
     function createPledge(
-        uint32 createDate,
+        // uint32 createDate,
         bytes32 shareNumber,
         uint256 pledgedPar,
         uint40 creditor,
@@ -452,7 +413,7 @@ contract GeneralKeeper is AccessControl {
         uint256 guaranteedAmt
     ) external {
         _BOPKeeper.createPledge(
-            createDate,
+            // createDate,
             shareNumber,
             pledgedPar,
             creditor,

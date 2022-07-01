@@ -5,10 +5,10 @@
 
 pragma solidity ^0.4.24;
 
-import "../../common/access/interfaces/IAccessControl.sol";
-import "../../common/access/interfaces/IDraftControl.sol";
+import "../../common/access//IAccessControl.sol";
+import "../../common/access//IDraftControl.sol";
 
-import "../../common/ruting/interfaces/IBookSetting.sol";
+import "../../common/ruting/IBookSetting.sol";
 import "../../common/ruting/BOSSetting.sol";
 import "../../common/ruting/BOMSetting.sol";
 
@@ -19,11 +19,14 @@ import "../../common/components/SigPage.sol";
 
 import "../../common/utils/CloneFactory.sol";
 
-import "./interfaces/ITerm.sol";
+import ".//ITerm.sol";
 
 import "./terms/VotingRules.sol";
 
+import "./IShareholdersAgreement.sol";
+
 contract ShareholdersAgreement is
+    IShareholdersAgreement,
     CloneFactory,
     VotingRules,
     BOMSetting,

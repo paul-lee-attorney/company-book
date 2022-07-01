@@ -34,11 +34,7 @@ interface IBOOKeeper {
         uint40 caller
     ) external;
 
-    function execOption(
-        bytes32 sn,
-        uint32 exerciseDate,
-        uint40 caller
-    ) external;
+    function execOption(bytes32 sn, uint40 caller) external;
 
     function addFuture(
         bytes32 sn,
@@ -69,15 +65,10 @@ interface IBOOKeeper {
     function closeOption(
         bytes32 sn,
         string hashKey,
-        uint32 closingDate,
         uint40 caller
     ) external;
 
-    function revokeOption(
-        bytes32 sn,
-        uint32 revokeDate,
-        uint40 caller
-    ) external;
+    function revokeOption(bytes32 sn, uint40 caller) external;
 
     function releasePledges(bytes32 sn, uint40 caller) external;
 }

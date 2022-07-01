@@ -9,7 +9,9 @@ import "../../books/bom/IBookOfMotions.sol";
 
 import "../access/AccessControl.sol";
 
-contract BOMSetting is AccessControl {
+import "./IBookSetting.sol";
+
+contract BOMSetting is IBookSetting, AccessControl {
     IBookOfMotions internal _bom;
 
     event SetBOM(address bom);

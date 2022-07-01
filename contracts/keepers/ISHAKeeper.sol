@@ -16,7 +16,6 @@ interface ISHAKeeper {
         uint256 parValue,
         uint256 paidPar,
         uint40 caller,
-        uint32 sigDate,
         bytes32 sigHash
     ) external;
 
@@ -26,7 +25,6 @@ interface ISHAKeeper {
         uint40 drager,
         bool dragAlong,
         uint40 caller,
-        uint32 sigDate,
         bytes32 sigHash
     ) external;
 
@@ -37,15 +35,13 @@ interface ISHAKeeper {
         bytes32 sn,
         bytes32 shareNumber,
         uint40 caller,
-        uint32 sigDate,
         bytes32 sigHash
     ) external;
 
     function takeGiftShares(
         address ia,
         bytes32 sn,
-        uint40 caller,
-        uint32 sigDate
+        uint40 caller
     ) external;
 
     // ======== FirstRefusal ========
@@ -54,7 +50,6 @@ interface ISHAKeeper {
         address ia,
         bytes32 sn,
         uint40 caller,
-        uint32 sigDate,
         bytes32 sigHash
     ) external;
 
@@ -62,7 +57,6 @@ interface ISHAKeeper {
         address ia,
         bytes32 sn,
         uint40 caller,
-        uint32 acceptDate,
         bytes32 sigHash
     ) external;
 }

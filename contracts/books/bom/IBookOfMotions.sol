@@ -1,33 +1,57 @@
-/*
+/* *
  * Copyright 2021-2022 LI LI of JINGTIAN & GONGCHENG.
  * All Rights Reserved.
  * */
 
 pragma solidity ^0.4.24;
+pragma experimental ABIEncoderV2;
 
 interface IBookOfMotions {
     //##############
     //##  Event   ##
     //##############
 
-    event ProposeMotion(address indexed ia, bytes32 sn);
+    event AuthorizeToPropose(
+        uint40 rightholder,
+        uint40 delegate,
+        uint256 actionId
+    );
+
+    event ProposeMotion(
+        uint256 indexed motionId,
+        uint8 typeOfMotion,
+        address[] targets,
+        bytes[] params,
+        bytes32 desHash,
+        bytes32 sn
+    );
 
     event Vote(
-        address indexed ia,
+        uint256 indexed motionId,
         uint40 voter,
         uint8 atitude,
         uint256 voteAmt
     );
 
-    event VoteCounting(address indexed ia, uint8 result);
+    event VoteCounting(uint256 indexed motionId, uint8 result);
 
     //##################
     //##    写接口    ##
     //##################
 
-    function proposeMotion(
-        address ia,
-        uint256 votingDeadline,
+    function authorizeToPropose(
+        uint40 rightholder,
+        uint40 delegate,
+        uint256 actionId
+    ) external;
+
+    function proposeMotion(address ia, uint40 submitter) external;
+
+    function proposeAction(
+        uint8 actionType,
+        address[] target,
+        bytes[] params,
+        bytes32 desHash,
         uint40 submitter
     ) external;
 
@@ -35,45 +59,52 @@ interface IBookOfMotions {
         address ia,
         uint8 attitude,
         uint40 caller,
-        uint32 sigDate,
         bytes32 sigHash
     ) external;
 
-    function voteCounting(address ia, uint32 sigDate) external;
+    function voteCounting(uint256 motionId) external;
 
-    function requestToBuy(
-        address ia,
-        bytes32 sn,
-        uint32 exerciseDate
-    ) external view returns (uint256 parValue, uint256 paidPar);
+    function requestToBuy(address ia, bytes32 sn)
+        external
+        view
+        returns (uint256 parValue, uint256 paidPar);
 
     //##################
     //##    读接口    ##
     //##################
 
-    function votingRule(address ia) external view returns (bytes32);
+    function votingRule(uint256 motionId) external view returns (bytes32);
 
-    function state(address ia) external view returns (uint8);
+    function state(uint256 motionId) external view returns (uint8);
 
-    function votedYea(address ia, uint40 acct) external view returns (bool);
+    function votedYea(uint256 motionId, uint40 acct)
+        external
+        view
+        returns (bool);
 
-    function votedNay(address ia, uint40 acct) external view returns (bool);
+    function votedNay(uint256 motionId, uint40 acct)
+        external
+        view
+        returns (bool);
 
-    function getYea(address ia)
+    function getYea(uint256 motionId)
         external
         view
         returns (uint40[] membersOfYea, uint256 supportPar);
 
-    function getNay(address ia)
+    function getNay(uint256 motionId)
         external
         view
         returns (uint40[] membersOfNay, uint256 againstPar);
 
-    function sumOfVoteAmt(address ia) external view returns (uint256);
+    function sumOfVoteAmt(uint256 motionId) external view returns (uint256);
 
-    function isVoted(address ia, uint40 acct) external view returns (bool);
+    function isVoted(uint256 motionId, uint40 acct)
+        external
+        view
+        returns (bool);
 
-    function getVote(address ia, uint40 acct)
+    function getVote(uint256 motionId, uint40 acct)
         external
         view
         returns (
@@ -84,7 +115,7 @@ interface IBookOfMotions {
             bytes32 sigHash
         );
 
-    function isPassed(address ia) external view returns (bool);
+    function isPassed(uint256 motionId) external view returns (bool);
 
-    function isRejected(address ia) external view returns (bool);
+    function isRejected(uint256 motionId) external view returns (bool);
 }

@@ -6,11 +6,13 @@
 pragma solidity ^0.4.24;
 
 import "./RegCenterSetting.sol";
-import "./interfaces/IRoles.sol";
+import ".//IRoles.sol";
 
 import "../lib/EnumerableSet.sol";
 
-contract Roles is RegCenterSetting {
+import "./IRoles.sol";
+
+contract Roles is IRoles, RegCenterSetting {
     using EnumerableSet for EnumerableSet.UintSet;
 
     struct RoleData {

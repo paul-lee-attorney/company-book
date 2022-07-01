@@ -7,7 +7,7 @@ pragma solidity ^0.4.24;
 
 // import "../../../common/lib/EnumerableSet.sol";
 
-import "../../boa/interfaces/IInvestmentAgreement.sol";
+import "../../boa//IInvestmentAgreement.sol";
 
 import "../../../common/ruting/BOSSetting.sol";
 import "../../../common/ruting/BOMSetting.sol";
@@ -19,7 +19,9 @@ import "../../../common/lib/SNParser.sol";
 import "../../../common/lib/EnumsRepo.sol";
 import "../../../common/lib/EnumerableSet.sol";
 
-contract AntiDilution is BOSSetting, BOMSetting, DraftControl {
+import "./IAntiDilution.sol";
+
+contract AntiDilution is IAntiDilution, BOSSetting, BOMSetting, DraftControl {
     using SNFactory for bytes;
     using ArrayUtils for bytes32[];
     using ArrayUtils for uint40[];
@@ -212,7 +214,7 @@ contract AntiDilution is BOSSetting, BOMSetting, DraftControl {
     {
         if (!isTriggered(ia, sn)) return true;
 
-        (uint40[] memory consentParties, ) = _bom.getYea(ia);
+        (uint40[] memory consentParties, ) = _bom.getYea(uint256(ia));
 
         uint256 unitPrice = IInvestmentAgreement(ia).unitPrice(
             sn.sequenceOfDeal()

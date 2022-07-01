@@ -10,17 +10,12 @@ interface IBOMKeeper {
     // ##   Motion   ##
     // ################
 
-    function proposeMotion(
-        address ia,
-        uint32 proposeDate,
-        uint40 caller
-    ) external;
+    function proposeMotion(address ia, uint40 caller) external;
 
     function castVote(
         address ia,
         uint8 attitude,
         uint40 caller,
-        uint32 sigDate,
         bytes32 sigHash
     ) external;
 
@@ -36,7 +31,6 @@ interface IBOMKeeper {
     function requestToBuy(
         address ia,
         bytes32 sn,
-        uint32 exerciseDate,
         address againstVoter,
         uint40 caller
     ) external;

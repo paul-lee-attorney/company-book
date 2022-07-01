@@ -7,13 +7,11 @@ pragma solidity ^0.4.24;
 
 import "../../common/lib/EnumerableSet.sol";
 import "../../common/lib/Checkpoints.sol";
-// import "../../common/lib/ArrayUtils.sol";
 import "../../common/lib/SNParser.sol";
 
 import "./GroupsRepo.sol";
 
 contract MembersRepo is GroupsRepo {
-    // using ArrayUtils for bytes32[];
     using SNParser for bytes32;
     using EnumerableSet for EnumerableSet.Bytes32Set;
     using EnumerableSet for EnumerableSet.UintSet;
@@ -30,13 +28,9 @@ contract MembersRepo is GroupsRepo {
 
     Checkpoints.History private _qtyOfMembers;
 
-    // mapping(uint40 => bool) public isMember;
-
     mapping(uint40 => EnumerableSet.Bytes32Set) internal _sharesInHand;
 
     mapping(uint40 => Checkpoints.History) private _votesInHand;
-
-    // uint40[] private _membersList;
 
     uint8 private _maxQtyOfMembers;
 
@@ -73,12 +67,12 @@ contract MembersRepo is GroupsRepo {
     //##################
 
     modifier onlyMember() {
-        require(_members.contains(uint256(_msgSender())), "NOT Member");
+        require(_members.contains(_msgSender()), "NOT Member");
         _;
     }
 
     modifier memberExist(uint40 acct) {
-        require(_members.contains(uint256(acct)), "Acct is NOT Member");
+        require(_members.contains(acct), "Acct is NOT Member");
         _;
     }
 
@@ -101,14 +95,14 @@ contract MembersRepo is GroupsRepo {
             "Qty of Members overflow"
         );
 
-        if (_members.add(uint256(acct))) {
+        if (_members.add(acct)) {
             _qtyOfMembers.push(_members.length(), 1);
             emit AddMember(acct, _members.length());
         }
     }
 
     function _removeMember(uint40 acct) internal {
-        if (_members.remove(uint256(acct))) {
+        if (_members.remove(acct)) {
             delete _sharesInHand[acct];
             if (_groupNo[acct] > 0) removeMemberFromGroup(acct, _groupNo[acct]);
             _qtyOfMembers.push(_members.length(), 0);
@@ -186,7 +180,7 @@ contract MembersRepo is GroupsRepo {
     }
 
     function isMember(uint40 acct) public view onlyUser returns (bool) {
-        return _members.contains(uint256(acct));
+        return _members.contains(acct);
     }
 
     function members() external view onlyUser returns (uint40[]) {
@@ -233,7 +227,7 @@ contract MembersRepo is GroupsRepo {
         else (, vote) = _votesInHand[acct].latest();
     }
 
-    function voteAtBlock(uint40 acct, uint256 blockNumber)
+    function votesAtBlock(uint40 acct, uint256 blockNumber)
         external
         view
         onlyUser

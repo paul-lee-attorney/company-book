@@ -5,12 +5,13 @@
 
 pragma solidity ^0.4.24;
 
-// import "../../common/lib/ArrayUtils.sol";
 import "../../common/lib/SNParser.sol";
 
 import "../../common/ruting/BOSSetting.sol";
 
-contract BOSCalculator is BOSSetting {
+import "./IBOSCalculator.sol";
+
+contract BOSCalculator is IBOSCalculator, BOSSetting {
     using SNParser for bytes32;
 
     //##################

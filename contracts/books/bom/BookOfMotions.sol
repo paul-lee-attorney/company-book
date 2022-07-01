@@ -1,11 +1,12 @@
-/*
+/* *
  * Copyright 2021-2022 LI LI of JINGTIAN & GONGCHENG.
  * All Rights Reserved.
  * */
 
 pragma solidity ^0.4.24;
+pragma experimental ABIEncoderV2;
 
-import "../boa/interfaces/IInvestmentAgreement.sol";
+import "../boa//IInvestmentAgreement.sol";
 
 import "../../common/ruting/BOASetting.sol";
 import "../../common/ruting/SHASetting.sol";
@@ -16,7 +17,7 @@ import "../../common/lib/SNParser.sol";
 import "../../common/lib/EnumsRepo.sol";
 import "../../common/lib/EnumerableSet.sol";
 
-import "../../common/components/interfaces/ISigPage.sol";
+import "../../common/components//ISigPage.sol";
 
 import "./IBookOfMotions.sol";
 
@@ -25,7 +26,6 @@ contract BookOfMotions is IBookOfMotions, SHASetting, BOASetting, BOSSetting {
     using SNParser for bytes32;
     using EnumerableSet for EnumerableSet.UintSet;
     using EnumerableSet for EnumerableSet.BallotsBox;
-    using EnumerableSet for EnumerableSet.AddressSet;
 
     struct Motion {
         bytes32 sn;
@@ -40,39 +40,34 @@ contract BookOfMotions is IBookOfMotions, SHASetting, BOASetting, BOSSetting {
         uint8 state; // 0-pending 1-proposed  2-passed 3-rejected(not to buy) 4-rejected (to buy)
     }
 
-    // ia/sha... => Motion
-    mapping(address => Motion) private _motions;
+    // motionId => delegateNo => memberNo
+    mapping(uint256 => mapping(uint256 => EnumerableSet.UintSet))
+        private _delegates;
 
-    // Investment Agreements Subject to voting
-    EnumerableSet.AddressSet private _ias;
+    // motionId => Motion
+    mapping(uint256 => Motion) private _motions;
+
+    EnumerableSet.UintSet private _motionIds;
 
     //####################
     //##    modifier    ##
     //####################
 
-    modifier onlyProposed(address ia) {
-        require(_ias.contains(ia), "IA is NOT isProposed");
+    modifier onlyProposed(uint256 motionId) {
+        require(_motionIds.contains(motionId), "motion is NOT proposed");
         _;
     }
 
-    modifier onlyOnVoting(address ia) {
+    modifier beforeExpire(uint256 motionId) {
         require(
-            _motions[ia].state == uint8(EnumsRepo.StateOfMotion.Proposed),
-            "Motion already voted"
-        );
-        _;
-    }
-
-    modifier beforeExpire(address ia, uint32 date) {
-        require(
-            date <= _motions[ia].sn.votingDeadlineOfMotion(),
+            _motions[motionId].sn.votingDeadlineOfMotion() >= block.number,
             "missed voting deadline"
         );
         _;
     }
 
-    modifier notVotedTo(address ia, uint40 caller) {
-        require(!isVoted(ia, caller), "HAVE voted for the IA");
+    modifier notVotedTo(uint256 motionId, uint40 caller) {
+        require(!isVoted(motionId, caller), "HAVE voted for the motion");
         _;
     }
 
@@ -81,73 +76,170 @@ contract BookOfMotions is IBookOfMotions, SHASetting, BOASetting, BOSSetting {
     //##################
 
     function _createSN(
-        address ia,
         uint40 submitter,
         uint32 proposeDate,
-        uint32 votingDeadline
+        uint32 votingDeadlineBN,
+        uint32 weightRegBlock,
+        uint8 typeOfMotion
     ) private pure returns (bytes32 sn) {
         bytes memory _sn = new bytes(32);
 
         _sn = _sn.acctToSN(0, submitter);
         _sn = _sn.dateToSN(5, proposeDate);
-        _sn = _sn.dateToSN(9, votingDeadline);
-        _sn = _sn.addrToSN(13, ia);
+        _sn = _sn.dateToSN(9, votingDeadlineBN);
+        _sn = _sn.dateToSN(13, weightRegBlock);
+        _sn[17] = bytes1(typeOfMotion);
 
         sn = _sn.bytesToBytes32();
     }
 
-    function proposeMotion(
-        address ia,
-        uint32 proposeDate,
-        uint40 submitter
-    ) external onlyDirectKeeper {
+    function proposeMotion(address ia, uint40 submitter)
+        external
+        onlyDirectKeeper
+    {
         require(ISigPage(ia).established(), "doc is not established");
 
-        require(
-            !_ias.contains(ia),
-            "the InvestmentAgreement has been proposed"
-        );
+        uint256 motionId = uint256(ia);
 
-        bytes32 rule = _getSHA().votingRules(_boa.typeOfIA(ia));
+        require(!_motionIds.contains(motionId), "the motion has been proposed");
 
-        Motion storage motion = _motions[ia];
+        uint8 typeOfMotion = _boa.typeOfIA(ia);
+
+        bytes32 rule = _getSHA().votingRules(typeOfMotion);
+
+        Motion storage motion = _motions[motionId];
 
         motion.votingRule = rule;
         motion.sn = _createSN(
-            ia,
             submitter,
-            proposeDate,
-            _boa.votingDeadlineOf(ia)
+            uint32(block.timestamp),
+            _boa.votingDeadlineBNOf(ia),
+            _boa.reviewDeadlineBNOf(ia),
+            typeOfMotion
         );
         motion.state = uint8(EnumsRepo.StateOfMotion.Proposed);
 
-        if (_ias.add(ia)) emit ProposeMotion(ia, motion.sn);
+        _motionIds.add(motionId);
+
+        emit ProposeMotion(
+            uint256(ia),
+            typeOfMotion,
+            new address[](1),
+            new bytes[](1),
+            bytes32(0),
+            motion.sn
+        );
+    }
+
+    function authorizeToPropose(
+        uint40 rightholder,
+        uint40 delegate,
+        uint256 actionId
+    ) external onlyDirectKeeper {
+        require(_bos.isMember(rightholder), "authorizer is not a member");
+        require(_bos.isMember(delegate), "delegate is not a member");
+
+        require(
+            _motions[actionId].state == uint8(EnumsRepo.StateOfMotion.Pending),
+            "action has been proposed"
+        );
+
+        if (_delegates[actionId][delegate].add(rightholder))
+            emit AuthorizeToPropose(rightholder, delegate, actionId);
+    }
+
+    function proposeAction(
+        uint8 actionType,
+        address[] target,
+        bytes[] params,
+        bytes32 desHash,
+        uint40 submitter
+    ) external onlyDirectKeeper {
+        uint256 actionId = _hashAction(actionType, target, params, desHash);
+        require(!_motionIds.contains(actionId), "motion has been proposed");
+        require(
+            _proposalWeight(actionId, submitter) >=
+                _getSHA().proposalThreshold(),
+            "insufficient voting weight"
+        );
+
+        bytes32 rule = _getSHA().votingRules(actionType);
+
+        Motion storage motion = _motions[actionId];
+
+        motion.votingRule = rule;
+        motion.sn = _createSN(
+            submitter,
+            uint32(block.timestamp),
+            uint32(block.number) +
+                (uint32(rule.votingDaysOfVR()) * 24 * _rc.blocksPerHour()),
+            uint32(block.number),
+            actionType
+        );
+        motion.state = uint8(EnumsRepo.StateOfMotion.Proposed);
+
+        _motionIds.add(actionId);
+
+        emit ProposeMotion(
+            actionId,
+            actionType,
+            target,
+            params,
+            desHash,
+            motion.sn
+        );
+    }
+
+    function _proposalWeight(uint256 actionId, uint40 acct)
+        private
+        view
+        returns (uint256)
+    {
+        uint256 len = _delegates[actionId][acct].length();
+        uint256 weight;
+
+        while (len > 0) {
+            uint40 shareholder = uint40(_delegates[actionId][acct].at(len - 1));
+            weight += _bos.voteInHand(shareholder);
+            len--;
+        }
+
+        return (weight * 10000) / _bos.totalVote();
+    }
+
+    function _hashAction(
+        uint8 actionType,
+        address[] target,
+        bytes[] params,
+        bytes32 desHash
+    ) private pure returns (uint256) {
+        return
+            uint256(keccak256(abi.encode(actionType, target, params, desHash)));
     }
 
     function castVote(
-        address ia,
+        uint256 motionId,
         uint8 attitude,
         uint40 caller,
-        uint32 sigDate,
         bytes32 sigHash
     )
         external
         onlyDirectKeeper
-        notVotedTo(ia, caller)
-        onlyOnVoting(ia)
-        beforeExpire(ia, sigDate)
+        notVotedTo(motionId, caller)
+        beforeExpire(motionId)
     {
         require(
-            attitude > uint8(EnumsRepo.AttitudeOfVote.ZeroPoint) &&
-                attitude <= uint8(EnumsRepo.AttitudeOfVote.Abstain),
+            attitude == uint8(EnumsRepo.AttitudeOfVote.Support) ||
+                attitude == uint8(EnumsRepo.AttitudeOfVote.Against) ||
+                attitude == uint8(EnumsRepo.AttitudeOfVote.Abstain),
             "attitude overflow"
         );
 
-        uint32 regBlock = _boa.reviewDeadlineOf(ia);
+        Motion storage motion = _motions[motionId];
 
-        uint256 voteAmt = _bos.voteAtBlock(caller, regBlock);
+        uint32 regBlock = motion.sn.weightRegBlockOfMotion();
 
-        Motion storage motion = _motions[ia];
+        uint256 voteAmt = _bos.votesAtBlock(caller, regBlock);
 
         if (motion.ballotsBox.add(caller, attitude, voteAmt, sigHash)) {
             if (attitude == uint8(EnumsRepo.AttitudeOfVote.Support)) {
@@ -160,11 +252,11 @@ contract BookOfMotions is IBookOfMotions, SHASetting, BOASetting, BOSSetting {
                 motion.abstainVoters.add(caller);
                 motion.sumOfAbs += voteAmt;
             }
-            emit Vote(ia, caller, attitude, voteAmt);
+            emit Vote(motionId, caller, attitude, voteAmt);
         }
     }
 
-    function _getParas(address ia)
+    function _getParas(uint256 motionId)
         private
         returns (
             uint256 totalHead,
@@ -173,40 +265,45 @@ contract BookOfMotions is IBookOfMotions, SHASetting, BOASetting, BOSSetting {
             uint256 consentAmt
         )
     {
-        Motion storage motion = _motions[ia];
+        Motion storage motion = _motions[motionId];
 
-        uint256 blockNumber = _boa.reviewDeadlineOf(ia);
+        uint32 regBlock = motion.sn.weightRegBlockOfMotion();
 
         if (motion.votingRule.onlyAttendanceOfVR()) {
             totalHead = motion.ballotsBox.voters.length;
             totalAmt = motion.ballotsBox.sumOfWeight;
         } else {
             // members hold voting rights at block
-            totalHead = _bos.qtyOfMembersAtBlock(blockNumber);
-            totalAmt = _bos.totalVoteAtBlock(blockNumber);
+            totalHead = _bos.qtyOfMembersAtBlock(regBlock);
+            totalAmt = _bos.totalVoteAtBlock(regBlock);
 
-            // minus parties of IA;
-            uint40[] memory parties = ISigPage(ia).parties();
-            uint256 len = parties.length;
+            if (motion.sn.typeOfMotion() < 8) {
+                // 1-7 typeOfIA; 8-external deal
 
-            while (len > 0) {
-                uint256 voteAmt = _bos.voteAtBlock(
-                    parties[len - 1],
-                    blockNumber
-                );
+                // minus parties of IA;
+                uint40[] memory parties = ISigPage(address(uint160(motionId)))
+                    .parties();
+                uint256 len = parties.length;
 
-                // party has voting right at block
-                if (voteAmt > 0) {
-                    if (motion.votingRule.partyAsConsentOfVR()) {
-                        consentHead++;
-                        consentAmt += voteAmt;
-                    } else {
-                        totalHead--;
-                        totalAmt -= voteAmt;
+                while (len > 0) {
+                    uint256 voteAmt = _bos.votesAtBlock(
+                        parties[len - 1],
+                        regBlock
+                    );
+
+                    // party has voting right at block
+                    if (voteAmt > 0) {
+                        if (motion.votingRule.partyAsConsentOfVR()) {
+                            consentHead++;
+                            consentAmt += voteAmt;
+                        } else {
+                            totalHead--;
+                            totalAmt -= voteAmt;
+                        }
                     }
-                }
 
-                len--;
+                    len--;
+                }
             }
 
             // members not cast vote
@@ -217,22 +314,25 @@ contract BookOfMotions is IBookOfMotions, SHASetting, BOASetting, BOSSetting {
         }
     }
 
-    function voteCounting(address ia, uint32 sigDate)
+    function voteCounting(uint256 motionId)
         external
         onlyDirectKeeper
-        onlyProposed(ia)
-        onlyOnVoting(ia)
+        onlyProposed(motionId)
+        beforeExpire(motionId)
     {
-        Motion storage motion = _motions[ia];
+        Motion storage motion = _motions[motionId];
 
-        require(sigDate > motion.sn.votingDeadlineOfMotion(), "voting NOT end");
+        require(
+            block.number > motion.sn.votingDeadlineOfMotion(),
+            "voting NOT end"
+        );
 
         (
             uint256 totalHead,
             uint256 totalAmt,
             uint256 consentHead,
             uint256 consentAmt
-        ) = _getParas(ia);
+        ) = _getParas(motionId);
 
         bool flag1 = motion.votingRule.ratioHeadOfVR() > 0
             ? totalHead > 0
@@ -255,34 +355,27 @@ contract BookOfMotions is IBookOfMotions, SHASetting, BOASetting, BOSSetting {
             ? uint8(EnumsRepo.StateOfMotion.Rejected_ToBuy)
             : uint8(EnumsRepo.StateOfMotion.Rejected_NotToBuy);
 
-        emit VoteCounting(ia, motion.state);
+        emit VoteCounting(motionId, motion.state);
     }
 
-    function _ratioOfNay(address ia, uint40 againstVoter)
+    function _ratioOfNay(uint256 motionId, uint40 againstVoter)
         private
         view
         returns (uint256)
     {
-        Motion storage motion = _motions[ia];
+        Motion storage motion = _motions[motionId];
 
         // require(
         //     motion.state == uint8(EnumsRepo.StateOfMotion.Rejected_ToBuy),
         //     "agianst NO need to buy"
         // );
-        require(
-            motion.againstVoters.contains(uint256(againstVoter)),
-            "NOT NAY voter"
-        );
+        require(motion.againstVoters.contains(againstVoter), "NOT NAY voter");
 
-        return ((motion.ballotsBox.ballots[uint256(againstVoter)].weight *
-            10000) / motion.sumOfNay);
+        return ((motion.ballotsBox.ballots[againstVoter].weight * 10000) /
+            motion.sumOfNay);
     }
 
-    function requestToBuy(
-        address ia,
-        bytes32 sn,
-        uint32 execDate
-    )
+    function requestToBuy(address ia, bytes32 sn)
         external
         view
         onlyDirectKeeper
@@ -291,21 +384,21 @@ contract BookOfMotions is IBookOfMotions, SHASetting, BOASetting, BOSSetting {
         // uint256 ratio = _ratioOfNay(ia, againstVoter);
 
         require(
-            execDate <
+            block.number <
                 IInvestmentAgreement(ia).closingDate(sn.sequenceOfDeal()),
             "MISSED closing date"
         );
 
         require(
-            execDate <
-                _motions[ia].sn.votingDeadlineOfMotion() +
-                    uint32(_motions[ia].votingRule.execDaysForPutOptOfVR()) *
-                    86400,
+            block.number <
+                _motions[uint256(ia)].sn.votingDeadlineOfMotion() +
+                    uint32(
+                        _motions[uint256(ia)].votingRule.execDaysForPutOptOfVR()
+                    ) *
+                    24 *
+                    _rc.blocksPerHour(),
             "MISSED execute deadline"
         );
-
-        // parValue = ((orgParValue * ratio) / 10000);
-        // paidPar = ((orgPaidPar * ratio) / 10000);
 
         (, parValue, paidPar, , ) = IInvestmentAgreement(ia).getDeal(
             sn.sequenceOfDeal()
@@ -316,78 +409,83 @@ contract BookOfMotions is IBookOfMotions, SHASetting, BOASetting, BOSSetting {
     //##    读接口    ##
     //##################
 
-    function votingRule(address ia)
+    function votingRule(uint256 motionId)
         external
         view
-        onlyProposed(ia)
+        onlyProposed(motionId)
         onlyUser
         returns (bytes32)
     {
-        return _motions[ia].votingRule;
+        return _motions[motionId].votingRule;
     }
 
-    function state(address ia)
+    function state(uint256 motionId)
         external
         view
-        onlyProposed(ia)
+        onlyProposed(motionId)
         onlyUser
         returns (uint8)
     {
-        return _motions[ia].state;
+        return _motions[motionId].state;
     }
 
-    function votedYea(address ia, uint40 acct)
+    function votedYea(uint256 motionId, uint40 acct)
         external
         view
         onlyUser
         returns (bool)
     {
-        return _motions[ia].supportVoters.contains(uint256(acct));
+        return _motions[motionId].supportVoters.contains(uint256(acct));
     }
 
-    function votedNay(address ia, uint40 acct)
+    function votedNay(uint256 motionId, uint40 acct)
         external
         view
         onlyUser
         returns (bool)
     {
-        return _motions[ia].againstVoters.contains(uint256(acct));
+        return _motions[motionId].againstVoters.contains(uint256(acct));
     }
 
-    function getYea(address ia)
+    function getYea(uint256 motionId)
         external
         view
         onlyUser
         returns (uint40[] membersOfYea, uint256 supportPar)
     {
-        membersOfYea = _motions[ia].supportVoters.valuesToUint40();
-        supportPar = _motions[ia].sumOfYea;
+        membersOfYea = _motions[motionId].supportVoters.valuesToUint40();
+        supportPar = _motions[motionId].sumOfYea;
     }
 
-    function getNay(address ia)
+    function getNay(uint256 motionId)
         external
         view
         onlyUser
         returns (uint40[] membersOfNay, uint256 againstPar)
     {
-        membersOfNay = _motions[ia].againstVoters.valuesToUint40();
-        againstPar = _motions[ia].sumOfNay;
+        membersOfNay = _motions[motionId].againstVoters.valuesToUint40();
+        againstPar = _motions[motionId].sumOfNay;
     }
 
-    function sumOfVoteAmt(address ia) external view onlyUser returns (uint256) {
-        return _motions[ia].ballotsBox.sumOfWeight;
+    function sumOfVoteAmt(uint256 motionId)
+        external
+        view
+        onlyUser
+        returns (uint256)
+    {
+        return _motions[motionId].ballotsBox.sumOfWeight;
     }
 
-    function isVoted(address ia, uint40 acct)
+    function isVoted(uint256 motionId, uint40 acct)
         public
         view
         onlyUser
         returns (bool)
     {
-        return _motions[ia].ballotsBox.ballots[acct].sigDate > 0;
+        return _motions[motionId].ballotsBox.ballots[acct].sigDate > 0;
     }
 
-    function getVote(address ia, uint40 acct)
+    function getVote(uint256 motionId, uint40 acct)
         external
         view
         onlyUser
@@ -399,9 +497,9 @@ contract BookOfMotions is IBookOfMotions, SHASetting, BOASetting, BOSSetting {
             bytes32 sigHash
         )
     {
-        require(isVoted(ia, acct), "did NOT vote");
+        require(isVoted(motionId, acct), "did NOT vote");
 
-        Motion storage motion = _motions[ia];
+        Motion storage motion = _motions[motionId];
 
         EnumerableSet.Ballot storage ballot = motion.ballotsBox.ballots[acct];
 
@@ -412,23 +510,24 @@ contract BookOfMotions is IBookOfMotions, SHASetting, BOASetting, BOSSetting {
         sigHash = ballot.sigHash;
     }
 
-    function isPassed(address ia)
+    function isPassed(uint256 motionId)
         external
         view
         onlyUser
-        onlyProposed(ia)
+        onlyProposed(motionId)
         returns (bool)
     {
-        return _motions[ia].state == uint8(EnumsRepo.StateOfMotion.Passed);
+        return
+            _motions[motionId].state == uint8(EnumsRepo.StateOfMotion.Passed);
     }
 
-    function isRejected(address ia)
+    function isRejected(uint256 motionId)
         external
         view
         onlyUser
-        onlyProposed(ia)
+        onlyProposed(motionId)
         returns (bool)
     {
-        return _motions[ia].state > uint8(EnumsRepo.StateOfMotion.Passed);
+        return _motions[motionId].state > uint8(EnumsRepo.StateOfMotion.Passed);
     }
 }

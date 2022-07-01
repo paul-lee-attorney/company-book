@@ -18,11 +18,7 @@ interface ISigPage {
 
     function finalizeDoc() external;
 
-    function signDoc(
-        uint40 caller,
-        uint32 sigDate,
-        bytes32 sigHash
-    ) external;
+    function signDoc(uint40 caller, bytes32 sigHash) external;
 
     function acceptDoc(uint32 sigDate, bytes32 sigHash) external;
 
@@ -50,9 +46,9 @@ interface ISigPage {
 
     function isInitSigner(uint40 acct) external view returns (bool);
 
-    function parties() external returns (uint40[]);
+    function parties() external view returns (uint40[]);
 
-    function qtyOfParties() external returns (uint8);
+    function qtyOfParties() external view returns (uint256);
 
     function qtyOfBlankForParty(uint40 acct) external view returns (uint16);
 

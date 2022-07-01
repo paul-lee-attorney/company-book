@@ -478,4 +478,27 @@ library EnumerableSet {
             flag = true;
         }
     }
+
+    // ======== TimeLine ========
+
+    struct TimeLine {
+        mapping(uint8 => uint256) startDateOf;
+        uint8 currentState;
+    }
+
+    function setState(TimeLine storage line, uint8 state) internal {
+        line.currentState = state;
+        line.startDateOf[state] = block.number;
+    }
+
+    function pushToNextState(TimeLine storage line) internal {
+        line.currentState++;
+        line.startDateOf[line.currentState] = block.number;
+    }
+
+    function backToPrevState(TimeLine storage line) internal {
+        require(line.currentState > 0, "currentState overflow");
+        line.startDateOf[line.currentState] = 0;
+        line.currentState--;
+    }
 }

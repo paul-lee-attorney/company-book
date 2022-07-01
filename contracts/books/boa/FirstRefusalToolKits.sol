@@ -7,10 +7,10 @@ pragma solidity ^0.4.24;
 
 import "./InvestmentAgreement.sol";
 
-import "../../common/lib/ObjGroup.sol";
+import "../../common/lib/EnumerableSet.sol";
 
 contract FirstRefusalToolKits is InvestmentAgreement {
-    using ObjGroup for ObjGroup.TimeLine;
+    using EnumerableSet for EnumerableSet.TimeLine;
 
     struct Record {
         uint16 ssn; // FR sequence number
@@ -51,7 +51,7 @@ contract FirstRefusalToolKits is InvestmentAgreement {
         uint16 ssn,
         bool basedOnPar,
         uint40 acct,
-        uint32 execDate,
+        // uint32 execDate,
         bytes32 sigHash
     ) external onlyKeeper dealExist(ssn) returns (bytes32) {
         Deal storage targetDeal = _deals[ssn];
@@ -70,10 +70,7 @@ contract FirstRefusalToolKits is InvestmentAgreement {
         _counterOfFR[ssn]++;
 
         if (_counterOfFR[ssn] == 1)
-            targetDeal.states.setState(
-                uint8(EnumsRepo.StateOfDeal.Terminated),
-                execDate
-            );
+            targetDeal.states.setState(uint8(EnumsRepo.StateOfDeal.Terminated));
 
         uint256 weight = _bos.voteInHand(acct);
         require(weight > 0, "first refusal request has ZERO weight");
@@ -87,9 +84,9 @@ contract FirstRefusalToolKits is InvestmentAgreement {
 
         _updateFRDeals(ssn, _counterOfFR[ssn]);
 
-        lockDealSubject(snOfFR.sequenceOfDeal(), execDate);
+        lockDealSubject(snOfFR.sequenceOfDeal());
 
-        signDeal(ssn, acct, execDate, sigHash);
+        signDeal(ssn, acct, sigHash);
 
         return snOfFR;
     }
@@ -121,14 +118,14 @@ contract FirstRefusalToolKits is InvestmentAgreement {
     function acceptFR(
         uint16 ssn,
         uint40 acct,
-        uint32 acceptDate,
+        // uint32 acceptDate,
         bytes32 sigHash
     ) external onlyDirectKeeper dealExist(ssn) {
         uint16 len = _counterOfFR[ssn];
 
         while (len > 0) {
             uint16 frSSN = _records[ssn][len].ssn;
-            signDeal(frSSN, acct, acceptDate, sigHash);
+            signDeal(frSSN, acct, sigHash);
             len--;
         }
 

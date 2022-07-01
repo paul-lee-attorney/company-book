@@ -339,11 +339,15 @@ library SNParser {
     }
 
     function votingDeadlineOfMotion(bytes32 sn) internal pure returns (uint32) {
-        return uint32(bytes4(sn << 64));
+        return uint32(bytes4(sn << 72));
     }
 
-    function iaOfMotion(bytes32 sn) internal pure returns (address) {
-        return address(bytes20(sn << 96));
+    function weightRegBlockOfMotion(bytes32 sn) internal pure returns (uint32) {
+        return uint32(bytes4(sn << 104));
+    }
+
+    function typeOfMotion(bytes32 sn) internal pure returns (uint32) {
+        return uint8(sn[17]);
     }
 
     // ======== AntiDilution ========

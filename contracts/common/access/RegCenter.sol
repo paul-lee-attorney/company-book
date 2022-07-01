@@ -5,7 +5,9 @@
 
 pragma solidity ^0.4.24;
 
-contract RegCenter {
+import "./IRegCenter.sol";
+
+contract RegCenter is IRegCenter {
     struct User {
         address primeKey;
         address backupKey;
@@ -23,8 +25,11 @@ contract RegCenter {
 
     uint40 public counterOfUsers;
 
-    constructor() public {
+    uint32 private _BLOCKS_PER_HOUR;
+
+    constructor(uint32 blocks_per_hour) public {
         regUser();
+        _BLOCKS_PER_HOUR = blocks_per_hour;
     }
 
     // ##################
@@ -71,6 +76,14 @@ contract RegCenter {
         emit RegUser(counterOfUsers, msg.sender);
     }
 
+    function _isContract(address acct) private view returns (bool) {
+        uint32 size;
+        assembly {
+            size := extcodesize(acct)
+        }
+        return size > 0;
+    }
+
     function setBackupKey(uint40 userNo, address backupKey) external {
         require(backupKey != address(0), "zero key");
         require(!_usedKeys[backupKey], "used key");
@@ -78,6 +91,8 @@ contract RegCenter {
         User storage user = _users[userNo];
 
         require(msg.sender == user.primeKey, "wrong primeKey");
+        require(!_isContract(msg.sender), "msgSender shall not a contract");
+
         require(!user.flag, "already set backup key");
 
         user.backupKey = backupKey;
@@ -110,6 +125,18 @@ contract RegCenter {
     // ##################
     // ##   查询端口   ##
     // ##################
+
+    function blocksPerHour() external view returns (uint32) {
+        return _BLOCKS_PER_HOUR;
+    }
+
+    function primeKey(uint40 userNo) external view returns (address) {
+        return _users[userNo].primeKey;
+    }
+
+    function isContract(uint40 userNo) external view returns (bool) {
+        return _isContract(_users[userNo].primeKey);
+    }
 
     function isUser(address key) external view returns (bool) {
         return checkID(userNo(key), key);

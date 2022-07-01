@@ -12,27 +12,17 @@ interface IBookOfIA {
 
     function setTemplate(address body) external;
 
-    function createDoc(
-        uint8 docType,
-        uint40 creator,
-        uint32 createDate
-    ) external returns (address body);
+    function createDoc(uint8 docType, uint40 creator)
+        external
+        returns (address body);
 
     function removeDoc(address body) external;
 
-    function pushToNextState(
-        address body,
-        uint32 sigDate,
-        uint40 caller
-    ) external;
+    function pushToNextState(address body, uint40 caller) external;
 
     // ======== BookOfIA ========
 
-    function circulateIA(
-        address ia,
-        uint40 submitter,
-        uint32 submitDate
-    ) external;
+    function circulateIA(address ia, uint40 submitter) external;
 
     function mockDealOfSell(
         address ia,
@@ -61,8 +51,7 @@ interface IBookOfIA {
         bytes32 shareNumber,
         uint256 parValue,
         uint256 paidPar,
-        uint40 caller,
-        uint32 execDate
+        uint40 caller
     ) external;
 
     function acceptAlongDeal(
@@ -84,7 +73,7 @@ interface IBookOfIA {
 
     function counterOfDocs() external view returns (uint16);
 
-    function passedReview(address ia) external returns (bool);
+    function passedReview(address ia) external view returns (bool);
 
     function isCirculated(address body) external view returns (bool);
 
@@ -101,9 +90,9 @@ interface IBookOfIA {
 
     function startDateOf(address body) external view returns (uint32);
 
-    function reviewDeadlineOf(address body) external view returns (uint32);
+    function reviewDeadlineBNOf(address body) external view returns (uint32);
 
-    function votingDeadlineOf(address body) external view returns (uint32);
+    function votingDeadlineBNOf(address body) external view returns (uint32);
 
     // ======== BookOfIA ========
 

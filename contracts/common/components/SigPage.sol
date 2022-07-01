@@ -9,7 +9,9 @@ import "../lib/EnumerableSet.sol";
 
 import "../access/DraftControl.sol";
 
-contract SigPage is DraftControl {
+import "./ISigPage.sol";
+
+contract SigPage is ISigPage, DraftControl {
     using EnumerableSet for EnumerableSet.SignerGroup;
 
     bool public established;
@@ -140,7 +142,7 @@ contract SigPage is DraftControl {
     function signDeal(
         uint16 ssn,
         uint40 caller,
-        uint32 sigDate,
+        // uint32 sigDate,
         bytes32 sigHash
     ) public onlyKeeper {
         if (_signatures.signDeal(caller, ssn, sigHash)) {

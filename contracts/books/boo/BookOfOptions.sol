@@ -5,18 +5,20 @@
 
 pragma solidity ^0.4.24;
 
-import "../boh/terms/interfaces/IOptions.sol";
+import "../boh/terms//IOptions.sol";
 
 import "../../common/ruting/BOSSetting.sol";
 
 import "../../common/lib/ArrayUtils.sol";
-import "../../common/lib/ObjGroup.sol";
+import "../../common/lib/EnumerableSet.sol";
 import "../../common/lib/SNFactory.sol";
 import "../../common/lib/SNParser.sol";
-import "../../common/lib/ObjGroup.sol";
+import "../../common/lib/EnumerableSet.sol";
 import "../../common/lib/EnumerableSet.sol";
 
-contract BookOfOptions is BOSSetting {
+import "./IBookOfOptions.sol";
+
+contract BookOfOptions is IBookOfOptions, BOSSetting {
     using EnumerableSet for EnumerableSet.UintSet;
     using EnumerableSet for EnumerableSet.SNList;
     using ArrayUtils for bytes32[];
@@ -115,7 +117,7 @@ contract BookOfOptions is BOSSetting {
 
     event SetOptState(bytes32 indexed sn, uint8 state);
 
-    event ExecOpt(bytes32 indexed sn, uint32 exerciseDate);
+    event ExecOpt(bytes32 indexed sn);
 
     event RevokeOpt(bytes32 indexed sn);
 
@@ -310,12 +312,7 @@ contract BookOfOptions is BOSSetting {
         emit UpdateOracle(d1, d2);
     }
 
-    function execOption(bytes6 ssn, uint32 exerciseDate)
-        external
-        onlyKeeper
-        optionExist(ssn)
-        currentDate(exerciseDate)
-    {
+    function execOption(bytes6 ssn) external onlyKeeper optionExist(ssn) {
         Option storage opt = _options[ssn];
 
         bytes32 sn = opt.sn;
@@ -324,11 +321,11 @@ contract BookOfOptions is BOSSetting {
         uint8 closingDays = sn.closingDaysOfOpt();
 
         require(opt.state == 1, "option's state is NOT correct");
-        require(exerciseDate >= triggerDate, "NOT reached TriggerDate");
+        require(now - 15 minutes >= triggerDate, "NOT reached TriggerDate");
 
         if (exerciseDays > 0)
             require(
-                exerciseDate <= triggerDate + exerciseDays * 86400,
+                now + 15 minutes <= triggerDate + exerciseDays * 86400,
                 "NOT in exercise period"
             );
 
@@ -338,10 +335,10 @@ contract BookOfOptions is BOSSetting {
                 "conditions NOT satisfied"
             );
 
-        opt.closingDate = exerciseDate + closingDays * 86400;
+        opt.closingDate = uint32(block.timestamp) + closingDays * 86400;
         opt.state = 2;
 
-        emit ExecOpt(sn, exerciseDate);
+        emit ExecOpt(sn);
     }
 
     function _createFuture(
@@ -486,16 +483,16 @@ contract BookOfOptions is BOSSetting {
         emit LockOpt(opt.sn, hashLock);
     }
 
-    function closeOption(
-        bytes6 ssn,
-        string hashKey,
-        uint32 closingDate
-    ) external onlyKeeper optionExist(ssn) currentDate(closingDate) {
+    function closeOption(bytes6 ssn, string hashKey)
+        external
+        onlyKeeper
+        optionExist(ssn)
+    {
         Option storage opt = _options[ssn];
 
         require(opt.state > 1, "WRONG state");
         require(opt.state < 5, "WRONG state");
-        require(closingDate <= opt.closingDate, "MISSED closingDate");
+        require(now + 15 minutes <= opt.closingDate, "MISSED closingDate");
         require(opt.hashLock == keccak256(bytes(hashKey)), "WRONG key");
 
         opt.state = 5;
@@ -503,16 +500,14 @@ contract BookOfOptions is BOSSetting {
         emit CloseOpt(opt.sn, hashKey);
     }
 
-    function revokeOption(bytes6 ssn, uint32 revokeDate)
-        external
-        onlyKeeper
-        optionExist(ssn)
-        currentDate(revokeDate)
-    {
+    function revokeOption(bytes6 ssn) external onlyKeeper optionExist(ssn) {
         Option storage opt = _options[ssn];
 
         require(opt.state < 5, "WRONG state");
-        require(revokeDate > opt.closingDate, "closing period NOT expired");
+        require(
+            now - 15 minutes > opt.closingDate,
+            "closing period NOT expired"
+        );
 
         opt.state = 6;
 

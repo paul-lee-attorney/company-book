@@ -22,7 +22,13 @@ interface IRegCenter {
     // ##   查询端口   ##
     // ##################
 
-    function isUser(address key) external returns (bool);
+    function blocksPerHour() external view returns (uint32);
+
+    function primeKey(uint40 userNo) external view returns (address);
+
+    function isUser(address key) external view returns (bool);
+
+    function isContract(uint40 userNo) external view returns (bool);
 
     function checkID(uint40 userNo, address key) external returns (bool);
 

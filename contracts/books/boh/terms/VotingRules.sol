@@ -1,4 +1,4 @@
-/*
+/* *
  * Copyright 2021-2022 LI LI of JINGTIAN & GONGCHENG.
  * All Rights Reserved.
  * */
@@ -29,6 +29,8 @@ contract VotingRules is DraftControl {
     bytes32[8] private _votingRules;
 
     bool private _basedOnPar;
+
+    uint256 private _proposalThreshold;
 
     // constructor() public {
     //     // votingDays = 30; // default 30 days as per Company Law Act
@@ -71,6 +73,8 @@ contract VotingRules is DraftControl {
 
     event SetVotingBaseOnPar();
 
+    event SetProposalThreshold(uint256 threshold);
+
     event SetRule(uint8 typeOfVote, bytes32 sn);
 
     // ################
@@ -89,6 +93,11 @@ contract VotingRules is DraftControl {
     function setVotingBaseOnPar() external onlyAttorney {
         _basedOnPar = true;
         emit SetVotingBaseOnPar();
+    }
+
+    function setProposalThreshold(uint256 threshold) external onlyAttorney {
+        _proposalThreshold = threshold;
+        emit SetProposalThreshold(threshold);
     }
 
     function setRule(
@@ -138,5 +147,9 @@ contract VotingRules is DraftControl {
 
     function basedOnPar() external view onlyUser returns (bool) {
         return _basedOnPar;
+    }
+
+    function proposalThreshold() external view onlyUser returns (uint256) {
+        return _proposalThreshold;
     }
 }

@@ -5,7 +5,7 @@
 
 pragma solidity ^0.4.24;
 
-import "../../boa/interfaces/IInvestmentAgreement.sol";
+import "../../boa//IInvestmentAgreement.sol";
 
 import "../../../common/ruting/BOSSetting.sol";
 import "../../../common/ruting/BOASetting.sol";
@@ -17,7 +17,9 @@ import "../../../common/lib/SNFactory.sol";
 import "../../../common/lib/EnumerableSet.sol";
 import "../../../common/lib/EnumsRepo.sol";
 
-contract DragAlong is BOSSetting, BOASetting, DraftControl {
+import "./IAlongs.sol";
+
+contract DragAlong is IAlongs, BOSSetting, BOASetting, DraftControl {
     using ArrayUtils for address[];
     // using ArrayUtils for uint16[];
     using SNParser for bytes32;

@@ -10,7 +10,9 @@ import "../common/ruting/BOPSetting.sol";
 
 import "../common/lib/SNParser.sol";
 
-contract BOPKeeper is BOSSetting, BOPSetting {
+import "./IBOPKeeper.sol";
+
+contract BOPKeeper is IBOPKeeper, BOSSetting, BOPSetting {
     using SNParser for bytes32;
 
     // ################
@@ -18,21 +20,21 @@ contract BOPKeeper is BOSSetting, BOPSetting {
     // ################
 
     function createPledge(
-        uint32 createDate,
+        // uint32 createDate,
         bytes32 shareNumber,
         uint256 pledgedPar,
         uint40 creditor,
         uint40 debtor,
         uint256 guaranteedAmt,
         uint40 caller
-    ) external onlyDirectKeeper currentDate(createDate) {
+    ) external onlyDirectKeeper {
         require(shareNumber.shareholder() == caller, "NOT shareholder");
 
         _bos.decreaseCleanPar(shareNumber.short(), pledgedPar);
 
         _bop.createPledge(
             shareNumber,
-            createDate,
+            // createDate,
             creditor,
             debtor,
             pledgedPar,

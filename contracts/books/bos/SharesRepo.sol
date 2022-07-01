@@ -5,7 +5,6 @@
 
 pragma solidity ^0.4.24;
 
-// import "../../common/lib/ArrayUtils.sol";
 import "../../common/lib/SNFactory.sol";
 import "../../common/lib/SNParser.sol";
 import "../../common/lib/EnumerableSet.sol";
@@ -18,14 +17,9 @@ import "../../common/lib/Checkpoints.sol";
 
 contract SharesRepo is SHASetting {
     using SNFactory for bytes;
-    // using SNFactory for bytes32;
     using SNParser for bytes32;
     using EnumerableSet for EnumerableSet.SNList;
     using Checkpoints for Checkpoints.History;
-
-    // using ArrayUtils for uint256[];
-    // using ArrayUtils for address[];
-    // using ArrayUtils for bytes32[];
 
     //Share 股票
     struct Share {
@@ -33,8 +27,8 @@ contract SharesRepo is SHASetting {
         uint256 parValue; //票面金额（注册资本面值）
         uint256 paidPar; //实缴出资
         uint256 cleanPar; //清洁金额（扣除出质、远期票面金额）
-        uint32 paidInDeadline; //出资期限（时间戳）
         uint256 unitPrice; //发行价格（最小单位为分）
+        uint32 paidInDeadline; //出资期限（时间戳）
         uint8 state; //股票状态 （0：正常，1：出质，2：远期占用; 3:1+2; 4:查封; 5:1+4; 6:2+4; 7:1+2+4 ）
     }
 
@@ -49,26 +43,14 @@ contract SharesRepo is SHASetting {
 
     Checkpoints.History private _ownersEquity;
 
-    // //注册资本总额
-    // uint256 private _regCap;
-
-    // //实缴出资总额
-    // uint256 private _paidCap;
-
     //ssn => Share
     mapping(bytes6 => Share) internal _shares;
 
-    // //ssn => exist?
-    // mapping(bytes6 => bool) public isShare;
-
     //股权序列号计数器（2**16-1, 0-65535）
-    uint16 public counterOfShares;
+    uint16 internal _counterOfShares;
 
     //类别序列号计数器(2**8-1, 0-255)
-    uint8 public counterOfClasses;
-
-    // //shareNumber数组
-    // bytes32[] internal _snList;
+    uint8 internal _counterOfClasses;
 
     EnumerableSet.SNList internal _snList;
 
@@ -163,8 +145,6 @@ contract SharesRepo is SHASetting {
         uint32 paidInDeadline,
         uint256 unitPrice
     ) internal {
-        // require(!isShare[shareNumber], "shareNumber is USED");
-
         bytes6 ssn = shareNumber.short();
 
         Share storage share = _shares[ssn];
@@ -175,9 +155,6 @@ contract SharesRepo is SHASetting {
         share.cleanPar = paidPar;
         share.paidInDeadline = paidInDeadline;
         share.unitPrice = unitPrice;
-
-        // isShare[ssn] = true;
-        // shareNumber.insertToQue(_snList);
 
         _snList.add(shareNumber);
 
@@ -196,9 +173,6 @@ contract SharesRepo is SHASetting {
         delete _shares[ssn];
 
         _snList.remove(shareNumber);
-
-        // _snList.removeByValue(shareNumber);
-        // isShare[ssn] = false;
 
         emit DeregisterShare(shareNumber);
     }
@@ -227,11 +201,7 @@ contract SharesRepo is SHASetting {
         uint256 parValue,
         uint256 paidPar
     ) internal {
-        // require(paidPar <= parValue, "paidPar BIGGER than parValue");
-
         Share storage share = _shares[ssn];
-
-        // require(paidPar <= share.paidPar, "paidPar overflow");
 
         share.parValue -= parValue;
         share.paidPar -= paidPar;
@@ -275,8 +245,6 @@ contract SharesRepo is SHASetting {
         require(parValue <= share.cleanPar, "INSUFFICIENT cleanPar");
 
         share.cleanPar -= parValue;
-
-        if (share.state < 2) share.state += 2;
 
         emit DecreaseCleanPar(ssn, parValue);
     }
@@ -329,6 +297,14 @@ contract SharesRepo is SHASetting {
     //##    读接口    ##
     //##################
 
+    function counterOfShares() external view onlyUser returns (uint16) {
+        return _counterOfShares;
+    }
+
+    function counterOfClasses() external view onlyUser returns (uint8) {
+        return _counterOfClasses;
+    }
+
     function regCap() external view onlyUser returns (uint256 par) {
         (par, ) = _ownersEquity.latest();
     }
@@ -344,6 +320,11 @@ contract SharesRepo is SHASetting {
         returns (uint256 par, uint256 paid)
     {
         (par, paid) = _ownersEquity.getAtBlock(blocknumber);
+    }
+
+    function totalVote() external view onlyUser returns (uint256 vote) {
+        if (_getSHA().basedOnPar()) (vote, ) = _ownersEquity.latest();
+        else (, vote) = _ownersEquity.latest();
     }
 
     function totalVoteAtBlock(uint256 blocknumber)
@@ -370,7 +351,7 @@ contract SharesRepo is SHASetting {
     }
 
     function getShare(bytes6 ssn)
-        public
+        external
         view
         shareExist(ssn)
         onlyUser

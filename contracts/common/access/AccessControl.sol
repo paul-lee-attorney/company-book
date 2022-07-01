@@ -7,7 +7,9 @@ pragma solidity ^0.4.24;
 
 import "./Roles.sol";
 
-contract AccessControl is Roles {
+import "./IAccessControl.sol";
+
+contract AccessControl is IAccessControl, Roles {
     bytes32 public constant KEEPERS = bytes32("Keepers");
 
     bytes32 public constant READERS = bytes32("Readers");

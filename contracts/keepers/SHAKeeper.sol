@@ -5,16 +5,16 @@
 
 pragma solidity ^0.4.24;
 
-import "../books/boh/terms/interfaces/IAntiDilution.sol";
-import "../books/boh/interfaces/ITerm.sol";
+import "../books/boh/terms//IAntiDilution.sol";
+import "../books/boh//ITerm.sol";
 
-import "../books/boa/interfaces/IInvestmentAgreement.sol";
+import "../books/boa//IInvestmentAgreement.sol";
 import "../books/boa/InvestmentAgreement.sol";
 
-import "../books/boh/terms/interfaces/IAlongs.sol";
+import "../books/boh/terms//IAlongs.sol";
 import "../books/boh/terms/interfaces/IFirstRefusal.sol";
 
-import "../common/components/interfaces/ISigPage.sol";
+import "../common/components//ISigPage.sol";
 
 import "../common/ruting/BOASetting.sol";
 import "../common/ruting/BOSSetting.sol";
@@ -24,21 +24,26 @@ import "../common/lib/SNParser.sol";
 import "../common/lib/EnumsRepo.sol";
 import "../common/lib/ArrayUtils.sol";
 
-contract SHAKeeper is BOASetting, SHASetting, BOSSetting {
+import "./ISHAKeeper.sol";
+
+contract SHAKeeper is ISHAKeeper, BOASetting, SHASetting, BOSSetting {
     using SNParser for bytes32;
 
     // ##################
     // ##   Modifier   ##
     // ##################
 
-    modifier withinReviewPeriod(address ia, uint32 sigDate) {
-        require(_boa.reviewDeadlineOf(ia) >= sigDate, "missed review period");
+    modifier withinReviewPeriod(address ia) {
+        require(
+            _boa.reviewDeadlineBNOf(ia) >= block.number,
+            "missed review period"
+        );
         _;
     }
 
     // modifier withinProposePeriod(address ia, uint32 sigDate) {
-    //     require(_boa.reviewDeadlineOf(ia) < sigDate, "still in review period");
-    //     require(_boa.votingDeadlineOf(ia) >= sigDate, "missed voting deadline");
+    //     require(_boa.reviewDeadlineBNOf(ia) < sigDate, "still in review period");
+    //     require(_boa.votingDeadlineBNOf(ia) >= sigDate, "missed voting deadline");
     //     _;
     // }
 
@@ -64,15 +69,8 @@ contract SHAKeeper is BOASetting, SHASetting, BOSSetting {
         uint256 parValue,
         uint256 paidPar,
         uint40 caller,
-        uint32 sigDate,
         bytes32 sigHash
-    )
-        external
-        onlyDirectKeeper
-        currentDate(sigDate)
-        onlyExecuted(ia)
-        withinReviewPeriod(ia, sigDate)
-    {
+    ) external onlyDirectKeeper onlyExecuted(ia) withinReviewPeriod(ia) {
         _addAlongDeal(
             dragAlong,
             ia,
@@ -80,15 +78,14 @@ contract SHAKeeper is BOASetting, SHASetting, BOSSetting {
             shareNumber,
             parValue,
             paidPar,
-            caller,
-            sigDate
+            caller
         );
 
         bytes32 alongSN = _createAlongDeal(ia, sn, dragAlong, shareNumber);
 
         _updateAlongDeal(ia, sn, alongSN, parValue, paidPar);
 
-        _lockDealSubject(ia, alongSN, parValue, sigDate);
+        _lockDealSubject(ia, alongSN, parValue);
 
         if (!dragAlong)
             ISigPage(ia).signDeal(alongSN.sequenceOfDeal(), caller, sigHash);
@@ -101,8 +98,7 @@ contract SHAKeeper is BOASetting, SHASetting, BOSSetting {
         bytes32 shareNumber,
         uint256 parValue,
         uint256 paidPar,
-        uint40 caller,
-        uint32 sigDate
+        uint40 caller
     ) private {
         uint40 drager = IInvestmentAgreement(ia)
             .shareNumberOfDeal(sn.sequenceOfDeal())
@@ -146,8 +142,7 @@ contract SHAKeeper is BOASetting, SHASetting, BOSSetting {
             shareNumber,
             parValue,
             paidPar,
-            caller,
-            sigDate
+            caller
         );
     }
 
@@ -198,14 +193,10 @@ contract SHAKeeper is BOASetting, SHASetting, BOSSetting {
     function _lockDealSubject(
         address ia,
         bytes32 alongSN,
-        uint256 parValue,
-        uint32 sigDate
+        uint256 parValue
     ) private returns (bool flag) {
         if (
-            IInvestmentAgreement(ia).lockDealSubject(
-                alongSN.sequenceOfDeal(),
-                sigDate
-            )
+            IInvestmentAgreement(ia).lockDealSubject(alongSN.sequenceOfDeal())
         ) {
             _bos.decreaseCleanPar(alongSN.shortShareNumberOfDeal(), parValue);
             flag = true;
@@ -218,15 +209,8 @@ contract SHAKeeper is BOASetting, SHASetting, BOSSetting {
         uint40 drager,
         bool dragAlong,
         uint40 caller,
-        uint32 sigDate,
         bytes32 sigHash
-    )
-        external
-        onlyDirectKeeper
-        currentDate(sigDate)
-        onlyExecuted(ia)
-        withinReviewPeriod(ia, sigDate)
-    {
+    ) external onlyDirectKeeper onlyExecuted(ia) withinReviewPeriod(ia) {
         require(caller == sn.buyerOfDeal(), "caller NOT buyer");
         _boa.acceptAlongDeal(ia, sn, drager, dragAlong);
         ISigPage(ia).signDeal(sn.sequenceOfDeal(), caller, sigHash);
@@ -239,15 +223,8 @@ contract SHAKeeper is BOASetting, SHASetting, BOSSetting {
         bytes32 sn,
         bytes32 shareNumber,
         uint40 caller,
-        uint32 sigDate,
         bytes32 sigHash
-    )
-        external
-        onlyDirectKeeper
-        currentDate(sigDate)
-        onlyExecuted(ia)
-        withinReviewPeriod(ia, sigDate)
-    {
+    ) external onlyDirectKeeper onlyExecuted(ia) withinReviewPeriod(ia) {
         require(
             caller == shareNumber.shareholder(),
             "caller is not shareholder"
@@ -273,7 +250,6 @@ contract SHAKeeper is BOASetting, SHASetting, BOSSetting {
             giftPar,
             obligors,
             caller,
-            sigDate,
             sigHash
         );
     }
@@ -284,7 +260,6 @@ contract SHAKeeper is BOASetting, SHASetting, BOSSetting {
         uint256 giftPar,
         uint40[] obligors,
         uint40 caller,
-        uint32 sigDate,
         bytes32 sigHash
     ) private {
         for (uint256 i = 0; i < obligors.length; i++) {
@@ -296,8 +271,7 @@ contract SHAKeeper is BOASetting, SHASetting, BOSSetting {
                     ssn,
                     sharesInHand[j],
                     giftPar,
-                    caller,
-                    sigDate
+                    caller
                 );
 
                 ISigPage(ia).signDeal(
@@ -305,13 +279,6 @@ contract SHAKeeper is BOASetting, SHASetting, BOSSetting {
                     caller,
                     sigHash
                 );
-
-                // ISigPage(ia).signDeal(
-                //     snOfGiftDeal.sequenceOfDeal(),
-                //     obligors[i],
-                //     sigDate,
-                //     sigHash
-                // );
 
                 giftPar = result;
                 if (giftPar == 0) break;
@@ -326,8 +293,7 @@ contract SHAKeeper is BOASetting, SHASetting, BOSSetting {
         uint16 ssn,
         bytes32 shareNumber,
         uint256 giftPar,
-        uint40 caller,
-        uint32 sigDate
+        uint40 caller
     ) private returns (bytes32 snOfGiftDeal, uint256 result) {
         uint256 targetCleanPar = _bos.cleanPar(shareNumber.short());
 
@@ -349,8 +315,7 @@ contract SHAKeeper is BOASetting, SHASetting, BOSSetting {
 
             if (
                 IInvestmentAgreement(ia).lockDealSubject(
-                    snOfGiftDeal.sequenceOfDeal(),
-                    sigDate
+                    snOfGiftDeal.sequenceOfDeal()
                 )
             ) {
                 _bos.decreaseCleanPar(shareNumber.short(), lockAmount);
@@ -388,11 +353,10 @@ contract SHAKeeper is BOASetting, SHASetting, BOSSetting {
     function takeGiftShares(
         address ia,
         bytes32 sn,
-        uint40 caller,
-        uint32 sigDate
-    ) external currentDate(sigDate) onlyDirectKeeper {
+        uint40 caller
+    ) external onlyDirectKeeper {
         require(caller == sn.buyerOfDeal(), "caller is not buyer");
-        IInvestmentAgreement(ia).takeGift(sn.sequenceOfDeal(), sigDate);
+        IInvestmentAgreement(ia).takeGift(sn.sequenceOfDeal());
     }
 
     // ======== FirstRefusal ========
@@ -401,15 +365,9 @@ contract SHAKeeper is BOASetting, SHASetting, BOSSetting {
         address ia,
         bytes32 sn,
         uint40 caller,
-        uint32 sigDate,
+        // uint32 sigDate,
         bytes32 sigHash
-    )
-        external
-        onlyDirectKeeper
-        currentDate(sigDate)
-        onlyExecuted(ia)
-        withinReviewPeriod(ia, sigDate)
-    {
+    ) external onlyDirectKeeper onlyExecuted(ia) withinReviewPeriod(ia) {
         require(!ISigPage(ia).isInitSigner(caller), "caller is an init signer");
 
         address term = _getSHA().getTerm(
@@ -424,7 +382,6 @@ contract SHAKeeper is BOASetting, SHASetting, BOSSetting {
             sn.sequenceOfDeal(),
             _getSHA().basedOnPar(),
             caller,
-            sigDate,
             sigHash
         );
     }
@@ -433,15 +390,9 @@ contract SHAKeeper is BOASetting, SHASetting, BOSSetting {
         address ia,
         bytes32 sn,
         uint40 caller,
-        uint32 acceptDate,
+        // uint32 acceptDate,
         bytes32 sigHash
-    )
-        external
-        onlyDirectKeeper
-        currentDate(acceptDate)
-        onlyExecuted(ia)
-        withinReviewPeriod(ia, acceptDate)
-    {
+    ) external onlyDirectKeeper onlyExecuted(ia) withinReviewPeriod(ia) {
         if (sn.typeOfDeal() == uint8(EnumsRepo.TypeOfDeal.CapitalIncrease))
             require(
                 _bos.groupNo(caller) == _bos.controller(),
@@ -459,7 +410,7 @@ contract SHAKeeper is BOASetting, SHASetting, BOSSetting {
         IInvestmentAgreement(ia).acceptFR(
             sn.sequenceOfDeal(),
             caller,
-            acceptDate,
+            // acceptDate,
             sigHash
         );
     }

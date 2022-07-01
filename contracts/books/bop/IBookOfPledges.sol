@@ -6,13 +6,25 @@
 pragma solidity ^0.4.24;
 
 interface IBookOfPledges {
-    function isPledge(bytes32 sn) external view returns (bool);
+    //##################
+    //##    Event     ##
+    //##################
 
-    function pledgesOf(bytes32 sn) external view returns (bytes32[]);
+    event CreatePledge(
+        bytes32 indexed sn,
+        bytes32 indexed shareNumber,
+        uint256 pledgedPar,
+        uint40 creditor,
+        uint256 guaranteedAmt
+    );
 
-    function counterOfPledges() external view returns (uint16);
+    event DelPledge(bytes32 indexed sn);
 
-    function snList(uint256 sequence) external view returns (bytes32);
+    event UpdatePledge(
+        bytes32 indexed sn,
+        uint256 pledgedPar,
+        uint256 guaranteedAmt
+    );
 
     //##################
     //##    写接口    ##
@@ -20,7 +32,7 @@ interface IBookOfPledges {
 
     function createPledge(
         bytes32 shareNumber,
-        uint32 createDate,
+        // uint32 createDate,
         uint40 creditor,
         uint40 debtor,
         uint256 pledgedPar,
@@ -64,4 +76,12 @@ interface IBookOfPledges {
             uint40 creditor,
             uint256 guaranteedAmt
         );
+
+    function isPledge(bytes32 sn) external view returns (bool);
+
+    function pledgesOf(bytes32 sn) external view returns (bytes32[]);
+
+    function counterOfPledges() external view returns (uint16);
+
+    function snList(uint256 sequence) external view returns (bytes32);
 }

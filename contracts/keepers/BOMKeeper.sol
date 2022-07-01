@@ -4,8 +4,9 @@
  * */
 
 pragma solidity ^0.4.24;
+pragma experimental ABIEncoderV2;
 
-import "../books/boa/interfaces/IInvestmentAgreement.sol";
+import "../books/boa//IInvestmentAgreement.sol";
 
 import "../common/ruting/BOSSetting.sol";
 import "../common/ruting/BOASetting.sol";
@@ -15,11 +16,14 @@ import "../common/ruting/SHASetting.sol";
 
 import "../common/lib/SNParser.sol";
 
-import "../common/components/interfaces/ISigPage.sol";
+import "../common/components//ISigPage.sol";
 
 import "../common/lib/EnumsRepo.sol";
 
+import "./IBOMKeeper.sol";
+
 contract BOMKeeper is
+    IBOMKeeper,
     BOASetting,
     BOMSetting,
     SHASetting,
@@ -46,15 +50,19 @@ contract BOMKeeper is
     // ##   Motion   ##
     // ################
 
-    function proposeMotion(
-        address ia,
-        uint32 proposeDate,
-        uint40 caller
-    )
+    function authorizeToPropose(
+        uint40 caller,
+        uint40 delegate,
+        uint256 actionId
+    ) external onlyDirectKeeper memberExist(caller) {
+        _bom.authorizeToPropose(caller, delegate, actionId);
+    }
+
+    function proposeMotion(address ia, uint40 caller)
         external
         onlyDirectKeeper
+        memberExist(caller)
         onlyPartyOf(ia, caller)
-        currentDate(proposeDate)
     {
         require(
             _boa.currentState(ia) == uint8(EnumsRepo.BODStates.Established),
@@ -62,52 +70,61 @@ contract BOMKeeper is
         );
 
         require(
-            _boa.reviewDeadlineOf(ia) < block.number,
+            _boa.reviewDeadlineBNOf(ia) < block.number,
             "InvestmentAgreement not passed review procesedure"
         );
 
         require(
-            _boa.votingDeadlineOf(ia) >= block.number,
-            "missed votingDeadline"
+            _boa.votingDeadlineBNOf(ia) >= block.number,
+            "missed votingDeadlineBN"
         );
 
         bytes32 vr = _getSHA().votingRules(_boa.typeOfIA(ia));
 
         if (vr.ratioHeadOfVR() > 0 || vr.ratioAmountOfVR() > 0)
-            _bom.proposeMotion(ia, proposeDate, caller);
+            _bom.proposeMotion(ia, caller);
 
-        _boa.pushToNextState(ia, proposeDate, caller);
+        _boa.pushToNextState(ia, caller);
+    }
+
+    function proposeAction(
+        uint8 actionType,
+        address[] target,
+        bytes[] params,
+        bytes32 desHash,
+        uint40 submitter
+    ) external onlyDirectKeeper memberExist(submitter) {
+        _bom.proposeAction(actionType, target, params, desHash, submitter);
     }
 
     function castVote(
         address ia,
         uint8 attitude,
         uint40 caller,
-        uint32 sigDate,
         bytes32 sigHash
-    ) external onlyDirectKeeper currentDate(sigDate) notPartyOf(ia, caller) {
+    ) external onlyDirectKeeper notPartyOf(ia, caller) {
         require(_bos.isMember(caller), "not a shareholder");
-        _bom.castVote(ia, attitude, caller, sigDate, sigHash);
+        _bom.castVote(ia, attitude, caller, sigHash);
     }
 
-    function voteCounting(
-        address ia,
-        uint40 caller,
-        uint32 sigDate
-    ) external onlyDirectKeeper onlyPartyOf(ia, caller) currentDate(sigDate) {
-        _bom.voteCounting(ia, sigDate);
-        _boa.pushToNextState(ia, sigDate, caller);
+    function voteCounting(address ia, uint40 caller)
+        external
+        onlyDirectKeeper
+        onlyPartyOf(ia, caller)
+    {
+        _bom.voteCounting(uint256(ia));
+        _boa.pushToNextState(ia, caller);
     }
 
     function requestToBuy(
         address ia,
         bytes32 sn,
-        uint32 exerciseDate,
         uint40 againstVoter,
         uint40 caller
-    ) external onlyDirectKeeper currentDate(exerciseDate) {
+    ) external onlyDirectKeeper {
         require(
-            _bom.state(ia) == uint8(EnumsRepo.StateOfMotion.Rejected_ToBuy),
+            _bom.state(uint256(ia)) ==
+                uint8(EnumsRepo.StateOfMotion.Rejected_ToBuy),
             "agianst NO need to buy"
         );
 
@@ -124,19 +141,18 @@ contract BOMKeeper is
             sn.sequenceOfDeal()
         );
 
-        (uint256 parValue, uint256 paidPar) = _bom.requestToBuy(
-            ia,
-            sn,
-            exerciseDate
-        );
+        (uint256 parValue, uint256 paidPar) = _bom.requestToBuy(ia, sn);
 
-        uint8 closingDays = uint8((closingDate - exerciseDate + 42300) / 84600);
+        uint8 closingDays = uint8(
+            (closingDate - uint32(block.number) + 12 * _rc.blocksPerHour()) /
+                (24 * _rc.blocksPerHour())
+        );
 
         bytes32 snOfOpt = _boo.createOption(
             uint8(EnumsRepo.TypeOfOption.Put_Price),
             caller,
             againstVoter,
-            exerciseDate,
+            uint32(block.number),
             1,
             closingDays,
             unitPrice,
@@ -144,7 +160,7 @@ contract BOMKeeper is
             paidPar
         );
 
-        _boo.execOption(snOfOpt.shortOfOpt(), exerciseDate);
+        _boo.execOption(snOfOpt.shortOfOpt());
         _boo.addFuture(snOfOpt.shortOfOpt(), shareNumber, parValue, paidPar);
     }
 }

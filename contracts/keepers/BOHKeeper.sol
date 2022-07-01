@@ -5,26 +5,34 @@
 
 pragma solidity ^0.4.24;
 
-import "../books/boh/interfaces/IShareholdersAgreement.sol";
-import "../books/boh/terms/interfaces/IGroupsUpdate.sol";
+import "../books/boh//IShareholdersAgreement.sol";
+import "../books/boh/terms//IGroupsUpdate.sol";
 import "../books/boh/ShareholdersAgreement.sol";
 
-import "../common/components/interfaces/ISigPage.sol";
+import "../common/components//ISigPage.sol";
 
 import "../common/ruting/BOMSetting.sol";
 import "../common/ruting/BOOSetting.sol";
 import "../common/ruting/BOSSetting.sol";
 import "../common/ruting/SHASetting.sol";
-import "../common/access/interfaces/IAccessControl.sol";
-import "../common/ruting/interfaces/IBookSetting.sol";
-import "../common/access/interfaces/IRoles.sol";
+import "../common/access//IAccessControl.sol";
+import "../common/ruting/IBookSetting.sol";
+import "../common/access//IRoles.sol";
 
 import "../common/lib/SNParser.sol";
 import "../common/lib/EnumsRepo.sol";
 
+import "./IBOHKeeper.sol";
+
 // import "../common/utils/Context.sol";
 
-contract BOHKeeper is BOSSetting, SHASetting, BOMSetting, BOOSetting {
+contract BOHKeeper is
+    IBOHKeeper,
+    BOSSetting,
+    SHASetting,
+    BOMSetting,
+    BOOSetting
+{
     using SNParser for bytes32;
 
     address[15] public termsTemplate;
@@ -69,13 +77,9 @@ contract BOHKeeper is BOSSetting, SHASetting, BOMSetting, BOOSetting {
         emit AddTemplate(title, add);
     }
 
-    function createSHA(
-        uint8 docType,
-        uint40 caller,
-        uint32 createDate
-    ) external onlyDirectKeeper currentDate(createDate) {
+    function createSHA(uint8 docType, uint40 caller) external onlyDirectKeeper {
         require(_bos.isMember(caller), "not MEMBER");
-        address sha = _boh.createDoc(docType, caller, createDate);
+        address sha = _boh.createDoc(docType, caller);
 
         IAccessControl(sha).init(caller, _rc.userNo(this), address(_rc));
 
@@ -96,21 +100,16 @@ contract BOHKeeper is BOSSetting, SHASetting, BOMSetting, BOOSetting {
         _boh.removeDoc(sha, caller);
     }
 
-    function circulateSHA(
-        address sha,
-        uint40 caller,
-        uint32 submitDate
-    )
+    function circulateSHA(address sha, uint40 caller)
         external
         onlyDirectKeeper
         onlyOwnerOf(sha, caller)
-        currentDate(submitDate)
     {
         require(IDraftControl(sha).finalized(), "let GC finalize SHA first");
 
         IAccessControl(sha).abandonOwnership();
 
-        _boh.circulateDoc(sha, bytes32(0), caller, submitDate);
+        _boh.circulateDoc(sha, bytes32(0), caller);
     }
 
     // ======== Sign SHA ========
@@ -118,18 +117,16 @@ contract BOHKeeper is BOSSetting, SHASetting, BOMSetting, BOOSetting {
     function signSHA(
         address sha,
         uint40 caller,
-        uint32 sigDate,
         bytes32 sigHash
-    ) external onlyDirectKeeper onlyPartyOf(sha, caller) currentDate(sigDate) {
+    ) external onlyDirectKeeper onlyPartyOf(sha, caller) {
         require(
             _boh.currentState(sha) == uint8(EnumsRepo.BODStates.Circulated),
             "SHA not in Circulated State"
         );
 
-        ISigPage(sha).signDoc(caller, sigDate, sigHash);
+        ISigPage(sha).signDoc(caller, sigHash);
 
-        if (ISigPage(sha).established())
-            _boh.pushToNextState(sha, sigDate, caller);
+        if (ISigPage(sha).established()) _boh.pushToNextState(sha, caller);
     }
 
     function effectiveSHA(

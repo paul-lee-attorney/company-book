@@ -5,11 +5,13 @@
 
 pragma solidity ^0.4.24;
 
-import "../../books/bop/interfaces/IBookOfPledges.sol";
+import "../../books/bop/IBookOfPledges.sol";
 
 import "../access/AccessControl.sol";
 
-contract BOPSetting is AccessControl {
+import "./IBookSetting.sol";
+
+contract BOPSetting is IBookSetting, AccessControl {
     IBookOfPledges internal _bop;
 
     event SetBOP(address bop);

@@ -7,9 +7,12 @@ pragma solidity ^0.4.24;
 
 import "../../common/components/BookOfDocuments.sol";
 
-import "./interfaces/IShareholdersAgreement.sol";
+import ".//IShareholdersAgreement.sol";
 
-contract BookOfSHA is BookOfDocuments {
+import "./IBookOfSHA.sol";
+import "./ITerm.sol";
+
+contract BookOfSHA is IBookOfSHA, ITerm, BookOfDocuments {
     enum BOHStates {
         ZeroPoint,
         Created,
@@ -41,9 +44,9 @@ contract BookOfSHA is BookOfDocuments {
         uint40 caller,
         uint32 sigDate
     ) external onlyDirectKeeper onlyRegistered(body) {
-        if (_pointer != address(0)) pushToNextState(_pointer, sigDate, caller);
+        if (_pointer != address(0)) pushToNextState(_pointer, caller);
 
-        pushToNextState(body, sigDate, caller);
+        pushToNextState(body, caller);
 
         _pointer = body;
 

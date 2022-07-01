@@ -5,7 +5,7 @@
 
 pragma solidity ^0.4.24;
 
-import "../../boa/interfaces/IInvestmentAgreement.sol";
+import "../../boa//IInvestmentAgreement.sol";
 
 import "../../../common/ruting/BOSSetting.sol";
 import "../../../common/ruting/BOMSetting.sol";
@@ -16,9 +16,11 @@ import "../../../common/lib/EnumerableSet.sol";
 import "../../../common/lib/SNFactory.sol";
 import "../../../common/lib/SNParser.sol";
 
-import "../../../common/components/interfaces/ISigPage.sol";
+import "../../../common/components//ISigPage.sol";
 
-contract FirstRefusal is BOSSetting, BOMSetting, DraftControl {
+import "./IFirstRefusal.sol";
+
+contract FirstRefusal is IFirstRefusal, BOSSetting, BOMSetting, DraftControl {
     // using ArrayUtils for uint256[];
     using ArrayUtils for uint40[];
     using SNFactory for bytes;
@@ -213,7 +215,7 @@ contract FirstRefusal is BOSSetting, BOMSetting, DraftControl {
         if (!isTriggered(ia, sn)) return true;
         bytes32 rule = _firstRefusals[sn.typeOfDeal()].rule;
 
-        (uint40[] memory consentParties, ) = _bom.getYea(ia);
+        (uint40[] memory consentParties, ) = _bom.getYea(uint256(ia));
 
         uint40[] memory signers = ISigPage(ia).parties();
 

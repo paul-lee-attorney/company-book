@@ -4,11 +4,11 @@
 
 pragma solidity ^0.4.24;
 
-import "./interfaces/IInvestmentAgreement.sol";
+import ".//IInvestmentAgreement.sol";
 
-import "../boh/terms/interfaces/IAlongs.sol";
+import "../boh/terms//IAlongs.sol";
 
-import "../../common/components/interfaces/ISigPage.sol";
+import "../../common/components//ISigPage.sol";
 import "../../common/components/BookOfDocuments.sol";
 
 import "../../common/ruting/SHASetting.sol";
@@ -18,7 +18,9 @@ import "../../common/lib/SNParser.sol";
 import "../../common/lib/EnumsRepo.sol";
 import "../../common/lib/EnumerableSet.sol";
 
-contract BookOfIA is BookOfDocuments {
+import "./IBookOfIA.sol";
+
+contract BookOfIA is IBookOfIA, BookOfDocuments {
     using SNParser for bytes32;
     using EnumerableSet for EnumerableSet.UintSet;
     using ArrayUtils for uint40[];
@@ -78,14 +80,13 @@ contract BookOfIA is BookOfDocuments {
     //##  Write I/O  ##
     //#################
 
-    function circulateIA(
-        address ia,
-        uint40 submitter,
-        uint32 submitDate
-    ) external onlyDirectKeeper {
+    function circulateIA(address ia, uint40 submitter)
+        external
+        onlyDirectKeeper
+    {
         bytes32 rule = _getSHA().votingRules(typeOfIA(ia));
 
-        circulateDoc(ia, rule, submitter, submitDate);
+        circulateDoc(ia, rule, submitter);
     }
 
     function mockDealOfSell(
@@ -204,9 +205,9 @@ contract BookOfIA is BookOfDocuments {
     {
         Doc storage doc = _docs[ia];
 
-        require(doc.reviewDeadline <= block.number, "still in review period");
+        require(doc.reviewDeadlineBN <= block.number, "still in review period");
 
-        pushToNextState(ia, proposeDate, caller);
+        pushToNextState(ia, caller);
     }
 
     function addAlongDeal(
@@ -215,9 +216,8 @@ contract BookOfIA is BookOfDocuments {
         bytes32 shareNumber,
         uint256 parValue,
         uint256 paidPar,
-        uint40 caller,
-        uint32 execDate
-    ) external onlyDirectKeeper currentDate(execDate) {
+        uint40 caller
+    ) external onlyDirectKeeper {
         uint16 drager = rule.dragerOfLink();
         uint16 follower = _bos.groupNo(shareNumber.shareholder());
 

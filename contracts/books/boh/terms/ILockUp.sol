@@ -5,8 +5,6 @@
 
 pragma solidity ^0.4.24;
 
-import "../LockUp.sol";
-
 contract ILockUp {
     function setLocker(uint256 shareNumber, uint256 dueDate) external;
 

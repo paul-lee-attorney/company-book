@@ -12,7 +12,9 @@ import "../../common/lib/EnumerableSet.sol";
 
 import "../../common/ruting/BOSSetting.sol";
 
-contract BookOfPledges is BOSSetting {
+import "./IBookOfPledges.sol";
+
+contract BookOfPledges is IBookOfPledges, BOSSetting {
     using SNFactory for bytes;
     using SNParser for bytes32;
     using EnumerableSet for EnumerableSet.SNList;
@@ -39,35 +41,15 @@ contract BookOfPledges is BOSSetting {
     mapping(bytes6 => Pledge) private _pledges;
 
     // shortShareNumber => pledges SN
-    mapping(bytes6 => bytes32[]) public pledgesOf;
+    mapping(bytes6 => bytes32[]) private _pledgesOf;
 
-    uint16 public counterOfPledges;
+    uint16 private _counterOfPledges;
 
     EnumerableSet.SNList private _snList;
 
     constructor(uint40 bookeeper, address regCenter) public {
         init(_msgSender(), bookeeper, regCenter);
     }
-
-    //##################
-    //##    Event     ##
-    //##################
-
-    event CreatePledge(
-        bytes32 indexed sn,
-        bytes32 indexed shareNumber,
-        uint256 pledgedPar,
-        uint40 creditor,
-        uint256 guaranteedAmt
-    );
-
-    event DelPledge(bytes32 indexed sn);
-
-    event UpdatePledge(
-        bytes32 indexed sn,
-        uint256 pledgedPar,
-        uint256 guaranteedAmt
-    );
 
     //##################
     //##   Modifier   ##
@@ -104,7 +86,7 @@ contract BookOfPledges is BOSSetting {
 
     function createPledge(
         bytes32 shareNumber,
-        uint32 createDate,
+        // uint32 createDate,
         uint40 creditor,
         uint40 debtor,
         uint256 pledgedPar,
@@ -112,12 +94,12 @@ contract BookOfPledges is BOSSetting {
     ) external onlyDirectKeeper shareExist(shareNumber.short()) {
         require(pledgedPar > 0, "ZERO pledged parvalue");
 
-        counterOfPledges++;
+        _counterOfPledges++;
 
         bytes32 sn = _createSN(
             1,
-            counterOfPledges,
-            createDate,
+            _counterOfPledges,
+            uint32(block.number),
             shareNumber.short(),
             shareNumber.shareholder(),
             debtor
@@ -137,7 +119,7 @@ contract BookOfPledges is BOSSetting {
 
         _snList.add(sn);
 
-        sn.insertToQue(pledgesOf[shareNumber.short()]);
+        sn.insertToQue(_pledgesOf[shareNumber.short()]);
 
         emit CreatePledge(sn, shareNumber, pledgedPar, creditor, guaranteedAmt);
     }
@@ -145,10 +127,10 @@ contract BookOfPledges is BOSSetting {
     function delPledge(bytes6 ssn) external onlyKeeper pledgeExist(ssn) {
         Pledge storage pld = _pledges[ssn];
 
-        pledgesOf[pld.sn.shortShareNumberOfPledge()].removeByValue(pld.sn);
+        _pledgesOf[pld.sn.shortShareNumberOfPledge()].removeByValue(pld.sn);
 
-        if (pledgesOf[pld.sn.shortShareNumberOfPledge()].length == 0)
-            delete pledgesOf[pld.sn.shortShareNumberOfPledge()];
+        if (_pledgesOf[pld.sn.shortShareNumberOfPledge()].length == 0)
+            delete _pledgesOf[pld.sn.shortShareNumberOfPledge()];
 
         // snList.removeByValue(pld.sn);
 
@@ -181,6 +163,14 @@ contract BookOfPledges is BOSSetting {
     //##################
     //##    读接口    ##
     //##################
+
+    function pledgesOf(bytes32 sn) external view returns (bytes32[]) {
+        return _pledgesOf[sn.short()];
+    }
+
+    function counterOfPledges() external view returns (uint16) {
+        return _counterOfPledges;
+    }
 
     function isPledge(bytes6 ssn) external view onlyUser returns (bool) {
         return _snList.contains(ssn);

@@ -16,14 +16,12 @@ interface IInvestmentAgreement {
         uint16 ssn,
         bool basedOnPar,
         uint40 acct,
-        uint32 execDate,
         bytes32 sigHash
     ) external returns (bytes32);
 
     function acceptFR(
         uint16 ssn,
         uint40 acct,
-        uint32 acceptDate,
         bytes32 sigHash
     ) external;
 
@@ -48,36 +46,27 @@ interface IInvestmentAgreement {
 
     function delDeal(uint16 sn) external;
 
-    function lockDealSubject(uint16 ssn, uint32 lockDate)
-        external
-        returns (bool flag);
+    function lockDealSubject(uint16 ssn) external returns (bool flag);
 
-    function releaseDealSubject(uint16 ssn, uint32 releaseDate)
-        external
-        returns (bool flag);
+    function releaseDealSubject(uint16 ssn) external returns (bool flag);
 
     function finalizeIA() external;
 
     function clearDealCP(
         uint16 ssn,
-        uint32 sigDate,
         bytes32 hashLock,
         uint256 closingDate
     ) external;
 
-    function closeDeal(
-        uint16 ssn,
-        uint32 sigDate,
-        string hashKey
-    ) external;
+    function closeDeal(uint16 ssn, string hashKey) external;
 
     function revokeDeal(
         uint16 ssn,
-        uint32 sigDate,
+        // uint32 sigDate,
         string hashKey
     ) external;
 
-    function takeGift(uint16 ssn, uint32 sigDate) external;
+    function takeGift(uint16 ssn) external;
 
     //  ######################
     //  ##     查询接口     ##

@@ -5,7 +5,7 @@
 
 pragma solidity ^0.4.24;
 
-import "../../boa/interfaces/IInvestmentAgreement.sol";
+import "../../boa//IInvestmentAgreement.sol";
 
 import "../../../common/ruting/BOMSetting.sol";
 
@@ -14,7 +14,7 @@ import "../../../common/lib/ArrayUtils.sol";
 
 import "./DragAlong.sol";
 
-import "../../../common/components/interfaces/ISigPage.sol";
+import "../../../common/components//ISigPage.sol";
 
 contract TagAlong is BOMSetting, DragAlong {
     using EnumerableSet for EnumerableSet.UintSet;
@@ -40,11 +40,11 @@ contract TagAlong is BOMSetting, DragAlong {
     // ################
 
     function isExempted(address ia, bytes32 sn) public onlyUser returns (bool) {
-        require(_bom.isPassed(ia), "motion NOT passed");
+        require(_bom.isPassed(uint256(ia)), "motion NOT passed");
 
         if (!isTriggered(ia, sn)) return true;
 
-        (uint40[] memory consentParties, ) = _bom.getYea(ia);
+        (uint40[] memory consentParties, ) = _bom.getYea(uint256(ia));
 
         uint40[] memory signers = ISigPage(ia).parties();
 

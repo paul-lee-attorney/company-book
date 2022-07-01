@@ -5,7 +5,7 @@
 
 pragma solidity ^0.4.24;
 
-import "../../boa/interfaces/IInvestmentAgreement.sol";
+import "../../boa//IInvestmentAgreement.sol";
 
 import "../../../common/ruting/BOSSetting.sol";
 import "../../../common/ruting/BOMSetting.sol";
@@ -14,11 +14,11 @@ import "../../../common/access/DraftControl.sol";
 import "../../../common/lib/ArrayUtils.sol";
 import "../../../common/lib/SNParser.sol";
 
-import "../../../common/components/interfaces/ISigPage.sol";
+import "../../../common/components//ISigPage.sol";
 
-// import "../../../common/interfaces/IMotion.sol";
+import "./ILockUp.sol";
 
-contract LockUp is BOSSetting, BOMSetting, DraftControl {
+contract LockUp is ILockUp, BOSSetting, BOMSetting, DraftControl {
     using ArrayUtils for uint256[];
     using ArrayUtils for uint40[];
     using SNParser for bytes32;
@@ -182,7 +182,7 @@ contract LockUp is BOSSetting, BOMSetting, DraftControl {
         onlyUser
         returns (bool)
     {
-        (uint40[] memory consentParties, ) = _bom.getYea(ia);
+        (uint40[] memory consentParties, ) = _bom.getYea(uint256(ia));
 
         uint40[] memory signers = ISigPage(ia).parties();
 

@@ -5,12 +5,14 @@
 
 pragma solidity ^0.4.24;
 
-import "../../books/bos/interfaces/IBookOfShares.sol";
-import "../../books/bos/interfaces/IBOSCalculator.sol";
+import "../../books/bos/IBookOfShares.sol";
+import "../../books/bos/IBOSCalculator.sol";
 
 import "../access/AccessControl.sol";
 
-contract BOSSetting is AccessControl {
+import "./IBookSetting.sol";
+
+contract BOSSetting is IBookSetting, AccessControl {
     IBookOfShares internal _bos;
     IBOSCalculator internal _bosCal;
 

@@ -10,17 +10,19 @@ import "../../common/ruting/BOSSetting.sol";
 import "../../common/lib/ArrayUtils.sol";
 import "../../common/lib/SNFactory.sol";
 import "../../common/lib/SNParser.sol";
-import "../../common/lib/ObjGroup.sol";
+import "../../common/lib/EnumerableSet.sol";
 import "../../common/lib/EnumerableSet.sol";
 import "../../common/lib/EnumsRepo.sol";
 
 import "../../common/components/SigPage.sol";
 
-contract InvestmentAgreement is BOSSetting, SigPage {
+import "./IInvestmentAgreement.sol";
+
+contract InvestmentAgreement is IInvestmentAgreement, BOSSetting, SigPage {
     using SNFactory for bytes;
     using SNParser for bytes32;
     using ArrayUtils for bytes32[];
-    using ObjGroup for ObjGroup.TimeLine;
+    using EnumerableSet for EnumerableSet.TimeLine;
     using EnumerableSet for EnumerableSet.UintSet;
 
     /* struct sn{
@@ -65,7 +67,7 @@ contract InvestmentAgreement is BOSSetting, SigPage {
         uint256 parValue;
         uint256 paidPar;
         uint32 closingDate;
-        ObjGroup.TimeLine states;
+        EnumerableSet.TimeLine states;
         bytes32 hashLock;
     }
 
@@ -258,7 +260,7 @@ contract InvestmentAgreement is BOSSetting, SigPage {
     ) public dealExist(ssn) attorneyOrKeeper {
         require(parValue > 0, "parValue is ZERO");
         require(parValue >= paidPar, "paidPar overflow");
-        require(closingDate > now + 15 minutes, "closingDate shall be future");
+        require(closingDate > block.number, "closingDate shall be future");
 
         Deal storage deal = _deals[ssn];
 
@@ -293,7 +295,7 @@ contract InvestmentAgreement is BOSSetting, SigPage {
         emit DelDeal(sn);
     }
 
-    function lockDealSubject(uint16 ssn, uint32 lockDate)
+    function lockDealSubject(uint16 ssn)
         public
         onlyKeeper
         dealExist(ssn)
@@ -301,13 +303,13 @@ contract InvestmentAgreement is BOSSetting, SigPage {
     {
         Deal storage deal = _deals[ssn];
         if (deal.states.currentState == uint8(EnumsRepo.StateOfDeal.Drafting)) {
-            deal.states.pushToNextState(lockDate);
+            deal.states.pushToNextState();
             flag = true;
             emit LockDealSubject(deal.sn);
         }
     }
 
-    function releaseDealSubject(uint16 ssn, uint32 releaseDate)
+    function releaseDealSubject(uint16 ssn)
         external
         onlyKeeper
         dealExist(ssn)
@@ -315,10 +317,7 @@ contract InvestmentAgreement is BOSSetting, SigPage {
     {
         Deal storage deal = _deals[ssn];
         if (deal.states.currentState >= uint8(EnumsRepo.StateOfDeal.Locked)) {
-            deal.states.setState(
-                uint8(EnumsRepo.StateOfDeal.Drafting),
-                releaseDate
-            );
+            deal.states.setState(uint8(EnumsRepo.StateOfDeal.Drafting));
             flag = true;
             emit ReleaseDealSubject(deal.sn);
         }
@@ -326,13 +325,15 @@ contract InvestmentAgreement is BOSSetting, SigPage {
 
     function clearDealCP(
         uint16 ssn,
-        uint32 sigDate,
         bytes32 hashLock,
         uint32 closingDate
     ) external onlyKeeper dealExist(ssn) {
         Deal storage deal = _deals[ssn];
 
-        require(sigDate < closingDate, "closingDate shall be FUTURE time");
+        require(
+            uint32(block.timestamp) < closingDate,
+            "closingDate shall be FUTURE time"
+        );
 
         require(
             closingDate <= closingDeadline,
@@ -344,7 +345,7 @@ contract InvestmentAgreement is BOSSetting, SigPage {
             "Deal state wrong"
         );
 
-        deal.states.pushToNextState(sigDate);
+        deal.states.pushToNextState();
 
         deal.hashLock = hashLock;
 
@@ -358,11 +359,11 @@ contract InvestmentAgreement is BOSSetting, SigPage {
         );
     }
 
-    function closeDeal(
-        uint16 ssn,
-        uint32 sigDate,
-        string hashKey
-    ) external onlyCleared(ssn) onlyKeeper {
+    function closeDeal(uint16 ssn, string hashKey)
+        external
+        onlyCleared(ssn)
+        onlyKeeper
+    {
         Deal storage deal = _deals[ssn];
 
         require(
@@ -370,21 +371,24 @@ contract InvestmentAgreement is BOSSetting, SigPage {
             "hashKey NOT correct"
         );
 
-        require(sigDate <= deal.closingDate, "MISSED closing date");
+        require(now + 15 minutes <= deal.closingDate, "MISSED closing date");
 
-        deal.states.pushToNextState(sigDate);
+        deal.states.pushToNextState();
 
         emit CloseDeal(deal.sn, hashKey);
     }
 
     function revokeDeal(
         uint16 ssn,
-        uint32 sigDate,
+        // uint32 sigDate,
         string hashKey
     ) external onlyCleared(ssn) onlyDirectKeeper {
         Deal storage deal = _deals[ssn];
 
-        require(deal.closingDate < sigDate, "NOT reached closing date");
+        require(
+            deal.closingDate < now - 15 minutes,
+            "NOT reached closing date"
+        );
 
         require(
             deal.sn.typeOfDeal() != uint8(EnumsRepo.TypeOfDeal.FreeGift),
@@ -401,8 +405,8 @@ contract InvestmentAgreement is BOSSetting, SigPage {
             "hashKey NOT correct"
         );
 
-        deal.states.pushToNextState(sigDate);
-        deal.states.pushToNextState(sigDate);
+        deal.states.pushToNextState();
+        deal.states.pushToNextState();
 
         emit RevokeDeal(deal.sn, hashKey);
     }
@@ -428,8 +432,8 @@ contract InvestmentAgreement is BOSSetting, SigPage {
             "wrong state"
         );
 
-        deal.states.pushToNextState(sigDate);
-        deal.states.pushToNextState(sigDate);
+        deal.states.pushToNextState();
+        deal.states.pushToNextState();
 
         emit CloseDeal(deal.sn, "0");
     }

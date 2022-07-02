@@ -30,27 +30,34 @@ contract BookOfDirectors is IBookOfDirectors, SHASetting {
 
     struct Director {
         uint8 title; // 1-Chairman; 2-ViceChairman; 3-Director;
-        uint40 nominator;
+        uint40 appointer;
         uint32 inaugurationDate;
         uint32 expirationDate;
     }
 
     // userNo => Director
-    mapping(uint256 => Director) private _directors;
+    mapping(uint40 => Director) private _directors;
+
+    // appointer => numOfDirector nominated;
+    mapping(uint40 => uint8) private _appointmentCounter;
 
     // title => userNo
-    mapping(uint256 => uint256) private _whoIs;
+    mapping(uint8 => uint40) private _whoIs;
 
     EnumerableSet.UintSet private _snList;
 
-    uint256 private _maxNumOfDirectors;
+    uint8 private _maxNumOfDirectors;
 
     //####################
     //##    modifier    ##
     //####################
 
-    modifier directorExist(uint256 acct) {
+    modifier directorExist(uint40 acct) {
         require(_snList.contains(acct), "not a director");
+        require(
+            _directors[acct].expirationDate >= now + 15 minutes,
+            "tenure expired"
+        );
         _;
     }
 
@@ -58,53 +65,70 @@ contract BookOfDirectors is IBookOfDirectors, SHASetting {
     //##    写接口    ##
     //##################
 
-    function setNumOfDirectors(uint256 num) external onlyDirectKeeper {
+    function setMaxNumOfDirectors(uint8 num) external onlyKeeper {
         _maxNumOfDirectors = num;
-        emit SetNumOfDirectors(num);
+        emit SetMaxNumOfDirectors(num);
     }
 
-    function addDirector(
-        uint40 nominator,
-        uint40 acct,
+    function appointDirector(
+        uint40 appointer,
+        uint40 candidate,
         uint8 title
     ) external onlyDirectKeeper {
-        if (!_snList.contains(acct))
+        _addDirector(candidate, appointer, title);
+    }
+
+    function _addDirector(
+        uint40 candidate,
+        uint40 appointer,
+        uint8 title
+    ) private {
+        if (!_snList.contains(candidate))
             require(
                 _snList.length() < _maxNumOfDirectors,
                 "number of directors overflow"
             );
 
+        if (appointer > 0) _appointmentCounter[appointer]++;
+
         uint32 inaugurationDate = uint32(block.number);
 
         uint32 expirationDate = inaugurationDate +
-            _getSHA().tenureOfBoard() *
+            uint32(_getSHA().tenureOfBoard()) *
             31536000;
 
-        Director storage director = _directors[acct];
+        Director storage director = _directors[candidate];
 
         director.title = title;
-        director.nominator = nominator;
+        director.appointer = appointer;
         director.inaugurationDate = inaugurationDate;
         director.expirationDate = expirationDate;
 
         if (title != uint8(EnumsRepo.TitleOfDirectors.Director))
-            _whoIs[title] = acct;
+            _whoIs[title] = candidate;
 
-        _snList.add(acct);
+        _snList.add(candidate);
 
         emit AddDirector(
-            acct,
+            candidate,
             title,
-            nominator,
+            appointer,
             inaugurationDate,
             expirationDate
         );
+    }
+
+    function takePosition(uint40 candidate) external onlyDirectKeeper {
+        _addDirector(candidate, 0, uint8(EnumsRepo.TitleOfDirectors.Director));
     }
 
     function removeDirector(uint40 acct) external onlyDirectKeeper {
         if (_snList.remove(acct)) {
             uint8 title = _directors[acct].title;
             if (uint40(_whoIs[title]) == acct) delete _whoIs[title];
+
+            uint40 appointer = _directors[acct].appointer;
+            if (appointer > 0) _appointmentCounter[appointer]--;
 
             delete _directors[acct];
 
@@ -116,14 +140,31 @@ contract BookOfDirectors is IBookOfDirectors, SHASetting {
     //##    读接口    ##
     //##################
 
-    function maxNumOfDirectors() external view onlyUser returns (uint256) {
+    function maxNumOfDirectors() external view onlyUser returns (uint8) {
         return _maxNumOfDirectors;
     }
 
+    function appointmentCounter(uint40 appointer)
+        external
+        view
+        onlyUser
+        returns (uint8)
+    {
+        return _appointmentCounter[appointer];
+    }
+
     function isDirector(uint40 acct) external view onlyUser returns (bool) {
-        return
-            _snList.contains(acct) &&
-            (uint256(_directors[acct].expirationDate) >= now + 15 minutes);
+        return _snList.contains(acct);
+    }
+
+    function inTenure(uint40 acct)
+        external
+        view
+        directorExist(acct)
+        onlyUser
+        returns (bool)
+    {
+        return (uint256(_directors[acct].expirationDate) >= now + 15 minutes);
     }
 
     function whoIs(uint8 title) external view onlyUser returns (uint40) {
@@ -132,11 +173,11 @@ contract BookOfDirectors is IBookOfDirectors, SHASetting {
             "director is not a special title"
         );
 
-        uint256 userNo = _whoIs[title];
+        uint40 userNo = _whoIs[title];
 
         if (_directors[userNo].title != title) userNo = 0;
 
-        return uint40(userNo);
+        return userNo;
     }
 
     function titleOfDirector(uint40 acct)
@@ -149,14 +190,14 @@ contract BookOfDirectors is IBookOfDirectors, SHASetting {
         return _directors[acct].title;
     }
 
-    function nominatorOfDirector(uint40 acct)
+    function appointerOfDirector(uint40 acct)
         external
         view
         onlyUser
         directorExist(acct)
         returns (uint40)
     {
-        return _directors[acct].nominator;
+        return _directors[acct].appointer;
     }
 
     function inaugurationDateOfDirector(uint40 acct)

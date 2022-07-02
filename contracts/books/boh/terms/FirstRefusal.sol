@@ -16,7 +16,7 @@ import "../../../common/lib/EnumerableSet.sol";
 import "../../../common/lib/SNFactory.sol";
 import "../../../common/lib/SNParser.sol";
 
-import "../../../common/components//ISigPage.sol";
+import "../../../common/components/ISigPage.sol";
 
 import "./IFirstRefusal.sol";
 

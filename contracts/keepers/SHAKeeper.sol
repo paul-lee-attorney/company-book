@@ -14,7 +14,7 @@ import "../books/boa/InvestmentAgreement.sol";
 import "../books/boh/terms//IAlongs.sol";
 import "../books/boh/terms//IFirstRefusal.sol";
 
-import "../common/components//ISigPage.sol";
+import "../common/components/ISigPage.sol";
 
 import "../common/ruting/BOASetting.sol";
 import "../common/ruting/BOSSetting.sol";

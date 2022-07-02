@@ -6,12 +6,12 @@
 pragma solidity ^0.4.24;
 
 interface IBookOfDirectors {
-    event SetNumOfDirectors(uint256 num);
+    event SetMaxNumOfDirectors(uint8 num);
 
     event AddDirector(
         uint40 acct,
         uint8 title,
-        uint40 nominator,
+        uint40 appointer,
         uint32 inaugurationDate,
         uint32 expirationDate
     );
@@ -22,13 +22,15 @@ interface IBookOfDirectors {
     //##    写接口    ##
     //##################
 
-    function setNumOfDirectors(uint256 num) external;
+    function setMaxNumOfDirectors(uint8 num) external;
 
-    function addDirector(
-        uint40 nominator,
-        uint40 acct,
+    function appointDirector(
+        uint40 appointer,
+        uint40 candidate,
         uint8 title
     ) external;
+
+    function takePosition(uint40 candidate) external;
 
     function removeDirector(uint40 acct) external;
 
@@ -36,7 +38,9 @@ interface IBookOfDirectors {
     //##    读接口    ##
     //##################
 
-    function maxNumOfDirectors() external view returns (uint256);
+    function maxNumOfDirectors() external view returns (uint8);
+
+    function appointmentCounter(uint40 appointer) external view returns (uint8);
 
     function isDirector(uint40 acct) external view returns (bool);
 
@@ -44,7 +48,7 @@ interface IBookOfDirectors {
 
     function titleOfDirector(uint40 acct) external view returns (uint8);
 
-    function nominatorOfDirector(uint40 acct) external view returns (uint40);
+    function appointerOfDirector(uint40 acct) external view returns (uint40);
 
     function inaugurationDateOfDirector(uint40 acct)
         external

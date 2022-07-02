@@ -15,10 +15,10 @@ import "../books/boa/InvestmentAgreement.sol";
 import "../books/boh/terms//IAlongs.sol";
 import "../books/boh/terms//IFirstRefusal.sol";
 
-import "../common/access//IRoles.sol";
-import "../common/access//IAccessControl.sol";
+import "../common/access/IRoles.sol";
+import "../common/access/IAccessControl.sol";
 
-import "../common/components//ISigPage.sol";
+import "../common/components/ISigPage.sol";
 
 import "../common/ruting/IBookSetting.sol";
 import "../common/ruting/BOASetting.sol";

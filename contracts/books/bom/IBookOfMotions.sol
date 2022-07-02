@@ -45,6 +45,8 @@ interface IBookOfMotions {
         uint256 actionId
     ) external;
 
+    function nominateDirector(uint40 candidate, uint40 nominator) external;
+
     function proposeMotion(address ia, uint40 submitter) external;
 
     function proposeAction(
@@ -56,13 +58,21 @@ interface IBookOfMotions {
     ) external;
 
     function castVote(
-        address ia,
+        uint256 motionId,
         uint8 attitude,
         uint40 caller,
         bytes32 sigHash
     ) external;
 
     function voteCounting(uint256 motionId) external;
+
+    function execAction(
+        uint8 actionType,
+        address[] targets,
+        bytes[] params,
+        bytes32 desHash,
+        uint40 caller
+    ) external returns (uint256);
 
     function requestToBuy(address ia, bytes32 sn)
         external

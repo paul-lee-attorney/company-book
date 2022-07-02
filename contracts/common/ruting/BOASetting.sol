@@ -14,8 +14,6 @@ import "./IBookSetting.sol";
 contract BOASetting is IBookSetting, AccessControl {
     IBookOfIA internal _boa;
 
-    event SetBOA(address boa);
-
     function setBOA(address boa) external onlyDirectKeeper {
         _boa = IBookOfIA(boa);
         emit SetBOA(boa);

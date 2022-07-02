@@ -6,7 +6,7 @@
 pragma solidity ^0.4.24;
 
 import "./RegCenterSetting.sol";
-import ".//IRoles.sol";
+import "./IRoles.sol";
 
 import "../lib/EnumerableSet.sol";
 

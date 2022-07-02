@@ -10,13 +10,14 @@ import "../books/boa//IInvestmentAgreement.sol";
 
 import "../common/ruting/BOSSetting.sol";
 import "../common/ruting/BOASetting.sol";
+import "../common/ruting/BODSetting.sol";
 import "../common/ruting/BOMSetting.sol";
 import "../common/ruting/BOOSetting.sol";
 import "../common/ruting/SHASetting.sol";
 
 import "../common/lib/SNParser.sol";
 
-import "../common/components//ISigPage.sol";
+import "../common/components/ISigPage.sol";
 
 import "../common/lib/EnumsRepo.sol";
 
@@ -25,6 +26,7 @@ import "./IBOMKeeper.sol";
 contract BOMKeeper is
     IBOMKeeper,
     BOASetting,
+    BODSetting,
     BOMSetting,
     SHASetting,
     BOOSetting,
@@ -104,7 +106,7 @@ contract BOMKeeper is
         bytes32 sigHash
     ) external onlyDirectKeeper notPartyOf(ia, caller) {
         require(_bos.isMember(caller), "not a shareholder");
-        _bom.castVote(ia, attitude, caller, sigHash);
+        _bom.castVote(uint256(ia), attitude, caller, sigHash);
     }
 
     function voteCounting(address ia, uint40 caller)
@@ -114,6 +116,18 @@ contract BOMKeeper is
     {
         _bom.voteCounting(uint256(ia));
         _boa.pushToNextState(ia, caller);
+    }
+
+    function execAction(
+        uint8 actionType,
+        address[] targets,
+        bytes[] params,
+        bytes32 desHash,
+        uint40 caller
+    ) external returns (uint256) {
+        require(_bod.isDirector(caller), "caller is not a Director");
+        require(!_rc.isContract(caller), "caller is not an EOA");
+        return _bom.execAction(actionType, targets, params, desHash, caller);
     }
 
     function requestToBuy(

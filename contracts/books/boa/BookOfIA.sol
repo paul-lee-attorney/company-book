@@ -8,7 +8,7 @@ import ".//IInvestmentAgreement.sol";
 
 import "../boh/terms//IAlongs.sol";
 
-import "../../common/components//ISigPage.sol";
+import "../../common/components/ISigPage.sol";
 import "../../common/components/BookOfDocuments.sol";
 
 import "../../common/ruting/SHASetting.sol";
@@ -51,30 +51,6 @@ contract BookOfIA is IBookOfIA, BookOfDocuments {
 
     // IA address => topGroup
     mapping(address => TopGroup) private _topGroups;
-
-    //##############
-    //##  Event   ##
-    //##############
-
-    event MockDeals(address indexed ia);
-
-    event CalculateResult(
-        address indexed ia,
-        uint16 topGroup,
-        uint256 topAmt,
-        bool isOrgController,
-        uint256 shareRatio
-    );
-
-    event AddAlongDeal(
-        address ia,
-        uint16 follower,
-        bytes32 shareNumber,
-        uint256 parValue,
-        uint256 paidPar
-    );
-
-    event AcceptAlongDeal(address ia, address drager, bytes32 sn);
 
     //#################
     //##  Write I/O  ##

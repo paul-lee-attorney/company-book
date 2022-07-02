@@ -7,6 +7,30 @@ pragma solidity ^0.4.24;
 
 interface IBookOfIA {
     //##################
+    //##    event     ##
+    //##################
+
+    event MockDeals(address indexed ia);
+
+    event CalculateResult(
+        address indexed ia,
+        uint16 topGroup,
+        uint256 topAmt,
+        bool isOrgController,
+        uint256 shareRatio
+    );
+
+    event AddAlongDeal(
+        address ia,
+        uint16 follower,
+        bytes32 shareNumber,
+        uint256 parValue,
+        uint256 paidPar
+    );
+
+    event AcceptAlongDeal(address ia, address drager, bytes32 sn);
+
+    //##################
     //##    写接口    ##
     //##################
 

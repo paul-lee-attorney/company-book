@@ -5,10 +5,13 @@
 
 pragma solidity ^0.4.24;
 
+pragma experimental ABIEncoderV2;
+
 import "../common/access/AccessControl.sol";
-import "../common/access//IAccessControl.sol";
+import "../common/access/IAccessControl.sol";
 
 import "./IBOAKeeper.sol";
+import "./IBODKeeper.sol";
 import "./ISHAKeeper.sol";
 import "./IBOHKeeper.sol";
 import "./IBOMKeeper.sol";
@@ -17,6 +20,7 @@ import "./IBOPKeeper.sol";
 
 contract GeneralKeeper is AccessControl {
     IBOAKeeper private _BOAKeeper;
+    IBODKeeper private _BODKeeper;
     ISHAKeeper private _SHAKeeper;
     IBOHKeeper private _BOHKeeper;
     IBOMKeeper private _BOMKeeper;
@@ -32,6 +36,8 @@ contract GeneralKeeper is AccessControl {
     // ###############
 
     event SetBOAKeeper(address keeper);
+
+    event SetBODKeeper(address keeper);
 
     event SetSHAKeeper(address keeper);
 
@@ -53,6 +59,12 @@ contract GeneralKeeper is AccessControl {
         _BOAKeeper = IBOAKeeper(keeper);
         IAccessControl(keeper).init(getOwner(), _rc.userNo(this), address(_rc));
         emit SetBOAKeeper(keeper);
+    }
+
+    function setBODKeeper(address keeper) external onlyDirectKeeper {
+        _BODKeeper = IBODKeeper(keeper);
+        IAccessControl(keeper).init(getOwner(), _rc.userNo(this), address(_rc));
+        emit SetBODKeeper(keeper);
     }
 
     function setBOHKeeper(address keeper) external onlyDirectKeeper {
@@ -313,6 +325,21 @@ contract GeneralKeeper is AccessControl {
         _BOMKeeper.voteCounting(ia, _msgSender());
     }
 
+    function execAction(
+        uint8 actionType,
+        address[] targets,
+        bytes[] params,
+        bytes32 desHash
+    ) external returns (uint256) {
+        _BOMKeeper.execAction(
+            actionType,
+            targets,
+            params,
+            desHash,
+            _msgSender()
+        );
+    }
+
     function requestToBuy(
         address ia,
         bytes32 sn,
@@ -440,5 +467,29 @@ contract GeneralKeeper is AccessControl {
 
     function delPledge(bytes32 sn) external {
         _BOPKeeper.delPledge(sn, _msgSender());
+    }
+
+    // ###################
+    // ##   BODKeeper   ##
+    // ###################
+
+    function appointDirector(uint40 candidate, uint8 title) external {
+        _BODKeeper.appointDirector(candidate, title, _msgSender());
+    }
+
+    function removeDirector(uint40 director) external {
+        _BODKeeper.removeDirector(director, _msgSender());
+    }
+
+    function quitPosition() external {
+        _BODKeeper.quitPosition(_msgSender());
+    }
+
+    function nominateDirector(uint40 candidate) external {
+        _BODKeeper.nominateDirector(candidate, _msgSender());
+    }
+
+    function takePosition(uint256 motionId) external {
+        _BODKeeper.takePosition(_msgSender(), motionId);
     }
 }

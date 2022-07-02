@@ -28,9 +28,9 @@ interface IShareholdersAgreement {
 
     function setTenureOfBoard(uint8 numOfYear) external;
 
-    function setNominatorOfChairman(uint40 nominator) external;
+    function setAppointerOfChairman(uint40 nominator) external;
 
-    function setNominatorOfViceChairman(uint40 nominator) external;
+    function setAppointerOfViceChairman(uint40 nominator) external;
 
     function setBoardSeatsQuotaOf(uint40 nominator, uint256 quota) external;
 
@@ -85,11 +85,11 @@ interface IShareholdersAgreement {
 
     function maxNumOfDirectors() external view returns (uint8);
 
-    function tenureOfBoard() external view returns (uint8);
+    function tenureOfBoard() external view returns (uint256);
 
-    function nominatorOfChairman() external view returns (uint40);
+    function appointerOfChairman() external view returns (uint40);
 
-    function nominatorOfViceChairman() external view returns (uint40);
+    function appointerOfViceChairman() external view returns (uint40);
 
     function sumOfBoardSeatsQuota() external view returns (uint8);
 

@@ -19,8 +19,8 @@ import "../common/ruting/BOSSetting.sol";
 import "../common/lib/SNParser.sol";
 
 import "../common/ruting/IBookSetting.sol";
-import "../common/access//IAccessControl.sol";
-import "../common/components//ISigPage.sol";
+import "../common/access/IAccessControl.sol";
+import "../common/components/ISigPage.sol";
 
 import "./IBOOKeeper.sol";
 

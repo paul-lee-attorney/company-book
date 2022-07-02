@@ -5,7 +5,7 @@
 
 pragma solidity ^0.4.24;
 
-import "../../common/access//IAccessControl.sol";
+import "../../common/access/IAccessControl.sol";
 import "../../common/access//IDraftControl.sol";
 
 import "../../common/ruting/IBookSetting.sol";

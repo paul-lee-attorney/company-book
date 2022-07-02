@@ -4,6 +4,7 @@
  * */
 
 pragma solidity ^0.4.24;
+pragma experimental ABIEncoderV2;
 
 interface IBOMKeeper {
     // ################
@@ -27,6 +28,14 @@ interface IBOMKeeper {
     ) external;
 
     function voteCounting(address ia, uint40 caller) external;
+
+    function execAction(
+        uint8 actionType,
+        address[] targets,
+        bytes[] params,
+        bytes32 desHash,
+        uint40 caller
+    ) external returns (uint256);
 
     function requestToBuy(
         address ia,

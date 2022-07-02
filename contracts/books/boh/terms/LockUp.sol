@@ -14,7 +14,7 @@ import "../../../common/access/DraftControl.sol";
 import "../../../common/lib/ArrayUtils.sol";
 import "../../../common/lib/SNParser.sol";
 
-import "../../../common/components//ISigPage.sol";
+import "../../../common/components/ISigPage.sol";
 
 import "./ILockUp.sol";
 

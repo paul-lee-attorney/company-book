@@ -330,24 +330,28 @@ library SNParser {
 
     // ======== MotionSN ========
 
+    function typeOfMotion(bytes32 sn) internal pure returns (uint8) {
+        return uint8(sn[0]);
+    }
+
     function submitterOfMotion(bytes32 sn) internal pure returns (uint40) {
-        return uint40(bytes5(sn));
+        return uint40(bytes5(sn << 8));
     }
 
     function proposeDateOfMotion(bytes32 sn) internal pure returns (uint32) {
-        return uint32(bytes4(sn << 40));
+        return uint32(bytes4(sn << 48));
     }
 
     function votingDeadlineOfMotion(bytes32 sn) internal pure returns (uint32) {
-        return uint32(bytes4(sn << 72));
+        return uint32(bytes4(sn << 80));
     }
 
     function weightRegBlockOfMotion(bytes32 sn) internal pure returns (uint32) {
-        return uint32(bytes4(sn << 104));
+        return uint32(bytes4(sn << 112));
     }
 
-    function typeOfMotion(bytes32 sn) internal pure returns (uint32) {
-        return uint8(sn[17]);
+    function candidateOfMotion(bytes32 sn) internal pure returns (uint40) {
+        return uint40(bytes5(sn << 144));
     }
 
     // ======== AntiDilution ========
@@ -358,34 +362,4 @@ library SNParser {
     function classOfMark(bytes32 sn) internal pure returns (uint8) {
         return uint8(sn[31]);
     }
-
-    // // ======== BookOfDirectors ========
-
-    // function userNoOfDirector(bytes32 sn) internal pure returns (uint40) {
-    //     return uint40(bytes5(sn));
-    // }
-
-    // function titleOfDirector(bytes32 sn) internal pure returns (uint8) {
-    //     return uint8(sn[5]);
-    // }
-
-    // function nominatorOfDirector(bytes32 sn) internal pure returns (uint40) {
-    //     return uint40(bytes5(sn << 48));
-    // }
-
-    // function inaugurationDateOfDirector(bytes32 sn)
-    //     internal
-    //     pure
-    //     returns (uint32)
-    // {
-    //     return uint32(bytes4(sn << 88));
-    // }
-
-    // function expirationDateOfDirector(bytes32 sn)
-    //     internal
-    //     pure
-    //     returns (uint32)
-    // {
-    //     return uint32(bytes4(sn << 120));
-    // }
 }

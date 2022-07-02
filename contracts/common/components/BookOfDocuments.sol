@@ -12,7 +12,7 @@ import "../lib/SNParser.sol";
 import "../lib/ArrayUtils.sol";
 import "../lib/EnumerableSet.sol";
 
-import ".//ISigPage.sol";
+import "./ISigPage.sol";
 
 import "../ruting/BOSSetting.sol";
 import "../ruting/SHASetting.sol";

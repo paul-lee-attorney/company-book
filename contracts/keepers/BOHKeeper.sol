@@ -9,15 +9,16 @@ import "../books/boh//IShareholdersAgreement.sol";
 import "../books/boh/terms//IGroupsUpdate.sol";
 import "../books/boh/ShareholdersAgreement.sol";
 
-import "../common/components//ISigPage.sol";
+import "../common/components/ISigPage.sol";
 
 import "../common/ruting/BOMSetting.sol";
 import "../common/ruting/BOOSetting.sol";
 import "../common/ruting/BOSSetting.sol";
+import "../common/ruting/BODSetting.sol";
 import "../common/ruting/SHASetting.sol";
-import "../common/access//IAccessControl.sol";
+import "../common/access/IAccessControl.sol";
 import "../common/ruting/IBookSetting.sol";
-import "../common/access//IRoles.sol";
+import "../common/access/IRoles.sol";
 
 import "../common/lib/SNParser.sol";
 import "../common/lib/EnumsRepo.sol";
@@ -31,7 +32,8 @@ contract BOHKeeper is
     BOSSetting,
     SHASetting,
     BOMSetting,
-    BOOSetting
+    BOOSetting,
+    BODSetting
 {
     using SNParser for bytes32;
 
@@ -150,6 +152,10 @@ contract BOHKeeper is
         }
 
         _boh.changePointer(sha, caller, sigDate);
+
+        _bod.setMaxNumOfDirectors(
+            IShareholdersAgreement(sha).maxNumOfDirectors()
+        );
 
         if (
             IShareholdersAgreement(sha).hasTitle(

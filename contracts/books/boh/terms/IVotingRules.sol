@@ -18,9 +18,9 @@ interface IVotingRules {
 
     event SetTenureOfBoard(uint8 numOfYear);
 
-    event SetNominatorOfChairman(uint40 nominator);
+    event SetAppointerOfChairman(uint40 nominator);
 
-    event SetNominatorOfViceChairman(uint40 nominator);
+    event SetAppointerOfViceChairman(uint40 nominator);
 
     event SetBoardSeatsQuotaOf(uint40 nominator, uint256 quota);
 
@@ -38,9 +38,9 @@ interface IVotingRules {
 
     function setTenureOfBoard(uint8 numOfYear) external;
 
-    function setNominatorOfChairman(uint40 nominator) external;
+    function setAppointerOfChairman(uint40 nominator) external;
 
-    function setNominatorOfViceChairman(uint40 nominator) external;
+    function setAppointerOfViceChairman(uint40 nominator) external;
 
     function setBoardSeatsQuotaOf(uint40 nominator, uint8 quota) external;
 
@@ -69,11 +69,11 @@ interface IVotingRules {
 
     function maxNumOfDirectors() external view returns (uint8);
 
-    function tenureOfBoard() external view returns (uint8);
+    function tenureOfBoard() external view returns (uint256);
 
-    function nominatorOfChairman() external view returns (uint40);
+    function appointerOfChairman() external view returns (uint40);
 
-    function nominatorOfViceChairman() external view returns (uint40);
+    function appointerOfViceChairman() external view returns (uint40);
 
     function sumOfBoardSeatsQuota() external view returns (uint8);
 

@@ -16,8 +16,6 @@ contract BOSSetting is IBookSetting, AccessControl {
     IBookOfShares internal _bos;
     IBOSCalculator internal _bosCal;
 
-    event SetBOS(address bos);
-    event SetBOSCal(address cal);
 
     modifier onlyMember() {
         require(_bos.isMember(_msgSender()), "NOT Member");

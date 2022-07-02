@@ -14,8 +14,6 @@ import "./IBookSetting.sol";
 contract BOPSetting is IBookSetting, AccessControl {
     IBookOfPledges internal _bop;
 
-    event SetBOP(address bop);
-
     function setBOP(address bop) external onlyDirectKeeper {
         _bop = IBookOfPledges(bop);
         emit SetBOP(bop);

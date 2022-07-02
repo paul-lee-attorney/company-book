@@ -66,7 +66,23 @@ library EnumsRepo {
         Proposed,
         Passed,
         Rejected_NotToBuy,
-        Rejected_ToBuy
+        Rejected_ToBuy,
+        Executed
+    }
+
+    enum TypeOfVoting {
+        ZeroPoint,
+        CapitalIncrease,
+        ShareTransferExt,
+        ShareTransferInt,
+        CI_STI,
+        STE_STI,
+        CI_STE_STI,
+        CI_STE,
+        ElectDirector,
+        ReviseAOA,
+        NomalAction,
+        SpecialAction
     }
 
     enum TypeOfOption {

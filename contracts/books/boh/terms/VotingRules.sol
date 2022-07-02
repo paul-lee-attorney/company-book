@@ -39,8 +39,8 @@ contract VotingRules is IVotingRules, DraftControl {
         uint16 proposalThreshold;
         uint8 maxNumOfDirectors;
         uint8 tenureOfBoard;
-        uint40 nominatorOfChairman;
-        uint40 nominatorOfViceChairman;
+        uint40 appointerOfChairman;
+        uint40 appointerOfViceChairman;
         uint8 sumOfBoardSeatsQuota;
         mapping(uint40 => uint8) boardSeatsQuotaOf;
     }
@@ -83,16 +83,6 @@ contract VotingRules is IVotingRules, DraftControl {
     // }
 
     // ################
-    // ##   Event    ##
-    // ################
-
-    event SetVotingBaseOnPar();
-
-    event SetProposalThreshold(uint256 threshold);
-
-    event SetRule(uint8 typeOfVote, bytes32 sn);
-
-    // ################
     // ##  Modifier  ##
     // ################
 
@@ -125,17 +115,17 @@ contract VotingRules is IVotingRules, DraftControl {
         emit SetTenureOfBoard(numOfYear);
     }
 
-    function setNominatorOfChairman(uint40 nominator) external onlyAttorney {
-        _ruleOfGovernance.nominatorOfChairman = nominator;
-        emit SetNominatorOfChairman(nominator);
+    function setAppointerOfChairman(uint40 nominator) external onlyAttorney {
+        _ruleOfGovernance.appointerOfChairman = nominator;
+        emit SetAppointerOfChairman(nominator);
     }
 
-    function setNominatorOfViceChairman(uint40 nominator)
+    function setAppointerOfViceChairman(uint40 nominator)
         external
         onlyAttorney
     {
-        _ruleOfGovernance.nominatorOfViceChairman = nominator;
-        emit SetNominatorOfViceChairman(nominator);
+        _ruleOfGovernance.appointerOfViceChairman = nominator;
+        emit SetAppointerOfViceChairman(nominator);
     }
 
     function setBoardSeatsQuotaOf(uint40 nominator, uint8 quota)
@@ -222,16 +212,16 @@ contract VotingRules is IVotingRules, DraftControl {
         return _ruleOfGovernance.maxNumOfDirectors;
     }
 
-    function tenureOfBoard() external view onlyUser returns (uint8) {
+    function tenureOfBoard() external view onlyUser returns (uint256) {
         return _ruleOfGovernance.tenureOfBoard;
     }
 
-    function nominatorOfChairman() external view onlyUser returns (uint40) {
-        return _ruleOfGovernance.nominatorOfChairman;
+    function appointerOfChairman() external view onlyUser returns (uint40) {
+        return _ruleOfGovernance.appointerOfChairman;
     }
 
-    function nominatorOfViceChairman() external view onlyUser returns (uint40) {
-        return _ruleOfGovernance.nominatorOfViceChairman;
+    function appointerOfViceChairman() external view onlyUser returns (uint40) {
+        return _ruleOfGovernance.appointerOfViceChairman;
     }
 
     function sumOfBoardSeatsQuota() external view onlyUser returns (uint8) {

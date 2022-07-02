@@ -14,7 +14,7 @@ import "../../../common/lib/ArrayUtils.sol";
 
 import "./DragAlong.sol";
 
-import "../../../common/components//ISigPage.sol";
+import "../../../common/components/ISigPage.sol";
 
 contract TagAlong is BOMSetting, DragAlong {
     using EnumerableSet for EnumerableSet.UintSet;

@@ -90,37 +90,6 @@ contract InvestmentAgreement is IInvestmentAgreement, BOSSetting, SigPage {
     mapping(uint40 => mapping(uint16 => bool)) private _isBuyerOfDeal;
 
     //##################
-    //##    Event     ##
-    //##################
-
-    event CreateDeal(bytes32 indexed sn, bytes32 shareNumber);
-
-    event UpdateDeal(
-        bytes32 indexed sn,
-        uint256 unitPrice,
-        uint256 parValue,
-        uint256 paidPar,
-        uint32 closingDate
-    );
-
-    event DelDeal(bytes32 indexed sn);
-
-    event LockDealSubject(bytes32 indexed sn);
-
-    event ReleaseDealSubject(bytes32 indexed sn);
-
-    event ClearDealCP(
-        bytes32 indexed sn,
-        uint8 state,
-        bytes32 hashLock,
-        uint32 closingDate
-    );
-
-    event CloseDeal(bytes32 indexed sn, string hashKey);
-
-    event RevokeDeal(bytes32 indexed sn, string hashKey);
-
-    //##################
     //##   Modifier   ##
     //##################
 

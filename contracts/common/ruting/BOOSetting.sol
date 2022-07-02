@@ -14,8 +14,6 @@ import "./IBookSetting.sol";
 contract BOOSetting is IBookSetting, AccessControl {
     IBookOfOptions internal _boo;
 
-    event SetBOO(address boo);
-
     function setBOO(address boo) external onlyDirectKeeper {
         _boo = IBookOfOptions(boo);
         emit SetBOO(boo);

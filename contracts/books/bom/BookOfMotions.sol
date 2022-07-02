@@ -6,22 +6,29 @@
 pragma solidity ^0.4.24;
 pragma experimental ABIEncoderV2;
 
-import "../boa//IInvestmentAgreement.sol";
+import "../boa/IInvestmentAgreement.sol";
 
 import "../../common/ruting/BOASetting.sol";
 import "../../common/ruting/SHASetting.sol";
 import "../../common/ruting/BOSSetting.sol";
+import "../../common/ruting/BODSetting.sol";
 
 import "../../common/lib/SNFactory.sol";
 import "../../common/lib/SNParser.sol";
 import "../../common/lib/EnumsRepo.sol";
 import "../../common/lib/EnumerableSet.sol";
 
-import "../../common/components//ISigPage.sol";
+import "../../common/components/ISigPage.sol";
 
 import "./IBookOfMotions.sol";
 
-contract BookOfMotions is IBookOfMotions, SHASetting, BOASetting, BOSSetting {
+contract BookOfMotions is
+    IBookOfMotions,
+    SHASetting,
+    BOASetting,
+    BOSSetting,
+    BODSetting
+{
     using SNFactory for bytes;
     using SNParser for bytes32;
     using EnumerableSet for EnumerableSet.UintSet;
@@ -76,21 +83,84 @@ contract BookOfMotions is IBookOfMotions, SHASetting, BOASetting, BOSSetting {
     //##################
 
     function _createSN(
+        uint8 typeOfMotion,
         uint40 submitter,
         uint32 proposeDate,
         uint32 votingDeadlineBN,
-        uint32 weightRegBlock,
-        uint8 typeOfMotion
+        uint32 weightRegBlock
     ) private pure returns (bytes32 sn) {
         bytes memory _sn = new bytes(32);
 
-        _sn = _sn.acctToSN(0, submitter);
-        _sn = _sn.dateToSN(5, proposeDate);
-        _sn = _sn.dateToSN(9, votingDeadlineBN);
-        _sn = _sn.dateToSN(13, weightRegBlock);
-        _sn[17] = bytes1(typeOfMotion);
+        _sn[0] = bytes1(typeOfMotion);
+        _sn = _sn.acctToSN(1, submitter);
+        _sn = _sn.dateToSN(6, proposeDate);
+        _sn = _sn.dateToSN(10, votingDeadlineBN);
+        _sn = _sn.dateToSN(14, weightRegBlock);
 
         sn = _sn.bytesToBytes32();
+    }
+
+    function _createNomination(
+        uint8 typeOfMotion,
+        uint40 nominator,
+        uint32 proposeDate,
+        uint32 votingDeadlineBN,
+        uint32 weightRegBlock,
+        uint40 candidate
+    ) private pure returns (bytes32 sn) {
+        bytes memory _sn = new bytes(32);
+
+        _sn[0] = bytes1(typeOfMotion);
+        _sn = _sn.acctToSN(1, nominator);
+        _sn = _sn.dateToSN(6, proposeDate);
+        _sn = _sn.dateToSN(10, votingDeadlineBN);
+        _sn = _sn.dateToSN(14, weightRegBlock);
+
+        _sn = _sn.acctToSN(18, candidate);
+
+        sn = _sn.bytesToBytes32();
+    }
+
+    function nominateDirector(uint40 candidate, uint40 nominator)
+        external
+        onlyDirectKeeper
+    {
+        bytes32 rule = _getSHA().votingRules(
+            uint8(EnumsRepo.TypeOfVoting.ElectDirector)
+        );
+
+        uint8 title = uint8(EnumsRepo.TitleOfDirectors.Director);
+
+        bytes32 sn = _createNomination(
+            uint8(EnumsRepo.TypeOfVoting.ElectDirector),
+            nominator,
+            uint32(block.number),
+            uint32(block.number) +
+                (uint32(rule.votingDaysOfVR()) * 24 * _rc.blocksPerHour()),
+            uint32(block.number),
+            candidate
+        );
+
+        uint256 motionId = uint256(sn);
+
+        require(!_motionIds.contains(motionId), "the motion has been proposed");
+
+        Motion storage motion = _motions[motionId];
+
+        motion.votingRule = rule;
+        motion.sn = sn;
+        motion.state = uint8(EnumsRepo.StateOfMotion.Proposed);
+
+        _motionIds.add(motionId);
+
+        emit ProposeMotion(
+            motionId,
+            uint8(EnumsRepo.TypeOfVoting.ElectDirector),
+            new address[](1),
+            new bytes[](1),
+            bytes32(0),
+            motion.sn
+        );
     }
 
     function proposeMotion(address ia, uint40 submitter)
@@ -111,11 +181,11 @@ contract BookOfMotions is IBookOfMotions, SHASetting, BOASetting, BOSSetting {
 
         motion.votingRule = rule;
         motion.sn = _createSN(
+            typeOfMotion,
             submitter,
             uint32(block.timestamp),
             _boa.votingDeadlineBNOf(ia),
-            _boa.reviewDeadlineBNOf(ia),
-            typeOfMotion
+            _boa.reviewDeadlineBNOf(ia)
         );
         motion.state = uint8(EnumsRepo.StateOfMotion.Proposed);
 
@@ -169,12 +239,12 @@ contract BookOfMotions is IBookOfMotions, SHASetting, BOASetting, BOSSetting {
 
         motion.votingRule = rule;
         motion.sn = _createSN(
+            actionType,
             submitter,
             uint32(block.timestamp),
             uint32(block.number) +
                 (uint32(rule.votingDaysOfVR()) * 24 * _rc.blocksPerHour()),
-            uint32(block.number),
-            actionType
+            uint32(block.number)
         );
         motion.state = uint8(EnumsRepo.StateOfMotion.Proposed);
 
@@ -373,6 +443,44 @@ contract BookOfMotions is IBookOfMotions, SHASetting, BOASetting, BOSSetting {
 
         return ((motion.ballotsBox.ballots[againstVoter].weight * 10000) /
             motion.sumOfNay);
+    }
+
+    function execAction(
+        uint8 actionType,
+        address[] targets,
+        bytes[] params,
+        bytes32 desHash,
+        uint40 caller
+    ) external onlyDirectKeeper returns (uint256) {
+        uint256 actionId = _hashAction(actionType, targets, params, desHash);
+
+        require(_motionIds.contains(actionId), "motion not proposed");
+
+        Motion storage motion = _motions[actionId];
+
+        require(
+            motion.state == uint8(EnumsRepo.StateOfMotion.Passed),
+            "voting NOT end"
+        );
+
+        motion.state = uint8(EnumsRepo.StateOfMotion.Executed);
+        _execute(targets, params);
+
+        return actionId;
+    }
+
+    function _execute(address[] memory targets, bytes[] memory params)
+        internal
+        returns (bool)
+    {
+        bool success;
+
+        for (uint256 i = 0; i < targets.length; ++i) {
+            success = targets[i].call(params[i]);
+            if (!success) return success;
+        }
+
+        return success;
     }
 
     function requestToBuy(address ia, bytes32 sn)

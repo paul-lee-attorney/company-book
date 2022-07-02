@@ -358,4 +358,34 @@ library SNParser {
     function classOfMark(bytes32 sn) internal pure returns (uint8) {
         return uint8(sn[31]);
     }
+
+    // // ======== BookOfDirectors ========
+
+    // function userNoOfDirector(bytes32 sn) internal pure returns (uint40) {
+    //     return uint40(bytes5(sn));
+    // }
+
+    // function titleOfDirector(bytes32 sn) internal pure returns (uint8) {
+    //     return uint8(sn[5]);
+    // }
+
+    // function nominatorOfDirector(bytes32 sn) internal pure returns (uint40) {
+    //     return uint40(bytes5(sn << 48));
+    // }
+
+    // function inaugurationDateOfDirector(bytes32 sn)
+    //     internal
+    //     pure
+    //     returns (uint32)
+    // {
+    //     return uint32(bytes4(sn << 88));
+    // }
+
+    // function expirationDateOfDirector(bytes32 sn)
+    //     internal
+    //     pure
+    //     returns (uint32)
+    // {
+    //     return uint32(bytes4(sn << 120));
+    // }
 }

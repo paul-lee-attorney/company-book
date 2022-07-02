@@ -9,7 +9,9 @@ import "../../../common/access/DraftControl.sol";
 
 import "../../../common/lib/SNFactory.sol";
 
-contract VotingRules is DraftControl {
+import "./IVotingRules.sol";
+
+contract VotingRules is IVotingRules, DraftControl {
     using SNFactory for bytes;
 
     // struct snInfo {
@@ -26,11 +28,24 @@ contract VotingRules is DraftControl {
     // }
 
     // typeOfVote => Rule: 1-CI 2-ST(to 3rd Party) 3-ST(to otherMember) 4-(1&3) 5-(2&3) 6-(1&2&3) 7-(1&2)
-    bytes32[8] private _votingRules;
+    bytes32[12] private _votingRules;
 
-    bool private _basedOnPar;
+    // bool private _basedOnPar;
 
-    uint256 private _proposalThreshold;
+    // uint256 private _proposalThreshold;
+
+    struct Governance {
+        bool basedOnPar;
+        uint16 proposalThreshold;
+        uint8 maxNumOfDirectors;
+        uint8 tenureOfBoard;
+        uint40 nominatorOfChairman;
+        uint40 nominatorOfViceChairman;
+        uint8 sumOfBoardSeatsQuota;
+        mapping(uint40 => uint8) boardSeatsQuotaOf;
+    }
+
+    Governance private _ruleOfGovernance;
 
     // constructor() public {
     //     // votingDays = 30; // default 30 days as per Company Law Act
@@ -82,7 +97,7 @@ contract VotingRules is DraftControl {
     // ################
 
     modifier typeAllowed(uint8 typeOfVote) {
-        require(typeOfVote < 8, "typeOfVote overflow");
+        require(typeOfVote < 12, "typeOfVote overflow");
         _;
     }
 
@@ -91,13 +106,63 @@ contract VotingRules is DraftControl {
     // ################
 
     function setVotingBaseOnPar() external onlyAttorney {
-        _basedOnPar = true;
+        _ruleOfGovernance.basedOnPar = true;
         emit SetVotingBaseOnPar();
     }
 
-    function setProposalThreshold(uint256 threshold) external onlyAttorney {
-        _proposalThreshold = threshold;
+    function setProposalThreshold(uint16 threshold) external onlyAttorney {
+        _ruleOfGovernance.proposalThreshold = threshold;
         emit SetProposalThreshold(threshold);
+    }
+
+    function setMaxNumOfDirectors(uint8 num) external onlyAttorney {
+        _ruleOfGovernance.maxNumOfDirectors = num;
+        emit SetMaxNumOfDirectors(num);
+    }
+
+    function setTenureOfBoard(uint8 numOfYear) external onlyAttorney {
+        _ruleOfGovernance.tenureOfBoard = numOfYear;
+        emit SetTenureOfBoard(numOfYear);
+    }
+
+    function setNominatorOfChairman(uint40 nominator) external onlyAttorney {
+        _ruleOfGovernance.nominatorOfChairman = nominator;
+        emit SetNominatorOfChairman(nominator);
+    }
+
+    function setNominatorOfViceChairman(uint40 nominator)
+        external
+        onlyAttorney
+    {
+        _ruleOfGovernance.nominatorOfViceChairman = nominator;
+        emit SetNominatorOfViceChairman(nominator);
+    }
+
+    function setBoardSeatsQuotaOf(uint40 nominator, uint8 quota)
+        external
+        onlyAttorney
+    {
+        uint8 orgQuota = _ruleOfGovernance.boardSeatsQuotaOf[nominator];
+
+        if (orgQuota > 0) {
+            require(
+                _ruleOfGovernance.sumOfBoardSeatsQuota - orgQuota + quota <=
+                    _ruleOfGovernance.maxNumOfDirectors,
+                "board seats quota overflow"
+            );
+            _ruleOfGovernance.sumOfBoardSeatsQuota -= orgQuota;
+        } else {
+            require(
+                _ruleOfGovernance.sumOfBoardSeatsQuota + quota <=
+                    _ruleOfGovernance.maxNumOfDirectors,
+                "board seats quota overflow"
+            );
+        }
+
+        _ruleOfGovernance.boardSeatsQuotaOf[nominator] = quota;
+        _ruleOfGovernance.sumOfBoardSeatsQuota += quota;
+
+        emit SetBoardSeatsQuotaOf(nominator, quota);
     }
 
     function setRule(
@@ -146,10 +211,39 @@ contract VotingRules is DraftControl {
     }
 
     function basedOnPar() external view onlyUser returns (bool) {
-        return _basedOnPar;
+        return _ruleOfGovernance.basedOnPar;
     }
 
-    function proposalThreshold() external view onlyUser returns (uint256) {
-        return _proposalThreshold;
+    function proposalThreshold() external view onlyUser returns (uint16) {
+        return _ruleOfGovernance.proposalThreshold;
+    }
+
+    function maxNumOfDirectors() external view onlyUser returns (uint8) {
+        return _ruleOfGovernance.maxNumOfDirectors;
+    }
+
+    function tenureOfBoard() external view onlyUser returns (uint8) {
+        return _ruleOfGovernance.tenureOfBoard;
+    }
+
+    function nominatorOfChairman() external view onlyUser returns (uint40) {
+        return _ruleOfGovernance.nominatorOfChairman;
+    }
+
+    function nominatorOfViceChairman() external view onlyUser returns (uint40) {
+        return _ruleOfGovernance.nominatorOfViceChairman;
+    }
+
+    function sumOfBoardSeatsQuota() external view onlyUser returns (uint8) {
+        return _ruleOfGovernance.sumOfBoardSeatsQuota;
+    }
+
+    function boardSeatsQuotaOf(uint40 acct)
+        external
+        view
+        onlyUser
+        returns (uint8)
+    {
+        return _ruleOfGovernance.boardSeatsQuotaOf[acct];
     }
 }

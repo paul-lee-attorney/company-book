@@ -13,7 +13,7 @@ import "../books/boa//IInvestmentAgreement.sol";
 import "../books/boa/InvestmentAgreement.sol";
 
 import "../books/boh/terms//IAlongs.sol";
-import "../books/boh/terms/interfaces/IFirstRefusal.sol";
+import "../books/boh/terms//IFirstRefusal.sol";
 
 import "../common/access//IRoles.sol";
 import "../common/access//IAccessControl.sol";

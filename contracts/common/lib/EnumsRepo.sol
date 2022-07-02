@@ -98,6 +98,13 @@ library EnumsRepo {
         ControlChangedWithHigherROE
     }
 
+    enum TitleOfDirectors {
+        ZeroPoint,
+        Chairman,
+        ViceChairman,
+        Director
+    }
+
     enum ActionType {
         CAPITAL_INCREASE,
         SHARE_TRANSFER,

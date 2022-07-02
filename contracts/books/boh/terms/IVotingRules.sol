@@ -1,24 +1,34 @@
-/*
+/* *
  * Copyright 2021-2022 LI LI of JINGTIAN & GONGCHENG.
  * All Rights Reserved.
  * */
 
 pragma solidity ^0.4.24;
 
-interface IShareholdersAgreement {
-    //##################
-    //##    写接口    ##
-    //##################
+interface IVotingRules {
+    // ################
+    // ##   Event    ##
+    // ################
 
-    function setTermsTemplate(address[15] templates) external;
+    event SetVotingBaseOnPar();
 
-    function createTerm(uint8 title) external returns (address body);
+    event SetProposalThreshold(uint256 threshold);
 
-    function removeTerm(uint8 title) external;
+    event SetMaxNumOfDirectors(uint8 num);
 
-    function finalizeSHA() external;
+    event SetTenureOfBoard(uint8 numOfYear);
 
-    // ======== VotingRule ========
+    event SetNominatorOfChairman(uint40 nominator);
+
+    event SetNominatorOfViceChairman(uint40 nominator);
+
+    event SetBoardSeatsQuotaOf(uint40 nominator, uint256 quota);
+
+    event SetRule(uint8 typeOfVote, bytes32 sn);
+
+    // ################
+    // ##   写接口   ##
+    // ################
 
     function setVotingBaseOnPar() external;
 
@@ -32,7 +42,7 @@ interface IShareholdersAgreement {
 
     function setNominatorOfViceChairman(uint40 nominator) external;
 
-    function setBoardSeatsQuotaOf(uint40 nominator, uint256 quota) external;
+    function setBoardSeatsQuotaOf(uint40 nominator, uint8 quota) external;
 
     function setRule(
         uint8 typeOfVote,
@@ -40,42 +50,16 @@ interface IShareholdersAgreement {
         uint256 ratioAmount,
         bool onlyAttendance,
         bool impliedConsent,
+        bool partyAsConsent,
         bool againstShallBuy,
+        uint8 reviewDays,
         uint8 votingDays,
         uint8 execDaysForPutOpt
     ) external;
 
-    //##################
-    //##    读接口    ##
-    //##################
-
-    function tempOfTitle(uint8 title) external view returns (address);
-
-    function hasTitle(uint8 title) external view returns (bool);
-
-    function isTitle(uint8 title) external view returns (bool);
-
-    function isBody(address addr) external view returns (bool);
-
-    function titles() external view returns (uint8[]);
-
-    function bodies() external view returns (address[]);
-
-    function getTerm(uint8 title) external view returns (address body);
-
-    function termIsTriggered(
-        uint8 title,
-        address ia,
-        bytes32 snOfDeal
-    ) external view returns (bool);
-
-    function termIsExempted(
-        uint8 title,
-        address ia,
-        bytes32 snOfDeal
-    ) external returns (bool);
-
-    // ======== VotingRule ========
+    // ################
+    // ##   读接口   ##
+    // ################
 
     function votingRules(uint8 typeOfVote) external view returns (bytes32);
 

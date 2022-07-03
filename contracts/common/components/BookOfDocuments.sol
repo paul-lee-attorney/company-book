@@ -10,7 +10,7 @@ import "../lib/SNFactory.sol";
 import "../lib/SNParser.sol";
 // import "../lib/SafeMath.sol";
 import "../lib/ArrayUtils.sol";
-import "../lib/EnumerableSet.sol";
+import "../lib/ObjsRepo.sol";
 
 import "./ISigPage.sol";
 
@@ -22,7 +22,7 @@ import "../utils/CloneFactory.sol";
 contract BookOfDocuments is CloneFactory, SHASetting, BOSSetting {
     using SNFactory for bytes;
     using SNParser for bytes32;
-    using EnumerableSet for EnumerableSet.TimeLine;
+    using ObjsRepo for ObjsRepo.TimeLine;
     using ArrayUtils for bytes32[];
 
     string private _bookName;
@@ -46,7 +46,7 @@ contract BookOfDocuments is CloneFactory, SHASetting, BOSSetting {
         bytes32 docHash;
         uint32 reviewDeadlineBN;
         uint32 votingDeadlineBN;
-        EnumerableSet.TimeLine states;
+        ObjsRepo.TimeLine states;
     }
 
     // struct snInfo {

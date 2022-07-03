@@ -11,7 +11,7 @@ import "../../common/lib/ArrayUtils.sol";
 import "../../common/lib/SNFactory.sol";
 import "../../common/lib/SNParser.sol";
 import "../../common/lib/EnumerableSet.sol";
-import "../../common/lib/EnumerableSet.sol";
+import "../../common/lib/ObjsRepo.sol";
 import "../../common/lib/EnumsRepo.sol";
 
 import "../../common/components/SigPage.sol";
@@ -22,7 +22,7 @@ contract InvestmentAgreement is IInvestmentAgreement, BOSSetting, SigPage {
     using SNFactory for bytes;
     using SNParser for bytes32;
     using ArrayUtils for bytes32[];
-    using EnumerableSet for EnumerableSet.TimeLine;
+    using ObjsRepo for ObjsRepo.TimeLine;
     using EnumerableSet for EnumerableSet.UintSet;
 
     /* struct sn{
@@ -67,7 +67,7 @@ contract InvestmentAgreement is IInvestmentAgreement, BOSSetting, SigPage {
         uint256 parValue;
         uint256 paidPar;
         uint32 closingDate;
-        EnumerableSet.TimeLine states;
+        ObjsRepo.TimeLine states;
         bytes32 hashLock;
     }
 

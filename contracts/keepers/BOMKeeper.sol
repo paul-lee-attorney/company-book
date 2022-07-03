@@ -127,7 +127,7 @@ contract BOMKeeper is
     ) external returns (uint256) {
         require(_bod.isDirector(caller), "caller is not a Director");
         require(!_rc.isContract(caller), "caller is not an EOA");
-        return _bom.execAction(actionType, targets, params, desHash, caller);
+        return _bom.execAction(actionType, targets, params, desHash);
     }
 
     function requestToBuy(

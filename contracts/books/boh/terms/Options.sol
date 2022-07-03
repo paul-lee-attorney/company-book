@@ -10,6 +10,7 @@ import "../../../common/access/DraftControl.sol";
 
 import "../../../common/lib/ArrayUtils.sol";
 import "../../../common/lib/EnumerableSet.sol";
+import "../../../common/lib/ObjsRepo.sol";
 
 import "../../../common/lib/SNFactory.sol";
 import "../../../common/lib/SNParser.sol";
@@ -20,7 +21,7 @@ contract Options is IOptions, BOSSetting, DraftControl {
     using SNFactory for bytes;
     using SNParser for bytes32;
     using EnumerableSet for EnumerableSet.UintSet;
-    using EnumerableSet for EnumerableSet.SNList;
+    using ObjsRepo for ObjsRepo.SNList;
 
     struct Option {
         bytes32 sn;
@@ -47,7 +48,7 @@ contract Options is IOptions, BOSSetting, DraftControl {
     // ssn => Option
     mapping(bytes6 => Option) private _options;
 
-    EnumerableSet.SNList private _snList;
+    ObjsRepo.SNList private _snList;
 
     uint16 public counterOfOptions;
 

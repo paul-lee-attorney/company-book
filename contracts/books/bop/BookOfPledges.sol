@@ -9,6 +9,7 @@ import "../../common/lib/ArrayUtils.sol";
 import "../../common/lib/SNFactory.sol";
 import "../../common/lib/SNParser.sol";
 import "../../common/lib/EnumerableSet.sol";
+import "../../common/lib/ObjsRepo.sol";
 
 import "../../common/ruting/BOSSetting.sol";
 
@@ -17,7 +18,7 @@ import "./IBookOfPledges.sol";
 contract BookOfPledges is IBookOfPledges, BOSSetting {
     using SNFactory for bytes;
     using SNParser for bytes32;
-    using EnumerableSet for EnumerableSet.SNList;
+    using ObjsRepo for ObjsRepo.SNList;
     using ArrayUtils for bytes32[];
 
     //Pledge 质权
@@ -45,7 +46,7 @@ contract BookOfPledges is IBookOfPledges, BOSSetting {
 
     uint16 private _counterOfPledges;
 
-    EnumerableSet.SNList private _snList;
+    ObjsRepo.SNList private _snList;
 
     constructor(uint40 bookeeper, address regCenter) public {
         init(_msgSender(), bookeeper, regCenter);

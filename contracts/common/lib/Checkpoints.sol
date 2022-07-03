@@ -22,15 +22,15 @@ library Checkpoints {
 
     // ======== stacks ========
 
-    struct Delta {
-        bool _in;
-        uint248 _acct;
-    }
+    // struct Delta {
+    //     bool _in;
+    //     uint248 _acct;
+    // }
 
-    struct Evolution {
-        mapping(uint256 => Delta[]) _stacks;
-        EnumerableSet.UintSet _blocks;
-    }
+    // struct Evolution {
+    //     mapping(uint256 => Delta[]) _stacks;
+    //     EnumerableSet.UintSet _blocks;
+    // }
 
     //##################
     //##    写接口    ##
@@ -60,17 +60,17 @@ library Checkpoints {
         return (self._checkpoints[self._checkpoints.length - 1]._blockNumber);
     }
 
-    function push(
-        Evolution storage self,
-        bool join,
-        uint40 acct
-    ) internal {
-        self._stacks[block.number].push(
-            Delta({_in: join, _acct: uint248(acct)})
-        );
+    // function push(
+    //     Evolution storage self,
+    //     bool join,
+    //     uint40 acct
+    // ) internal {
+    //     self._stacks[block.number].push(
+    //         Delta({_in: join, _acct: uint248(acct)})
+    //     );
 
-        self._blocks.add(block.number);
-    }
+    //     self._blocks.add(block.number);
+    // }
 
     //##################
     //##    读接口    ##
@@ -123,50 +123,50 @@ library Checkpoints {
         input.length--;
     }
 
-    function getAtBlock(
-        Evolution storage self,
-        uint256 blockNumber,
-        uint40[] input
-    ) internal view returns (uint40[]) {
-        require(blockNumber < block.number, "Checkpoints: block not yet mined");
+    // function getAtBlock(
+    //     Evolution storage self,
+    //     uint256 blockNumber,
+    //     uint40[] input
+    // ) internal view returns (uint40[]) {
+    //     require(blockNumber < block.number, "Checkpoints: block not yet mined");
 
-        uint256 high = self._blocks.length();
-        uint256 low = 0;
-        while (low < high) {
-            uint256 mid = _average(low, high);
-            if (self._blocks.at(mid) > blockNumber) {
-                high = mid;
-            } else {
-                low = mid + 1;
-            }
-        }
+    //     uint256 high = self._blocks.length();
+    //     uint256 low = 0;
+    //     while (low < high) {
+    //         uint256 mid = _average(low, high);
+    //         if (self._blocks.at(mid) > blockNumber) {
+    //             high = mid;
+    //         } else {
+    //             low = mid + 1;
+    //         }
+    //     }
 
-        low = high;
-        high = self._blocks.length();
+    //     low = high;
+    //     high = self._blocks.length();
 
-        uint40[] storage output;
+    //     uint40[] storage output;
 
-        uint256 len = input.length;
+    //     uint256 len = input.length;
 
-        while (len > 0) {
-            output.push(input[len - 1]);
-            len--;
-        }
+    //     while (len > 0) {
+    //         output.push(input[len - 1]);
+    //         len--;
+    //     }
 
-        while (high > low) {
-            Delta[] memory deltas = self._stacks[high - 1];
-            high--;
+    //     while (high > low) {
+    //         Delta[] memory deltas = self._stacks[high - 1];
+    //         high--;
 
-            len = deltas.length;
+    //         len = deltas.length;
 
-            while (len > 0) {
-                if (deltas[len - 1]._in)
-                    _removeByValue(output, (uint40(deltas[len - 1]._acct)));
-                else output.push(uint40(deltas[len - 1]._acct));
-                len--;
-            }
-        }
+    //         while (len > 0) {
+    //             if (deltas[len - 1]._in)
+    //                 _removeByValue(output, (uint40(deltas[len - 1]._acct)));
+    //             else output.push(uint40(deltas[len - 1]._acct));
+    //             len--;
+    //         }
+    //     }
 
-        return output;
-    }
+    //     return output;
+    // }
 }

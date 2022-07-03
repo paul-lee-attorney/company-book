@@ -7,7 +7,7 @@ pragma solidity ^0.4.24;
 
 import "../../common/lib/SNFactory.sol";
 import "../../common/lib/SNParser.sol";
-import "../../common/lib/EnumerableSet.sol";
+import "../../common/lib/ObjsRepo.sol";
 
 import "../../common/access/AccessControl.sol";
 
@@ -18,7 +18,7 @@ import "../../common/lib/Checkpoints.sol";
 contract SharesRepo is SHASetting {
     using SNFactory for bytes;
     using SNParser for bytes32;
-    using EnumerableSet for EnumerableSet.SNList;
+    using ObjsRepo for ObjsRepo.SNList;
     using Checkpoints for Checkpoints.History;
 
     //Share 股票
@@ -52,7 +52,7 @@ contract SharesRepo is SHASetting {
     //类别序列号计数器(2**8-1, 0-255)
     uint8 internal _counterOfClasses;
 
-    EnumerableSet.SNList internal _snList;
+    ObjsRepo.SNList internal _snList;
 
     //##################
     //##    Event     ##

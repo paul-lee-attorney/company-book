@@ -14,13 +14,13 @@ import "../../common/lib/EnumerableSet.sol";
 import "../../common/lib/SNFactory.sol";
 import "../../common/lib/SNParser.sol";
 import "../../common/lib/EnumerableSet.sol";
-import "../../common/lib/EnumerableSet.sol";
+import "../../common/lib/ObjsRepo.sol";
 
 import "./IBookOfOptions.sol";
 
 contract BookOfOptions is IBookOfOptions, BOSSetting {
     using EnumerableSet for EnumerableSet.UintSet;
-    using EnumerableSet for EnumerableSet.SNList;
+    using ObjsRepo for ObjsRepo.SNList;
     using ArrayUtils for bytes32[];
     // using ArrayUtils for uint32[];
     using SNFactory for bytes;
@@ -83,7 +83,7 @@ contract BookOfOptions is IBookOfOptions, BOSSetting {
 
     // bytes32[] private _snList;
 
-    EnumerableSet.SNList private _snList;
+    ObjsRepo.SNList private _snList;
 
     uint16 public counterOfOptions;
 

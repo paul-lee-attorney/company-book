@@ -26,7 +26,6 @@ contract BookOfDirectors is IBookOfDirectors, SHASetting {
     using SNFactory for bytes;
     using SNParser for bytes32;
     using EnumerableSet for EnumerableSet.UintSet;
-    // using EnumerableSet for EnumerableSet.BallotsBox;
 
     struct Director {
         uint8 title; // 1-Chairman; 2-ViceChairman; 3-Director;

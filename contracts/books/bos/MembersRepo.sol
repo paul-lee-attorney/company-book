@@ -16,7 +16,7 @@ contract MembersRepo is GroupsRepo {
     using EnumerableSet for EnumerableSet.Bytes32Set;
     using EnumerableSet for EnumerableSet.UintSet;
     using Checkpoints for Checkpoints.History;
-    using Checkpoints for Checkpoints.Evolution;
+    // using Checkpoints for Checkpoints.Evolution;
 
     // struct Member {
     //     bytes32[] sharesInHand;

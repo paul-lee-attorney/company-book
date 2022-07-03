@@ -70,8 +70,7 @@ interface IBookOfMotions {
         uint8 actionType,
         address[] targets,
         bytes[] params,
-        bytes32 desHash,
-        uint40 caller
+        bytes32 desHash
     ) external returns (uint256);
 
     function requestToBuy(address ia, bytes32 sn)

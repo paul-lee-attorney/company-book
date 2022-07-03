@@ -5,14 +5,14 @@
 
 pragma solidity ^0.4.24;
 
-import "../lib/EnumerableSet.sol";
+import "../lib/ObjsRepo.sol";
 
 import "../access/DraftControl.sol";
 
 import "./ISigPage.sol";
 
 contract SigPage is ISigPage, DraftControl {
-    using EnumerableSet for EnumerableSet.SignerGroup;
+    using ObjsRepo for ObjsRepo.SignerGroup;
 
     bool public established;
 
@@ -20,7 +20,7 @@ contract SigPage is ISigPage, DraftControl {
 
     uint32 public closingDeadline;
 
-    EnumerableSet.SignerGroup private _signatures;
+    ObjsRepo.SignerGroup private _signatures;
 
     //####################
     //##     event      ##

@@ -7,10 +7,10 @@ pragma solidity ^0.4.24;
 
 import "./InvestmentAgreement.sol";
 
-import "../../common/lib/EnumerableSet.sol";
+import "../../common/lib/ObjsRepo.sol";
 
 contract FirstRefusalToolKits is InvestmentAgreement {
-    using EnumerableSet for EnumerableSet.TimeLine;
+    using ObjsRepo for ObjsRepo.TimeLine;
 
     struct Record {
         uint16 ssn; // FR sequence number

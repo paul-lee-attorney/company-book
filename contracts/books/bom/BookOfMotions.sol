@@ -390,20 +390,28 @@ contract BookOfMotions is
             uint256 consentAmt
         ) = _getParas(motionId);
 
-        bool flag1 = motion.votingRule.ratioHeadOfVR() > 0
-            ? totalHead > 0
-                ? ((motion.box.supportVoters.length() + consentHead) * 10000) /
-                    totalHead >=
-                    motion.votingRule.ratioHeadOfVR()
-                : false
-            : true;
+        bool flag1;
+        bool flag2;
 
-        bool flag2 = motion.votingRule.ratioAmountOfVR() > 0
-            ? totalAmt > 0
-                ? ((motion.box.sumOfYea + consentAmt) * 10000) / totalAmt >=
-                    motion.votingRule.ratioAmountOfVR()
-                : false
-            : true;
+        uint40 vetoHolder = motion.votingRule.vetoHolderOfVR();
+
+        if (vetoHolder == 0 || motion.box.supportVoters.contains(vetoHolder)) {
+            flag1 = motion.votingRule.ratioHeadOfVR() > 0
+                ? totalHead > 0
+                    ? ((motion.box.supportVoters.length() + consentHead) *
+                        10000) /
+                        totalHead >=
+                        motion.votingRule.ratioHeadOfVR()
+                    : false
+                : true;
+
+            flag2 = motion.votingRule.ratioAmountOfVR() > 0
+                ? totalAmt > 0
+                    ? ((motion.box.sumOfYea + consentAmt) * 10000) / totalAmt >=
+                        motion.votingRule.ratioAmountOfVR()
+                    : false
+                : true;
+        }
 
         motion.state = flag1 && flag2
             ? uint8(EnumsRepo.StateOfMotion.Passed)

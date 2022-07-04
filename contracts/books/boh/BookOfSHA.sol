@@ -5,14 +5,14 @@
 
 pragma solidity ^0.4.24;
 
-import "../../common/components/BookOfDocuments.sol";
+import "../../common/components/DocumentsRepo.sol";
 
 import ".//IShareholdersAgreement.sol";
 
 import "./IBookOfSHA.sol";
 import "./ITerm.sol";
 
-contract BookOfSHA is IBookOfSHA, ITerm, BookOfDocuments {
+contract BookOfSHA is IBookOfSHA, ITerm, DocumentsRepo {
     enum BOHStates {
         ZeroPoint,
         Created,
@@ -27,7 +27,7 @@ contract BookOfSHA is IBookOfSHA, ITerm, BookOfDocuments {
     //     string _bookName,
     //     uint40 _owner,
     //     uint40 _bookeeper
-    // ) public BookOfDocuments(_bookName, _admin, _bookeeper, _rc) {}
+    // ) public DocumentsRepo(_bookName, _admin, _bookeeper, _rc) {}
 
     //##############
     //##  Event   ##

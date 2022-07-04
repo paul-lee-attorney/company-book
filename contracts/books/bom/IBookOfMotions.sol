@@ -7,35 +7,35 @@ pragma solidity ^0.4.24;
 pragma experimental ABIEncoderV2;
 
 interface IBookOfMotions {
-    //##############
-    //##  Event   ##
-    //##############
+    // //##############
+    // //##  Event   ##
+    // //##############
 
-    event AuthorizeToPropose(
-        uint40 rightholder,
-        uint40 delegate,
-        uint256 actionId
-    );
+    // event AuthorizeToPropose(
+    //     uint40 rightholder,
+    //     uint40 delegate,
+    //     uint256 actionId
+    // );
 
-    event ProposeMotion(
-        uint256 indexed motionId,
-        uint8 typeOfMotion,
-        address[] targets,
-        bytes[] params,
-        bytes32 desHash,
-        bytes32 sn
-    );
+    // event ProposeMotion(
+    //     uint256 indexed motionId,
+    //     uint8 typeOfMotion,
+    //     address[] targets,
+    //     bytes[] params,
+    //     bytes32 desHash,
+    //     bytes32 sn
+    // );
 
-    event Vote(
-        uint256 indexed motionId,
-        uint40 voter,
-        uint8 atitude,
-        uint256 voteAmt
-    );
+    // event Vote(
+    //     uint256 indexed motionId,
+    //     uint40 voter,
+    //     uint8 atitude,
+    //     uint256 voteAmt
+    // );
 
     event VoteCounting(uint256 indexed motionId, uint8 result);
 
-    event ExecuteAction(uint256 indexed actionId, bool flag);
+    // event ExecuteAction(uint256 indexed actionId, bool flag);
 
     //##################
     //##    写接口    ##

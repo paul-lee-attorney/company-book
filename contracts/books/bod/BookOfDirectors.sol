@@ -15,6 +15,7 @@ pragma experimental ABIEncoderV2;
 import "../../common/ruting/SHASetting.sol";
 // import "../../common/ruting/BOSSetting.sol";
 
+import "../../common/components/MotionsRepo.sol";
 import "../../common/lib/SNFactory.sol";
 import "../../common/lib/SNParser.sol";
 import "../../common/lib/EnumsRepo.sol";
@@ -25,7 +26,7 @@ import "../../common/access/AccessControl.sol";
 
 import "./IBookOfDirectors.sol";
 
-contract BookOfDirectors is IBookOfDirectors, SHASetting {
+contract BookOfDirectors is IBookOfDirectors, MotionsRepo, SHASetting {
     using SNFactory for bytes;
     using SNParser for bytes32;
     using EnumerableSet for EnumerableSet.UintSet;
@@ -51,20 +52,6 @@ contract BookOfDirectors is IBookOfDirectors, SHASetting {
 
     uint8 private _maxNumOfDirectors;
 
-    // ======== VotingComponent ========
-
-    struct Motion {
-        bytes32 sn;
-        bytes32 votingRule;
-        uint8 state; // 0-pending 1-proposed  2-passed 3-rejected(not to buy) 4-rejected (to buy)
-        ObjsRepo.BallotsBox box;
-    }
-
-    // motionId => Motion
-    mapping(uint256 => Motion) private _motions;
-
-    EnumerableSet.UintSet private _motionIds;
-
     //####################
     //##    modifier    ##
     //####################
@@ -78,57 +65,13 @@ contract BookOfDirectors is IBookOfDirectors, SHASetting {
         _;
     }
 
-    modifier onlyProposed(uint256 motionId) {
-        require(_motionIds.contains(motionId), "motion is NOT proposed");
-        _;
-    }
-
-    modifier beforeExpire(uint256 motionId) {
-        require(
-            _motions[motionId].sn.votingDeadlineOfMotion() >= block.number,
-            "missed voting deadline"
-        );
-        _;
-    }
-
-    modifier afterExpire(uint256 motionId) {
-        require(
-            _motions[motionId].sn.votingDeadlineOfMotion() < block.number,
-            "still on voting"
-        );
-        _;
-    }
-
-    modifier notVotedTo(uint256 motionId, uint40 caller) {
-        require(!isVoted(motionId, caller), "HAVE voted for the motion");
-        _;
-    }
-
     //##################
     //##    写接口    ##
     //##################
 
-    function _createSN(
-        uint8 typeOfMotion,
-        uint40 submitter,
-        uint32 proposeDate,
-        uint32 votingDeadlineBN,
-        uint32 weightRegBlock
-    ) private pure returns (bytes32 sn) {
-        bytes memory _sn = new bytes(32);
-
-        _sn[0] = bytes1(typeOfMotion);
-        _sn = _sn.acctToSN(1, submitter);
-        _sn = _sn.dateToSN(6, proposeDate);
-        _sn = _sn.dateToSN(10, votingDeadlineBN);
-        _sn = _sn.dateToSN(14, weightRegBlock);
-
-        sn = _sn.bytesToBytes32();
-    }
-
     function proposeAction(
         uint8 actionType,
-        address[] target,
+        address[] targets,
         bytes[] params,
         bytes32 desHash,
         uint40 submitter
@@ -142,54 +85,29 @@ contract BookOfDirectors is IBookOfDirectors, SHASetting {
             "tenure expired"
         );
 
-        _proposeAction(actionType, target, params, desHash, submitter);
-    }
-
-    function _proposeAction(
-        uint8 actionType,
-        address[] target,
-        bytes[] params,
-        bytes32 desHash,
-        uint40 submitter
-    ) internal {
-        uint256 actionId = _hashAction(actionType, target, params, desHash);
-        require(!_motionIds.contains(actionId), "motion has been proposed");
+        uint256 actionId = _hashAction(actionType, targets, params, desHash);
 
         bytes32 rule = _getSHA().votingRules(actionType);
 
-        Motion storage motion = _motions[actionId];
-
-        motion.votingRule = rule;
-        motion.sn = _createSN(
+        bytes32 sn = _createSN(
             actionType,
             submitter,
             uint32(block.timestamp),
             uint32(block.number) +
                 (uint32(rule.votingDaysOfVR()) * 24 * _rc.blocksPerHour()),
-            uint32(block.number)
+            uint32(block.number),
+            0
         );
-        motion.state = uint8(EnumsRepo.StateOfMotion.Proposed);
 
-        _motionIds.add(actionId);
-
-        emit ProposeMotion(
+        _proposeMotion(
             actionId,
+            rule,
+            sn,
             actionType,
-            target,
+            targets,
             params,
-            desHash,
-            motion.sn
+            desHash
         );
-    }
-
-    function _hashAction(
-        uint8 actionType,
-        address[] target,
-        bytes[] params,
-        bytes32 desHash
-    ) private pure returns (uint256) {
-        return
-            uint256(keccak256(abi.encode(actionType, target, params, desHash)));
     }
 
     function castVote(
@@ -197,12 +115,7 @@ contract BookOfDirectors is IBookOfDirectors, SHASetting {
         uint8 attitude,
         uint40 caller,
         bytes32 sigHash
-    )
-        external
-        onlyDirectKeeper
-        notVotedTo(motionId, caller)
-        beforeExpire(motionId)
-    {
+    ) external onlyDirectKeeper {
         require(_directorsUserNoList.contains(caller), "not a director");
         require(
             _directors[caller].expirationBN >= block.number,
@@ -217,9 +130,7 @@ contract BookOfDirectors is IBookOfDirectors, SHASetting {
             "not a Director at weight registration BN"
         );
 
-        if (motion.box.add(caller, attitude, 1, sigHash)) {
-            emit Vote(motionId, caller, attitude, 1);
-        }
+        _castVote(motionId, attitude, caller, sigHash, 1);
     }
 
     function voteCounting(uint256 motionId)
@@ -247,44 +158,6 @@ contract BookOfDirectors is IBookOfDirectors, SHASetting {
         }
 
         emit VoteCounting(motionId, motion.state);
-    }
-
-    function execAction(
-        uint8 actionType,
-        address[] targets,
-        bytes[] params,
-        bytes32 desHash
-    ) external onlyDirectKeeper returns (uint256) {
-        uint256 actionId = _hashAction(actionType, targets, params, desHash);
-
-        require(_motionIds.contains(actionId), "motion not proposed");
-
-        Motion storage motion = _motions[actionId];
-
-        require(
-            motion.state == uint8(EnumsRepo.StateOfMotion.Passed),
-            "voting NOT end"
-        );
-
-        motion.state = uint8(EnumsRepo.StateOfMotion.Executed);
-        if (_execute(targets, params)) emit ExecuteAction(actionId, true);
-        else emit ExecuteAction(actionId, false);
-
-        return actionId;
-    }
-
-    function _execute(address[] memory targets, bytes[] memory params)
-        internal
-        returns (bool)
-    {
-        bool success;
-
-        for (uint256 i = 0; i < targets.length; ++i) {
-            success = targets[i].call(params[i]);
-            if (!success) return success;
-        }
-
-        return success;
     }
 
     // ======== Directors ========
@@ -364,15 +237,6 @@ contract BookOfDirectors is IBookOfDirectors, SHASetting {
     //##################
     //##    读接口    ##
     //##################
-
-    function isVoted(uint256 motionId, uint40 acct)
-        public
-        view
-        onlyUser
-        returns (bool)
-    {
-        return _motions[motionId].box.isVoted(acct);
-    }
 
     function maxNumOfDirectors() external view onlyUser returns (uint8) {
         return _maxNumOfDirectors;

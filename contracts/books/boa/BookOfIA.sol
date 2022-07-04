@@ -9,7 +9,7 @@ import ".//IInvestmentAgreement.sol";
 import "../boh/terms//IAlongs.sol";
 
 import "../../common/components/ISigPage.sol";
-import "../../common/components/BookOfDocuments.sol";
+import "../../common/components/DocumentsRepo.sol";
 
 import "../../common/ruting/SHASetting.sol";
 
@@ -20,7 +20,7 @@ import "../../common/lib/EnumerableSet.sol";
 
 import "./IBookOfIA.sol";
 
-contract BookOfIA is IBookOfIA, BookOfDocuments {
+contract BookOfIA is IBookOfIA, DocumentsRepo {
     using SNParser for bytes32;
     using EnumerableSet for EnumerableSet.UintSet;
     using ArrayUtils for uint40[];

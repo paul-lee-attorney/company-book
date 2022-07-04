@@ -19,7 +19,7 @@ import "../ruting/SHASetting.sol";
 
 import "../utils/CloneFactory.sol";
 
-contract BookOfDocuments is CloneFactory, SHASetting, BOSSetting {
+contract DocumentsRepo is CloneFactory, SHASetting, BOSSetting {
     using SNFactory for bytes;
     using SNParser for bytes32;
     using ObjsRepo for ObjsRepo.TimeLine;

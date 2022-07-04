@@ -20,25 +20,7 @@ interface IBookOfDirectors {
 
     event RemoveDirector(uint40 userNo, uint8 title);
 
-    event ProposeMotion(
-        uint256 indexed motionId,
-        uint8 typeOfMotion,
-        address[] targets,
-        bytes[] params,
-        bytes32 desHash,
-        bytes32 sn
-    );
-
-    event Vote(
-        uint256 indexed motionId,
-        uint40 voter,
-        uint8 atitude,
-        uint256 voteAmt
-    );
-
     event VoteCounting(uint256 indexed motionId, uint8 result);
-
-    event ExecuteAction(uint256 indexed actionId, bool flag);
 
     //##################
     //##    写接口    ##
@@ -56,9 +38,79 @@ interface IBookOfDirectors {
 
     function removeDirector(uint40 acct) external;
 
+    // ======== Motions ========
+
+    function proposeAction(
+        uint8 actionType,
+        address[] target,
+        bytes[] params,
+        bytes32 desHash,
+        uint40 submitter
+    ) external;
+
+    function castVote(
+        uint256 motionId,
+        uint8 attitude,
+        uint40 caller,
+        bytes32 sigHash
+    ) external;
+
+    function voteCounting(uint256 motionId) external;
+
+    function execAction(
+        uint8 actionType,
+        address[] targets,
+        bytes[] params,
+        bytes32 desHash
+    ) external returns (uint256);
+
     //##################
     //##    读接口    ##
     //##################
+
+    // ======== Motions ========
+
+    function votingRule(uint256 motionId) external view returns (bytes32);
+
+    function state(uint256 motionId) external view returns (uint8);
+
+    function votedYea(uint256 motionId, uint40 acct)
+        external
+        view
+        returns (bool);
+
+    function votedNay(uint256 motionId, uint40 acct)
+        external
+        view
+        returns (bool);
+
+    function getYea(uint256 motionId) external view returns (uint40[], uint256);
+
+    function getNay(uint256 motionId) external view returns (uint40[], uint256);
+
+    function sumOfVoteAmt(uint256 motionId) external view returns (uint256);
+
+    function isVoted(uint256 motionId, uint40 acct)
+        external
+        view
+        returns (bool);
+
+    function getVote(uint256 motionId, uint40 acct)
+        external
+        view
+        returns (
+            uint64 weight,
+            uint8 attitude,
+            uint32 blockNumber,
+            uint32 sigDate,
+            bytes32 sigHash
+        );
+
+    function isPassed(uint256 motionId) external view returns (bool);
+
+    function isRejected(uint256 motionId) external view returns (bool);
+
+    //======== Director ========
 
     function maxNumOfDirectors() external view returns (uint8);
 

@@ -46,6 +46,7 @@ interface IVotingRules {
 
     function setRule(
         uint8 typeOfVote,
+        uint40 vetoHolder,
         uint256 ratioHead,
         uint256 ratioAmount,
         bool onlyAttendance,

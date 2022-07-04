@@ -35,6 +35,8 @@ interface IBookOfMotions {
 
     event VoteCounting(uint256 indexed motionId, uint8 result);
 
+    event ExecuteAction(uint256 indexed actionId, bool flag);
+
     //##################
     //##    写接口    ##
     //##################

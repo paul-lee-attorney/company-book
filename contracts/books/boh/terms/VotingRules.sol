@@ -25,6 +25,7 @@ contract VotingRules is IVotingRules, DraftControl {
     //     uint8 votingDays; //default: 30 natrual days
     //     uint8 execDaysForPutOpt; //default: 7 natrual days
     //     uint8 typeOfVote;
+    //     uint40 vetoHolder;
     // }
 
     // typeOfVote => Rule: 1-CI 2-ST(to 3rd Party) 3-ST(to otherMember) 4-(1&3) 5-(2&3) 6-(1&2&3) 7-(1&2)
@@ -157,6 +158,7 @@ contract VotingRules is IVotingRules, DraftControl {
 
     function setRule(
         uint8 typeOfVote,
+        uint40 vetoHolder,
         uint256 ratioHead,
         uint256 ratioAmount,
         bool onlyAttendance,
@@ -181,6 +183,7 @@ contract VotingRules is IVotingRules, DraftControl {
         _sn[9] = bytes1(votingDays);
         _sn[10] = bytes1(execDaysForPutOpt);
         _sn[11] = bytes1(typeOfVote);
+        _sn = _sn.acctToSN(12, vetoHolder);
 
         _votingRules[typeOfVote] = _sn.bytesToBytes32();
 

@@ -65,6 +65,7 @@ library EnumsRepo {
         Pending,
         Proposed,
         Passed,
+        Rejected,
         Rejected_NotToBuy,
         Rejected_ToBuy,
         Executed

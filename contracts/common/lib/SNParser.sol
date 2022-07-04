@@ -328,6 +328,10 @@ library SNParser {
         return uint8(sn[11]);
     }
 
+    function vetoHolderOfVR(bytes32 sn) internal pure returns (uint40) {
+        return uint40(bytes5(sn << 96));
+    }
+
     // ======== MotionSN ========
 
     function typeOfMotion(bytes32 sn) internal pure returns (uint8) {

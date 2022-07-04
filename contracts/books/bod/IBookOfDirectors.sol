@@ -5,6 +5,8 @@
 
 pragma solidity ^0.4.24;
 
+pragma experimental ABIEncoderV2;
+
 interface IBookOfDirectors {
     event SetMaxNumOfDirectors(uint8 num);
 
@@ -17,6 +19,26 @@ interface IBookOfDirectors {
     );
 
     event RemoveDirector(uint40 userNo, uint8 title);
+
+    event ProposeMotion(
+        uint256 indexed motionId,
+        uint8 typeOfMotion,
+        address[] targets,
+        bytes[] params,
+        bytes32 desHash,
+        bytes32 sn
+    );
+
+    event Vote(
+        uint256 indexed motionId,
+        uint40 voter,
+        uint8 atitude,
+        uint256 voteAmt
+    );
+
+    event VoteCounting(uint256 indexed motionId, uint8 result);
+
+    event ExecuteAction(uint256 indexed actionId, bool flag);
 
     //##################
     //##    写接口    ##

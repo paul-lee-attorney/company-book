@@ -38,13 +38,16 @@ contract BookOfMotions is
     struct Motion {
         bytes32 sn;
         bytes32 votingRule;
-        ObjsRepo.BallotsBox box;
         uint8 state; // 0-pending 1-proposed  2-passed 3-rejected(not to buy) 4-rejected (to buy)
+        ObjsRepo.BallotsBox box;
     }
 
     // motionId => delegateNo => memberNo
     mapping(uint256 => mapping(uint256 => EnumerableSet.UintSet))
         private _delegates;
+
+    // motionId => authorizers
+    mapping(uint256 => EnumerableSet.UintSet) private _authorizers;
 
     // motionId => Motion
     mapping(uint256 => Motion) private _motions;
@@ -64,6 +67,14 @@ contract BookOfMotions is
         require(
             _motions[motionId].sn.votingDeadlineOfMotion() >= block.number,
             "missed voting deadline"
+        );
+        _;
+    }
+
+    modifier afterExpire(uint256 motionId) {
+        require(
+            _motions[motionId].sn.votingDeadlineOfMotion() < block.number,
+            "still on voting"
         );
         _;
     }
@@ -209,8 +220,10 @@ contract BookOfMotions is
             "action has been proposed"
         );
 
-        if (_delegates[actionId][delegate].add(rightholder))
+        if (_authorizers[actionId].add(rightholder)) {
+            _delegates[actionId][delegate].add(rightholder);
             emit AuthorizeToPropose(rightholder, delegate, actionId);
+        }
     }
 
     function proposeAction(
@@ -366,14 +379,9 @@ contract BookOfMotions is
         external
         onlyDirectKeeper
         onlyProposed(motionId)
-        beforeExpire(motionId)
+        afterExpire(motionId)
     {
         Motion storage motion = _motions[motionId];
-
-        require(
-            block.number > motion.sn.votingDeadlineOfMotion(),
-            "voting NOT end"
-        );
 
         (
             uint256 totalHead,
@@ -441,7 +449,8 @@ contract BookOfMotions is
         );
 
         motion.state = uint8(EnumsRepo.StateOfMotion.Executed);
-        _execute(targets, params);
+        if (_execute(targets, params)) emit ExecuteAction(actionId, true);
+        else emit ExecuteAction(actionId, false);
 
         return actionId;
     }

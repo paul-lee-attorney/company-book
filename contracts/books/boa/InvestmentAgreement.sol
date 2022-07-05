@@ -1,4 +1,4 @@
-/*
+/* *
  * Copyright 2021-2022 LI LI of JINGTIAN & GONGCHENG.
  * All Rights Reserved.
  * */
@@ -7,7 +7,6 @@ pragma solidity ^0.4.24;
 
 import "../../common/ruting/BOSSetting.sol";
 
-import "../../common/lib/ArrayUtils.sol";
 import "../../common/lib/SNFactory.sol";
 import "../../common/lib/SNParser.sol";
 import "../../common/lib/EnumerableSet.sol";
@@ -21,18 +20,19 @@ import "./IInvestmentAgreement.sol";
 contract InvestmentAgreement is IInvestmentAgreement, BOSSetting, SigPage {
     using SNFactory for bytes;
     using SNParser for bytes32;
-    using ArrayUtils for bytes32[];
+    using ObjsRepo for ObjsRepo.SeqList;
     using ObjsRepo for ObjsRepo.TimeLine;
     using EnumerableSet for EnumerableSet.UintSet;
 
     /* struct sn{
         uint8 class; 1
         uint8 typeOfDeal; 1    
-        uint16 sequence; 2
-        uint40 buyer; 4
+        uint40 buyer; 5
         uint16 group; 2
         bytes6 shortShareNumber; 6
         uint16 preSN; 2
+        。。。
+        uint16 sequence; 2
     } 
     */
 
@@ -74,10 +74,7 @@ contract InvestmentAgreement is IInvestmentAgreement, BOSSetting, SigPage {
     // sequence => Deal
     mapping(uint16 => Deal) internal _deals;
 
-    // sequence => exist?
-    mapping(uint16 => bool) private _isDeal;
-
-    bytes32[] private _dealsList;
+    ObjsRepo.SeqList private _dealsList;
 
     uint16 private _counterOfDeals;
 
@@ -103,7 +100,7 @@ contract InvestmentAgreement is IInvestmentAgreement, BOSSetting, SigPage {
     }
 
     modifier dealExist(uint16 ssn) {
-        require(_isDeal[ssn], "NOT a deal sn");
+        require(_dealsList.contains(ssn), "NOT a deal sn");
         _;
     }
 
@@ -113,8 +110,8 @@ contract InvestmentAgreement is IInvestmentAgreement, BOSSetting, SigPage {
 
     function _createSN(
         uint8 class,
-        uint8 typeOfDeal,
         uint16 sequence,
+        uint8 typeOfDeal,
         uint40 buyer,
         uint16 group,
         bytes32 shareNumber,
@@ -123,8 +120,8 @@ contract InvestmentAgreement is IInvestmentAgreement, BOSSetting, SigPage {
         bytes memory _sn = new bytes(32);
 
         _sn[0] = bytes1(class);
-        _sn[1] = bytes1(typeOfDeal);
-        _sn = _sn.sequenceToSN(2, sequence);
+        _sn = _sn.sequenceToSN(1, sequence);
+        _sn[3] = bytes1(typeOfDeal);
         _sn = _sn.acctToSN(4, buyer);
         _sn = _sn.sequenceToSN(9, group);
         _sn = _sn.shortToSN(11, shareNumber.short());
@@ -178,8 +175,8 @@ contract InvestmentAgreement is IInvestmentAgreement, BOSSetting, SigPage {
 
         bytes32 sn = _createSN(
             class,
-            typeOfDeal,
             _counterOfDeals,
+            typeOfDeal,
             buyer,
             group,
             shareNumber,
@@ -191,8 +188,7 @@ contract InvestmentAgreement is IInvestmentAgreement, BOSSetting, SigPage {
         deal.sn = sn;
         deal.shareNumber = shareNumber;
 
-        _dealsList.push(sn);
-        _isDeal[_counterOfDeals] = true;
+        _dealsList.add(sn);
 
         if (finalized) {
             if (
@@ -258,8 +254,7 @@ contract InvestmentAgreement is IInvestmentAgreement, BOSSetting, SigPage {
         removePartyFromDoc(sn.buyerOfDeal());
 
         delete _deals[ssn];
-        _dealsList.removeByValue(sn);
-        _isDeal[ssn] = false;
+        _dealsList.remove(sn);
 
         emit DelDeal(sn);
     }
@@ -412,7 +407,7 @@ contract InvestmentAgreement is IInvestmentAgreement, BOSSetting, SigPage {
     //  #################################
 
     function isDeal(uint16 ssn) external view onlyUser returns (bool) {
-        return _isDeal[ssn];
+        return _dealsList.contains(ssn);
     }
 
     function counterOfDeals() external view onlyUser returns (uint16) {
@@ -472,7 +467,7 @@ contract InvestmentAgreement is IInvestmentAgreement, BOSSetting, SigPage {
     }
 
     function dealsList() external view onlyUser returns (bytes32[]) {
-        return _dealsList;
+        return _dealsList.values();
     }
 
     function dealsConcerned(uint40 acct)

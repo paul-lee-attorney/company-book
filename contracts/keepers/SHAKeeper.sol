@@ -88,7 +88,7 @@ contract SHAKeeper is ISHAKeeper, BOASetting, SHASetting, BOSSetting {
         _lockDealSubject(ia, alongSN, parValue);
 
         if (!dragAlong)
-            ISigPage(ia).signDeal(alongSN.sequenceOfDeal(), caller, sigHash);
+            ISigPage(ia).signDeal(alongSN.sequence(), caller, sigHash);
     }
 
     function _addAlongDeal(
@@ -101,17 +101,14 @@ contract SHAKeeper is ISHAKeeper, BOASetting, SHASetting, BOSSetting {
         uint40 caller
     ) private {
         uint40 drager = IInvestmentAgreement(ia)
-            .shareNumberOfDeal(sn.sequenceOfDeal())
+            .shareNumberOfDeal(sn.sequence())
             .shareholder();
 
         address term = dragAlong
             ? _getSHA().getTerm(uint8(EnumsRepo.TermTitle.DRAG_ALONG))
             : _getSHA().getTerm(uint8(EnumsRepo.TermTitle.TAG_ALONG));
 
-        require(
-            ITerm(term).isTriggered(ia, sn.sequenceOfDeal()),
-            "not triggered"
-        );
+        require(ITerm(term).isTriggered(ia, sn.sequence()), "not triggered");
 
         require(
             IAlongs(term).isLinked(drager, shareNumber.shareholder()),
@@ -173,16 +170,14 @@ contract SHAKeeper is ISHAKeeper, BOASetting, SHASetting, BOSSetting {
         uint256 parValue,
         uint256 paidPar
     ) private {
-        uint256 unitPrice = IInvestmentAgreement(ia).unitPrice(
-            sn.sequenceOfDeal()
-        );
+        uint256 unitPrice = IInvestmentAgreement(ia).unitPrice(sn.sequence());
 
         uint32 closingDate = IInvestmentAgreement(ia).closingDate(
-            sn.sequenceOfDeal()
+            sn.sequence()
         );
 
         IInvestmentAgreement(ia).updateDeal(
-            alongSN.sequenceOfDeal(),
+            alongSN.sequence(),
             unitPrice,
             parValue,
             paidPar,
@@ -195,9 +190,7 @@ contract SHAKeeper is ISHAKeeper, BOASetting, SHASetting, BOSSetting {
         bytes32 alongSN,
         uint256 parValue
     ) private returns (bool flag) {
-        if (
-            IInvestmentAgreement(ia).lockDealSubject(alongSN.sequenceOfDeal())
-        ) {
+        if (IInvestmentAgreement(ia).lockDealSubject(alongSN.sequence())) {
             _bos.decreaseCleanPar(alongSN.shortShareNumberOfDeal(), parValue);
             flag = true;
         }
@@ -213,7 +206,7 @@ contract SHAKeeper is ISHAKeeper, BOASetting, SHASetting, BOSSetting {
     ) external onlyDirectKeeper onlyExecuted(ia) withinReviewPeriod(ia) {
         require(caller == sn.buyerOfDeal(), "caller NOT buyer");
         _boa.acceptAlongDeal(ia, sn, drager, dragAlong);
-        ISigPage(ia).signDeal(sn.sequenceOfDeal(), caller, sigHash);
+        ISigPage(ia).signDeal(sn.sequence(), caller, sigHash);
     }
 
     // ======== AntiDilution ========
@@ -244,14 +237,7 @@ contract SHAKeeper is ISHAKeeper, BOASetting, SHASetting, BOSSetting {
             shareNumber.class()
         );
 
-        _createGiftDeals(
-            ia,
-            sn.sequenceOfDeal(),
-            giftPar,
-            obligors,
-            caller,
-            sigHash
-        );
+        _createGiftDeals(ia, sn.sequence(), giftPar, obligors, caller, sigHash);
     }
 
     function _createGiftDeals(
@@ -274,11 +260,7 @@ contract SHAKeeper is ISHAKeeper, BOASetting, SHASetting, BOSSetting {
                     caller
                 );
 
-                ISigPage(ia).signDeal(
-                    snOfGiftDeal.sequenceOfDeal(),
-                    caller,
-                    sigHash
-                );
+                ISigPage(ia).signDeal(snOfGiftDeal.sequence(), caller, sigHash);
 
                 giftPar = result;
                 if (giftPar == 0) break;
@@ -315,19 +297,14 @@ contract SHAKeeper is ISHAKeeper, BOASetting, SHASetting, BOSSetting {
 
             if (
                 IInvestmentAgreement(ia).lockDealSubject(
-                    snOfGiftDeal.sequenceOfDeal()
+                    snOfGiftDeal.sequence()
                 )
             ) {
                 _bos.decreaseCleanPar(shareNumber.short(), lockAmount);
                 _boa.mockDealOfSell(ia, caller, lockAmount);
             }
 
-            _boa.mockDealOfBuy(
-                ia,
-                snOfGiftDeal.sequenceOfDeal(),
-                caller,
-                lockAmount
-            );
+            _boa.mockDealOfBuy(ia, snOfGiftDeal.sequence(), caller, lockAmount);
         }
         result = giftPar - lockAmount;
     }
@@ -342,7 +319,7 @@ contract SHAKeeper is ISHAKeeper, BOASetting, SHASetting, BOSSetting {
         );
 
         IInvestmentAgreement(ia).updateDeal(
-            snOfGiftDeal.sequenceOfDeal(),
+            snOfGiftDeal.sequence(),
             0,
             lockAmount,
             lockAmount,
@@ -356,7 +333,7 @@ contract SHAKeeper is ISHAKeeper, BOASetting, SHASetting, BOSSetting {
         uint40 caller
     ) external onlyDirectKeeper {
         require(caller == sn.buyerOfDeal(), "caller is not buyer");
-        IInvestmentAgreement(ia).takeGift(sn.sequenceOfDeal());
+        IInvestmentAgreement(ia).takeGift(sn.sequence());
     }
 
     // ======== FirstRefusal ========
@@ -379,7 +356,7 @@ contract SHAKeeper is ISHAKeeper, BOASetting, SHASetting, BOSSetting {
         );
 
         IInvestmentAgreement(ia).execFirstRefusalRight(
-            sn.sequenceOfDeal(),
+            sn.sequence(),
             _getSHA().basedOnPar(),
             caller,
             sigHash
@@ -402,13 +379,13 @@ contract SHAKeeper is ISHAKeeper, BOASetting, SHASetting, BOSSetting {
             require(
                 caller ==
                     IInvestmentAgreement(ia)
-                        .shareNumberOfDeal(sn.sequenceOfDeal())
+                        .shareNumberOfDeal(sn.sequence())
                         .shareholder(),
                 "not seller of Deal"
             );
 
         IInvestmentAgreement(ia).acceptFR(
-            sn.sequenceOfDeal(),
+            sn.sequence(),
             caller,
             // acceptDate,
             sigHash

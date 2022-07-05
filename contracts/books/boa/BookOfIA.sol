@@ -13,7 +13,6 @@ import "../../common/components/DocumentsRepo.sol";
 
 import "../../common/ruting/SHASetting.sol";
 
-import "../../common/lib/ArrayUtils.sol";
 import "../../common/lib/SNParser.sol";
 import "../../common/lib/EnumsRepo.sol";
 import "../../common/lib/EnumerableSet.sol";
@@ -23,7 +22,6 @@ import "./IBookOfIA.sol";
 contract BookOfIA is IBookOfIA, DocumentsRepo {
     using SNParser for bytes32;
     using EnumerableSet for EnumerableSet.UintSet;
-    using ArrayUtils for uint40[];
 
     struct Amt {
         uint256 selAmt;
@@ -247,7 +245,7 @@ contract BookOfIA is IBookOfIA, DocumentsRepo {
         bytes32 rule = IAlongs(term).linkRule(_bos.groupNo(drager));
 
         (, uint256 parValue, uint256 paidPar, , ) = IInvestmentAgreement(ia)
-            .getDeal(sn.sequenceOfDeal());
+            .getDeal(sn.sequence());
 
         Amt storage bAmt = _mockResults[ia][buyerGroup];
 
@@ -256,7 +254,7 @@ contract BookOfIA is IBookOfIA, DocumentsRepo {
 
         bAmt.rstAmt = bAmt.orgAmt + bAmt.buyAmt - bAmt.selAmt;
 
-        _isMocked[ia][sn.sequenceOfDeal()] = true;
+        _isMocked[ia][sn.sequence()] = true;
 
         emit AcceptAlongDeal(ia, drager, sn);
     }
@@ -350,7 +348,7 @@ contract BookOfIA is IBookOfIA, DocumentsRepo {
             len--;
 
             (, , , uint8 state, ) = IInvestmentAgreement(ia).getDeal(
-                dealsList[len - 1].sequenceOfDeal()
+                dealsList[len - 1].sequence()
             );
 
             if (state == uint8(EnumsRepo.StateOfDeal.Terminated)) continue;
@@ -373,17 +371,5 @@ contract BookOfIA is IBookOfIA, DocumentsRepo {
         // 协议类别计算
         uint8 sumOfSignal = signal[0] + signal[1] + signal[2];
         output = sumOfSignal == 3 ? signal[2] == 0 ? 7 : 3 : sumOfSignal;
-    }
-
-    function otherMembers(address ia)
-        external
-        view
-        onlyUser
-        returns (uint40[])
-    {
-        uint40[] memory signers = ISigPage(ia).parties();
-        uint40[] memory members = _bos.members();
-
-        return members.minus(signers);
     }
 }

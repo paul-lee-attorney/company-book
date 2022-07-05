@@ -313,8 +313,7 @@ contract BookOfMotions is
         returns (uint256 parValue, uint256 paidPar)
     {
         require(
-            block.number <
-                IInvestmentAgreement(ia).closingDate(sn.sequenceOfDeal()),
+            block.number < IInvestmentAgreement(ia).closingDate(sn.sequence()),
             "MISSED closing date"
         );
 
@@ -330,7 +329,7 @@ contract BookOfMotions is
         );
 
         (, parValue, paidPar, , ) = IInvestmentAgreement(ia).getDeal(
-            sn.sequenceOfDeal()
+            sn.sequence()
         );
     }
 }

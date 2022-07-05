@@ -54,12 +54,12 @@ library SNParser {
         return uint8(sn[0]);
     }
 
+    // function sequenceOfDeal(bytes32 sn) internal pure returns (uint16) {
+    //     return uint16(bytes2(sn << 16));
+    // }
+
     function typeOfDeal(bytes32 sn) internal pure returns (uint8) {
         return uint8(sn[1]);
-    }
-
-    function sequenceOfDeal(bytes32 sn) internal pure returns (uint16) {
-        return uint16(bytes2(sn << 16));
     }
 
     function buyerOfDeal(bytes32 sn) internal pure returns (uint40) {
@@ -84,9 +84,9 @@ library SNParser {
         return uint8(sn[0]);
     }
 
-    function sequenceOfDoc(bytes32 sn) internal pure returns (uint16) {
-        return uint16(bytes2(sn << 8));
-    }
+    // function sequenceOfDoc(bytes32 sn) internal pure returns (uint16) {
+    //     return uint16(bytes2(sn << 8));
+    // }
 
     function createDateOfDoc(bytes32 sn) internal pure returns (uint32) {
         return uint32(bytes4(sn << 24));
@@ -164,9 +164,9 @@ library SNParser {
         return uint8(sn[0]);
     }
 
-    function sequenceOfOpt(bytes32 sn) internal pure returns (uint16) {
-        return uint16(bytes2(sn << 8));
-    }
+    // function sequenceOfOpt(bytes32 sn) internal pure returns (uint16) {
+    //     return uint16(bytes2(sn << 8));
+    // }
 
     function triggerDateOfOpt(bytes32 sn) internal pure returns (uint32) {
         return uint32(bytes4(sn << 24));
@@ -262,9 +262,9 @@ library SNParser {
         return uint8(sn[0]);
     }
 
-    function sequenceOfPledge(bytes32 sn) internal pure returns (uint16) {
-        return uint16(bytes2(sn << 8));
-    }
+    // function sequenceOfPledge(bytes32 sn) internal pure returns (uint16) {
+    //     return uint16(bytes2(sn << 8));
+    // }
 
     function createDateOfPledge(bytes32 sn) internal pure returns (uint32) {
         return uint32(bytes4(sn << 24));
@@ -360,10 +360,10 @@ library SNParser {
 
     // ======== AntiDilution ========
     function priceOfMark(bytes32 sn) internal pure returns (uint256) {
-        return uint256(bytes31(sn));
+        return uint256(bytes29(sn << 24));
     }
 
     function classOfMark(bytes32 sn) internal pure returns (uint8) {
-        return uint8(sn[31]);
+        return uint8(sn[2]);
     }
 }

@@ -228,7 +228,7 @@ contract DragAlong is IAlongs, BOSSetting, BOASetting, DraftControl {
             return false;
 
         uint40 seller = IInvestmentAgreement(ia)
-            .shareNumberOfDeal(sn.sequenceOfDeal())
+            .shareNumberOfDeal(sn.sequence())
             .shareholder();
 
         uint16 sellerGroup = _bos.groupNo(seller);
@@ -279,7 +279,7 @@ contract DragAlong is IAlongs, BOSSetting, BOASetting, DraftControl {
         require(isTriggered(ia, sn), "not triggered");
 
         uint40 drager = IInvestmentAgreement(ia)
-            .shareNumberOfDeal(sn.sequenceOfDeal())
+            .shareNumberOfDeal(sn.sequence())
             .shareholder();
 
         require(caller == drager, "caller is not drager of DragAlong");
@@ -289,11 +289,9 @@ contract DragAlong is IAlongs, BOSSetting, BOASetting, DraftControl {
             "caller and target shareholder NOT linked"
         );
 
-        uint256 dealPrice = IInvestmentAgreement(ia).unitPrice(
-            sn.sequenceOfDeal()
-        );
+        uint256 dealPrice = IInvestmentAgreement(ia).unitPrice(sn.sequence());
         uint32 closingDate = IInvestmentAgreement(ia).closingDate(
-            sn.sequenceOfDeal()
+            sn.sequence()
         );
 
         bytes32 rule = _links[_bos.groupNo(drager)].rule;

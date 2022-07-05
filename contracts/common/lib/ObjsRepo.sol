@@ -19,20 +19,28 @@ library ObjsRepo {
 
     struct SNList {
         mapping(bytes6 => bytes32) shortToSN;
-        EnumerableSet.Bytes32Set _inner;
+        EnumerableSet.Bytes32Set bytes32Set;
     }
 
     function add(SNList storage list, bytes32 value) internal returns (bool) {
-        list.shortToSN[value.short()] = value;
-        return list._inner.add(value);
+        if (list.bytes32Set.add(value)) {
+            list.shortToSN[value.short()] = value;
+            return true;
+        }
+
+        return false;
     }
 
     function remove(SNList storage list, bytes32 value)
         internal
         returns (bool)
     {
-        delete list.shortToSN[value.short()];
-        return list._inner.remove(value);
+        if (list.bytes32Set.remove(value)) {
+            delete list.shortToSN[value.short()];
+            return true;
+        }
+
+        return false;
     }
 
     function contains(SNList storage list, bytes6 ssn)
@@ -41,11 +49,11 @@ library ObjsRepo {
         returns (bool)
     {
         bytes32 value = list.shortToSN[ssn];
-        return list._inner.contains(value);
+        return list.bytes32Set.contains(value);
     }
 
     function length(SNList storage list) internal view returns (uint256) {
-        return list._inner.length();
+        return list.bytes32Set.length();
     }
 
     function at(SNList storage list, uint256 index)
@@ -53,7 +61,7 @@ library ObjsRepo {
         view
         returns (bytes32)
     {
-        return list._inner.at(index);
+        return list.bytes32Set.at(index);
     }
 
     function values(SNList storage list)
@@ -61,7 +69,136 @@ library ObjsRepo {
         view
         returns (bytes32[] memory)
     {
-        return list._inner.values();
+        return list.bytes32Set.values();
+    }
+
+    //======== SeqList ========
+
+    struct SeqList {
+        mapping(uint16 => bytes32) seqToSN;
+        EnumerableSet.Bytes32Set bytes32Set;
+    }
+
+    function add(SeqList storage list, bytes32 value) internal returns (bool) {
+        if (list.bytes32Set.add(value)) {
+            list.seqToSN[value.sequence()] = value;
+            return true;
+        }
+
+        return false;
+    }
+
+    function append(
+        SeqList storage list,
+        bytes32 value,
+        uint256 bit
+    ) internal returns (bool) {
+        uint256 len = list.bytes32Set.length();
+
+        if (!add(list, value)) return false;
+
+        while (len > 0) {
+            if (
+                uint256(list.bytes32Set._inner._values[len - 1] << bit) <=
+                uint256(list.bytes32Set._inner._values[len] << bit)
+            ) break;
+
+            (
+                list.bytes32Set._inner._values[len - 1],
+                list.bytes32Set._inner._values[len]
+            ) = (
+                list.bytes32Set._inner._values[len],
+                list.bytes32Set._inner._values[len - 1]
+            );
+
+            list.bytes32Set._inner._indexes[
+                list.bytes32Set._inner._values[len - 1]
+            ] = len - 1;
+
+            list.bytes32Set._inner._indexes[
+                list.bytes32Set._inner._values[len]
+            ] = len;
+
+            len--;
+        }
+
+        return true;
+    }
+
+    function remove(SeqList storage list, bytes32 value)
+        internal
+        returns (bool)
+    {
+        if (list.bytes32Set.remove(value)) {
+            delete list.seqToSN[value.sequence()];
+            return true;
+        }
+
+        return false;
+    }
+
+    function pickout(SeqList storage list, bytes32 value)
+        internal
+        returns (bool)
+    {
+        uint256 i = list.bytes32Set._inner._indexes[value];
+        uint256 len = list.bytes32Set.length();
+
+        while (len > i + 1) {
+            list.bytes32Set._inner._values[i] = list.bytes32Set._inner._values[
+                i + 1
+            ];
+            list.bytes32Set._inner._indexes[
+                list.bytes32Set._inner._values[i]
+            ]--;
+            i++;
+        }
+
+        delete list.bytes32Set._inner._values[len - 1];
+        list.bytes32Set._inner._values.length--;
+
+        delete list.bytes32Set._inner._indexes[value];
+
+        delete list.seqToSN[value.sequence()];
+
+        return true;
+    }
+
+    function getSN(SeqList storage list, uint16 ssn)
+        internal
+        view
+        returns (bytes32)
+    {
+        return list.seqToSN[ssn];
+    }
+
+    function contains(SeqList storage list, uint16 ssn)
+        internal
+        view
+        returns (bool)
+    {
+        bytes32 value = list.seqToSN[ssn];
+        return list.bytes32Set.contains(value);
+    }
+
+    function length(SeqList storage list) internal view returns (uint256) {
+        return list.bytes32Set.length();
+    }
+
+    function at(SeqList storage list, uint256 index)
+        internal
+        view
+        returns (bytes32)
+    {
+        return list.bytes32Set.at(index);
+    }
+
+    function values(SeqList storage list)
+        internal
+        view
+        returns (bytes32[] memory)
+    {
+        return list.bytes32Set.values();
     }
 
     // ======== SignerGroup ========
@@ -301,5 +438,29 @@ library ObjsRepo {
         require(line.currentState > 0, "currentState overflow");
         line.startDateOf[line.currentState] = 0;
         line.currentState--;
+    }
+
+    // ======== ArrayUtils ========
+    function fullyCoveredBy(uint40[] arrA, uint40[] arrB)
+        internal
+        pure
+        returns (bool)
+    {
+        uint256 lenA = arrA.length;
+        uint256 lenB = arrB.length;
+        bool flag;
+
+        for (uint256 i = 0; i < lenA; i++) {
+            flag = false;
+            for (uint256 j = 0; j < lenB; j++) {
+                if (arrB[j] == arrA[i]) {
+                    flag = true;
+                    break;
+                }
+            }
+            if (!flag) return false;
+        }
+
+        return true;
     }
 }

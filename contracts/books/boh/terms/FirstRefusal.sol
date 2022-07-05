@@ -199,7 +199,7 @@ contract FirstRefusal is IFirstRefusal, BOSSetting, BOMSetting, DraftControl {
         returns (bool)
     {
         require(
-            IInvestmentAgreement(ia).isDeal(sn.sequenceOfDeal()),
+            IInvestmentAgreement(ia).isDeal(sn.sequence()),
             "deal not exist"
         );
 

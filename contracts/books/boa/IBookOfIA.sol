@@ -153,6 +153,4 @@ interface IBookOfIA {
         );
 
     function typeOfIA(address ia) external view returns (uint8 output);
-
-    function otherMembers(address ia) external view returns (uint40[]);
 }

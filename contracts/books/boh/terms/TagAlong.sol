@@ -62,7 +62,7 @@ contract TagAlong is BOMSetting, DragAlong {
         uint16[] memory rightholders = _links[
             _bos.groupNo(
                 IInvestmentAgreement(ia)
-                    .shareNumberOfDeal(sn.sequenceOfDeal())
+                    .shareNumberOfDeal(sn.sequence())
                     .shareholder()
             )
         ].followerGroups.valuesToUint16();

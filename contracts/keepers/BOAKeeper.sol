@@ -112,10 +112,10 @@ contract BOAKeeper is
 
     function _releaseCleanParOfDeal(address ia, bytes32 sn) private {
         (, uint256 parValue, , , ) = IInvestmentAgreement(ia).getDeal(
-            sn.sequenceOfDeal()
+            sn.sequence()
         );
 
-        if (IInvestmentAgreement(ia).releaseDealSubject(sn.sequenceOfDeal()))
+        if (IInvestmentAgreement(ia).releaseDealSubject(sn.sequence()))
             _bos.increaseCleanPar(sn.shortShareNumberOfDeal(), parValue);
     }
 
@@ -213,7 +213,7 @@ contract BOAKeeper is
             require(
                 caller ==
                     IInvestmentAgreement(ia)
-                        .shareNumberOfDeal(sn.sequenceOfDeal())
+                        .shareNumberOfDeal(sn.sequence())
                         .shareholder(),
                 "NOT seller"
             );
@@ -234,7 +234,7 @@ contract BOAKeeper is
         }
 
         IInvestmentAgreement(ia).clearDealCP(
-            sn.sequenceOfDeal(),
+            sn.sequence(),
             hashLock,
             closingDate
         );
@@ -272,7 +272,7 @@ contract BOAKeeper is
         require(sn.buyerOfDeal() == caller, "caller is NOT buyer");
 
         //验证hashKey, 执行Deal
-        IInvestmentAgreement(ia).closeDeal(sn.sequenceOfDeal(), hashKey);
+        IInvestmentAgreement(ia).closeDeal(sn.sequence(), hashKey);
 
         transferTargetShare(ia, sn);
 
@@ -285,7 +285,7 @@ contract BOAKeeper is
         uint256 len = snList.length;
         while (len > 0) {
             (, , , uint8 state, ) = IInvestmentAgreement(ia).getDeal(
-                snList[len - 1].sequenceOfDeal()
+                snList[len - 1].sequence()
             );
             if (state < uint8(EnumsRepo.StateOfDeal.Closed)) break;
             len--;
@@ -299,15 +299,13 @@ contract BOAKeeper is
         onlyDirectKeeper
     {
         bytes32 shareNumber = IInvestmentAgreement(ia).shareNumberOfDeal(
-            sn.sequenceOfDeal()
+            sn.sequence()
         );
 
         (, uint256 parValue, uint256 paidPar, , ) = IInvestmentAgreement(ia)
-            .getDeal(sn.sequenceOfDeal());
+            .getDeal(sn.sequence());
 
-        uint256 unitPrice = IInvestmentAgreement(ia).unitPrice(
-            sn.sequenceOfDeal()
-        );
+        uint256 unitPrice = IInvestmentAgreement(ia).unitPrice(sn.sequence());
 
         //释放Share的质押标记(若需)，执行交易
         if (shareNumber > bytes32(0)) {
@@ -353,13 +351,13 @@ contract BOAKeeper is
         require(
             caller ==
                 IInvestmentAgreement(ia)
-                    .shareNumberOfDeal(sn.sequenceOfDeal())
+                    .shareNumberOfDeal(sn.sequence())
                     .shareholder(),
             "NOT seller"
         );
 
         IInvestmentAgreement(ia).revokeDeal(
-            sn.sequenceOfDeal(),
+            sn.sequence(),
             // sigDate,
             hashKey
         );

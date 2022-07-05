@@ -133,7 +133,7 @@ contract LockUp is ILockUp, BOSSetting, BOMSetting, DraftControl {
         returns (bool)
     {
         uint256 closingDate = IInvestmentAgreement(ia).closingDate(
-            sn.sequenceOfDeal()
+            sn.sequence()
         );
 
         uint8 typeOfDeal = sn.typeOfDeal();

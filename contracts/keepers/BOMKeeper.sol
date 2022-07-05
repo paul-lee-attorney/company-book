@@ -143,16 +143,14 @@ contract BOMKeeper is
         );
 
         bytes32 shareNumber = IInvestmentAgreement(ia).shareNumberOfDeal(
-            sn.sequenceOfDeal()
+            sn.sequence()
         );
 
         require(caller == shareNumber.shareholder(), "NOT Seller of the Deal");
 
-        uint256 unitPrice = IInvestmentAgreement(ia).unitPrice(
-            sn.sequenceOfDeal()
-        );
+        uint256 unitPrice = IInvestmentAgreement(ia).unitPrice(sn.sequence());
         uint32 closingDate = IInvestmentAgreement(ia).closingDate(
-            sn.sequenceOfDeal()
+            sn.sequence()
         );
 
         (uint256 parValue, uint256 paidPar) = _bom.requestToBuy(ia, sn);

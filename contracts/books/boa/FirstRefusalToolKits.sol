@@ -64,7 +64,7 @@ contract FirstRefusalToolKits is InvestmentAgreement {
             targetDeal.sn.classOfDeal(),
             acct,
             _bos.groupNo(acct),
-            targetDeal.sn.sequenceOfDeal()
+            targetDeal.sn.sequence()
         );
 
         _counterOfFR[ssn]++;
@@ -77,14 +77,14 @@ contract FirstRefusalToolKits is InvestmentAgreement {
 
         Record storage record = _records[ssn][_counterOfFR[ssn]];
 
-        record.ssn = snOfFR.sequenceOfDeal();
+        record.ssn = snOfFR.sequence();
         record.weight = weight;
 
         _sumOfWeight[ssn] += weight;
 
         _updateFRDeals(ssn, _counterOfFR[ssn]);
 
-        lockDealSubject(snOfFR.sequenceOfDeal());
+        lockDealSubject(snOfFR.sequence());
 
         signDeal(ssn, acct, sigHash);
 

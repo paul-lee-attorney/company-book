@@ -5,15 +5,15 @@
 
 pragma solidity ^0.4.24;
 
-import "../books/boh/terms//IAntiDilution.sol";
+import "../books/boh/terms/IAntiDilution.sol";
 import "../books/boh/ShareholdersAgreement.sol";
-import "../books/boh//ITerm.sol";
+import "../books/boh/terms/ITerm.sol";
 
-import "../books/boa//IInvestmentAgreement.sol";
+import "../books/boa/IInvestmentAgreement.sol";
 import "../books/boa/InvestmentAgreement.sol";
 
-import "../books/boh/terms//IAlongs.sol";
-import "../books/boh/terms//IFirstRefusal.sol";
+import "../books/boh/terms/IAlongs.sol";
+import "../books/boh/terms/IFirstRefusal.sol";
 
 import "../common/access/IRoles.sol";
 import "../common/access/IAccessControl.sol";

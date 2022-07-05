@@ -19,14 +19,16 @@ contract BookOfPledges is IBookOfPledges, BOSSetting {
     using SNFactory for bytes;
     using SNParser for bytes32;
     using ObjsRepo for ObjsRepo.SNList;
-    using ArrayUtils for bytes32[];
+    using EnumerableSet for EnumerableSet.Bytes32Set;
+
+    // using ArrayUtils for bytes32[];
 
     //Pledge 质权
     struct Pledge {
         bytes32 sn; //质押编号
-        uint256 pledgedPar; // 出质票面额（数量）
+        uint64 pledgedPar; // 出质票面额（数量）
         uint40 creditor; //质权人、债权人
-        uint256 guaranteedAmt; //担保金额
+        uint64 guaranteedAmt; //担保金额
     }
 
     // struct snInfo {
@@ -42,7 +44,7 @@ contract BookOfPledges is IBookOfPledges, BOSSetting {
     mapping(bytes6 => Pledge) private _pledges;
 
     // shortShareNumber => pledges SN
-    mapping(bytes6 => bytes32[]) private _pledgesOf;
+    mapping(bytes6 => EnumerableSet.Bytes32Set) private _pledgesAttachedOn;
 
     uint16 private _counterOfPledges;
 
@@ -90,8 +92,8 @@ contract BookOfPledges is IBookOfPledges, BOSSetting {
         // uint32 createDate,
         uint40 creditor,
         uint40 debtor,
-        uint256 pledgedPar,
-        uint256 guaranteedAmt
+        uint64 pledgedPar,
+        uint64 guaranteedAmt
     ) external onlyDirectKeeper shareExist(shareNumber.short()) {
         require(pledgedPar > 0, "ZERO pledged parvalue");
 
@@ -120,7 +122,7 @@ contract BookOfPledges is IBookOfPledges, BOSSetting {
 
         _snList.add(sn);
 
-        sn.insertToQue(_pledgesOf[shareNumber.short()]);
+        _pledgesAttachedOn[shareNumber.short()].add(sn);
 
         emit CreatePledge(sn, shareNumber, pledgedPar, creditor, guaranteedAmt);
     }
@@ -128,10 +130,10 @@ contract BookOfPledges is IBookOfPledges, BOSSetting {
     function delPledge(bytes6 ssn) external onlyKeeper pledgeExist(ssn) {
         Pledge storage pld = _pledges[ssn];
 
-        _pledgesOf[pld.sn.shortShareNumberOfPledge()].removeByValue(pld.sn);
+        _pledgesAttachedOn[pld.sn.shortShareNumberOfPledge()].remove(pld.sn);
 
-        if (_pledgesOf[pld.sn.shortShareNumberOfPledge()].length == 0)
-            delete _pledgesOf[pld.sn.shortShareNumberOfPledge()];
+        if (_pledgesAttachedOn[pld.sn.shortShareNumberOfPledge()].length() == 0)
+            delete _pledgesAttachedOn[pld.sn.shortShareNumberOfPledge()];
 
         // snList.removeByValue(pld.sn);
 
@@ -147,8 +149,8 @@ contract BookOfPledges is IBookOfPledges, BOSSetting {
     function updatePledge(
         bytes6 ssn,
         uint40 creditor,
-        uint256 pledgedPar,
-        uint256 guaranteedAmt
+        uint64 pledgedPar,
+        uint64 guaranteedAmt
     ) external onlyKeeper pledgeExist(ssn) {
         require(pledgedPar > 0, "ZERO pledged parvalue");
 
@@ -166,7 +168,7 @@ contract BookOfPledges is IBookOfPledges, BOSSetting {
     //##################
 
     function pledgesOf(bytes32 sn) external view returns (bytes32[]) {
-        return _pledgesOf[sn.short()];
+        return _pledgesAttachedOn[sn.short()].values();
     }
 
     function counterOfPledges() external view returns (uint16) {

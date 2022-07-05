@@ -5,9 +5,10 @@
 
 pragma solidity ^0.4.24;
 
-import "../../../common/lib/ArrayUtils.sol";
+// import "../../../common/lib/ArrayUtils.sol";
 import "../../../common/lib/SNFactory.sol";
 import "../../../common/lib/SNParser.sol";
+import "../../../common/lib/EnumerableSet.sol";
 
 import "../../../common/ruting/BOSSetting.sol";
 import "../../../common/access/DraftControl.sol";
@@ -17,9 +18,10 @@ import "./IGroupsUpdate.sol";
 contract GroupsUpdate is IGroupsUpdate, BOSSetting, DraftControl {
     using SNFactory for bytes;
     using SNParser for bytes32;
-    using ArrayUtils for bytes32[];
+    // using ArrayUtils for bytes32[];
+    using EnumerableSet for EnumerableSet.Bytes32Set;
 
-    bytes32[] private _orders;
+    EnumerableSet.Bytes32Set private _orders;
 
     //##################
     //##    Event     ##
@@ -53,9 +55,8 @@ contract GroupsUpdate is IGroupsUpdate, BOSSetting, DraftControl {
         bool addMember = true;
 
         bytes32 order = _createOrder(addMember, acct, groupNo);
-        order.insertToQue(_orders);
-
-        emit AddMemberOrder(acct, groupNo);
+        // order.insertToQue(_orders);
+        if (_orders.add(order)) emit AddMemberOrder(acct, groupNo);
     }
 
     function removeMemberOrder(uint40 acct, uint16 groupNo)
@@ -69,15 +70,14 @@ contract GroupsUpdate is IGroupsUpdate, BOSSetting, DraftControl {
         bool addMember = false;
 
         bytes32 order = _createOrder(addMember, acct, groupNo);
-        order.insertToQue(_orders);
-
-        emit RemoveMemberOrder(acct, groupNo);
+        // order.insertToQue(_orders);
+        if (_orders.add(order)) emit RemoveMemberOrder(acct, groupNo);
     }
 
     function delOrder(bytes32 order) external onlyAttorney {
-        _orders.removeByValue(order);
+        // _orders.removeByValue(order);
 
-        emit DelOrder(order);
+        if (_orders.remove(order)) emit DelOrder(order);
     }
 
     //##################
@@ -85,6 +85,6 @@ contract GroupsUpdate is IGroupsUpdate, BOSSetting, DraftControl {
     //##################
 
     function orders() external view onlyUser returns (bytes32[]) {
-        return _orders;
+        return _orders.values();
     }
 }

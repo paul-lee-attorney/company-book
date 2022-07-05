@@ -132,9 +132,9 @@ library ObjsRepo {
         if (list.bytes32Set.remove(value)) {
             delete list.seqToSN[value.sequence()];
             return true;
+        } else {
+            return false;
         }
-
-        return false;
     }
 
     function pickout(SeqList storage list, bytes32 value)
@@ -144,13 +144,13 @@ library ObjsRepo {
         uint256 i = list.bytes32Set._inner._indexes[value];
         uint256 len = list.bytes32Set.length();
 
-        while (len > i + 1) {
+        while (i < len - 1) {
             list.bytes32Set._inner._values[i] = list.bytes32Set._inner._values[
                 i + 1
             ];
             list.bytes32Set._inner._indexes[
                 list.bytes32Set._inner._values[i]
-            ]--;
+            ] = i;
             i++;
         }
 
@@ -438,29 +438,5 @@ library ObjsRepo {
         require(line.currentState > 0, "currentState overflow");
         line.startDateOf[line.currentState] = 0;
         line.currentState--;
-    }
-
-    // ======== ArrayUtils ========
-    function fullyCoveredBy(uint40[] arrA, uint40[] arrB)
-        internal
-        pure
-        returns (bool)
-    {
-        uint256 lenA = arrA.length;
-        uint256 lenB = arrB.length;
-        bool flag;
-
-        for (uint256 i = 0; i < lenA; i++) {
-            flag = false;
-            for (uint256 j = 0; j < lenB; j++) {
-                if (arrB[j] == arrA[i]) {
-                    flag = true;
-                    break;
-                }
-            }
-            if (!flag) return false;
-        }
-
-        return true;
     }
 }

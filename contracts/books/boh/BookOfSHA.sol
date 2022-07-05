@@ -10,7 +10,7 @@ import "../../common/components/DocumentsRepo.sol";
 import ".//IShareholdersAgreement.sol";
 
 import "./IBookOfSHA.sol";
-import "./ITerm.sol";
+import "./terms/ITerm.sol";
 
 contract BookOfSHA is IBookOfSHA, ITerm, DocumentsRepo {
     enum BOHStates {

@@ -9,8 +9,9 @@ import "../lib/EnumsRepo.sol";
 import "../lib/SNFactory.sol";
 import "../lib/SNParser.sol";
 // import "../lib/SafeMath.sol";
-import "../lib/ArrayUtils.sol";
+// import "../lib/ArrayUtils.sol";
 import "../lib/ObjsRepo.sol";
+import "../lib/EnumerableSet.sol";
 
 import "./ISigPage.sol";
 
@@ -23,7 +24,9 @@ contract DocumentsRepo is CloneFactory, SHASetting, BOSSetting {
     using SNFactory for bytes;
     using SNParser for bytes32;
     using ObjsRepo for ObjsRepo.TimeLine;
-    using ArrayUtils for bytes32[];
+    using EnumerableSet for EnumerableSet.Bytes32Set;
+
+    // using ArrayUtils for bytes32[];
 
     string private _bookName;
     address private _template;
@@ -63,7 +66,9 @@ contract DocumentsRepo is CloneFactory, SHASetting, BOSSetting {
     // addrOfBody => bool
     mapping(address => bool) private _isRegistered;
 
-    bytes32[] private _docsList;
+    // bytes32[] private _docsList;
+
+    EnumerableSet.Bytes32Set private _docsList;
 
     uint16 private _counterOfDocs;
 
@@ -170,7 +175,8 @@ contract DocumentsRepo is CloneFactory, SHASetting, BOSSetting {
         doc.states.pushToNextState();
 
         _isRegistered[body] = true;
-        sn.insertToQue(_docsList);
+        // sn.insertToQue(_docsList);
+        _docsList.add(sn);
 
         emit UpdateStateOfDoc(sn, doc.states.currentState, creator);
     }
@@ -183,7 +189,8 @@ contract DocumentsRepo is CloneFactory, SHASetting, BOSSetting {
     {
         bytes32 sn = _docs[body].sn;
 
-        _docsList.removeByValue(sn);
+        // _docsList.removeByValue(sn);
+        _docsList.remove(sn);
 
         delete _docs[body];
         delete _isRegistered[body];
@@ -280,11 +287,11 @@ contract DocumentsRepo is CloneFactory, SHASetting, BOSSetting {
     }
 
     function qtyOfDocs() external view onlyUser returns (uint256) {
-        return _docsList.length;
+        return _docsList.length();
     }
 
     function docsList() external view onlyUser returns (bytes32[]) {
-        return _docsList;
+        return _docsList.values();
     }
 
     function getDoc(address body)

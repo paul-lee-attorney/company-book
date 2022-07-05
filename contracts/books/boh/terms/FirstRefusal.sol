@@ -1,4 +1,4 @@
-/*
+/* *
  * Copyright 2021-2022 LI LI of JINGTIAN & GONGCHENG.
  * All Rights Reserved.
  * */
@@ -129,7 +129,7 @@ contract FirstRefusal is IFirstRefusal, BOSSetting, BOMSetting, DraftControl {
 
         require(!rule.membersEqualOfFR(), "Members' right are equal");
 
-        if (fr.rightholders.add(uint256(rightholder)))
+        if (fr.rightholders.add(rightholder))
             emit AddRightholder(typeOfDeal, rightholder);
     }
 
@@ -140,7 +140,7 @@ contract FirstRefusal is IFirstRefusal, BOSSetting, BOMSetting, DraftControl {
     {
         FR storage fr = _firstRefusals[typeOfDeal];
 
-        if (fr.rightholders.remove(uint256(acct)))
+        if (fr.rightholders.remove(acct))
             emit RemoveRightholder(typeOfDeal, acct);
     }
 
@@ -172,7 +172,7 @@ contract FirstRefusal is IFirstRefusal, BOSSetting, BOMSetting, DraftControl {
         FR storage fr = _firstRefusals[typeOfDeal];
 
         if (fr.rule.membersEqualOfFR()) return _bos.isMember(acct);
-        else return fr.rightholders.contains(uint256(acct));
+        else return fr.rightholders.contains(acct);
     }
 
     function rightholders(uint8 typeOfDeal)

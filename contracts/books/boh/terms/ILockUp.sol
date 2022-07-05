@@ -6,22 +6,42 @@
 pragma solidity ^0.4.24;
 
 contract ILockUp {
-    function setLocker(uint256 shareNumber, uint256 dueDate) external;
+    // ################
+    // ##   Event   ##
+    // ################
 
-    function delLocker(uint256 shareNumber) external;
+    event SetLocker(bytes32 indexed shareNumber, uint256 dueDate);
 
-    function addKeyholder(uint256 shareNumber, uint40 keyholder) external;
+    event AddKeyholder(bytes32 indexed shareNumber, uint40 keyholder);
 
-    function removeKeyholder(uint256 shareNumber, uint40 keyholder) external;
+    event RemoveKeyholder(bytes32 indexed shareNumber, uint40 keyholder);
+
+    event DelLocker(bytes32 indexed shareNumber);
+
+    // ################
+    // ##   Write    ##
+    // ################
+
+    function setLocker(bytes32 shareNumber, uint256 dueDate) external;
+
+    function delLocker(bytes32 shareNumber) external;
+
+    function addKeyholder(bytes32 shareNumber, uint40 keyholder) external;
+
+    function removeKeyholder(bytes32 shareNumber, uint40 keyholder) external;
 
     // ################
     // ##  查询接口  ##
     // ################
 
-    function lockerExist(uint256 shareNumber) public view returns (bool);
 
-    function getLocker(uint256 shareNumber)
+    function isLocked(bytes6 ssn) external view returns (bool);
+
+    function getLocker(bytes6 ssn)
         public
         view
         returns (uint256 dueDate, uint40[] keyHolders);
+
+    function lockedShares() external view  returns (bytes32[]);
+
 }

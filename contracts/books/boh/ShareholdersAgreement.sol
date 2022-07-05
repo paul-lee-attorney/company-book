@@ -19,7 +19,7 @@ import "../../common/components/SigPage.sol";
 
 import "../../common/utils/CloneFactory.sol";
 
-import ".//ITerm.sol";
+import "./terms/ITerm.sol";
 
 import "./terms/VotingRules.sol";
 

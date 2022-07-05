@@ -14,7 +14,7 @@ interface IBookOfOptions {
 
     function snList() external view returns (bytes32[]);
 
-    function counterOfOptions() external view returns (bytes32[]);
+    function counterOfOptions() external view returns (uint16);
 
     // ################
     // ##   写接口   ##

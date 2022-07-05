@@ -13,17 +13,17 @@ interface IBookOfPledges {
     event CreatePledge(
         bytes32 indexed sn,
         bytes32 indexed shareNumber,
-        uint256 pledgedPar,
+        uint64 pledgedPar,
         uint40 creditor,
-        uint256 guaranteedAmt
+        uint64 guaranteedAmt
     );
 
     event DelPledge(bytes32 indexed sn);
 
     event UpdatePledge(
         bytes32 indexed sn,
-        uint256 pledgedPar,
-        uint256 guaranteedAmt
+        uint64 pledgedPar,
+        uint64 guaranteedAmt
     );
 
     //##################
@@ -35,8 +35,8 @@ interface IBookOfPledges {
         // uint32 createDate,
         uint40 creditor,
         uint40 debtor,
-        uint256 pledgedPar,
-        uint256 guaranteedAmt
+        uint64 pledgedPar,
+        uint64 guaranteedAmt
     ) external;
 
     function delPledge(bytes32 sn) external;
@@ -44,8 +44,8 @@ interface IBookOfPledges {
     function updatePledge(
         bytes32 sn,
         uint40 creditor,
-        uint256 pledgedPar,
-        uint256 guaranteedAmt
+        uint64 pledgedPar,
+        uint64 guaranteedAmt
     ) external;
 
     //##################

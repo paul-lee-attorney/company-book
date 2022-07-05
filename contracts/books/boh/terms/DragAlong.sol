@@ -11,7 +11,6 @@ import "../../../common/ruting/BOSSetting.sol";
 import "../../../common/ruting/BOASetting.sol";
 import "../../../common/access/DraftControl.sol";
 
-import "../../../common/lib/ArrayUtils.sol";
 import "../../../common/lib/SNParser.sol";
 import "../../../common/lib/SNFactory.sol";
 import "../../../common/lib/EnumerableSet.sol";
@@ -20,8 +19,6 @@ import "../../../common/lib/EnumsRepo.sol";
 import "./IAlongs.sol";
 
 contract DragAlong is IAlongs, BOSSetting, BOASetting, DraftControl {
-    using ArrayUtils for address[];
-    // using ArrayUtils for uint16[];
     using SNParser for bytes32;
     using SNFactory for bytes;
     using EnumerableSet for EnumerableSet.UintSet;
@@ -118,7 +115,7 @@ contract DragAlong is IAlongs, BOSSetting, BOASetting, DraftControl {
             roe
         );
 
-        _dragerGroups.add(uint256(dragerGroup));
+        _dragerGroups.add(dragerGroup);
 
         _links[dragerGroup].rule = rule;
 
@@ -130,7 +127,7 @@ contract DragAlong is IAlongs, BOSSetting, BOASetting, DraftControl {
         onlyAttorney
         dragerGroupExist(dragerGroup)
     {
-        if (_links[dragerGroup].followerGroups.add(uint256(followerGroup)))
+        if (_links[dragerGroup].followerGroups.add(followerGroup))
             emit AddFollower(dragerGroup, followerGroup);
     }
 
@@ -139,7 +136,7 @@ contract DragAlong is IAlongs, BOSSetting, BOASetting, DraftControl {
         onlyAttorney
         dragerGroupExist(dragerGroup)
     {
-        if (_links[dragerGroup].followerGroups.remove(uint256(followerGroup)))
+        if (_links[dragerGroup].followerGroups.remove(followerGroup))
             emit RemoveFollower(dragerGroup, followerGroup);
     }
 
@@ -150,8 +147,7 @@ contract DragAlong is IAlongs, BOSSetting, BOASetting, DraftControl {
     {
         delete _links[dragerGroup];
 
-        _dragerGroups.remove(uint256(dragerGroup));
-        // delete _isDragerGroup[dragerGroup];
+        _dragerGroups.remove(dragerGroup);
 
         emit DelLink(dragerGroup);
     }
@@ -177,8 +173,7 @@ contract DragAlong is IAlongs, BOSSetting, BOASetting, DraftControl {
         dragerGroupExist(dragerGroup)
         returns (bool)
     {
-        return
-            _links[dragerGroup].followerGroups.contains(uint256(followerGroup));
+        return _links[dragerGroup].followerGroups.contains(followerGroup);
     }
 
     function isLinked(uint40 drager, uint40 follower)
@@ -194,7 +189,7 @@ contract DragAlong is IAlongs, BOSSetting, BOASetting, DraftControl {
     }
 
     function isDragerGroup(uint16 group) external view onlyUser returns (bool) {
-        return _dragerGroups.contains(uint256(group));
+        return _dragerGroups.contains(group);
     }
 
     function dragerGroups() external view onlyUser returns (uint16[]) {

@@ -6,20 +6,12 @@
 pragma solidity ^0.4.24;
 pragma experimental ABIEncoderV2;
 
-// import "../books/boa//IInvestmentAgreement.sol";
-
 import "../common/ruting/BOSSetting.sol";
-// import "../common/ruting/BOASetting.sol";
 import "../common/ruting/BODSetting.sol";
 import "../common/ruting/BOMSetting.sol";
-
-// import "../common/ruting/BOOSetting.sol";
 import "../common/ruting/SHASetting.sol";
 
 import "../common/lib/SNParser.sol";
-
-// import "../common/components/ISigPage.sol";
-
 import "../common/lib/EnumsRepo.sol";
 
 import "./IBODKeeper.sol";
@@ -108,6 +100,6 @@ contract BODKeeper is
             "caller is not the candidate"
         );
 
-        _bod.takePosition(candidate);
+        _bod.takePosition(candidate, bytes32(motionId).submitterOfMotion());
     }
 }

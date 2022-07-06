@@ -43,7 +43,7 @@ contract BookOfDirectors is IBookOfDirectors, MotionsRepo, SHASetting {
     // title => userNo
     mapping(uint8 => uint40) private _whoIs;
 
-    EnumerableSet.UintSet private _directorsUserNoList;
+    EnumerableSet.UintSet private _directorsList;
 
     uint8 private _maxNumOfDirectors;
 
@@ -52,7 +52,7 @@ contract BookOfDirectors is IBookOfDirectors, MotionsRepo, SHASetting {
     //####################
 
     modifier directorExist(uint40 acct) {
-        require(_directorsUserNoList.contains(acct), "not a director");
+        require(_directorsList.contains(acct), "not a director");
         require(
             _directors[acct].expirationBN >= now + 15 minutes,
             "tenure expired"
@@ -72,7 +72,7 @@ contract BookOfDirectors is IBookOfDirectors, MotionsRepo, SHASetting {
         uint40 submitter
     ) external onlyDirectKeeper {
         require(
-            _directorsUserNoList.contains(submitter),
+            _directorsList.contains(submitter),
             "submitter is not Director"
         );
         require(
@@ -111,7 +111,7 @@ contract BookOfDirectors is IBookOfDirectors, MotionsRepo, SHASetting {
         uint40 caller,
         bytes32 sigHash
     ) external onlyDirectKeeper {
-        require(_directorsUserNoList.contains(caller), "not a director");
+        require(_directorsList.contains(caller), "not a director");
         require(
             _directors[caller].expirationBN >= block.number,
             "tenure expired"
@@ -146,7 +146,7 @@ contract BookOfDirectors is IBookOfDirectors, MotionsRepo, SHASetting {
             motion.state = uint8(EnumsRepo.StateOfMotion.Rejected);
         } else {
             motion.state = (motion.box.supportVoters.length() * 10000) /
-                _directorsUserNoList.length() >
+                _directorsList.length() >
                 threshold
                 ? uint8(EnumsRepo.StateOfMotion.Passed)
                 : uint8(EnumsRepo.StateOfMotion.Rejected);
@@ -175,9 +175,9 @@ contract BookOfDirectors is IBookOfDirectors, MotionsRepo, SHASetting {
         uint40 appointer,
         uint8 title
     ) private {
-        if (!_directorsUserNoList.contains(candidate))
+        if (!_directorsList.contains(candidate))
             require(
-                _directorsUserNoList.length() < _maxNumOfDirectors,
+                _directorsList.length() < _maxNumOfDirectors,
                 "number of directors overflow"
             );
 
@@ -200,7 +200,7 @@ contract BookOfDirectors is IBookOfDirectors, MotionsRepo, SHASetting {
         if (title != uint8(EnumsRepo.TitleOfDirectors.Director))
             _whoIs[title] = candidate;
 
-        _directorsUserNoList.add(candidate);
+        _directorsList.add(candidate);
 
         emit AddDirector(
             candidate,
@@ -211,12 +211,19 @@ contract BookOfDirectors is IBookOfDirectors, MotionsRepo, SHASetting {
         );
     }
 
-    function takePosition(uint40 candidate) external onlyDirectKeeper {
-        _addDirector(candidate, 0, uint8(EnumsRepo.TitleOfDirectors.Director));
+    function takePosition(uint40 candidate, uint40 nominator)
+        external
+        onlyDirectKeeper
+    {
+        _addDirector(
+            candidate,
+            nominator,
+            uint8(EnumsRepo.TitleOfDirectors.Director)
+        );
     }
 
     function removeDirector(uint40 acct) external onlyDirectKeeper {
-        if (_directorsUserNoList.remove(acct)) {
+        if (_directorsList.remove(acct)) {
             uint8 title = _directors[acct].title;
             if (uint40(_whoIs[title]) == acct) delete _whoIs[title];
 
@@ -247,7 +254,7 @@ contract BookOfDirectors is IBookOfDirectors, MotionsRepo, SHASetting {
     }
 
     function isDirector(uint40 acct) external view onlyUser returns (bool) {
-        return _directorsUserNoList.contains(acct);
+        return _directorsList.contains(acct);
     }
 
     function inTenure(uint40 acct)
@@ -314,10 +321,10 @@ contract BookOfDirectors is IBookOfDirectors, MotionsRepo, SHASetting {
     }
 
     function qtyOfDirectors() external view onlyUser returns (uint256) {
-        return _directorsUserNoList.length();
+        return _directorsList.length();
     }
 
     function directors() external view onlyUser returns (uint40[]) {
-        return _directorsUserNoList.valuesToUint40();
+        return _directorsList.valuesToUint40();
     }
 }

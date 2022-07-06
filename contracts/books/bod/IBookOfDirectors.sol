@@ -34,7 +34,7 @@ interface IBookOfDirectors {
         uint8 title
     ) external;
 
-    function takePosition(uint40 candidate) external;
+    function takePosition(uint40 candidate, uint40 nominator) external;
 
     function removeDirector(uint40 acct) external;
 

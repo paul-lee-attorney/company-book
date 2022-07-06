@@ -22,8 +22,6 @@ contract BookOfOptions is IBookOfOptions, BOSSetting {
     using EnumerableSet for EnumerableSet.Bytes32Set;
     using EnumerableSet for EnumerableSet.UintSet;
     using ObjsRepo for ObjsRepo.SNList;
-    // using ArrayUtils for bytes32[];
-    // using ArrayUtils for uint32[];
     using SNFactory for bytes;
     using SNParser for bytes32;
 
@@ -91,51 +89,6 @@ contract BookOfOptions is IBookOfOptions, BOSSetting {
     // constructor(address bookeeper) public {
     //     init(msg.sender, bookeeper);
     // }
-
-    // ################
-    // ##   Event    ##
-    // ################
-
-    event CreateOpt(
-        bytes32 indexed sn,
-        uint40 rightholder,
-        uint40 obligor,
-        uint256 parValue,
-        uint256 paidPar
-    );
-
-    event RegisterOpt(bytes32 indexed sn);
-
-    event AddObligorIntoOpt(bytes32 sn, uint40 obligor);
-
-    event RemoveObligorFromOpt(bytes32 sn, uint40 obligor);
-
-    // event SetState(bytes32 indexed sn, uint8 state);
-
-    event DelOpt(bytes32 indexed sn);
-
-    event CloseOpt(bytes32 indexed sn, string hashKey);
-
-    event SetOptState(bytes32 indexed sn, uint8 state);
-
-    event ExecOpt(bytes32 indexed sn);
-
-    event RevokeOpt(bytes32 indexed sn);
-
-    event UpdateOracle(uint256 data_1, uint256 data_2);
-
-    event AddFuture(
-        bytes32 indexed sn,
-        bytes32 shareNumber,
-        uint256 parValue,
-        uint256 paidPar
-    );
-
-    event DelFuture(bytes32 indexed sn);
-
-    event AddPledge(bytes32 indexed sn, bytes32 shareNumber, uint256 paidPar);
-
-    event LockOpt(bytes32 indexed sn, bytes32 hashLock);
 
     // ################
     // ##  Modifier  ##

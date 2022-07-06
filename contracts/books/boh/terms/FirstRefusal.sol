@@ -19,8 +19,15 @@ import "../../../common/lib/SNParser.sol";
 import "../../../common/components/ISigPage.sol";
 
 import "./IFirstRefusal.sol";
+import "./ITerm.sol";
 
-contract FirstRefusal is IFirstRefusal, BOSSetting, BOMSetting, DraftControl {
+contract FirstRefusal is
+    IFirstRefusal,
+    ITerm,
+    BOSSetting,
+    BOMSetting,
+    DraftControl
+{
     // using ArrayUtils for uint256[];
     using ArrayUtils for uint40[];
     using SNFactory for bytes;
@@ -45,17 +52,6 @@ contract FirstRefusal is IFirstRefusal, BOSSetting, BOMSetting, DraftControl {
     // typeOfDeal => bool
     mapping(uint8 => bool) private _isSubject;
 
-    // ################
-    // ##   Event   ##
-    // ################
-
-    event SetFirstRefusal(uint8 indexed typeOfDeal, bytes32 rule);
-
-    event AddRightholder(uint8 indexed typeOfDeal, uint40 rightholder);
-
-    event RemoveRightholder(uint8 indexed typeOfDeal, uint40 rightholder);
-
-    event DelFirstRefusal(uint8 indexed typeOfDeal);
 
     // ################
     // ##  Modifier  ##

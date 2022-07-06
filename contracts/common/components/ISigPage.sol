@@ -7,6 +7,30 @@ pragma solidity ^0.4.24;
 
 interface ISigPage {
     //####################
+    //##     event      ##
+    //####################
+
+    event DocFinalized();
+
+    event BackToFinalized();
+
+    event DocEstablished();
+
+    event SetSigDeadline(uint32 deadline);
+
+    event SetClosingDeadline(uint32 deadline);
+
+    event AddParty(uint40 acct);
+
+    event RemoveParty(uint40 acct);
+
+    event AddBlank(uint40 acct, uint16 sn);
+
+    event SignDeal(uint40 acct, uint16 sn, bytes32 sigHash);
+
+    event SignDoc(uint40 acct, bytes32 sigHash);
+
+    //####################
     //##    设置接口    ##
     //####################
 

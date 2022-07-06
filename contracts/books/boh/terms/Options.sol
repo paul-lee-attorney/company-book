@@ -31,7 +31,7 @@ contract Options is IOptions, BOSSetting, DraftControl {
 
     // bytes32 snInfo{
     //      uint8 typeOfOpt; 0  //0-call(price); 1-put(price); 2-call(roe); 3-pub(roe); 4-call(price) & cnds; 5-put(price) & cnds; 6-call(roe) & cnds; 7-put(roe) & cnds;
-    //      uint16 counterOfOptions; 1, 2
+    //      uint16 _counterOfOptions; 1, 2
     //      uint32 triggerDate; 3, 4
     //      uint8 exerciseDays; 7, 1
     //      uint8 closingDays; 8, 1
@@ -50,21 +50,7 @@ contract Options is IOptions, BOSSetting, DraftControl {
 
     ObjsRepo.SNList private _snList;
 
-    uint16 public counterOfOptions;
-
-    // ################
-    // ##   Event    ##
-    // ################
-
-    event CreateOpt(bytes32 indexed sn, uint40 rightholder, uint40 obligor);
-
-    event AddObligorIntoOpt(bytes32 sn, uint40 obligor);
-
-    event RemoveObligorFromOpt(bytes32 sn, uint40 obligor);
-
-    event DelOpt(bytes32 indexed sn);
-
-    event AddConditions(bytes32 indexed sn);
+    uint16 private _counterOfOptions;
 
     // ################
     // ##  Modifier  ##
@@ -122,11 +108,11 @@ contract Options is IOptions, BOSSetting, DraftControl {
         require(exerciseDays > 0, "ZERO exerciseDays");
         require(closingDays > 0, "ZERO closingDays");
 
-        counterOfOptions++;
+        _counterOfOptions++;
 
         bytes32 sn = _createSN(
             typeOfOpt,
-            counterOfOptions,
+            _counterOfOptions,
             triggerDate,
             exerciseDays,
             closingDays,
@@ -238,6 +224,10 @@ contract Options is IOptions, BOSSetting, DraftControl {
     // ################
     // ##  查询接口  ##
     // ################
+
+    function counterOfOptions() external view onlyUser returns (uint16) {
+        return _counterOfOptions;
+    }
 
     function sn(bytes6 ssn)
         external

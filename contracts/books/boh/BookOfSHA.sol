@@ -29,12 +29,6 @@ contract BookOfSHA is IBookOfSHA, ITerm, DocumentsRepo {
     //     uint40 _bookeeper
     // ) public DocumentsRepo(_bookName, _admin, _bookeeper, _rc) {}
 
-    //##############
-    //##  Event   ##
-    //##############
-
-    event ChangePointer(address indexed pointer, address indexed body);
-
     //##################
     //##    写接口    ##
     //##################

@@ -27,23 +27,6 @@ contract FirstRefusalToolKits is InvestmentAgreement {
     mapping(uint16 => mapping(uint16 => Record)) private _records;
 
     //##################
-    //##    Event     ##
-    //##################
-
-    event CreateFRDeal(
-        bytes32 indexed sn,
-        bytes32 shareNumber,
-        uint256 unitPrice,
-        uint256 parValue,
-        uint256 paidPar,
-        uint32 closingDate
-    );
-
-    event UpdateFRDeal(bytes32 indexed sn, uint256 parValue, uint256 paidPar);
-
-    event AcceptFR(bytes32 indexed sn, uint40 sender);
-
-    //##################
     //##    写接口    ##
     //##################
 

@@ -39,18 +39,6 @@ contract AntiDilution is
 
     ObjsRepo.SeqList private _benchmarks;
 
-    // ################
-    // ##   Event    ##
-    // ################
-
-    event SetBenchmark(uint8 indexed class, uint256 price);
-
-    event DelBenchmark(uint8 indexed class);
-
-    event AddObligor(uint256 indexed class, uint40 obligor);
-
-    event RemoveObligor(uint256 indexed class, uint40 obligor);
-
     // #################
     // ##   修饰器    ##
     // #################

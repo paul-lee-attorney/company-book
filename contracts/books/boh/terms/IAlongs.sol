@@ -6,6 +6,22 @@
 pragma solidity ^0.4.24;
 
 interface IAlongs {
+    // ################
+    // ##   Event    ##
+    // ################
+
+    event SetLink(uint16 indexed dragerGroup, bytes32 rule);
+
+    event AddFollower(uint16 indexed dragerGroup, uint16 followerGroup);
+
+    event RemoveFollower(uint16 indexed dragerGroup, uint16 followerGroup);
+
+    event DelLink(uint16 indexed dragerGroup);
+
+    // ################
+    // ##   Write    ##
+    // ################
+
     function createLink(
         uint16 drager,
         uint8 triggerType,
@@ -40,14 +56,6 @@ interface IAlongs {
         returns (bool);
 
     function followers(uint16 drager) external view returns (uint16[]);
-
-    // ################
-    // ##  Term接口  ##
-    // ################
-
-    function isTriggered(address ia, bytes32 sn) external view returns (bool);
-
-    function isExempted(address ia, bytes32 sn) external view returns (bool);
 
     function priceCheck(
         address ia,

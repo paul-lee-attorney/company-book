@@ -7,15 +7,10 @@ pragma solidity ^0.4.24;
 
 pragma experimental ABIEncoderV2;
 
-// pragma experimental ABIEncoderV2;
-
-// import "../boa//IInvestmentAgreement.sol";
-
-// import "../../common/ruting/BOASetting.sol";
 import "../../common/ruting/SHASetting.sol";
-// import "../../common/ruting/BOSSetting.sol";
 
 import "../../common/components/MotionsRepo.sol";
+
 import "../../common/lib/SNFactory.sol";
 import "../../common/lib/SNParser.sol";
 import "../../common/lib/EnumsRepo.sol";

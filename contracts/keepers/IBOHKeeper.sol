@@ -6,6 +6,12 @@
 pragma solidity ^0.4.24;
 
 interface IBOHKeeper {
+    // ################
+    // ##   Events   ##
+    // ################
+
+    event AddTemplate(uint8 title, address add);
+
     // ##################
     // ##  BOHKeeper   ##
     // ##################

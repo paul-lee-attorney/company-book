@@ -6,15 +6,48 @@
 pragma solidity ^0.4.24;
 
 interface IBookOfOptions {
-    function futures(bytes6 ssn) external view returns (bytes32[]);
+    // ################
+    // ##   Event    ##
+    // ################
 
-    function pledges(bytes6 ssn) external view returns (bytes32[]);
+    event CreateOpt(
+        bytes32 indexed sn,
+        uint40 rightholder,
+        uint40 obligor,
+        uint256 parValue,
+        uint256 paidPar
+    );
 
-    function isOption(bytes6 ssn) external view returns (bool);
+    event RegisterOpt(bytes32 indexed sn);
 
-    function snList() external view returns (bytes32[]);
+    event AddObligorIntoOpt(bytes32 sn, uint40 obligor);
 
-    function counterOfOptions() external view returns (uint16);
+    event RemoveObligorFromOpt(bytes32 sn, uint40 obligor);
+
+    event DelOpt(bytes32 indexed sn);
+
+    event CloseOpt(bytes32 indexed sn, string hashKey);
+
+    event SetOptState(bytes32 indexed sn, uint8 state);
+
+    event ExecOpt(bytes32 indexed sn);
+
+    event RevokeOpt(bytes32 indexed sn);
+
+    event UpdateOracle(uint256 data_1, uint256 data_2);
+
+    event AddFuture(
+        bytes32 indexed sn,
+        bytes32 shareNumber,
+        uint256 parValue,
+        uint256 paidPar
+    );
+
+    event DelFuture(bytes32 indexed sn);
+
+    event AddPledge(bytes32 indexed sn, bytes32 shareNumber, uint256 paidPar);
+
+    event LockOpt(bytes32 indexed sn, bytes32 hashLock);
 
     // ################
     // ##   写接口   ##
@@ -92,4 +125,14 @@ interface IBookOfOptions {
     function obligors(bytes6 ssn) external view returns (uint40[]);
 
     function stateOfOption(bytes6 ssn) external view returns (uint8);
+
+    function futures(bytes6 ssn) external view returns (bytes32[]);
+
+    function pledges(bytes6 ssn) external view returns (bytes32[]);
+
+    function isOption(bytes6 ssn) external view returns (bool);
+
+    function snList() external view returns (bytes32[]);
+
+    function counterOfOptions() external view returns (uint16);
 }

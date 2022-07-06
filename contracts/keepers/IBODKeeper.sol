@@ -1,4 +1,4 @@
-/*
+/* *
  * Copyright 2021-2022 LI LI of JINGTIAN & GONGCHENG.
  * All Rights Reserved.
  * */
@@ -6,21 +6,12 @@
 pragma solidity ^0.4.24;
 pragma experimental ABIEncoderV2;
 
-// import "../books/boa//IInvestmentAgreement.sol";
-
 import "../common/ruting/BOSSetting.sol";
-// import "../common/ruting/BOASetting.sol";
 import "../common/ruting/BODSetting.sol";
 import "../common/ruting/BOMSetting.sol";
-
-// import "../common/ruting/BOOSetting.sol";
 import "../common/ruting/SHASetting.sol";
 
 import "../common/lib/SNParser.sol";
-
-// import "../common/components/ISigPage.sol";
-
-// import "../common/lib/EnumsRepo.sol";
 
 import "./IBODKeeper.sol";
 

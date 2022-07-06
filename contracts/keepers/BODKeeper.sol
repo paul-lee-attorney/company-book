@@ -33,21 +33,6 @@ contract BODKeeper is
 {
     using SNParser for bytes32;
 
-    // ##################
-    // ##   Modifier   ##
-    // ##################
-    // modifier onlyPartyOf(address body, uint40 caller) {
-    //     require(ISigPage(body).isParty(caller), "NOT Party of Doc");
-    //     _;
-    // }
-    // modifier notPartyOf(address body, uint40 caller) {
-    //     require(!ISigPage(body).isParty(caller), "Party has no voting right");
-    //     _;
-    // }
-    // ##################
-    // ##   Wite I/O   ##
-    // ##################
-
     function appointDirector(
         uint40 candidate,
         uint8 title,

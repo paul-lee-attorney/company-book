@@ -24,24 +24,6 @@ contract Roles is IRoles, RegCenterSetting {
     mapping(bytes32 => RoleData) private _roles;
 
     // ##################
-    // ##   Event      ##
-    // ##################
-
-    event SetRoleAdmin(bytes32 indexed role, uint40 indexed admin);
-
-    event RoleGranted(
-        bytes32 indexed role,
-        uint40 indexed member,
-        uint40 indexed sender
-    );
-
-    event RoleRevoked(
-        bytes32 indexed role,
-        uint40 indexed member,
-        uint40 indexed sender
-    );
-
-    // ##################
     // ##    写端口    ##
     // ##################
 

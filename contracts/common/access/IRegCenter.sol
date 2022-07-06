@@ -6,7 +6,17 @@
 pragma solidity ^0.4.24;
 
 interface IRegCenter {
-    function counterOfUsers() external returns (uint40);
+    // ##################
+    // ##    Event     ##
+    // ##################
+
+    event RegUser(uint40 indexed userNo, address primeKey);
+
+    event SetBackupKey(uint40 indexed userNo, address backupKey);
+
+    event ReplacePrimeKey(uint40 indexed userNo, address newKey);
+
+    event ResetBackupKeyFlag(uint40 indexed userNo);
 
     // ##################
     // ##    写端口    ##
@@ -21,6 +31,8 @@ interface IRegCenter {
     // ##################
     // ##   查询端口   ##
     // ##################
+
+    function counterOfUsers() external view returns (uint40);
 
     function blocksPerHour() external view returns (uint32);
 

@@ -5,7 +5,6 @@
 
 pragma solidity ^0.4.24;
 
-// import "../../../common/lib/ArrayUtils.sol";
 import "../../../common/lib/SNFactory.sol";
 import "../../../common/lib/SNParser.sol";
 import "../../../common/lib/EnumerableSet.sol";
@@ -18,17 +17,9 @@ import "./IGroupsUpdate.sol";
 contract GroupsUpdate is IGroupsUpdate, BOSSetting, DraftControl {
     using SNFactory for bytes;
     using SNParser for bytes32;
-    // using ArrayUtils for bytes32[];
     using EnumerableSet for EnumerableSet.Bytes32Set;
 
     EnumerableSet.Bytes32Set private _orders;
-
-    //##################
-    //##    Event     ##
-    //##################
-    event AddMemberOrder(uint40 acct, uint16 groupNo);
-    event RemoveMemberOrder(uint40 acct, uint16 groupNo);
-    event DelOrder(bytes32 order);
 
     //##################
     //##    写接口    ##

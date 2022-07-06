@@ -6,7 +6,19 @@
 pragma solidity ^0.4.24;
 
 interface IOptions {
-    function counterOfOptions() external view returns (uint16);
+    // ################
+    // ##   Event    ##
+    // ################
+
+    event CreateOpt(bytes32 indexed sn, uint40 rightholder, uint40 obligor);
+
+    event AddObligorIntoOpt(bytes32 sn, uint40 obligor);
+
+    event RemoveObligorFromOpt(bytes32 sn, uint40 obligor);
+
+    event DelOpt(bytes32 indexed sn);
+
+    event AddConditions(bytes32 indexed sn);
 
     // ################
     // ##   写接口   ##
@@ -42,6 +54,8 @@ interface IOptions {
     // ################
     // ##  查询接口  ##
     // ################
+
+    function counterOfOptions() external view returns (uint16);
 
     function sn(bytes6 ssn) external view returns (bytes32);
 

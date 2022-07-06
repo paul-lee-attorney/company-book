@@ -17,8 +17,9 @@ import "../../../common/lib/EnumerableSet.sol";
 import "../../../common/lib/EnumsRepo.sol";
 
 import "./IAlongs.sol";
+import "./ITerm.sol";
 
-contract DragAlong is IAlongs, BOSSetting, BOASetting, DraftControl {
+contract DragAlong is IAlongs, ITerm, BOSSetting, BOASetting, DraftControl {
     using SNParser for bytes32;
     using SNFactory for bytes;
     using EnumerableSet for EnumerableSet.UintSet;
@@ -44,18 +45,6 @@ contract DragAlong is IAlongs, BOSSetting, BOASetting, DraftControl {
 
     // dragerGroup => Link
     mapping(uint16 => Link) internal _links;
-
-    // ################
-    // ##   Event    ##
-    // ################
-
-    event SetLink(uint16 indexed dragerGroup, bytes32 rule);
-
-    event AddFollower(uint16 indexed dragerGroup, uint16 followerGroup);
-
-    event RemoveFollower(uint16 indexed dragerGroup, uint16 followerGroup);
-
-    event DelLink(uint16 indexed dragerGroup);
 
     // ################
     // ##  modifier  ##
@@ -205,6 +194,56 @@ contract DragAlong is IAlongs, BOSSetting, BOASetting, DraftControl {
         return _links[dragerGroup].followerGroups.valuesToUint16();
     }
 
+    function priceCheck(
+        address ia,
+        bytes32 sn,
+        bytes32 shareNumber,
+        uint40 caller
+    ) public view onlyKeeper returns (bool) {
+        require(isTriggered(ia, sn), "not triggered");
+
+        uint40 drager = IInvestmentAgreement(ia)
+            .shareNumberOfDeal(sn.sequence())
+            .shareholder();
+
+        require(caller == drager, "caller is not drager of DragAlong");
+
+        require(
+            isLinked(caller, shareNumber.shareholder()),
+            "caller and target shareholder NOT linked"
+        );
+
+        uint256 dealPrice = IInvestmentAgreement(ia).unitPrice(sn.sequence());
+        uint32 closingDate = IInvestmentAgreement(ia).closingDate(
+            sn.sequence()
+        );
+
+        bytes32 rule = _links[_bos.groupNo(drager)].rule;
+
+        if (
+            rule.triggerTypeOfLink() <
+            uint8(EnumsRepo.TriggerTypeOfAlongs.ControlChangedWithHigherPrice)
+        ) return true;
+
+        if (
+            rule.triggerTypeOfLink() ==
+            uint8(EnumsRepo.TriggerTypeOfAlongs.ControlChangedWithHigherPrice)
+        ) {
+            if (dealPrice >= rule.unitPriceOfLink()) return true;
+            else return false;
+        }
+
+        (, , , , uint256 issuePrice, ) = _bos.getShare(shareNumber.short());
+        uint32 issueDate = shareNumber.issueDate();
+
+        if (
+            _roeOfDeal(dealPrice, issuePrice, closingDate, issueDate) >=
+            rule.roeOfLink()
+        ) return true;
+
+        return false;
+    }
+
     // ################
     // ##  Term接口  ##
     // ################
@@ -262,55 +301,5 @@ contract DragAlong is IAlongs, BOSSetting, BOASetting, DraftControl {
         roe =
             (deltaPrice * 365000000) /
             (issuePrice * (uint256(deltaDate) / 864));
-    }
-
-    function priceCheck(
-        address ia,
-        bytes32 sn,
-        bytes32 shareNumber,
-        uint40 caller
-    ) public view onlyKeeper returns (bool) {
-        require(isTriggered(ia, sn), "not triggered");
-
-        uint40 drager = IInvestmentAgreement(ia)
-            .shareNumberOfDeal(sn.sequence())
-            .shareholder();
-
-        require(caller == drager, "caller is not drager of DragAlong");
-
-        require(
-            isLinked(caller, shareNumber.shareholder()),
-            "caller and target shareholder NOT linked"
-        );
-
-        uint256 dealPrice = IInvestmentAgreement(ia).unitPrice(sn.sequence());
-        uint32 closingDate = IInvestmentAgreement(ia).closingDate(
-            sn.sequence()
-        );
-
-        bytes32 rule = _links[_bos.groupNo(drager)].rule;
-
-        if (
-            rule.triggerTypeOfLink() <
-            uint8(EnumsRepo.TriggerTypeOfAlongs.ControlChangedWithHigherPrice)
-        ) return true;
-
-        if (
-            rule.triggerTypeOfLink() ==
-            uint8(EnumsRepo.TriggerTypeOfAlongs.ControlChangedWithHigherPrice)
-        ) {
-            if (dealPrice >= rule.unitPriceOfLink()) return true;
-            else return false;
-        }
-
-        (, , , , uint256 issuePrice, ) = _bos.getShare(shareNumber.short());
-        uint32 issueDate = shareNumber.issueDate();
-
-        if (
-            _roeOfDeal(dealPrice, issuePrice, closingDate, issueDate) >=
-            rule.roeOfLink()
-        ) return true;
-
-        return false;
     }
 }

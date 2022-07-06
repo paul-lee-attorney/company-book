@@ -32,7 +32,6 @@ interface IBookOfPledges {
 
     function createPledge(
         bytes32 shareNumber,
-        // uint32 createDate,
         uint40 creditor,
         uint40 debtor,
         uint64 pledgedPar,

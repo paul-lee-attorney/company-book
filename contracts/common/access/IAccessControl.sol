@@ -7,6 +7,18 @@ pragma solidity ^0.4.24;
 
 interface IAccessControl {
     // ##################
+    // ##   Event      ##
+    // ##################
+
+    event Init(
+        uint40 indexed owner,
+        uint40 indexed directKeeper,
+        address regCenter
+    );
+
+    event AbandonOwnership();
+
+    // ##################
     // ##    写端口    ##
     // ##################
 

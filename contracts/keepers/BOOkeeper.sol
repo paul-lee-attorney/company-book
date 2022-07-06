@@ -35,10 +35,6 @@ contract BOOKeeper is
 {
     using SNParser for bytes32;
 
-    // ################
-    // ##   Events   ##
-    // ################
-
     // ##################
     // ##   Modifier   ##
     // ##################

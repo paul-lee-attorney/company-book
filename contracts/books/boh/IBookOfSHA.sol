@@ -6,6 +6,12 @@
 pragma solidity ^0.4.24;
 
 interface IBookOfSHA {
+    //##############
+    //##  Event   ##
+    //##############
+
+    event ChangePointer(address indexed pointer, address indexed body);
+
     //##################
     //##    写接口    ##
     //##################

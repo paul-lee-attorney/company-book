@@ -6,6 +6,22 @@
 pragma solidity ^0.4.24;
 
 contract IFirstRefusal {
+    // ###############
+    // ##   Event   ##
+    // ###############
+
+    event SetFirstRefusal(uint8 indexed typeOfDeal, bytes32 rule);
+
+    event AddRightholder(uint8 indexed typeOfDeal, uint40 rightholder);
+
+    event RemoveRightholder(uint8 indexed typeOfDeal, uint40 rightholder);
+
+    event DelFirstRefusal(uint8 indexed typeOfDeal);
+
+    // ###############
+    // ##   Write   ##
+    // ###############
+
     function setFirstRefusal(
         uint8 typeOfDeal,
         bool membersEqualOfFR,

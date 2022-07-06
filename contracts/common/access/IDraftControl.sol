@@ -7,6 +7,14 @@ pragma solidity ^0.4.24;
 
 interface IDraftControl {
     // ##################
+    // ##   Event      ##
+    // ##################
+
+    event SetGeneralCounsel(uint40 indexed gc);
+
+    event LockContents();
+
+    // ##################
     // ##    写端口    ##
     // ##################
 

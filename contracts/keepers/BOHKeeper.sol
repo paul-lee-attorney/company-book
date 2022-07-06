@@ -39,12 +39,6 @@ contract BOHKeeper is
 
     address[15] public termsTemplate;
 
-    // ################
-    // ##   Events   ##
-    // ################
-
-    event AddTemplate(uint8 title, address add);
-
     // ##################
     // ##   Modifier   ##
     // ##################

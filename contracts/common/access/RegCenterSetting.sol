@@ -5,7 +5,7 @@
 
 pragma solidity ^0.4.24;
 
-import ".//IRegCenter.sol";
+import "./IRegCenter.sol";
 
 contract RegCenterSetting {
     IRegCenter internal _rc;

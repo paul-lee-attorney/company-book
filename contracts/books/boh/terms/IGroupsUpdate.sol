@@ -6,6 +6,19 @@
 pragma solidity ^0.4.24;
 
 interface IGroupsUpdate {
+    //##################
+    //##    Event     ##
+    //##################
+    event AddMemberOrder(uint40 acct, uint16 groupNo);
+
+    event RemoveMemberOrder(uint40 acct, uint16 groupNo);
+
+    event DelOrder(bytes32 order);
+
+    //##################
+    //##    Write     ##
+    //##################
+
     function addMemberOrder(uint40 acct, uint16 groupNo) external;
 
     function removeMemberOrder(uint40 acct, uint16 groupNo) external;

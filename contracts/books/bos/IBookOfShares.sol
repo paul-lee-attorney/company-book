@@ -96,15 +96,15 @@ interface IBookOfShares {
 
     // ========== GroupsRepo ==============
 
-    function isGroup(uint16 group) external view returns (bool);
-
-    function membersOfGroup(uint16 group) external view returns (uint40[]);
-
-    function groupNo(uint40 acct) external view returns (uint16);
-
     function counterOfGroups() external view returns (uint16);
 
     function controller() external view returns (uint16);
+
+    function groupNo(uint40 acct) external view returns (uint16);
+
+    function membersOfGroup(uint16 group) external view returns (uint40[]);
+
+    function isGroup(uint16 group) external view returns (bool);
 
     function groupsList() external view returns (uint16[]);
 

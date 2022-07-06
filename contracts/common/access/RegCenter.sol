@@ -23,7 +23,7 @@ contract RegCenter is IRegCenter {
     // primeKey => userNo
     mapping(address => uint40) private _userNo;
 
-    uint40 public counterOfUsers;
+    uint40 private _counterOfUsers;
 
     uint32 private _BLOCKS_PER_HOUR;
 
@@ -31,18 +31,6 @@ contract RegCenter is IRegCenter {
         regUser();
         _BLOCKS_PER_HOUR = blocks_per_hour;
     }
-
-    // ##################
-    // ##    Event     ##
-    // ##################
-
-    event RegUser(uint40 indexed userNo, address primeKey);
-
-    event SetBackupKey(uint40 indexed userNo, address backupKey);
-
-    event ReplacePrimeKey(uint40 indexed userNo, address newKey);
-
-    event ResetBackupKeyFlag(uint40 indexed userNo);
 
     // ##################
     // ##    Modifier  ##
@@ -64,16 +52,19 @@ contract RegCenter is IRegCenter {
 
     function regUser() public {
         require(!_usedKeys[msg.sender], "already registered");
-        require(counterOfUsers + 1 > counterOfUsers, "counterOfUsers overflow");
+        require(
+            _counterOfUsers + 1 > _counterOfUsers,
+            "counterOfUsers overflow"
+        );
 
-        counterOfUsers++;
+        _counterOfUsers++;
 
-        _users[counterOfUsers].primeKey = msg.sender;
+        _users[_counterOfUsers].primeKey = msg.sender;
 
         _usedKeys[msg.sender] = true;
-        _userNo[msg.sender] = counterOfUsers;
+        _userNo[msg.sender] = _counterOfUsers;
 
-        emit RegUser(counterOfUsers, msg.sender);
+        emit RegUser(_counterOfUsers, msg.sender);
     }
 
     function _isContract(address acct) private view returns (bool) {
@@ -125,6 +116,10 @@ contract RegCenter is IRegCenter {
     // ##   查询端口   ##
     // ##################
 
+    function counterOfUsers() external view returns (uint40) {
+        return _counterOfUsers;
+    }
+
     function blocksPerHour() external view returns (uint32) {
         return _BLOCKS_PER_HOUR;
     }
@@ -148,7 +143,7 @@ contract RegCenter is IRegCenter {
         returns (bool)
     {
         require(userNo > 0, "zero userNo");
-        require(userNo <= counterOfUsers, "userNo overflow");
+        require(userNo <= _counterOfUsers, "userNo overflow");
 
         return key == _users[userNo].primeKey;
     }

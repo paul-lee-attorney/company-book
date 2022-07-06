@@ -10,6 +10,23 @@ interface IInvestmentAgreement {
     //##    Event     ##
     //##################
 
+    // ======== FRDeal ========
+
+    event CreateFRDeal(
+        bytes32 indexed sn,
+        bytes32 shareNumber,
+        uint256 unitPrice,
+        uint256 parValue,
+        uint256 paidPar,
+        uint32 closingDate
+    );
+
+    event UpdateFRDeal(bytes32 indexed sn, uint256 parValue, uint256 paidPar);
+
+    event AcceptFR(bytes32 indexed sn, uint40 sender);
+
+    // ======== normalDeal ========
+
     event CreateDeal(bytes32 indexed sn, bytes32 shareNumber);
 
     event UpdateDeal(

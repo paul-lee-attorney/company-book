@@ -16,14 +16,6 @@ contract DraftControl is IDraftControl, AccessControl {
     bytes32 public constant ATTORNEYS = bytes32("Attorneys");
 
     // ##################
-    // ##   Event      ##
-    // ##################
-
-    event SetGeneralCounsel(uint40 indexed gc);
-
-    event LockContents();
-
-    // ##################
     // ##   修饰器     ##
     // ##################
 

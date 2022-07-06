@@ -48,15 +48,6 @@ contract ShareholdersAgreement is
     // bodys
     EnumerableSet.AddressSet private _bodies;
 
-    //##############
-    //##  Event   ##
-    //##############
-
-    event SetTemplate(uint8 indexed title, address tempAdd);
-
-    event CreateTerm(uint8 indexed title, address indexed body, uint40 creator);
-
-    event RemoveTerm(uint8 indexed title);
 
     //####################
     //##    modifier    ##

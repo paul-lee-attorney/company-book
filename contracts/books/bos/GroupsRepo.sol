@@ -20,15 +20,17 @@ contract GroupsRepo is SharesRepo {
 
     EnumerableSet.UintSet private _groupsList;
 
-    uint16 public controller;
+    uint16 private _controller;
 
-    uint16 public counterOfGroups;
+    uint16 private _counterOfGroups;
 
     //#################
     //##    Event    ##
     //#################
     event AddMemberToGroup(uint40 acct, uint16 groupNo);
+
     event RemoveMemberFromGroup(uint40 acct, uint16 groupNo);
+
     event SetController(uint16 groupNo);
 
     //##################
@@ -46,12 +48,12 @@ contract GroupsRepo is SharesRepo {
 
     function addMemberToGroup(uint40 acct, uint16 group) public onlyKeeper {
         require(group > 0, "ZERO group");
-        require(group <= counterOfGroups + 1, "group OVER FLOW");
+        require(group <= _counterOfGroups + 1, "group OVER FLOW");
         require(_groupNo[acct] == 0, "belongs to another group");
 
         _groupsList.add(group);
 
-        if (group > counterOfGroups) counterOfGroups = group;
+        if (group > _counterOfGroups) _counterOfGroups = group;
 
         _groupNo[acct] = group;
 
@@ -80,13 +82,21 @@ contract GroupsRepo is SharesRepo {
     }
 
     function setController(uint16 group) external onlyKeeper groupExist(group) {
-        controller = group;
+        _controller = group;
         emit SetController(group);
     }
 
     // ################
     // ##  查询接口  ##
     // ################
+
+    function counterOfGroups() external view onlyUser returns (uint16) {
+        return _counterOfGroups;
+    }
+
+    function controller() external view onlyUser returns (uint16) {
+        return _controller;
+    }
 
     function groupNo(uint40 acct) external view onlyUser returns (uint16) {
         return _groupNo[acct];

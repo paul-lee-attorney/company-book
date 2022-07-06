@@ -18,17 +18,6 @@ contract AccessControl is IAccessControl, Roles {
 
     uint40 private _owner;
 
-    // ##################
-    // ##   Event      ##
-    // ##################
-
-    event Init(
-        uint40 indexed owner,
-        uint40 indexed directKeeper,
-        address regCenter
-    );
-
-    event AbandonOwnership();
 
     // ##################
     // ##   修饰器     ##

@@ -375,7 +375,7 @@ contract InvestmentAgreement is IInvestmentAgreement, BOSSetting, SigPage {
         emit RevokeDeal(deal.sn, hashKey);
     }
 
-    function takeGift(uint16 ssn, uint32 sigDate) external onlyKeeper {
+    function takeGift(uint16 ssn) external onlyKeeper {
         Deal storage deal = _deals[ssn];
 
         require(

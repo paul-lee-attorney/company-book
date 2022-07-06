@@ -20,7 +20,7 @@ interface ISigPage {
 
     function signDoc(uint40 caller, bytes32 sigHash) external;
 
-    function acceptDoc(uint32 sigDate, bytes32 sigHash) external;
+    function acceptDoc(bytes32 sigHash) external;
 
     function addBlank(uint40 acct, uint16 sn) external;
 

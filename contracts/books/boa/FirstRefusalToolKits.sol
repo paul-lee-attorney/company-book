@@ -49,7 +49,6 @@ contract FirstRefusalToolKits is InvestmentAgreement {
 
     function execFirstRefusalRight(
         uint16 ssn,
-        bool basedOnPar,
         uint40 acct,
         // uint32 execDate,
         bytes32 sigHash

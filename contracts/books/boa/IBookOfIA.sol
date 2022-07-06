@@ -1,4 +1,4 @@
-/*
+/* *
  * Copyright 2021-2022 LI LI of JINGTIAN & GONGCHENG.
  * All Rights Reserved.
  * */
@@ -28,7 +28,7 @@ interface IBookOfIA {
         uint256 paidPar
     );
 
-    event AcceptAlongDeal(address ia, address drager, bytes32 sn);
+    event AcceptAlongDeal(address ia, bytes32 sn);
 
     //##################
     //##    写接口    ##
@@ -74,16 +74,10 @@ interface IBookOfIA {
         bytes32 rule,
         bytes32 shareNumber,
         uint256 parValue,
-        uint256 paidPar,
-        uint40 caller
+        uint256 paidPar
     ) external;
 
-    function acceptAlongDeal(
-        address ia,
-        bytes32 sn,
-        uint40 drager,
-        bool dragAlong
-    ) external;
+    function acceptAlongDeal(address ia, bytes32 sn) external;
 
     //##################
     //##    读接口    ##
@@ -137,10 +131,6 @@ interface IBookOfIA {
             uint256 netIncreasedAmt,
             uint256 shareRatio
         );
-
-    // function topAmount(address ia) external view returns (uint256);
-
-    // function netIncreasedAmount(address ia) external view returns (uint256);
 
     function mockResults(address ia, uint16 group)
         external

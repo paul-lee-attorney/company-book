@@ -23,24 +23,46 @@ library ArrayUtils {
         return arrC;
     }
 
-    function minus(uint40[] arrA, uint40[] arrB) internal returns (uint40[]) {
+    function minus(uint40[] arrA, uint40[] arrB)
+        internal
+        pure
+        returns (uint40[])
+    {
         uint256 lenA = arrA.length;
         uint256 lenB = arrB.length;
 
-        uint40[] storage arrC;
+        uint40[] memory arrC = new uint40[](lenA);
 
-        for (uint256 i = 0; i < lenA; i++) {
+        uint256 pointer;
+
+        while (lenA > 0) {
             bool flag = false;
-            for (uint256 j = 0; j < lenB; j++) {
-                if (arrB[j] == arrA[i]) {
+            lenB = arrB.length;
+            while (lenB > 0) {
+                if (arrB[lenB - 1] == arrA[lenA - 1]) {
                     flag = true;
                     break;
                 }
+                lenB--;
             }
-            if (!flag) arrC.push(arrA[i]);
+
+            if (!flag) {
+                arrC[pointer] = arrA[lenA - 1];
+                pointer++;
+            }
+
+            lenA--;
         }
 
-        return arrC;
+        uint40[] memory output = new uint40[](pointer);
+        lenA = 0;
+
+        while (lenA < pointer) {
+            output[lenA] = arrC[lenA];
+            lenA++;
+        }
+
+        return output;
     }
 
     function fullyCoveredBy(uint40[] arrA, uint40[] arrB)
@@ -50,10 +72,9 @@ library ArrayUtils {
     {
         uint256 lenA = arrA.length;
         uint256 lenB = arrB.length;
-        bool flag;
 
         for (uint256 i = 0; i < lenA; i++) {
-            flag = false;
+            bool flag;
             for (uint256 j = 0; j < lenB; j++) {
                 if (arrB[j] == arrA[i]) {
                     flag = true;

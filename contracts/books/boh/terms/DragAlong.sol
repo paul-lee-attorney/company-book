@@ -32,7 +32,6 @@ contract DragAlong is IAlongs, BOSSetting, BOASetting, DraftControl {
     //     uint16 drager;
     //     // 0-no condition; 1- not biggest || biggest but shareRatio < threshold; 2- 1 && price >= uintPrice; 3- 1 && roe >= ROE
     //     uint8 triggerType;
-    //     bool basedOnPar;
     //     // threshold to define material control party
     //     uint32 threshold;
     //     // false - free amount; true - pro rata (transfered parValue : original parValue)

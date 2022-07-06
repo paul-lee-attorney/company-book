@@ -113,7 +113,7 @@ contract SigPage is ISigPage, DraftControl {
         }
     }
 
-    function acceptDoc(uint32 sigDate, bytes32 sigHash) external onlyParty {
+    function acceptDoc(bytes32 sigHash) external onlyParty {
         require(established, "Doc not established");
 
         if (_signatures.signDeal(_msgSender(), 0, sigHash)) {

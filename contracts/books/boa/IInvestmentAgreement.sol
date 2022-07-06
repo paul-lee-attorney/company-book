@@ -45,7 +45,6 @@ interface IInvestmentAgreement {
 
     function execFirstRefusalRight(
         uint16 ssn,
-        bool basedOnPar,
         uint40 acct,
         bytes32 sigHash
     ) external returns (bytes32);

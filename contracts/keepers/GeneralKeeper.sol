@@ -175,17 +175,9 @@ contract GeneralKeeper is AccessControl {
     function acceptTagAlong(
         address ia,
         bytes32 sn,
-        uint40 drager,
         bytes32 sigHash
     ) external {
-        _SHAKeeper.acceptAlongDeal(
-            ia,
-            sn,
-            drager,
-            false,
-            _msgSender(),
-            sigHash
-        );
+        _SHAKeeper.acceptAlongDeal(ia, sn, _msgSender(), sigHash);
     }
 
     // ======= DragAlong ========
@@ -213,18 +205,9 @@ contract GeneralKeeper is AccessControl {
     function acceptDragAlong(
         address ia,
         bytes32 sn,
-        // uint32 sigDate,
         bytes32 sigHash
     ) external {
-        _SHAKeeper.acceptAlongDeal(
-            ia,
-            sn,
-            _msgSender(),
-            true,
-            _msgSender(),
-            // sigDate,
-            sigHash
-        );
+        _SHAKeeper.acceptAlongDeal(ia, sn, _msgSender(), sigHash);
     }
 
     // ======== AntiDilution ========
@@ -233,17 +216,9 @@ contract GeneralKeeper is AccessControl {
         address ia,
         bytes32 sn,
         bytes32 shareNumber,
-        // uint32 sigDate,
         bytes32 sigHash
     ) external {
-        _SHAKeeper.execAntiDilution(
-            ia,
-            sn,
-            shareNumber,
-            _msgSender(),
-            // sigDate,
-            sigHash
-        );
+        _SHAKeeper.execAntiDilution(ia, sn, shareNumber, _msgSender(), sigHash);
     }
 
     function takeGiftShares(address ia, bytes32 sn) external {
@@ -256,7 +231,6 @@ contract GeneralKeeper is AccessControl {
     function execFirstRefusal(
         address ia,
         bytes32 sn,
-        // uint32 execDate,
         bytes32 sigHash
     ) external {
         _SHAKeeper.execFirstRefusal(ia, sn, _msgSender(), sigHash);
@@ -265,16 +239,9 @@ contract GeneralKeeper is AccessControl {
     function acceptFirstRefusal(
         address ia,
         bytes32 sn,
-        // uint32 acceptDate,
         bytes32 sigHash
     ) external {
-        _SHAKeeper.acceptFirstRefusal(
-            ia,
-            sn,
-            _msgSender(),
-            // acceptDate,
-            sigHash
-        );
+        _SHAKeeper.acceptFirstRefusal(ia, sn, _msgSender(), sigHash);
     }
 
     // ##################
@@ -432,7 +399,6 @@ contract GeneralKeeper is AccessControl {
     // ###################
 
     function createPledge(
-        // uint32 createDate,
         bytes32 shareNumber,
         uint256 pledgedPar,
         uint40 creditor,
@@ -440,7 +406,6 @@ contract GeneralKeeper is AccessControl {
         uint256 guaranteedAmt
     ) external {
         _BOPKeeper.createPledge(
-            // createDate,
             shareNumber,
             pledgedPar,
             creditor,

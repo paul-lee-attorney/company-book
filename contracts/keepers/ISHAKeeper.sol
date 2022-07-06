@@ -22,8 +22,6 @@ interface ISHAKeeper {
     function acceptAlongDeal(
         address ia,
         bytes32 sn,
-        uint40 drager,
-        bool dragAlong,
         uint40 caller,
         bytes32 sigHash
     ) external;

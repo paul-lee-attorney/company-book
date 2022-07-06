@@ -1,4 +1,4 @@
-/*
+/* *
  * Copyright 2021-2022 LI LI of JINGTIAN & GONGCHENG.
  * All Rights Reserved.
  * */
@@ -40,12 +40,6 @@ contract SHAKeeper is ISHAKeeper, BOASetting, SHASetting, BOSSetting {
         );
         _;
     }
-
-    // modifier withinProposePeriod(address ia, uint32 sigDate) {
-    //     require(_boa.reviewDeadlineBNOf(ia) < sigDate, "still in review period");
-    //     require(_boa.votingDeadlineBNOf(ia) >= sigDate, "missed voting deadline");
-    //     _;
-    // }
 
     modifier onlyExecuted(address ia) {
         require(
@@ -138,8 +132,7 @@ contract SHAKeeper is ISHAKeeper, BOASetting, SHASetting, BOSSetting {
             IAlongs(term).linkRule(_bos.groupNo(drager)),
             shareNumber,
             parValue,
-            paidPar,
-            caller
+            paidPar
         );
     }
 
@@ -199,13 +192,11 @@ contract SHAKeeper is ISHAKeeper, BOASetting, SHASetting, BOSSetting {
     function acceptAlongDeal(
         address ia,
         bytes32 sn,
-        uint40 drager,
-        bool dragAlong,
         uint40 caller,
         bytes32 sigHash
     ) external onlyDirectKeeper onlyExecuted(ia) withinReviewPeriod(ia) {
         require(caller == sn.buyerOfDeal(), "caller NOT buyer");
-        _boa.acceptAlongDeal(ia, sn, drager, dragAlong);
+        _boa.acceptAlongDeal(ia, sn);
         ISigPage(ia).signDeal(sn.sequence(), caller, sigHash);
     }
 
@@ -342,7 +333,6 @@ contract SHAKeeper is ISHAKeeper, BOASetting, SHASetting, BOSSetting {
         address ia,
         bytes32 sn,
         uint40 caller,
-        // uint32 sigDate,
         bytes32 sigHash
     ) external onlyDirectKeeper onlyExecuted(ia) withinReviewPeriod(ia) {
         require(!ISigPage(ia).isInitSigner(caller), "caller is an init signer");
@@ -357,7 +347,6 @@ contract SHAKeeper is ISHAKeeper, BOASetting, SHASetting, BOSSetting {
 
         IInvestmentAgreement(ia).execFirstRefusalRight(
             sn.sequence(),
-            _getSHA().basedOnPar(),
             caller,
             sigHash
         );
@@ -367,7 +356,6 @@ contract SHAKeeper is ISHAKeeper, BOASetting, SHASetting, BOSSetting {
         address ia,
         bytes32 sn,
         uint40 caller,
-        // uint32 acceptDate,
         bytes32 sigHash
     ) external onlyDirectKeeper onlyExecuted(ia) withinReviewPeriod(ia) {
         if (sn.typeOfDeal() == uint8(EnumsRepo.TypeOfDeal.CapitalIncrease))
@@ -384,11 +372,6 @@ contract SHAKeeper is ISHAKeeper, BOASetting, SHASetting, BOSSetting {
                 "not seller of Deal"
             );
 
-        IInvestmentAgreement(ia).acceptFR(
-            sn.sequence(),
-            caller,
-            // acceptDate,
-            sigHash
-        );
+        IInvestmentAgreement(ia).acceptFR(sn.sequence(), caller, sigHash);
     }
 }

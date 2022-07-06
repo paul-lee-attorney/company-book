@@ -189,8 +189,7 @@ contract BookOfIA is IBookOfIA, DocumentsRepo {
         bytes32 rule,
         bytes32 shareNumber,
         uint256 parValue,
-        uint256 paidPar,
-        uint40 caller
+        uint256 paidPar
     ) external onlyDirectKeeper {
         uint16 drager = rule.dragerOfLink();
         uint16 follower = _bos.groupNo(shareNumber.shareholder());
@@ -231,18 +230,8 @@ contract BookOfIA is IBookOfIA, DocumentsRepo {
         emit AddAlongDeal(ia, follower, shareNumber, parValue, paidPar);
     }
 
-    function acceptAlongDeal(
-        address ia,
-        bytes32 sn,
-        uint40 drager,
-        bool dragAlong
-    ) external onlyKeeper {
+    function acceptAlongDeal(address ia, bytes32 sn) external onlyKeeper {
         uint16 buyerGroup = _bos.groupNo(sn.buyerOfDeal());
-        address term = dragAlong
-            ? _getSHA().getTerm(uint8(EnumsRepo.TermTitle.DRAG_ALONG))
-            : _getSHA().getTerm(uint8(EnumsRepo.TermTitle.TAG_ALONG));
-
-        bytes32 rule = IAlongs(term).linkRule(_bos.groupNo(drager));
 
         (, uint256 parValue, uint256 paidPar, , ) = IInvestmentAgreement(ia)
             .getDeal(sn.sequence());
@@ -256,7 +245,7 @@ contract BookOfIA is IBookOfIA, DocumentsRepo {
 
         _isMocked[ia][sn.sequence()] = true;
 
-        emit AcceptAlongDeal(ia, drager, sn);
+        emit AcceptAlongDeal(ia, sn);
     }
 
     //##################

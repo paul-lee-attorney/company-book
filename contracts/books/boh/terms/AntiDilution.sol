@@ -19,8 +19,15 @@ import "../../../common/lib/EnumerableSet.sol";
 import "../../../common/lib/ObjsRepo.sol";
 
 import "./IAntiDilution.sol";
+import "./ITerm.sol";
 
-contract AntiDilution is IAntiDilution, BOSSetting, BOMSetting, DraftControl {
+contract AntiDilution is
+    IAntiDilution,
+    ITerm,
+    BOSSetting,
+    BOMSetting,
+    DraftControl
+{
     using SNFactory for bytes;
     using SNParser for bytes32;
     using EnumerableSet for EnumerableSet.UintSet;
@@ -73,13 +80,7 @@ contract AntiDilution is IAntiDilution, BOSSetting, BOMSetting, DraftControl {
     function setBenchmark(uint8 class, uint256 price) external onlyAttorney {
         bytes32 sn = _createSN(class, price);
 
-        _benchmarks.append(sn, 24);
-
-        // _isMarked[class] = true;
-        // _classToMark[class] = sn;
-        // sn.insertToQue(_benchmarks);
-
-        emit SetBenchmark(class, price);
+        if (_benchmarks.append(sn, 24)) emit SetBenchmark(class, price);
     }
 
     function delBenchmark(uint8 class) external onlyAttorney onlyMarked(class) {
@@ -87,9 +88,7 @@ contract AntiDilution is IAntiDilution, BOSSetting, BOMSetting, DraftControl {
 
         delete _obligors[mark];
 
-        _benchmarks.pickout(mark);
-
-        emit DelBenchmark(class);
+        if (_benchmarks.pickout(mark)) emit DelBenchmark(class);
     }
 
     function addObligor(uint8 class, uint40 acct)

@@ -91,7 +91,7 @@ contract RegCenter is IRegCenter {
         User storage user = _users[userNo];
 
         require(msg.sender == user.primeKey, "wrong primeKey");
-        require(!_isContract(msg.sender), "msgSender shall not a contract");
+        require(!_isContract(msg.sender), "msgSender shall not be a contract");
 
         require(!user.flag, "already set backup key");
 
@@ -111,8 +111,7 @@ contract RegCenter is IRegCenter {
         _userNo[user.primeKey] = 0;
         _userNo[user.backupKey] = userNo;
 
-        user.primeKey = user.backupKey;
-        user.backupKey = address(0);
+        (user.primeKey, user.backupKey) = (user.backupKey, user.primeKey);
 
         emit ReplacePrimeKey(userNo, user.primeKey);
     }

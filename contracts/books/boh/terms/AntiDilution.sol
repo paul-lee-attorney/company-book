@@ -28,16 +28,21 @@ contract AntiDilution is
     BOMSetting,
     DraftControl
 {
-    using SNFactory for bytes;
+    // using SNFactory for bytes;
     using SNParser for bytes32;
     using EnumerableSet for EnumerableSet.UintSet;
-    using ObjsRepo for ObjsRepo.SeqList;
+    using ObjsRepo for ObjsRepo.MarkChain;
     using ArrayUtils for uint40[];
+    // using ObjsRepo for ObjsRepo.SeqList;
 
-    // benchmark => _obligors
-    mapping(bytes32 => EnumerableSet.UintSet) private _obligors;
+    mapping(uint256 => EnumerableSet.UintSet) private _obligors;
 
-    ObjsRepo.SeqList private _benchmarks;
+    ObjsRepo.MarkChain private _benchmarks;
+
+    // // benchmark => _obligors
+    // mapping(bytes32 => EnumerableSet.UintSet) private _obligors;
+
+    // ObjsRepo.SeqList private _benchmarks;
 
     // #################
     // ##   修饰器    ##
@@ -52,31 +57,12 @@ contract AntiDilution is
     // ##   写接口   ##
     // ################
 
-    function _createSN(uint8 class, uint256 price)
-        private
-        pure
-        returns (bytes32 sn)
-    {
-        bytes memory _sn = new bytes(32);
-
-        _sn[2] = bytes1(class);
-        _sn = _sn.intToSN(3, price, 29);
-
-        sn = _sn.bytesToBytes32();
-    }
-
-    function setBenchmark(uint8 class, uint256 price) external onlyAttorney {
-        bytes32 sn = _createSN(class, price);
-
-        if (_benchmarks.append(sn, 24)) emit SetBenchmark(class, price);
+    function setBenchmark(uint8 class, uint64 price) external onlyAttorney {
+        if (_benchmarks.addMark(class, price)) emit SetBenchmark(class, price);
     }
 
     function delBenchmark(uint8 class) external onlyAttorney onlyMarked(class) {
-        bytes32 mark = _benchmarks.getSN(class);
-
-        delete _obligors[mark];
-
-        if (_benchmarks.pickout(mark)) emit DelBenchmark(class);
+        if (_benchmarks.removeMark(class)) emit DelBenchmark(class);
     }
 
     function addObligor(uint8 class, uint40 acct)
@@ -84,8 +70,7 @@ contract AntiDilution is
         onlyAttorney
         onlyMarked(class)
     {
-        if (_obligors[_benchmarks.getSN(class)].add(acct))
-            emit AddObligor(class, acct);
+        if (_obligors[class].add(acct)) emit AddObligor(class, acct);
     }
 
     function removeObligor(uint8 class, uint40 acct)
@@ -93,8 +78,7 @@ contract AntiDilution is
         onlyAttorney
         onlyMarked(class)
     {
-        if (_obligors[_benchmarks.getSN(class)].remove(acct))
-            emit RemoveObligor(class, acct);
+        if (_obligors[class].remove(acct)) emit RemoveObligor(class, acct);
     }
 
     // ################
@@ -105,8 +89,14 @@ contract AntiDilution is
         return _benchmarks.contains(class);
     }
 
-    function classToMark(uint8 class) external view onlyUser returns (bytes32) {
-        return _benchmarks.getSN(class);
+    function getBenchmark(uint8 class)
+        external
+        view
+        onlyMarked(class)
+        onlyUser
+        returns (uint256)
+    {
+        return _benchmarks.markedValue(class);
     }
 
     function obligors(uint8 class)
@@ -116,11 +106,7 @@ contract AntiDilution is
         onlyUser
         returns (uint40[])
     {
-        return _obligors[_benchmarks.getSN(class)].valuesToUint40();
-    }
-
-    function benchmarks() external view onlyUser returns (bytes32[] marks) {
-        return marks = _benchmarks.values();
+        return _obligors[class].valuesToUint40();
     }
 
     function giftPar(
@@ -128,9 +114,7 @@ contract AntiDilution is
         bytes32 snOfDeal,
         bytes32 shareNumber
     ) external view onlyMarked(shareNumber.class()) onlyUser returns (uint256) {
-        uint256 markPrice = _benchmarks
-            .getSN(shareNumber.class())
-            .priceOfMark();
+        uint256 markPrice = _benchmarks.markedValue(shareNumber.class());
 
         uint256 dealPrice = IInvestmentAgreement(ia).unitPrice(
             snOfDeal.sequence()
@@ -157,8 +141,7 @@ contract AntiDilution is
 
         if (sn.typeOfDeal() > uint8(EnumsRepo.TypeOfDeal.PreEmptive))
             return false;
-        if (unitPrice < _benchmarks.at(_benchmarks.length() - 1).priceOfMark())
-            return true;
+        if (unitPrice < _benchmarks.topValue()) return true;
         else return false;
     }
 
@@ -169,19 +152,17 @@ contract AntiDilution is
     {
         require(consentParties.length > 0, "zero consentParties");
 
-        uint256 len = _benchmarks.length();
+        uint8 cur = uint8(_benchmarks.topKey());
 
-        while (len > 0) {
-            if (_benchmarks.at(len - 1).priceOfMark() <= price) break;
+        while (cur > 0) {
+            if (_benchmarks.markedValue(cur) <= price) break;
 
-            uint40[] memory classMember = _bosCal.membersOfClass(
-                _benchmarks.at(len - 1).classOfMark()
-            );
+            uint40[] memory classMember = _bosCal.membersOfClass(cur);
 
             if (classMember.length > consentParties.length) return false;
             else if (!classMember.fullyCoveredBy(consentParties)) return false;
 
-            len--;
+            cur = uint8(_benchmarks.prevKey(cur));
         }
 
         return true;

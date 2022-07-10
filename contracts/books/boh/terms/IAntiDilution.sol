@@ -10,7 +10,7 @@ interface IAntiDilution {
     // ##   Event    ##
     // ################
 
-    event SetBenchmark(uint8 indexed class, uint256 price);
+    event SetBenchmark(uint8 indexed class, uint64 price);
 
     event DelBenchmark(uint8 indexed class);
 
@@ -22,7 +22,7 @@ interface IAntiDilution {
     // ##   Write    ##
     // ################
 
-    function setBenchmark(uint8 class, uint256 price) external;
+    function setBenchmark(uint8 class, uint64 price) external;
 
     function delBenchmark(uint8 class) external;
 
@@ -36,11 +36,9 @@ interface IAntiDilution {
 
     function isMarked(uint8 class) external view returns (bool);
 
-    function classToMark(uint8 class) external view returns (bytes32);
+    function getBenchmark(uint8 class) external view returns (uint256);
 
     function obligors(uint8 class) external view returns (uint40[]);
-
-    function benchmarks() external view returns (bytes32[]);
 
     function giftPar(
         address ia,

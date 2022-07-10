@@ -284,6 +284,22 @@ library EnumerableSet {
         return result;
     }
 
+    // shall be checked at front-end so as to avoid overflow
+    function valuesToUint88(UintSet storage set)
+        internal
+        view
+        returns (uint88[])
+    {
+        bytes32[] memory store = _values(set._inner);
+        uint88[] memory result;
+
+        assembly {
+            result := store
+        }
+
+        return result;
+    }
+
     function emptyItems(UintSet storage set) internal {
         uint256 len = set._inner._values.length;
 

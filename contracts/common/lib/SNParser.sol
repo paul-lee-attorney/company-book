@@ -6,6 +6,21 @@
 pragma solidity ^0.4.24;
 
 library SNParser {
+    // ======== EdgeOfGraph ========
+
+    function from(uint88 edge) internal pure returns (uint40) {
+        return uint40(edge >> 40);
+    }
+
+    function to(uint88 edge) internal pure returns (uint40) {
+        return uint40(edge);
+    }
+
+    function typeOfEdge(uint88 edge) internal pure returns (uint8) {
+        return uint8(edge >> 80);
+    }
+
+    // ======== Bytes32Que ========
     function insertToQue(bytes32 sn, bytes32[] storage que)
         internal
         returns (uint256)

@@ -439,4 +439,146 @@ library ObjsRepo {
         line.startDateOf[line.currentState] = 0;
         line.currentState--;
     }
+
+    // ======== MarkChain ========
+
+    struct Mark {
+        uint40 key;
+        uint64 value;
+        uint40 prev;
+        uint40 next;
+    }
+
+    struct MarkChain {
+        uint40 head;
+        uint40 tail;
+        mapping(uint256 => Mark) marks;
+    }
+
+    function addMark(
+        MarkChain storage c,
+        uint40 key,
+        uint64 value
+    ) internal returns (bool) {
+        if (c.marks[key].key == 0) {
+            Mark storage m = c.marks[key];
+
+            m.key = key;
+            m.value = value;
+
+            _insertToChain(c, key);
+
+            return true;
+        }
+        return false;
+    }
+
+    function _insertToChain(MarkChain storage c, uint40 key) private {
+        Mark storage m = c.marks[key];
+
+        uint40 cur = c.tail;
+
+        if (cur == 0) {
+            c.head = key;
+            c.tail = key;
+        } else {
+            while (cur > 0) {
+                if (c.marks[cur].value <= m.value) break;
+                else cur = c.marks[cur].prev;
+            }
+
+            if (cur > 0) {
+                m.next = c.marks[cur].next;
+                if (m.next > 0) c.marks[m.next].prev = key;
+                c.marks[cur].next = key;
+                m.prev = cur;
+            } else {
+                m.next = c.head;
+                c.marks[c.head].prev = key;
+                c.head = key;
+            }
+        }
+    }
+
+    function updateMark(
+        MarkChain storage c,
+        uint40 key,
+        uint64 value
+    ) internal returns (bool) {
+        Mark storage m = c.marks[key];
+
+        if (key > 0 && m.key == key) {
+            m.value = value;
+            _unlinkMark(c, key);
+            _insertToChain(c, key);
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    function _unlinkMark(MarkChain storage c, uint40 key) private {
+        Mark storage m = c.marks[key];
+
+        if (key != c.tail) c.marks[m.next].prev = m.prev;
+        else c.tail = m.prev;
+
+        if (key != c.head) c.marks[m.prev].next = m.next;
+        else c.head = m.next;
+    }
+
+    function removeMark(MarkChain storage c, uint40 key)
+        internal
+        returns (bool)
+    {
+        Mark storage m = c.marks[key];
+
+        if (key > 0 && m.key == key) {
+            _unlinkMark(c, key);
+            delete c.marks[key];
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    function contains(MarkChain storage c, uint40 key)
+        internal
+        view
+        returns (bool flag)
+    {
+        if (key > 0 && c.marks[key].key == key) flag = true;
+    }
+
+    function markedValue(MarkChain storage c, uint40 key)
+        internal
+        view
+        returns (uint256 value)
+    {
+        if (contains(c, key)) value = c.marks[key].value;
+    }
+
+    function topValue(MarkChain storage c) internal view returns (uint256) {
+        return c.marks[c.tail].value;
+    }
+
+    function topKey(MarkChain storage c) internal view returns (uint40) {
+        return c.tail;
+    }
+
+    function prevKey(MarkChain storage c, uint40 cur)
+        internal
+        view
+        returns (uint40)
+    {
+        return c.marks[cur].prev;
+    }
+
+    function nextKey(MarkChain storage c, uint40 cur)
+        internal
+        view
+        returns (uint40)
+    {
+        return c.marks[cur].next;
+    }
 }

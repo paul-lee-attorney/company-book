@@ -6,7 +6,45 @@
 pragma solidity ^0.4.24;
 
 library EnumsRepo {
+    enum TypeOfVertex {
+        ZeroPoint,
+        EOA,
+        Company,
+        Group
+    }
+
+    enum TypeOfEntity {
+        ZeroPoint,
+        EOA,
+        Company
+    }
+
+    enum TypeOfConnection {
+        EquityInvestment,
+        Director
+    }
+
+    enum RoleOfRegCenter {
+        EOA,
+        BookOfShares,
+        BookOfMotions,
+        BookOfDirectors,
+        BookOfIA,
+        BookOfSHA,
+        BookOfOptions,
+        BookOfPledges,
+        GeneralKeeper,
+        BOAKeeper,
+        BODKeeper,
+        BOHKeeper,
+        BOMKeeper,
+        BOOKeeper,
+        BOPKeeper,
+        SHAKeeper
+    }
+
     enum TermTitle {
+        ZeroPoint,
         LOCK_UP,
         ANTI_DILUTION,
         FIRST_REFUSAL,

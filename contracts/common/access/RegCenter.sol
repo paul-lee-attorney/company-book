@@ -44,7 +44,12 @@ contract RegCenter is IRegCenter, EntitiesMapping {
     }
 
     modifier onlyOwner() {
-        require(_userNo[msg.sender] == 1, "not owner");
+        require(_userNo[msg.sender] == 1, "not the owner of RegCenter");
+        _;
+    }
+
+    modifier onlyUser() {
+        require(isUser(msg.sender), "not a user");
         _;
     }
 
@@ -114,10 +119,11 @@ contract RegCenter is IRegCenter, EntitiesMapping {
 
         require(msg.sender == user.backupKey, "wrong backupKey");
 
-        _userNo[user.primeKey] = 0;
+        delete _userNo[user.primeKey];
         _userNo[user.backupKey] = userNo;
 
-        (user.primeKey, user.backupKey) = (user.backupKey, user.primeKey);
+        user.primeKey = user.backupKey;
+        user.backupKey = address(0);
 
         emit ReplacePrimeKey(userNo, user.primeKey);
     }
@@ -127,34 +133,71 @@ contract RegCenter is IRegCenter, EntitiesMapping {
         emit ResetBackupKeyFlag(userNo);
     }
 
+    // ==== EquityInvestment ====
+
+    function investIn(uint40 usrInvestor, uint16 parRatio) external onlyUser {
+        require(isUser(usrInvestor), "investor is not a regUser");
+
+        if (!isEntity(usrInvestor)) {
+            require(!_isContract(_users[usrInvestor].primeKey), "not an EOA");
+
+            _createEntity(
+                usrInvestor,
+                uint8(EnumsRepo.TypeOfEntity.EOA),
+                uint8(EnumsRepo.RoleOfUser.EOA)
+            );
+        }
+
+        _investIn(usrInvestor, _userNo[msg.sender], parRatio);
+    }
+
+    // ==== AppointDirector ====
+
+    function takePosition(uint40 usrCandy, uint8 title) external onlyUser {
+        require(isUser(usrCandy), "investor is not a regUser");
+
+        if (!isEntity(usrCandy)) {
+            require(!_isContract(_users[usrCandy].primeKey), "not an EOA");
+
+            _createEntity(
+                usrCandy,
+                uint8(EnumsRepo.TypeOfEntity.EOA),
+                uint8(EnumsRepo.RoleOfUser.EOA)
+            );
+        }
+
+        _takePosition(usrCandy, _userNo[msg.sender], title);
+    }
+
     // ##################
     // ##   查询端口   ##
     // ##################
 
-    function counterOfUsers() external view returns (uint40) {
+    function counterOfUsers() external view onlyUser returns (uint40) {
         return _counterOfUsers;
     }
 
-    function blocksPerHour() external view returns (uint32) {
+    function blocksPerHour() external view onlyUser returns (uint32) {
         return _BLOCKS_PER_HOUR;
     }
 
-    function primeKey(uint40 userNo) external view returns (address) {
+    function primeKey(uint40 userNo) external view onlyUser returns (address) {
         return _users[userNo].primeKey;
     }
 
-    function isContract(uint40 userNo) external view returns (bool) {
+    function isContract(uint40 userNo) external view onlyUser returns (bool) {
         return _isContract(_users[userNo].primeKey);
     }
 
-    function isUser(address key) external view returns (bool) {
-        return checkID(userNo(key), key);
+    function isUser(address key) public view onlyUser returns (bool) {
+        return _userNo[key] > 0;
     }
 
     function checkID(uint40 userNo, address key)
         public
         view
         onlyRegKey(key)
+        onlyUser
         returns (bool)
     {
         require(userNo > 0, "zero userNo");
@@ -163,7 +206,13 @@ contract RegCenter is IRegCenter, EntitiesMapping {
         return key == _users[userNo].primeKey;
     }
 
-    function userNo(address key) public view onlyRegKey(key) returns (uint40) {
+    function userNo(address key)
+        public
+        view
+        onlyRegKey(key)
+        onlyUser
+        returns (uint40)
+    {
         return _userNo[key];
     }
 }

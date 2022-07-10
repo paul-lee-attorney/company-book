@@ -42,8 +42,8 @@ contract RegCenterSetting {
         emit SetRegCenter(rc);
     }
 
-    function regThisContract() public {
-        _rc.regUser();
+    function regThisContract(uint8 roleOfUser, uint40 entity) public {
+        _rc.regUser(roleOfUser, entity);
     }
 
     function _msgSender() internal returns (uint40) {

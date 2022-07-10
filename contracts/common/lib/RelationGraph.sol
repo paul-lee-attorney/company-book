@@ -61,38 +61,6 @@ library RelationGraph {
         }
     }
 
-    // function joinVertex(
-    //     Graph storage g,
-    //     uint40 vertex,
-    //     uint40 user,
-    //     uint8 roleOfUser
-    // ) internal returns (bool) {
-    //     require(roleOfUser < 16, "roleOfUser overflow");
-
-    //     if (g.vertices[vertex].members[roleOfUser] == 0) {
-    //         g.vertices[vertex].members[roleOfUser] = user;
-    //         return true;
-    //     } else {
-    //         return false;
-    //     }
-    // }
-
-    // function quitVertex(
-    //     Graph storage g,
-    //     uint40 vertex,
-    //     uint40 user,
-    //     uint8 roleOfUser
-    // ) internal returns (bool) {
-    //     require(roleOfUser < 16, "roleOfUser overflow");
-
-    //     if (g.vertices[vertex].members[roleOfUser] == user) {
-    //         g.vertices[vertex].members[roleOfUser] = 0;
-    //         return true;
-    //     } else {
-    //         return false;
-    //     }
-    // }
-
     // ======== Edge ========
 
     function addEdge(
@@ -225,15 +193,6 @@ library RelationGraph {
     // ##   查询端口   ##
     // ##################
 
-    // function getMember(
-    //     Graph storage g,
-    //     uint40 vertex,
-    //     uint8 role
-    // ) internal view returns (uint40 member) {
-    //     require(role < 16, "roleOfUser overflow");
-    //     return g.vertices[vertex].members[role];
-    // }
-
     function getVertex(Graph storage g, uint40 vertex)
         internal
         view
@@ -341,6 +300,20 @@ library RelationGraph {
     {
         Vertex storage v = g.vertices[vertex];
         return (v.firstOut == 0 && v.firstIn > 0);
+    }
+
+    function isVertex(Graph storage g, uint40 vertex)
+        internal
+        view
+        returns (bool)
+    {
+        return g.vertices[vertex].typeOfVertex > 0;
+    }
+
+    // ==== Edge ====
+
+    function isEdge(Graph storage g, uint88 edge) internal view returns (bool) {
+        return g.edges[edge].weight > 0;
     }
 
     // ==== getGraph ====

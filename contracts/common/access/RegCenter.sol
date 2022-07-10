@@ -6,8 +6,10 @@
 pragma solidity ^0.4.24;
 
 import "./IRegCenter.sol";
+import "../lib/EnumsRepo.sol";
+import "./EntitiesMapping.sol";
 
-contract RegCenter is IRegCenter {
+contract RegCenter is IRegCenter, EntitiesMapping {
     struct User {
         address primeKey;
         address backupKey;
@@ -28,7 +30,7 @@ contract RegCenter is IRegCenter {
     uint32 private _BLOCKS_PER_HOUR;
 
     constructor(uint32 blocks_per_hour) public {
-        regUser();
+        regUser(uint8(EnumsRepo.RoleOfUser.EOA), 0);
         _BLOCKS_PER_HOUR = blocks_per_hour;
     }
 
@@ -50,12 +52,8 @@ contract RegCenter is IRegCenter {
     // ##    写端口    ##
     // ##################
 
-    function regUser() public {
+    function regUser(uint8 roleOfUser, uint40 entity) public {
         require(!_usedKeys[msg.sender], "already registered");
-        require(
-            _counterOfUsers + 1 > _counterOfUsers,
-            "counterOfUsers overflow"
-        );
 
         _counterOfUsers++;
 
@@ -65,6 +63,23 @@ contract RegCenter is IRegCenter {
         _userNo[msg.sender] = _counterOfUsers;
 
         emit RegUser(_counterOfUsers, msg.sender);
+
+        if (roleOfUser == uint8(EnumsRepo.RoleOfUser.BookOfShares)) {
+            require(_isContract(msg.sender), "BOS shall be a CA");
+
+            _createEntity(
+                _counterOfUsers,
+                uint8(EnumsRepo.TypeOfEntity.Company),
+                roleOfUser
+            );
+        } else if (
+            roleOfUser > uint8(EnumsRepo.RoleOfUser.BookOfShares) &&
+            roleOfUser < uint8(EnumsRepo.RoleOfUser.EndPoint)
+        ) {
+            require(_isContract(msg.sender), "only CA may join Entity");
+
+            _joinEntity(entity, _counterOfUsers, roleOfUser);
+        }
     }
 
     function _isContract(address acct) private view returns (bool) {

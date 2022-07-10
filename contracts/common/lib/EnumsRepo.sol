@@ -9,8 +9,7 @@ library EnumsRepo {
     enum TypeOfVertex {
         ZeroPoint,
         EOA,
-        Company,
-        Group
+        Company
     }
 
     enum TypeOfEntity {
@@ -24,7 +23,8 @@ library EnumsRepo {
         Director
     }
 
-    enum RoleOfRegCenter {
+    enum RoleOfUser {
+        ZeroPoint,
         EOA,
         BookOfShares,
         BookOfMotions,
@@ -40,7 +40,8 @@ library EnumsRepo {
         BOMKeeper,
         BOOKeeper,
         BOPKeeper,
-        SHAKeeper
+        SHAKeeper,
+        EndPoint
     }
 
     enum TermTitle {

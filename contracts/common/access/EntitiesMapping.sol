@@ -67,15 +67,7 @@ contract EntitiesMapping {
     // ################
 
     modifier entityExist(uint40 entity) {
-        require(
-            _entities[entity].members[0] >
-                uint8(EnumsRepo.RoleOfRegCenter.EOA) ||
-                _entities[entity].members[
-                    uint8(EnumsRepo.RoleOfRegCenter.BookOfShares)
-                ] >
-                0,
-            "entity not exist"
-        );
+        require(isEntity(entity), "entity not exist");
         _;
     }
 
@@ -96,8 +88,8 @@ contract EntitiesMapping {
         uint8 roleOfUser
     ) internal {
         require(
-            roleOfUser == uint8(EnumsRepo.RoleOfRegCenter.EOA) ||
-                roleOfUser == uint8(EnumsRepo.RoleOfRegCenter.BookOfShares),
+            roleOfUser == uint8(EnumsRepo.RoleOfUser.EOA) ||
+                roleOfUser == uint8(EnumsRepo.RoleOfUser.BookOfShares),
             "only EOA and BOS may create a new Entity"
         );
 
@@ -116,14 +108,14 @@ contract EntitiesMapping {
         uint40 user,
         uint8 roleOfUser
     ) internal {
-        require(
-            roleOfUser != uint8(EnumsRepo.RoleOfRegCenter.BookOfShares),
-            "BookOfShares shall request to create an entity"
-        );
-        require(
-            roleOfUser != uint8(EnumsRepo.RoleOfRegCenter.EOA),
-            "EOA shall request to create an entity"
-        );
+        // require(
+        //     roleOfUser != uint8(EnumsRepo.RoleOfUser.BookOfShares),
+        //     "BookOfShares shall request to create an entity"
+        // );
+        // require(
+        //     roleOfUser != uint8(EnumsRepo.RoleOfUser.EOA),
+        //     "EOA shall request to create an entity"
+        // );
         require(_entityNo[user] == 0, "pls quit from other Entity first");
         require(
             _entities[entity].members[roleOfUser] == 0,
@@ -142,11 +134,11 @@ contract EntitiesMapping {
         uint8 roleOfUser
     ) internal {
         require(
-            roleOfUser != uint8(EnumsRepo.RoleOfRegCenter.BookOfShares),
+            roleOfUser != uint8(EnumsRepo.RoleOfUser.BookOfShares),
             "BookOfShares cannot quit from company"
         );
         require(
-            roleOfUser != uint8(EnumsRepo.RoleOfRegCenter.EOA),
+            roleOfUser != uint8(EnumsRepo.RoleOfUser.EOA),
             "EOA cannot quit from itself"
         );
         require(_entityNo[user] == entity, "wrong enityNo");
@@ -173,7 +165,7 @@ contract EntitiesMapping {
 
         require(
             _entities[company].members[
-                uint8(EnumsRepo.RoleOfRegCenter.BookOfShares)
+                uint8(EnumsRepo.RoleOfUser.BookOfShares)
             ] == usrBOS,
             "user is not BOS of the company"
         );
@@ -206,7 +198,7 @@ contract EntitiesMapping {
 
         require(
             _entities[company].members[
-                uint8(EnumsRepo.RoleOfRegCenter.BookOfShares)
+                uint8(EnumsRepo.RoleOfUser.BookOfShares)
             ] == usrBOS,
             "user is not BOS of the company"
         );
@@ -233,7 +225,7 @@ contract EntitiesMapping {
 
         require(
             _entities[company].members[
-                uint8(EnumsRepo.RoleOfRegCenter.BookOfShares)
+                uint8(EnumsRepo.RoleOfUser.BookOfShares)
             ] == usrBOS,
             "user is not BOS of the company"
         );
@@ -264,7 +256,7 @@ contract EntitiesMapping {
 
         require(
             _entities[company].members[
-                uint8(EnumsRepo.RoleOfRegCenter.BookOfDirectors)
+                uint8(EnumsRepo.RoleOfUser.BookOfDirectors)
             ] == usrBOD,
             "user is not BOD of the company"
         );
@@ -300,7 +292,7 @@ contract EntitiesMapping {
 
         require(
             _entities[company].members[
-                uint8(EnumsRepo.RoleOfRegCenter.BookOfDirectors)
+                uint8(EnumsRepo.RoleOfUser.BookOfDirectors)
             ] == usrBOD,
             "user is not BOD of the company"
         );
@@ -329,7 +321,7 @@ contract EntitiesMapping {
 
         require(
             _entities[company].members[
-                uint8(EnumsRepo.RoleOfRegCenter.BookOfDirectors)
+                uint8(EnumsRepo.RoleOfUser.BookOfDirectors)
             ] == usrBOD,
             "user is not BOD of the company"
         );
@@ -363,11 +355,20 @@ contract EntitiesMapping {
     // ##   查询端口   ##
     // ##################
 
+    function isEntity(uint40 entity) public view returns (bool) {
+        return (_entities[entity].members[uint8(EnumsRepo.RoleOfUser.EOA)] >
+            0 ||
+            _entities[entity].members[
+                uint8(EnumsRepo.RoleOfUser.BookOfShares)
+            ] >
+            0);
+    }
+
     function _getEntityNo(uint40 user) internal view returns (uint40) {
         return _entityNo[user];
     }
 
-    function getMemberOf(uint40 entity, uint8 role)
+    function _getMemberOf(uint40 entity, uint8 role)
         internal
         view
         entityExist(entity)

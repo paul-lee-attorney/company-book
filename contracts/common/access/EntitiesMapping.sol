@@ -107,7 +107,7 @@ contract EntitiesMapping {
         uint40 entity,
         uint40 user,
         uint8 roleOfUser
-    ) internal {
+    ) internal entityExist(entity) {
         // require(
         //     roleOfUser != uint8(EnumsRepo.RoleOfUser.BookOfShares),
         //     "BookOfShares shall request to create an entity"
@@ -128,29 +128,27 @@ contract EntitiesMapping {
         emit JoinEntity(entity, user, roleOfUser);
     }
 
-    function _quitEntity(
-        uint40 entity,
-        uint40 user,
-        uint8 roleOfUser
-    ) internal {
+    function _quitEntity(uint40 user, uint8 roleOfUser) internal {
         require(
-            roleOfUser != uint8(EnumsRepo.RoleOfUser.BookOfShares),
-            "BookOfShares cannot quit from company"
+            roleOfUser > uint8(EnumsRepo.RoleOfUser.BookOfShares),
+            "roleOfUser overflow"
         );
         require(
-            roleOfUser != uint8(EnumsRepo.RoleOfUser.EOA),
-            "EOA cannot quit from itself"
+            roleOfUser < uint8(EnumsRepo.RoleOfUser.EndPoint),
+            "roleOfUser overflow"
         );
-        require(_entityNo[user] == entity, "wrong enityNo");
+
+        uint40 entity = _entityNo[user];
+
         require(
             _entities[entity].members[roleOfUser] == user,
             "wrong roleOfUser"
         );
 
-        delete _entityNo[user];
         delete _entities[entity].members[roleOfUser];
+        delete _entityNo[user];
 
-        emit JoinEntity(entity, user, roleOfUser);
+        emit QuitEntity(entity, user, roleOfUser);
     }
 
     // ======== Equity ========
@@ -159,7 +157,7 @@ contract EntitiesMapping {
         uint40 usrInvestor,
         uint40 usrBOS,
         uint16 parRatio
-    ) internal {
+    ) internal entityExist(usrInvestor) returns (bool) {
         uint40 investor = _entityNo[usrInvestor];
         uint40 company = _entityNo[usrBOS];
 
@@ -179,47 +177,22 @@ contract EntitiesMapping {
                 uint8(EnumsRepo.TypeOfConnection.EquityInvestment),
                 parRatio
             )
-        )
+        ) {
             emit CreateConnection(
                 investor,
                 company,
                 parRatio,
                 uint8(EnumsRepo.TypeOfConnection.EquityInvestment)
             );
+            return true;
+        } else return false;
     }
 
-    function _updateShareRatio(
-        uint40 usrInvestor,
-        uint40 usrBOS,
-        uint16 shareRatio
-    ) internal {
-        uint40 investor = _entityNo[usrInvestor];
-        uint40 company = _entityNo[usrBOS];
-
-        require(
-            _entities[company].members[
-                uint8(EnumsRepo.RoleOfUser.BookOfShares)
-            ] == usrBOS,
-            "user is not BOS of the company"
-        );
-
-        if (
-            _graph.updateWeight(
-                investor,
-                company,
-                uint8(EnumsRepo.TypeOfConnection.EquityInvestment),
-                shareRatio
-            )
-        )
-            emit UpdateConnection(
-                investor,
-                company,
-                uint8(EnumsRepo.TypeOfConnection.EquityInvestment),
-                shareRatio
-            );
-    }
-
-    function _exitOut(uint40 usrInvestor, uint40 usrBOS) internal {
+    function _exitOut(uint40 usrInvestor, uint40 usrBOS)
+        internal
+        entityExist(usrInvestor)
+        returns (bool)
+    {
         uint40 investor = _entityNo[usrInvestor];
         uint40 company = _entityNo[usrBOS];
 
@@ -236,12 +209,49 @@ contract EntitiesMapping {
                 company,
                 uint8(EnumsRepo.TypeOfConnection.EquityInvestment)
             )
-        )
+        ) {
             emit DeleteConnection(
                 investor,
                 company,
                 uint8(EnumsRepo.TypeOfConnection.EquityInvestment)
             );
+            return true;
+        } else return false;
+    }
+
+    function _updateShareRatio(
+        uint40 usrInvestor,
+        uint40 usrBOS,
+        uint16 parRatio
+    ) internal entityExist(usrInvestor) returns (bool) {
+        uint40 investor = _entityNo[usrInvestor];
+        uint40 company = _entityNo[usrBOS];
+
+        require(
+            _entities[company].members[
+                uint8(EnumsRepo.RoleOfUser.BookOfShares)
+            ] == usrBOS,
+            "user is not BOS of the company"
+        );
+
+        require(parRatio > 0 && parRatio <= 10000, "parRatio overflow");
+
+        if (
+            _graph.updateWeight(
+                investor,
+                company,
+                uint8(EnumsRepo.TypeOfConnection.EquityInvestment),
+                parRatio
+            )
+        ) {
+            emit UpdateConnection(
+                investor,
+                company,
+                uint8(EnumsRepo.TypeOfConnection.EquityInvestment),
+                parRatio
+            );
+            return true;
+        } else return false;
     }
 
     // ======== Director ========
@@ -250,7 +260,7 @@ contract EntitiesMapping {
         uint40 usrCandy,
         uint40 usrBOD,
         uint8 title
-    ) internal {
+    ) internal entityExist(usrCandy) returns (bool) {
         uint40 director = _entityNo[usrCandy];
         uint40 company = _entityNo[usrBOD];
 
@@ -277,16 +287,22 @@ contract EntitiesMapping {
                 uint8(EnumsRepo.TypeOfConnection.Director),
                 title
             )
-        )
+        ) {
             emit CreateConnection(
                 director,
                 company,
                 title,
                 uint8(EnumsRepo.TypeOfConnection.Director)
             );
+            return true;
+        } else return false;
     }
 
-    function _quitPosition(uint40 usrDirector, uint40 usrBOD) internal {
+    function _quitPosition(uint40 usrDirector, uint40 usrBOD)
+        internal
+        entityExist(usrDirector)
+        returns (bool)
+    {
         uint40 director = _entityNo[usrDirector];
         uint40 company = _entityNo[usrBOD];
 
@@ -303,19 +319,21 @@ contract EntitiesMapping {
                 company,
                 uint8(EnumsRepo.TypeOfConnection.Director)
             )
-        )
+        ) {
             emit DeleteConnection(
                 director,
                 company,
                 uint8(EnumsRepo.TypeOfConnection.Director)
             );
+            return true;
+        } else return false;
     }
 
     function _changeTitle(
         uint40 usrDirector,
         uint40 usrBOD,
         uint8 title
-    ) internal {
+    ) internal entityExist(usrDirector) returns (bool) {
         uint40 director = _entityNo[usrDirector];
         uint40 company = _entityNo[usrBOD];
 
@@ -342,13 +360,15 @@ contract EntitiesMapping {
                 uint8(EnumsRepo.TypeOfConnection.Director),
                 title
             )
-        )
+        ) {
             emit UpdateConnection(
                 director,
                 company,
                 uint8(EnumsRepo.TypeOfConnection.Director),
                 title
             );
+            return true;
+        } else return false;
     }
 
     // ##################

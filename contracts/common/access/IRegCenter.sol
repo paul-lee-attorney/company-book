@@ -24,13 +24,33 @@ interface IRegCenter {
 
     function regUser(uint8 roleOfUser, uint40 entity) external;
 
+    function quitEntity(uint8 roleOfUser) external;
+
     function setBackupKey(uint40 userNo, address backupKey) external;
 
     function replacePrimaryKey(uint40 userNo) external;
 
-    function investIn(uint40 usrInvestor, uint16 parRatio) external;
+    // ==== EquityInvest ====
 
-    function takePosition(uint40 usrCandy, uint8 title) external;
+    function investIn(uint40 usrInvestor, uint16 parRatio)
+        external
+        returns (bool);
+
+    function exitOut(uint40 usrInvestor) external returns (bool);
+
+    function updateShareRatio(uint40 usrInvestor, uint16 shareRatio)
+        external
+        returns (bool);
+
+    // ==== Director ====
+
+    function takePosition(uint40 usrCandy, uint8 title) external returns (bool);
+
+    function quitPosition(uint40 usrDirector) external returns (bool);
+
+    function changeTitle(uint40 usrDirector, uint8 title)
+        external
+        returns (bool);
 
     // ##################
     // ##   查询端口   ##

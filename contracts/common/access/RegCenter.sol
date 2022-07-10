@@ -87,6 +87,10 @@ contract RegCenter is IRegCenter, EntitiesMapping {
         }
     }
 
+    function quitEntity(uint8 roleOfUser) external onlyUser {
+        _quitEntity(_userNo[msg.sender], roleOfUser);
+    }
+
     function _isContract(address acct) private view returns (bool) {
         uint32 size;
         assembly {
@@ -135,9 +139,11 @@ contract RegCenter is IRegCenter, EntitiesMapping {
 
     // ==== EquityInvestment ====
 
-    function investIn(uint40 usrInvestor, uint16 parRatio) external onlyUser {
-        require(isUser(usrInvestor), "investor is not a regUser");
-
+    function investIn(uint40 usrInvestor, uint16 parRatio)
+        external
+        onlyUser
+        returns (bool)
+    {
         if (!isEntity(usrInvestor)) {
             require(!_isContract(_users[usrInvestor].primeKey), "not an EOA");
 
@@ -148,12 +154,28 @@ contract RegCenter is IRegCenter, EntitiesMapping {
             );
         }
 
-        _investIn(usrInvestor, _userNo[msg.sender], parRatio);
+        return _investIn(usrInvestor, _userNo[msg.sender], parRatio);
     }
 
-    // ==== AppointDirector ====
+    function exitOut(uint40 usrInvestor) external onlyUser returns (bool) {
+        return _exitOut(usrInvestor, _userNo[msg.sender]);
+    }
 
-    function takePosition(uint40 usrCandy, uint8 title) external onlyUser {
+    function updateShareRatio(uint40 usrInvestor, uint16 shareRatio)
+        external
+        onlyUser
+        returns (bool)
+    {
+        return _updateShareRatio(usrInvestor, _userNo[msg.sender], shareRatio);
+    }
+
+    // ==== Director ====
+
+    function takePosition(uint40 usrCandy, uint8 title)
+        external
+        onlyUser
+        returns (bool)
+    {
         require(isUser(usrCandy), "investor is not a regUser");
 
         if (!isEntity(usrCandy)) {
@@ -166,7 +188,19 @@ contract RegCenter is IRegCenter, EntitiesMapping {
             );
         }
 
-        _takePosition(usrCandy, _userNo[msg.sender], title);
+        return _takePosition(usrCandy, _userNo[msg.sender], title);
+    }
+
+    function quitPosition(uint40 usrDirector) external onlyUser returns (bool) {
+        return _quitPosition(usrDirector, _userNo[msg.sender]);
+    }
+
+    function changeTitle(uint40 usrDirector, uint8 title)
+        external
+        onlyUser
+        returns (bool)
+    {
+        return _changeTitle(usrDirector, _userNo[msg.sender], title);
     }
 
     // ##################

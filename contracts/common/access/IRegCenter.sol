@@ -69,4 +69,52 @@ interface IRegCenter {
     function checkID(uint40 userNo, address key) external returns (bool);
 
     function userNo(address key) external returns (uint40);
+
+    // ==== Entity ====
+
+    function entityNo(uint40 user) external view returns (uint40);
+
+    function memberOfEntity(uint40 entity, uint8 role)
+        external
+        view
+        returns (uint40);
+
+    // ==== Element ====
+
+    function getEntity(uint40 entity)
+        external
+        view
+        returns (
+            uint8,
+            uint88,
+            uint88,
+            uint40
+        );
+
+    function getConnection(uint88 con)
+        external
+        view
+        returns (
+            uint88,
+            uint88,
+            uint16
+        );
+
+    function isRoot(uint40 entity) external view returns (bool);
+
+    function isLeaf(uint40 entity) external view returns (bool);
+
+    // ==== Graph ====
+
+    function getUpBranch(uint40 origin)
+        external
+        returns (uint40[] entities, uint88[] connections);
+
+    function getDownBranch(uint40 origin)
+        external
+        returns (uint40[] entities, uint88[] connections);
+
+    function getRoundGraph(uint40 origin)
+        external
+        returns (uint40[] entities, uint88[] connections);
 }

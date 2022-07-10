@@ -249,4 +249,82 @@ contract RegCenter is IRegCenter, EntitiesMapping {
     {
         return _userNo[key];
     }
+
+    // ==== Entity ====
+
+    function entityNo(uint40 user) external view onlyUser returns (uint40) {
+        return _entityNo[user];
+    }
+
+    function memberOfEntity(uint40 entity, uint8 role)
+        external
+        view
+        onlyUser
+        returns (uint40)
+    {
+        return _memberOfEntity(entity, role);
+    }
+
+    // ==== Element ====
+
+    function getEntity(uint40 entity)
+        external
+        view
+        onlyUser
+        returns (
+            uint8,
+            uint88,
+            uint88,
+            uint40
+        )
+    {
+        return _getEntity(entity);
+    }
+
+    function getConnection(uint88 con)
+        external
+        view
+        onlyUser
+        returns (
+            uint88,
+            uint88,
+            uint16
+        )
+    {
+        return _getConnection(con);
+    }
+
+    function isRoot(uint40 entity) external view onlyUser returns (bool) {
+        return _isRoot(entity);
+    }
+
+    function isLeaf(uint40 entity) external view onlyUser returns (bool) {
+        return _isLeaf(entity);
+    }
+
+    // ==== Graph ====
+
+    function getUpBranch(uint40 origin)
+        external
+        onlyUser
+        returns (uint40[] entities, uint88[] connections)
+    {
+        return _getUpBranch(origin);
+    }
+
+    function getDownBranch(uint40 origin)
+        external
+        onlyUser
+        returns (uint40[] entities, uint88[] connections)
+    {
+        return _getDownBranch(origin);
+    }
+
+    function getRoundGraph(uint40 origin)
+        external
+        onlyUser
+        returns (uint40[] entities, uint88[] connections)
+    {
+        return _getRoundGraph(origin);
+    }
 }

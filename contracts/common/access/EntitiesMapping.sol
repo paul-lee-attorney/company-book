@@ -19,10 +19,10 @@ contract EntitiesMapping {
     }
 
     // userNo => entityNo
-    mapping(uint40 => uint40) private _entityNo;
+    mapping(uint40 => uint40) internal _entityNo;
 
     // entityNo => Entity
-    mapping(uint40 => Entity) private _entities;
+    mapping(uint40 => Entity) internal _entities;
 
     RelationGraph.Graph private _graph;
 
@@ -108,14 +108,6 @@ contract EntitiesMapping {
         uint40 user,
         uint8 roleOfUser
     ) internal entityExist(entity) {
-        // require(
-        //     roleOfUser != uint8(EnumsRepo.RoleOfUser.BookOfShares),
-        //     "BookOfShares shall request to create an entity"
-        // );
-        // require(
-        //     roleOfUser != uint8(EnumsRepo.RoleOfUser.EOA),
-        //     "EOA shall request to create an entity"
-        // );
         require(_entityNo[user] == 0, "pls quit from other Entity first");
         require(
             _entities[entity].members[roleOfUser] == 0,
@@ -384,11 +376,7 @@ contract EntitiesMapping {
             0);
     }
 
-    function _getEntityNo(uint40 user) internal view returns (uint40) {
-        return _entityNo[user];
-    }
-
-    function _getMemberOf(uint40 entity, uint8 role)
+    function _memberOfEntity(uint40 entity, uint8 role)
         internal
         view
         entityExist(entity)

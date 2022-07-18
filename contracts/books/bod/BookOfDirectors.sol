@@ -7,7 +7,7 @@ pragma solidity ^0.4.24;
 
 pragma experimental ABIEncoderV2;
 
-import "../../common/ruting/SHASetting.sol";
+import "./IBookOfDirectors.sol";
 
 import "../../common/components/MotionsRepo.sol";
 
@@ -17,9 +17,7 @@ import "../../common/lib/EnumsRepo.sol";
 import "../../common/lib/EnumerableSet.sol";
 import "../../common/lib/ObjsRepo.sol";
 
-import "../../common/access/AccessControl.sol";
-
-import "./IBookOfDirectors.sol";
+import "../../common/ruting/SHASetting.sol";
 
 contract BookOfDirectors is IBookOfDirectors, MotionsRepo, SHASetting {
     using SNFactory for bytes;

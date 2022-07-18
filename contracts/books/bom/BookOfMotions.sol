@@ -6,7 +6,12 @@
 pragma solidity ^0.4.24;
 pragma experimental ABIEncoderV2;
 
+import "./IBookOfMotions.sol";
+
 import "../boa/IInvestmentAgreement.sol";
+
+import "../../common/components/ISigPage.sol";
+import "../../common/components/MotionsRepo.sol";
 
 import "../../common/ruting/BOASetting.sol";
 import "../../common/ruting/SHASetting.sol";
@@ -18,11 +23,6 @@ import "../../common/lib/SNParser.sol";
 import "../../common/lib/EnumsRepo.sol";
 import "../../common/lib/EnumerableSet.sol";
 import "../../common/lib/ObjsRepo.sol";
-
-import "../../common/components/ISigPage.sol";
-import "../../common/components/MotionsRepo.sol";
-
-import "./IBookOfMotions.sol";
 
 contract BookOfMotions is
     IBookOfMotions,

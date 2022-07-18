@@ -22,7 +22,6 @@ import "../common/ruting/SHASetting.sol";
 
 import "../common/lib/SNParser.sol";
 import "../common/lib/EnumsRepo.sol";
-import "../common/lib/ArrayUtils.sol";
 
 import "./ISHAKeeper.sol";
 

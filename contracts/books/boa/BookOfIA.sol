@@ -4,20 +4,16 @@
 
 pragma solidity ^0.4.24;
 
-import ".//IInvestmentAgreement.sol";
+import "./IInvestmentAgreement.sol";
+import "./IBookOfIA.sol";
 
-import "../boh/terms//IAlongs.sol";
-
-import "../../common/components/ISigPage.sol";
 import "../../common/components/DocumentsRepo.sol";
-
-import "../../common/ruting/SHASetting.sol";
 
 import "../../common/lib/SNParser.sol";
 import "../../common/lib/EnumsRepo.sol";
 import "../../common/lib/EnumerableSet.sol";
 
-import "./IBookOfIA.sol";
+import "../../common/ruting/SHASetting.sol";
 
 contract BookOfIA is IBookOfIA, DocumentsRepo {
     using SNParser for bytes32;

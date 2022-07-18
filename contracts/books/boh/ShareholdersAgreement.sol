@@ -5,25 +5,24 @@
 
 pragma solidity ^0.4.24;
 
+import "./IShareholdersAgreement.sol";
+
+import "./terms/ITerm.sol";
+import "./terms/VotingRules.sol";
+
 import "../../common/access/IAccessControl.sol";
-import "../../common/access//IDraftControl.sol";
+import "../../common/access/IDraftControl.sol";
+
+import "../../common/components/SigPage.sol";
+
+import "../../common/lib/EnumsRepo.sol";
+import "../../common/lib/EnumerableSet.sol";
 
 import "../../common/ruting/IBookSetting.sol";
 import "../../common/ruting/BOSSetting.sol";
 import "../../common/ruting/BOMSetting.sol";
 
-import "../../common/lib/EnumsRepo.sol";
-import "../../common/lib/EnumerableSet.sol";
-
-import "../../common/components/SigPage.sol";
-
 import "../../common/utils/CloneFactory.sol";
-
-import "./terms/ITerm.sol";
-
-import "./terms/VotingRules.sol";
-
-import "./IShareholdersAgreement.sol";
 
 contract ShareholdersAgreement is
     IShareholdersAgreement,
@@ -47,7 +46,6 @@ contract ShareholdersAgreement is
 
     // bodys
     EnumerableSet.AddressSet private _bodies;
-
 
     //####################
     //##    modifier    ##

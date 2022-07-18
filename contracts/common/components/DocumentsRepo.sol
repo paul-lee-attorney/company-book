@@ -8,8 +8,7 @@ pragma solidity ^0.4.24;
 import "../lib/EnumsRepo.sol";
 import "../lib/SNFactory.sol";
 import "../lib/SNParser.sol";
-// import "../lib/SafeMath.sol";
-// import "../lib/ArrayUtils.sol";
+
 import "../lib/ObjsRepo.sol";
 import "../lib/EnumerableSet.sol";
 
@@ -25,8 +24,6 @@ contract DocumentsRepo is CloneFactory, SHASetting, BOSSetting {
     using SNParser for bytes32;
     using ObjsRepo for ObjsRepo.TimeLine;
     using EnumerableSet for EnumerableSet.Bytes32Set;
-
-    // using ArrayUtils for bytes32[];
 
     string private _bookName;
     address private _template;

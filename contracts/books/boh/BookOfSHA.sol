@@ -5,22 +5,13 @@
 
 pragma solidity ^0.4.24;
 
-import "../../common/components/DocumentsRepo.sol";
-
-import ".//IShareholdersAgreement.sol";
-
 import "./IBookOfSHA.sol";
+
 import "./terms/ITerm.sol";
 
-contract BookOfSHA is IBookOfSHA, ITerm, DocumentsRepo {
-    enum BOHStates {
-        ZeroPoint,
-        Created,
-        Submitted,
-        Effective,
-        Revoked
-    }
+import "../../common/components/DocumentsRepo.sol";
 
+contract BookOfSHA is IBookOfSHA, ITerm, DocumentsRepo {
     address private _pointer;
 
     // constructor(

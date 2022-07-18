@@ -8,7 +8,6 @@ pragma solidity ^0.4.24;
 import "../../../common/ruting/BOSSetting.sol";
 import "../../../common/access/DraftControl.sol";
 
-import "../../../common/lib/ArrayUtils.sol";
 import "../../../common/lib/EnumerableSet.sol";
 import "../../../common/lib/ObjsRepo.sol";
 

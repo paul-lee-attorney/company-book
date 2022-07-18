@@ -5,7 +5,6 @@
 
 pragma solidity ^0.4.24;
 
-import "../../common/lib/ArrayUtils.sol";
 import "../../common/lib/SNFactory.sol";
 import "../../common/lib/SNParser.sol";
 import "../../common/lib/EnumerableSet.sol";
@@ -20,8 +19,6 @@ contract BookOfPledges is IBookOfPledges, BOSSetting {
     using SNParser for bytes32;
     using ObjsRepo for ObjsRepo.SNList;
     using EnumerableSet for EnumerableSet.Bytes32Set;
-
-    // using ArrayUtils for bytes32[];
 
     //Pledge 质权
     struct Pledge {

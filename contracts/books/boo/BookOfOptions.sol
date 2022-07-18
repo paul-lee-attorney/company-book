@@ -5,18 +5,17 @@
 
 pragma solidity ^0.4.24;
 
-import "../boh/terms//IOptions.sol";
+import "./IBookOfOptions.sol";
 
-import "../../common/ruting/BOSSetting.sol";
+import "../boh/terms/IOptions.sol";
 
-import "../../common/lib/ArrayUtils.sol";
 import "../../common/lib/EnumerableSet.sol";
 import "../../common/lib/SNFactory.sol";
 import "../../common/lib/SNParser.sol";
 import "../../common/lib/EnumerableSet.sol";
 import "../../common/lib/ObjsRepo.sol";
 
-import "./IBookOfOptions.sol";
+import "../../common/ruting/BOSSetting.sol";
 
 contract BookOfOptions is IBookOfOptions, BOSSetting {
     using EnumerableSet for EnumerableSet.Bytes32Set;

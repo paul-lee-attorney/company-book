@@ -18,6 +18,8 @@ interface IAccessControl {
 
     event AbandonOwnership();
 
+    event QuitEntity(uint8 roleOfUser);
+
     // ##################
     // ##    写端口    ##
     // ##################
@@ -30,9 +32,11 @@ interface IAccessControl {
 
     // function setUsersList(address ul) external;
 
+    function regThisContract() external;
+
     function abandonOwnership() external;
 
-    function regThisContract() external;
+    function quitEntity(uint8 roleOfUser) external;
 
     // ##################
     // ##   查询端口   ##

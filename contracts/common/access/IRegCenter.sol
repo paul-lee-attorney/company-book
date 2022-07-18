@@ -34,13 +34,13 @@ interface IRegCenter {
 
     function investIn(
         uint40 usrInvestor,
-        uint16 parRatio,
+        uint64 parValue,
         bool checkRingStruct
     ) external returns (bool);
 
     function exitOut(uint40 usrInvestor) external returns (bool);
 
-    function updateShareRatio(uint40 usrInvestor, uint16 shareRatio)
+    function updateParValue(uint40 usrInvestor, uint64 parValue)
         external
         returns (bool);
 

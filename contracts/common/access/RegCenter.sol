@@ -141,7 +141,7 @@ contract RegCenter is IRegCenter, EntitiesMapping {
 
     function investIn(
         uint40 usrInvestor,
-        uint16 parRatio,
+        uint64 parValue,
         bool checkRingStruct
     ) external onlyUser returns (bool) {
         if (!isEntity(usrInvestor)) {
@@ -158,7 +158,7 @@ contract RegCenter is IRegCenter, EntitiesMapping {
             _investIn(
                 usrInvestor,
                 _userNo[msg.sender],
-                parRatio,
+                parValue,
                 checkRingStruct
             );
     }
@@ -167,12 +167,12 @@ contract RegCenter is IRegCenter, EntitiesMapping {
         return _exitOut(usrInvestor, _userNo[msg.sender]);
     }
 
-    function updateShareRatio(uint40 usrInvestor, uint16 shareRatio)
+    function updateParValue(uint40 usrInvestor, uint64 parValue)
         external
         onlyUser
         returns (bool)
     {
-        return _updateShareRatio(usrInvestor, _userNo[msg.sender], shareRatio);
+        return _updateParValue(usrInvestor, _userNo[msg.sender], parValue);
     }
 
     // ==== Director ====

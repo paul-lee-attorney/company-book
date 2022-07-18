@@ -89,13 +89,14 @@ contract MembersRepo is GroupsRepo {
         emit SetMaxQtyOfMembers(max);
     }
 
-    function _addMember(uint40 acct) internal {
+    function _addMember(uint40 acct, uint64 parValue) internal {
         require(
             _members.length() < _maxQtyOfMembers,
             "Qty of Members overflow"
         );
 
         if (_members.add(acct)) {
+            _rc.investIn(acct, parValue, true);
             _qtyOfMembers.push(_members.length(), 1);
             emit AddMember(acct, _members.length());
         }
@@ -106,6 +107,7 @@ contract MembersRepo is GroupsRepo {
             delete _sharesInHand[acct];
             if (_groupNo[acct] > 0) removeMemberFromGroup(acct, _groupNo[acct]);
             _qtyOfMembers.push(_members.length(), 0);
+            _rc.exitOut(acct);
             emit RemoveMember(acct, _members.length());
         }
     }
@@ -150,6 +152,8 @@ contract MembersRepo is GroupsRepo {
             oldPaid + paidPar
         );
 
+        _rc.updateParValue(acct, uint64(oldPar + parValue));
+
         emit IncreaseAmountToMember(acct, parValue, paidPar, blocknumber);
     }
 
@@ -167,6 +171,8 @@ contract MembersRepo is GroupsRepo {
             oldPar - parValue,
             oldPaid - paidPar
         );
+
+        _rc.updateParValue(acct, uint64(oldPar - parValue));
 
         emit DecreaseAmountFromMember(acct, parValue, paidPar, blocknumber);
     }

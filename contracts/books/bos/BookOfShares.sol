@@ -76,7 +76,7 @@ contract BookOfShares is IBookOfShares, MembersRepo {
         require(paidPar <= parValue, "paidPar BIGGER than parValue");
 
         // 判断是否需要添加新股东，若添加是否会超过法定人数上限
-        _addMember(shareholder);
+        _addMember(shareholder, uint64(parValue));
 
         _counterOfShares++;
 
@@ -142,7 +142,7 @@ contract BookOfShares is IBookOfShares, MembersRepo {
         require(to <= _rc.counterOfUsers(), "shareholder userNo overflow");
 
         // 判断是否需要新增股东，若需要判断是否超过法定人数上限
-        _addMember(to);
+        _addMember(to, uint64(parValue));
 
         _decreaseShareAmount(ssn, parValue, paidPar);
 

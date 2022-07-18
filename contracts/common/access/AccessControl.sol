@@ -18,7 +18,6 @@ contract AccessControl is IAccessControl, Roles {
 
     uint40 private _owner;
 
-
     // ##################
     // ##   修饰器     ##
     // ##################
@@ -85,6 +84,11 @@ contract AccessControl is IAccessControl, Roles {
     function abandonOwnership() public ownerOrDirectKeeper {
         _owner = 0;
         emit AbandonOwnership();
+    }
+
+    function quitEntity(uint8 roleOfUser) external ownerOrDirectKeeper {
+        _rc.quitEntity(roleOfUser);
+        emit QuitEntity(roleOfUser);
     }
 
     // ##################

@@ -45,7 +45,7 @@ contract EntitiesMapping {
     event CreateConnection(
         uint40 from,
         uint40 indexed to,
-        uint16 weight,
+        uint64 weight,
         uint8 typeOfConnection,
         bool checkRingStruct
     );
@@ -54,7 +54,7 @@ contract EntitiesMapping {
         uint40 from,
         uint40 indexed to,
         uint8 typeOfConnection,
-        uint16 weight
+        uint64 weight
     );
 
     event DeleteConnection(
@@ -149,7 +149,7 @@ contract EntitiesMapping {
     function _investIn(
         uint40 usrInvestor,
         uint40 usrBOS,
-        uint16 parRatio,
+        uint64 parValue,
         bool checkRingStruct
     ) internal entityExist(usrInvestor) returns (bool) {
         uint40 investor = _entityNo[usrInvestor];
@@ -162,21 +162,21 @@ contract EntitiesMapping {
             "user is not BOS of the company"
         );
 
-        require(parRatio > 0 && parRatio <= 10000, "parRatio overflow");
+        require(parValue > 0, "zero parValue");
 
         if (
             _graph.addEdge(
                 investor,
                 company,
                 uint8(EnumsRepo.TypeOfConnection.EquityInvestment),
-                parRatio,
+                parValue,
                 checkRingStruct
             )
         ) {
             emit CreateConnection(
                 investor,
                 company,
-                parRatio,
+                parValue,
                 uint8(EnumsRepo.TypeOfConnection.EquityInvestment),
                 checkRingStruct
             );
@@ -215,10 +215,10 @@ contract EntitiesMapping {
         } else return false;
     }
 
-    function _updateShareRatio(
+    function _updateParValue(
         uint40 usrInvestor,
         uint40 usrBOS,
-        uint16 parRatio
+        uint64 parValue
     ) internal entityExist(usrInvestor) returns (bool) {
         uint40 investor = _entityNo[usrInvestor];
         uint40 company = _entityNo[usrBOS];
@@ -230,21 +230,21 @@ contract EntitiesMapping {
             "user is not BOS of the company"
         );
 
-        require(parRatio > 0 && parRatio <= 10000, "parRatio overflow");
+        require(parValue > 0, "zero parValue");
 
         if (
             _graph.updateWeight(
                 investor,
                 company,
                 uint8(EnumsRepo.TypeOfConnection.EquityInvestment),
-                parRatio
+                parValue
             )
         ) {
             emit UpdateConnection(
                 investor,
                 company,
                 uint8(EnumsRepo.TypeOfConnection.EquityInvestment),
-                parRatio
+                parValue
             );
             return true;
         } else return false;
@@ -368,10 +368,6 @@ contract EntitiesMapping {
             return true;
         } else return false;
     }
-
-    // ==== Group ====
-
-    function _updateInvestorGroup(uint40 investor, uint40 company) internal {}
 
     // ##################
     // ##   查询端口   ##

@@ -200,7 +200,8 @@ contract BookOfDirectors is IBookOfDirectors, MotionsRepo, SHASetting {
         if (title != uint8(EnumsRepo.TitleOfDirectors.Director))
             _whoIs[title] = candidate;
 
-        _directorsList.add(candidate);
+        if (_directorsList.add(candidate)) _rc.takePosition(candidate, title);
+        else _rc.changeTitle(candidate, title);
 
         emit AddDirector(
             candidate,
@@ -231,6 +232,8 @@ contract BookOfDirectors is IBookOfDirectors, MotionsRepo, SHASetting {
             if (appointer > 0) _appointmentCounter[appointer]--;
 
             delete _directors[acct];
+
+            _rc.quitPosition(acct);
 
             emit RemoveDirector(acct, title);
         }

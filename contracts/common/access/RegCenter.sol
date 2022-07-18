@@ -139,11 +139,11 @@ contract RegCenter is IRegCenter, EntitiesMapping {
 
     // ==== EquityInvestment ====
 
-    function investIn(uint40 usrInvestor, uint16 parRatio)
-        external
-        onlyUser
-        returns (bool)
-    {
+    function investIn(
+        uint40 usrInvestor,
+        uint16 parRatio,
+        bool checkRingStruct
+    ) external onlyUser returns (bool) {
         if (!isEntity(usrInvestor)) {
             require(!_isContract(_users[usrInvestor].primeKey), "not an EOA");
 
@@ -154,7 +154,13 @@ contract RegCenter is IRegCenter, EntitiesMapping {
             );
         }
 
-        return _investIn(usrInvestor, _userNo[msg.sender], parRatio);
+        return
+            _investIn(
+                usrInvestor,
+                _userNo[msg.sender],
+                parRatio,
+                checkRingStruct
+            );
     }
 
     function exitOut(uint40 usrInvestor) external onlyUser returns (bool) {
@@ -273,9 +279,11 @@ contract RegCenter is IRegCenter, EntitiesMapping {
         onlyUser
         returns (
             uint8,
+            uint40,
             uint88,
+            uint16,
             uint88,
-            uint40
+            uint16
         )
     {
         return _getEntity(entity);
@@ -288,7 +296,7 @@ contract RegCenter is IRegCenter, EntitiesMapping {
         returns (
             uint88,
             uint88,
-            uint16
+            uint64
         )
     {
         return _getConnection(con);
@@ -304,20 +312,20 @@ contract RegCenter is IRegCenter, EntitiesMapping {
 
     // ==== Graph ====
 
-    function getUpBranch(uint40 origin)
+    function getUpBranches(uint40 origin)
         external
         onlyUser
         returns (uint40[] entities, uint88[] connections)
     {
-        return _getUpBranch(origin);
+        return _getUpBranches(origin);
     }
 
-    function getDownBranch(uint40 origin)
+    function getDownBranches(uint40 origin)
         external
         onlyUser
         returns (uint40[] entities, uint88[] connections)
     {
-        return _getDownBranch(origin);
+        return _getDownBranches(origin);
     }
 
     function getRoundGraph(uint40 origin)

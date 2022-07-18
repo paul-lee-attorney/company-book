@@ -32,9 +32,11 @@ interface IRegCenter {
 
     // ==== EquityInvest ====
 
-    function investIn(uint40 usrInvestor, uint16 parRatio)
-        external
-        returns (bool);
+    function investIn(
+        uint40 usrInvestor,
+        uint16 parRatio,
+        bool checkRingStruct
+    ) external returns (bool);
 
     function exitOut(uint40 usrInvestor) external returns (bool);
 
@@ -86,9 +88,11 @@ interface IRegCenter {
         view
         returns (
             uint8,
+            uint40,
             uint88,
+            uint16,
             uint88,
-            uint40
+            uint16
         );
 
     function getConnection(uint88 con)
@@ -97,7 +101,7 @@ interface IRegCenter {
         returns (
             uint88,
             uint88,
-            uint16
+            uint64
         );
 
     function isRoot(uint40 entity) external view returns (bool);
@@ -106,11 +110,11 @@ interface IRegCenter {
 
     // ==== Graph ====
 
-    function getUpBranch(uint40 origin)
+    function getUpBranches(uint40 origin)
         external
         returns (uint40[] entities, uint88[] connections);
 
-    function getDownBranch(uint40 origin)
+    function getDownBranches(uint40 origin)
         external
         returns (uint40[] entities, uint88[] connections);
 

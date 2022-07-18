@@ -7,34 +7,33 @@ pragma solidity ^0.4.24;
 
 import "./EnumerableSet.sol";
 import "./SNParser.sol";
+import "./EnumsRepo.sol";
+import "./Queue.sol";
 
 library RelationGraph {
     using EnumerableSet for EnumerableSet.UintSet;
     using SNParser for uint88;
+    using Queue for Queue.UintQueue;
 
     struct Vertex {
-        // uint40 sn;
         uint8 typeOfVertex; // ZeroPoint; EOA ; Company; Group
-        uint88 firstIn;
-        uint88 firstOut;
         uint40 groupNo;
+        uint88 firstIn;
+        uint16 numOfIn;
+        uint88 firstOut;
+        uint16 numOfOut;
     }
 
     struct Edge {
-        // uint8 typeOfEdge; // EquityInvestment; Director; Group
-        // uint40 from;
-        // uint40 to;
-        uint88 nextOut;
         uint88 nextIn;
-        uint16 weight;
+        uint88 nextOut;
+        uint64 weight;
     }
 
     struct Graph {
-        // uint40 counterOfVertices;
-        // uint88 counterOfEdges;
-        uint40 counterOfGroups;
         mapping(uint256 => Vertex) vertices;
         mapping(uint256 => Edge) edges;
+        mapping(uint256 => bool) tempCheck;
     }
 
     struct Query {
@@ -53,7 +52,6 @@ library RelationGraph {
     ) internal returns (bool) {
         if (g.vertices[sn].typeOfVertex == 0) {
             Vertex storage v = g.vertices[sn];
-            // v.sn = sn;
             v.typeOfVertex = typeOfVertex;
             return true;
         } else {
@@ -68,30 +66,60 @@ library RelationGraph {
         uint40 from,
         uint40 to,
         uint8 typeOfEdge,
-        uint16 weight
+        uint64 weight,
+        bool checkRingStruct
     ) internal returns (bool) {
-        Vertex storage t = g.vertices[to];
         Vertex storage f = g.vertices[from];
+        Vertex storage t = g.vertices[to];
+
+        //DAG 环检测
+        if (checkRingStruct) {
+            g.tempCheck[from] = true;
+            if (_hasRing(g, to)) {
+                delete g.tempCheck[from];
+                return false;
+            } else delete g.tempCheck[from];
+        }
 
         uint88 edge = _createEdge(g, from, to, typeOfEdge, weight);
 
         if (edge > 0) {
-            uint88 tail;
+            Edge storage e = g.edges[edge];
 
-            if (t.firstIn == 0) t.firstIn = edge;
-            else {
-                tail = getTailOfInChain(g, t.firstIn);
-                g.edges[tail].nextIn = edge;
-            }
+            e.nextIn = t.firstIn;
+            t.firstIn = edge;
+            t.numOfIn++;
 
-            if (f.firstOut == 0) f.firstOut = edge;
-            else {
-                tail = getTailOfOutChain(g, f.firstOut);
-                g.edges[tail].nextOut = edge;
-            }
+            e.nextOut = f.firstOut;
+            f.firstOut = edge;
+            f.numOfOut++;
 
             return true;
         } else return false;
+    }
+
+    function _hasRing(Graph storage g, uint40 to) private returns (bool) {
+        g.tempCheck[to] = true;
+
+        uint88 cur = g.vertices[to].firstOut;
+        while (cur > 0) {
+            uint40 son = cur.to();
+
+            if (g.tempCheck[son]) {
+                delete g.tempCheck[to];
+                return true;
+            }
+
+            if (_hasRing(g, son)) {
+                delete g.tempCheck[to];
+                return true;
+            }
+
+            cur = g.edges[cur].nextOut;
+        }
+
+        delete g.tempCheck[to];
+        return false;
     }
 
     function _createSN(
@@ -107,7 +135,7 @@ library RelationGraph {
         uint40 from,
         uint40 to,
         uint8 typeOfEdge,
-        uint16 weight
+        uint64 weight
     ) private returns (uint88) {
         uint88 sn = _createSN(from, to, typeOfEdge);
 
@@ -124,12 +152,14 @@ library RelationGraph {
         uint40 from,
         uint40 to,
         uint8 typeOfEdge,
-        uint16 weight
+        uint64 weight
     ) internal returns (bool) {
-        (uint88 edge, ) = getInEdge(g, from, to, typeOfEdge);
+        uint88 sn = _createSN(from, to, typeOfEdge);
 
-        if (edge > 0) {
-            g.edges[edge].weight = weight;
+        Edge storage e = g.edges[sn];
+
+        if (e.weight > 0) {
+            e.weight = weight;
             return true;
         } else {
             return false;
@@ -142,21 +172,25 @@ library RelationGraph {
         uint40 to,
         uint8 typeOfEdge
     ) internal returns (bool) {
-        Vertex storage t = g.vertices[to];
         Vertex storage f = g.vertices[from];
+        Vertex storage t = g.vertices[to];
 
-        (uint88 edge, uint88 pre) = getInEdge(g, from, to, typeOfEdge);
+        (uint88 target, uint88 pre) = getInEdge(g, from, to, typeOfEdge);
 
-        if (edge > 0) {
-            if (pre == 0) t.firstIn = g.edges[edge].nextIn;
-            else g.edges[pre].nextIn = g.edges[edge].nextIn;
+        if (target > 0) {
+            Edge storage e = g.edges[target];
+
+            if (pre == 0) t.firstIn = e.nextIn;
+            else g.edges[pre].nextIn = e.nextIn;
+            t.numOfIn--;
 
             (, pre) = getOutEdge(g, from, to, typeOfEdge);
 
-            if (pre == 0) f.firstOut = g.edges[edge].nextOut;
-            else g.edges[pre].nextOut == g.edges[edge].nextOut;
+            if (pre == 0) f.firstOut = e.nextOut;
+            else g.edges[pre].nextOut == e.nextOut;
+            f.numOfOut--;
 
-            delete g.edges[edge];
+            delete g.edges[target];
 
             return true;
         } else {
@@ -164,92 +198,19 @@ library RelationGraph {
         }
     }
 
-    // ======== Group ========
-
-    // function groupSorting(Graph storage g, uint88 edge) internal {
-    //     Edge storage e = g.edges[edge];
-
-    //     uint40 from = e.from;
-    //     uint40 to = e.to;
-
-    //     Vertex storage f = g.vertices[from];
-    //     if (f.groupNo == 0) {
-    //         g.counterOfGroups++;
-    //         f.groupNo = g.counterOfGroups;
-    //     }
-
-    //     Vertex storage t = g.vertices[to];
-
-    //     // if (t.groupNo)
-
-    //     // uint88 cur = t.firstIn;
-
-    //     // while (cur > 0) {
-    //     //     if
-    //     // }
-    // }
-
     // ##################
     // ##   查询端口   ##
     // ##################
 
-    function getVertex(Graph storage g, uint40 vertex)
-        internal
-        view
-        returns (
-            uint8 typeOfVertex,
-            uint88 firstIn,
-            uint88 firstOut,
-            uint40 groupNo
-        )
-    {
-        Vertex storage v = g.vertices[vertex];
-        typeOfVertex = v.typeOfVertex;
-        firstIn = v.firstIn;
-        firstOut = v.firstOut;
-        groupNo = v.groupNo;
-    }
+    // ======== Edge ========
 
-    function getEdge(Graph storage g, uint88 sn)
-        internal
-        view
-        returns (
-            uint88 nextOut,
-            uint88 nextIn,
-            uint16 weight
-        )
-    {
-        Edge storage e = g.edges[sn];
-
-        if (sn.to() > 0) {
-            nextOut = e.nextOut;
-            nextIn = e.nextIn;
-            weight = e.weight;
-        }
-    }
-
-    // ======== Query ========
-
-    function getTailOfInChain(Graph storage g, uint88 head)
-        internal
-        view
-        returns (uint88 tail)
-    {
-        while (head > 0) {
-            tail = head;
-            head = g.edges[tail].nextIn;
-        }
-    }
-
-    function getTailOfOutChain(Graph storage g, uint88 head)
-        internal
-        view
-        returns (uint88 tail)
-    {
-        while (head > 0) {
-            tail = head;
-            head = g.edges[tail].nextOut;
-        }
+    function isEdge(
+        Graph storage g,
+        uint40 from,
+        uint40 to,
+        uint8 typeOfEdge
+    ) internal view returns (bool) {
+        return g.edges[_createSN(from, to, typeOfEdge)].weight > 0;
     }
 
     function getInEdge(
@@ -282,7 +243,31 @@ library RelationGraph {
         return (target, pre);
     }
 
+    function getEdge(Graph storage g, uint88 sn)
+        internal
+        view
+        returns (
+            uint88 nextIn,
+            uint88 nextOut,
+            uint64 weight
+        )
+    {
+        Edge storage e = g.edges[sn];
+
+        nextIn = e.nextIn;
+        nextOut = e.nextOut;
+        weight = e.weight;
+    }
+
     // ======== Vertex ========
+
+    function isVertex(Graph storage g, uint40 vertex)
+        internal
+        view
+        returns (bool)
+    {
+        return g.vertices[vertex].typeOfVertex > 0;
+    }
 
     function isRoot(Graph storage g, uint40 vertex)
         internal
@@ -302,23 +287,31 @@ library RelationGraph {
         return (v.firstOut == 0 && v.firstIn > 0);
     }
 
-    function isVertex(Graph storage g, uint40 vertex)
+    function getVertex(Graph storage g, uint40 vertex)
         internal
         view
-        returns (bool)
+        returns (
+            uint8 typeOfVertex,
+            uint40 groupNo,
+            uint88 firstIn,
+            uint16 numOfIn,
+            uint88 firstOut,
+            uint16 numOfOut
+        )
     {
-        return g.vertices[vertex].typeOfVertex > 0;
-    }
+        Vertex storage v = g.vertices[vertex];
 
-    // ==== Edge ====
-
-    function isEdge(Graph storage g, uint88 edge) internal view returns (bool) {
-        return g.edges[edge].weight > 0;
+        typeOfVertex = v.typeOfVertex;
+        groupNo = v.groupNo;
+        firstIn = v.firstIn;
+        numOfIn = v.numOfIn;
+        firstOut = v.firstOut;
+        numOfOut = v.numOfOut;
     }
 
     // ==== getGraph ====
 
-    function getUpBranch(
+    function getUpBranches(
         Graph storage g,
         uint40 origin,
         Query storage q
@@ -329,7 +322,7 @@ library RelationGraph {
             uint88 cur = v.firstIn;
 
             while (cur > 0) {
-                getUpBranch(g, cur.from(), q);
+                getUpBranches(g, cur.from(), q);
                 // q.vertices.add(g.edges[cur].from);
                 q.edges.add(cur);
                 cur = g.edges[cur].nextIn;
@@ -337,7 +330,7 @@ library RelationGraph {
         }
     }
 
-    function getDownBranch(
+    function getDownBranches(
         Graph storage g,
         uint40 origin,
         Query storage q
@@ -348,7 +341,7 @@ library RelationGraph {
             uint88 cur = v.firstOut;
 
             while (cur > 0) {
-                getDownBranch(g, cur.to(), q);
+                getDownBranches(g, cur.to(), q);
                 // q.vertices.add(g.edges[cur].to);
                 q.edges.add(cur);
                 cur = g.edges[cur].nextOut;

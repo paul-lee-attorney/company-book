@@ -46,7 +46,8 @@ contract EntitiesMapping {
         uint40 from,
         uint40 indexed to,
         uint16 weight,
-        uint8 typeOfConnection
+        uint8 typeOfConnection,
+        bool checkRingStruct
     );
 
     event UpdateConnection(
@@ -143,12 +144,13 @@ contract EntitiesMapping {
         emit QuitEntity(entity, user, roleOfUser);
     }
 
-    // ======== Equity ========
+    // ======== Investment ========
 
     function _investIn(
         uint40 usrInvestor,
         uint40 usrBOS,
-        uint16 parRatio
+        uint16 parRatio,
+        bool checkRingStruct
     ) internal entityExist(usrInvestor) returns (bool) {
         uint40 investor = _entityNo[usrInvestor];
         uint40 company = _entityNo[usrBOS];
@@ -167,14 +169,16 @@ contract EntitiesMapping {
                 investor,
                 company,
                 uint8(EnumsRepo.TypeOfConnection.EquityInvestment),
-                parRatio
+                parRatio,
+                checkRingStruct
             )
         ) {
             emit CreateConnection(
                 investor,
                 company,
                 parRatio,
-                uint8(EnumsRepo.TypeOfConnection.EquityInvestment)
+                uint8(EnumsRepo.TypeOfConnection.EquityInvestment),
+                checkRingStruct
             );
             return true;
         } else return false;
@@ -277,14 +281,16 @@ contract EntitiesMapping {
                 director,
                 company,
                 uint8(EnumsRepo.TypeOfConnection.Director),
-                title
+                title,
+                false
             )
         ) {
             emit CreateConnection(
                 director,
                 company,
                 title,
-                uint8(EnumsRepo.TypeOfConnection.Director)
+                uint8(EnumsRepo.TypeOfConnection.Director),
+                false
             );
             return true;
         } else return false;
@@ -363,6 +369,10 @@ contract EntitiesMapping {
         } else return false;
     }
 
+    // ==== Group ====
+
+    function _updateInvestorGroup(uint40 investor, uint40 company) internal {}
+
     // ##################
     // ##   查询端口   ##
     // ##################
@@ -393,9 +403,11 @@ contract EntitiesMapping {
         entityExist(entity)
         returns (
             uint8,
+            uint40,
             uint88,
+            uint16,
             uint88,
-            uint40
+            uint16
         )
     {
         return _graph.getVertex(entity);
@@ -408,7 +420,7 @@ contract EntitiesMapping {
         returns (
             uint88,
             uint88,
-            uint16
+            uint64
         )
     {
         return _graph.getEdge(con);
@@ -432,12 +444,12 @@ contract EntitiesMapping {
         return _graph.isLeaf(entity);
     }
 
-    function _getUpBranch(uint40 origin)
+    function _getUpBranches(uint40 origin)
         internal
         entityExist(origin)
         returns (uint40[] entities, uint88[] connections)
     {
-        _graph.getUpBranch(origin, _query);
+        _graph.getUpBranches(origin, _query);
 
         entities = _query.vertices.valuesToUint40();
         connections = _query.edges.valuesToUint88();
@@ -446,12 +458,12 @@ contract EntitiesMapping {
         _query.edges.emptyItems();
     }
 
-    function _getDownBranch(uint40 origin)
+    function _getDownBranches(uint40 origin)
         internal
         entityExist(origin)
         returns (uint40[] entities, uint88[] connections)
     {
-        _graph.getDownBranch(origin, _query);
+        _graph.getDownBranches(origin, _query);
 
         entities = _query.vertices.valuesToUint40();
         connections = _query.edges.valuesToUint88();

@@ -9,7 +9,8 @@ library EnumsRepo {
     enum TypeOfVertex {
         ZeroPoint,
         EOA,
-        Company
+        Company,
+        Group
     }
 
     enum TypeOfEntity {
@@ -20,7 +21,8 @@ library EnumsRepo {
 
     enum TypeOfConnection {
         EquityInvestment,
-        Director
+        Director,
+        VirtualGroup
     }
 
     enum RoleOfUser {

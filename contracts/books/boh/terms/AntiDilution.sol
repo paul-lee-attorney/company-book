@@ -12,7 +12,6 @@ import "../../../common/ruting/BOMSetting.sol";
 import "../../../common/access/DraftControl.sol";
 
 import "../../../common/lib/ArrayUtils.sol";
-import "../../../common/lib/SNFactory.sol";
 import "../../../common/lib/SNParser.sol";
 import "../../../common/lib/EnumsRepo.sol";
 import "../../../common/lib/EnumerableSet.sol";
@@ -28,12 +27,10 @@ contract AntiDilution is
     BOMSetting,
     DraftControl
 {
-    // using SNFactory for bytes;
     using SNParser for bytes32;
     using EnumerableSet for EnumerableSet.UintSet;
     using ObjsRepo for ObjsRepo.MarkChain;
     using ArrayUtils for uint40[];
-    // using ObjsRepo for ObjsRepo.SeqList;
 
     mapping(uint256 => EnumerableSet.UintSet) private _obligors;
 

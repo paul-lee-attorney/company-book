@@ -8,12 +8,10 @@ pragma solidity ^0.4.24;
 import "./EnumerableSet.sol";
 import "./SNParser.sol";
 import "./EnumsRepo.sol";
-import "./Queue.sol";
 
 library RelationGraph {
     using EnumerableSet for EnumerableSet.UintSet;
     using SNParser for uint88;
-    using Queue for Queue.UintQueue;
 
     struct Vertex {
         uint8 typeOfVertex; // ZeroPoint; EOA ; Company; Group

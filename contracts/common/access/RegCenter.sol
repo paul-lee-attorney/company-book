@@ -48,11 +48,6 @@ contract RegCenter is IRegCenter, EntitiesMapping {
         _;
     }
 
-    modifier onlyUser() {
-        require(isUser(msg.sender), "not a user");
-        _;
-    }
-
     // ##################
     // ##    写端口    ##
     // ##################
@@ -87,7 +82,7 @@ contract RegCenter is IRegCenter, EntitiesMapping {
         }
     }
 
-    function quitEntity(uint8 roleOfUser) external onlyUser {
+    function quitEntity(uint8 roleOfUser) external {
         _quitEntity(_userNo[msg.sender], roleOfUser);
     }
 
@@ -143,7 +138,7 @@ contract RegCenter is IRegCenter, EntitiesMapping {
         uint40 usrInvestor,
         uint64 parValue,
         bool checkRingStruct
-    ) external onlyUser returns (bool) {
+    ) external returns (bool) {
         if (!isEntity(usrInvestor)) {
             require(!_isContract(_users[usrInvestor].primeKey), "not an EOA");
 
@@ -163,13 +158,12 @@ contract RegCenter is IRegCenter, EntitiesMapping {
             );
     }
 
-    function exitOut(uint40 usrInvestor) external onlyUser returns (bool) {
+    function exitOut(uint40 usrInvestor) external returns (bool) {
         return _exitOut(usrInvestor, _userNo[msg.sender]);
     }
 
     function updateParValue(uint40 usrInvestor, uint64 parValue)
         external
-        onlyUser
         returns (bool)
     {
         return _updateParValue(usrInvestor, _userNo[msg.sender], parValue);
@@ -179,7 +173,6 @@ contract RegCenter is IRegCenter, EntitiesMapping {
 
     function takePosition(uint40 usrCandy, uint8 title)
         external
-        onlyUser
         returns (bool)
     {
         require(isUser(usrCandy), "investor is not a regUser");
@@ -197,13 +190,12 @@ contract RegCenter is IRegCenter, EntitiesMapping {
         return _takePosition(usrCandy, _userNo[msg.sender], title);
     }
 
-    function quitPosition(uint40 usrDirector) external onlyUser returns (bool) {
+    function quitPosition(uint40 usrDirector) external returns (bool) {
         return _quitPosition(usrDirector, _userNo[msg.sender]);
     }
 
     function changeTitle(uint40 usrDirector, uint8 title)
         external
-        onlyUser
         returns (bool)
     {
         return _changeTitle(usrDirector, _userNo[msg.sender], title);
@@ -213,23 +205,23 @@ contract RegCenter is IRegCenter, EntitiesMapping {
     // ##   查询端口   ##
     // ##################
 
-    function counterOfUsers() external view onlyUser returns (uint40) {
+    function counterOfUsers() external view returns (uint40) {
         return _counterOfUsers;
     }
 
-    function blocksPerHour() external view onlyUser returns (uint32) {
+    function blocksPerHour() external view returns (uint32) {
         return _BLOCKS_PER_HOUR;
     }
 
-    function primeKey(uint40 userNo) external view onlyUser returns (address) {
+    function primeKey(uint40 userNo) external view returns (address) {
         return _users[userNo].primeKey;
     }
 
-    function isContract(uint40 userNo) external view onlyUser returns (bool) {
+    function isContract(uint40 userNo) external view returns (bool) {
         return _isContract(_users[userNo].primeKey);
     }
 
-    function isUser(address key) public view onlyUser returns (bool) {
+    function isUser(address key) public view returns (bool) {
         return _userNo[key] > 0;
     }
 
@@ -237,7 +229,6 @@ contract RegCenter is IRegCenter, EntitiesMapping {
         public
         view
         onlyRegKey(key)
-        onlyUser
         returns (bool)
     {
         require(userNo > 0, "zero userNo");
@@ -246,26 +237,19 @@ contract RegCenter is IRegCenter, EntitiesMapping {
         return key == _users[userNo].primeKey;
     }
 
-    function userNo(address key)
-        public
-        view
-        onlyRegKey(key)
-        onlyUser
-        returns (uint40)
-    {
+    function userNo(address key) public view onlyRegKey(key) returns (uint40) {
         return _userNo[key];
     }
 
     // ==== Entity ====
 
-    function entityNo(uint40 user) external view onlyUser returns (uint40) {
+    function entityNo(uint40 user) external view returns (uint40) {
         return _entityNo[user];
     }
 
     function memberOfEntity(uint40 entity, uint8 role)
         external
         view
-        onlyUser
         returns (uint40)
     {
         return _memberOfEntity(entity, role);
@@ -276,7 +260,6 @@ contract RegCenter is IRegCenter, EntitiesMapping {
     function getEntity(uint40 entity)
         external
         view
-        onlyUser
         returns (
             uint8,
             uint40,
@@ -292,7 +275,6 @@ contract RegCenter is IRegCenter, EntitiesMapping {
     function getConnection(uint88 con)
         external
         view
-        onlyUser
         returns (
             uint88,
             uint88,
@@ -302,11 +284,11 @@ contract RegCenter is IRegCenter, EntitiesMapping {
         return _getConnection(con);
     }
 
-    function isRoot(uint40 entity) external view onlyUser returns (bool) {
+    function isRoot(uint40 entity) external view returns (bool) {
         return _isRoot(entity);
     }
 
-    function isLeaf(uint40 entity) external view onlyUser returns (bool) {
+    function isLeaf(uint40 entity) external view returns (bool) {
         return _isLeaf(entity);
     }
 
@@ -314,7 +296,6 @@ contract RegCenter is IRegCenter, EntitiesMapping {
 
     function getUpBranches(uint40 origin)
         external
-        onlyUser
         returns (uint40[] entities, uint88[] connections)
     {
         return _getUpBranches(origin);
@@ -322,7 +303,6 @@ contract RegCenter is IRegCenter, EntitiesMapping {
 
     function getDownBranches(uint40 origin)
         external
-        onlyUser
         returns (uint40[] entities, uint88[] connections)
     {
         return _getDownBranches(origin);
@@ -330,7 +310,6 @@ contract RegCenter is IRegCenter, EntitiesMapping {
 
     function getRoundGraph(uint40 origin)
         external
-        onlyUser
         returns (uint40[] entities, uint88[] connections)
     {
         return _getRoundGraph(origin);

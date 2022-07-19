@@ -311,7 +311,7 @@ contract BOAKeeper is
         if (shareNumber > bytes32(0)) {
             _bos.increaseCleanPar(sn.shortShareNumberOfDeal(), parValue);
             _bos.transferShare(
-                shareNumber,
+                shareNumber.short(),
                 parValue,
                 paidPar,
                 sn.buyerOfDeal(),

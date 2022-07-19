@@ -6,15 +6,6 @@
 pragma solidity ^0.4.24;
 pragma experimental ABIEncoderV2;
 
-import "../common/ruting/BOSSetting.sol";
-import "../common/ruting/BODSetting.sol";
-import "../common/ruting/BOMSetting.sol";
-import "../common/ruting/SHASetting.sol";
-
-import "../common/lib/SNParser.sol";
-
-import "./IBODKeeper.sol";
-
 interface IBODKeeper {
     function appointDirector(
         uint40 acct,

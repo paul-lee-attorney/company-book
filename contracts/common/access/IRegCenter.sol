@@ -28,7 +28,7 @@ interface IRegCenter {
 
     function setBackupKey(uint40 userNo, address backupKey) external;
 
-    function replacePrimaryKey(uint40 userNo) external;
+    function replacePrimeKey(uint40 userNo) external;
 
     // ==== EquityInvest ====
 

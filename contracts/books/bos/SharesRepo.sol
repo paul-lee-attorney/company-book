@@ -1,4 +1,4 @@
-/*
+/* *
  * Copyright 2021-2022 LI LI of JINGTIAN & GONGCHENG.
  * All Rights Reserved.
  * */
@@ -8,12 +8,11 @@ pragma solidity ^0.4.24;
 import "../../common/lib/SNFactory.sol";
 import "../../common/lib/SNParser.sol";
 import "../../common/lib/ObjsRepo.sol";
+import "../../common/lib/Checkpoints.sol";
 
 import "../../common/access/AccessControl.sol";
 
 import "../../common/ruting/SHASetting.sol";
-
-import "../../common/lib/Checkpoints.sol";
 
 contract SharesRepo is SHASetting {
     using SNFactory for bytes;

@@ -134,7 +134,7 @@ contract BookOfDirectors is IBookOfDirectors, MotionsRepo, SHASetting {
     {
         Motion storage motion = _motions[motionId];
 
-        uint256 threshold = motion.votingRule.ratioHeadOfVR();
+        uint16 threshold = motion.votingRule.ratioHeadOfVR();
 
         require(threshold > 0, "no threshold defined in voting rule");
 

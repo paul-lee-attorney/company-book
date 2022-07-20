@@ -15,17 +15,17 @@ interface IBookOfIA {
     event CalculateResult(
         address indexed ia,
         uint16 topGroup,
-        uint256 topAmt,
+        uint64 topAmt,
         bool isOrgController,
-        uint256 shareRatio
+        uint16 shareRatio
     );
 
     event AddAlongDeal(
         address ia,
         uint16 follower,
         bytes32 shareNumber,
-        uint256 parValue,
-        uint256 paidPar
+        uint64 parValue,
+        uint64 paidPar
     );
 
     event AcceptAlongDeal(address ia, bytes32 sn);
@@ -51,14 +51,14 @@ interface IBookOfIA {
     function mockDealOfSell(
         address ia,
         uint40 seller,
-        uint256 amount
+        uint64 amount
     ) external;
 
     function mockDealOfBuy(
         address ia,
         uint16 ssn,
         uint40 buyer,
-        uint256 amount
+        uint64 amount
     ) external;
 
     function calculateMockResult(address ia) external;
@@ -73,8 +73,8 @@ interface IBookOfIA {
         address ia,
         bytes32 rule,
         bytes32 shareNumber,
-        uint256 parValue,
-        uint256 paidPar
+        uint64 parValue,
+        uint64 paidPar
     ) external;
 
     function acceptAlongDeal(address ia, bytes32 sn) external;
@@ -126,20 +126,20 @@ interface IBookOfIA {
         view
         returns (
             uint16 groupNum,
-            uint256 amount,
+            uint64 amount,
             bool isOrgController,
-            uint256 netIncreasedAmt,
-            uint256 shareRatio
+            uint64 netIncreasedAmt,
+            uint16 shareRatio
         );
 
     function mockResults(address ia, uint16 group)
         external
         view
         returns (
-            uint256 selAmt,
-            uint256 buyAmt,
-            uint256 orgAmt,
-            uint256 rstAmt
+            uint64 selAmt,
+            uint64 buyAmt,
+            uint64 orgAmt,
+            uint64 rstAmt
         );
 
     function typeOfIA(address ia) external view returns (uint8 output);

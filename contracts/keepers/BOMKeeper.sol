@@ -148,12 +148,12 @@ contract BOMKeeper is
 
         require(caller == shareNumber.shareholder(), "NOT Seller of the Deal");
 
-        uint256 unitPrice = IInvestmentAgreement(ia).unitPrice(sn.sequence());
+        uint32 unitPrice = IInvestmentAgreement(ia).unitPrice(sn.sequence());
         uint32 closingDate = IInvestmentAgreement(ia).closingDate(
             sn.sequence()
         );
 
-        (uint256 parValue, uint256 paidPar) = _bom.requestToBuy(ia, sn);
+        (uint64 parValue, uint64 paidPar) = _bom.requestToBuy(ia, sn);
 
         uint8 closingDays = uint8(
             (closingDate - uint32(block.number) + 12 * _rc.blocksPerHour()) /

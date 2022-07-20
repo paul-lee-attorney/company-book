@@ -154,10 +154,10 @@ contract BookOfMotions is
     function _proposalWeight(uint256 actionId, uint40 acct)
         private
         view
-        returns (uint256)
+        returns (uint64)
     {
         uint256 len = _delegates[actionId][acct].length();
-        uint256 weight;
+        uint64 weight;
 
         while (len > 0) {
             uint40 shareholder = uint40(_delegates[actionId][acct].at(len - 1));
@@ -196,10 +196,10 @@ contract BookOfMotions is
         Motion storage motion = _motions[motionId];
 
         (
-            uint256 totalHead,
-            uint256 totalAmt,
-            uint256 consentHead,
-            uint256 consentAmt
+            uint64 totalHead,
+            uint64 totalAmt,
+            uint64 consentHead,
+            uint64 consentAmt
         ) = _getParas(motionId);
 
         bool flag1;
@@ -238,10 +238,10 @@ contract BookOfMotions is
         private
         view
         returns (
-            uint256 totalHead,
-            uint256 totalAmt,
-            uint256 consentHead,
-            uint256 consentAmt
+            uint64 totalHead,
+            uint64 totalAmt,
+            uint64 consentHead,
+            uint64 consentAmt
         )
     {
         Motion storage motion = _motions[motionId];
@@ -249,7 +249,7 @@ contract BookOfMotions is
         uint32 regBlock = motion.sn.weightRegBlockOfMotion();
 
         if (motion.votingRule.onlyAttendanceOfVR()) {
-            totalHead = motion.box.voters.length;
+            totalHead = uint64(motion.box.voters.length);
             totalAmt = motion.box.sumOfWeight;
         } else {
             // members hold voting rights at block
@@ -265,7 +265,7 @@ contract BookOfMotions is
                 uint256 len = parties.length;
 
                 while (len > 0) {
-                    uint256 voteAmt = _bos.votesAtBlock(
+                    uint64 voteAmt = _bos.votesAtBlock(
                         parties[len - 1],
                         regBlock
                     );
@@ -287,7 +287,7 @@ contract BookOfMotions is
 
             // members not cast vote
             if (motion.votingRule.impliedConsentOfVR()) {
-                consentHead += (totalHead - motion.box.voters.length);
+                consentHead += (totalHead - uint64(motion.box.voters.length));
                 consentAmt += (totalAmt - motion.box.sumOfWeight);
             }
         }
@@ -296,21 +296,24 @@ contract BookOfMotions is
     function _ratioOfNay(uint256 motionId, uint40 againstVoter)
         private
         view
-        returns (uint256)
+        returns (uint16)
     {
         Motion storage motion = _motions[motionId];
 
         require(motion.box.votedNay(againstVoter), "NOT NAY voter");
 
-        return ((motion.box.ballots[againstVoter].weight * 10000) /
-            motion.box.sumOfNay);
+        return
+            uint16(
+                (motion.box.ballots[againstVoter].weight * 10000) /
+                    motion.box.sumOfNay
+            );
     }
 
     function requestToBuy(address ia, bytes32 sn)
         external
         view
         onlyDirectKeeper
-        returns (uint256 parValue, uint256 paidPar)
+        returns (uint64 parValue, uint64 paidPar)
     {
         require(
             block.number < IInvestmentAgreement(ia).closingDate(sn.sequence()),

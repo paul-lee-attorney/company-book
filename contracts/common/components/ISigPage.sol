@@ -34,9 +34,9 @@ interface ISigPage {
     //##    设置接口    ##
     //####################
 
-    function setSigDeadline(uint256 deadline) external;
+    function setSigDeadline(uint32 deadline) external;
 
-    function setClosingDeadline(uint256 deadline) external;
+    function setClosingDeadline(uint32 deadline) external;
 
     function removePartyFromDoc(address acct) external;
 

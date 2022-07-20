@@ -70,9 +70,9 @@ contract Options is IOptions, BOSSetting, DraftControl {
         uint32 triggerDate,
         uint8 exerciseDays,
         uint8 closingDays,
-        uint256 rate,
-        uint256 parValue,
-        uint256 paidPar
+        uint32 rate,
+        uint64 parValue,
+        uint64 paidPar
     ) private pure returns (bytes32 sn) {
         bytes memory _sn = new bytes(32);
 
@@ -95,9 +95,9 @@ contract Options is IOptions, BOSSetting, DraftControl {
         uint32 triggerDate,
         uint8 exerciseDays,
         uint8 closingDays,
-        uint256 rate,
-        uint256 parValue,
-        uint256 paidPar
+        uint32 rate,
+        uint64 parValue,
+        uint64 paidPar
     ) external onlyAttorney {
         require(typeOfOpt < 8, "typeOfOpt overflow");
         require(triggerDate >= now - 15 minutes, "triggerDate NOT future");
@@ -125,7 +125,7 @@ contract Options is IOptions, BOSSetting, DraftControl {
         opt.sn = sn;
         opt.rightholder = rightholder;
 
-        opt.obligors.add(uint256(obligor));
+        opt.obligors.add(obligor);
 
         _snList.add(sn);
 
@@ -189,10 +189,7 @@ contract Options is IOptions, BOSSetting, DraftControl {
     {
         Option storage opt = _options[ssn];
 
-        require(
-            opt.obligors.add(uint256(obligor)),
-            "obligor ALREADY registered"
-        );
+        require(opt.obligors.add(obligor), "obligor ALREADY registered");
         emit AddObligorIntoOpt(opt.sn, obligor);
     }
 
@@ -203,10 +200,7 @@ contract Options is IOptions, BOSSetting, DraftControl {
     {
         Option storage opt = _options[ssn];
 
-        require(
-            opt.obligors.remove(uint256(obligor)),
-            "obligor NOT registered"
-        );
+        require(opt.obligors.remove(obligor), "obligor NOT registered");
         emit RemoveObligorFromOpt(opt.sn, obligor);
     }
 
@@ -249,7 +243,7 @@ contract Options is IOptions, BOSSetting, DraftControl {
         onlyUser
         returns (bool)
     {
-        return _options[ssn].obligors.contains(uint256(acct));
+        return _options[ssn].obligors.contains(acct);
     }
 
     function getObligors(bytes6 ssn)

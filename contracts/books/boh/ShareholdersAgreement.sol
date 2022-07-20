@@ -110,7 +110,7 @@ contract ShareholdersAgreement is
 
         _titleToBody[title] = body;
 
-        _titles.add(uint256(title));
+        _titles.add(title);
 
         _bodies.add(body);
 
@@ -118,7 +118,7 @@ contract ShareholdersAgreement is
     }
 
     function removeTerm(uint8 title) external onlyAttorney {
-        _titles.remove(uint256(title));
+        _titles.remove(title);
 
         _bodies.remove(_titleToBody[title]);
 
@@ -151,7 +151,7 @@ contract ShareholdersAgreement is
     }
 
     function isTitle(uint8 title) external view onlyUser returns (bool) {
-        return _titles.contains(uint256(title));
+        return _titles.contains(title);
     }
 
     function isBody(address addr) external view onlyUser returns (bool) {

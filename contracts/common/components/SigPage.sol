@@ -182,8 +182,8 @@ contract SigPage is ISigPage, DraftControl {
         onlyUser
         returns (uint32)
     {
-        uint256 seq = _signatures.dealToSN[acct][sn];
-        if (seq > 0) return uint32(_signatures.signatures[acct][seq].sigDate);
+        uint16 seq = _signatures.dealToSN[acct][sn];
+        if (seq > 0) return _signatures.signatures[acct][seq].sigDate;
         else revert("party did not sign this deal");
     }
 
@@ -193,7 +193,7 @@ contract SigPage is ISigPage, DraftControl {
         onlyUser
         returns (bytes32)
     {
-        uint256 seq = _signatures.dealToSN[acct][sn];
+        uint16 seq = _signatures.dealToSN[acct][sn];
         if (seq > 0) return _signatures.signatures[acct][seq].sigHash;
         else revert("party did not sign this deal");
     }
@@ -221,7 +221,7 @@ contract SigPage is ISigPage, DraftControl {
         uint16 sn,
         string src
     ) external view onlyUser returns (bool) {
-        uint256 seq = _signatures.dealToSN[acct][sn];
+        uint16 seq = _signatures.dealToSN[acct][sn];
         return
             _signatures.signatures[acct][seq].sigHash == keccak256(bytes(src));
     }

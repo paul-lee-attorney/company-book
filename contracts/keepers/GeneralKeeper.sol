@@ -156,8 +156,8 @@ contract GeneralKeeper is AccessControl {
         address ia,
         bytes32 sn,
         bytes32 shareNumber,
-        uint256 parValue,
-        uint256 paidPar,
+        uint64 parValue,
+        uint64 paidPar,
         bytes32 sigHash
     ) external {
         _SHAKeeper.execAlongRight(
@@ -186,8 +186,8 @@ contract GeneralKeeper is AccessControl {
         address ia,
         bytes32 sn,
         bytes32 shareNumber,
-        uint256 parValue,
-        uint256 paidPar,
+        uint64 parValue,
+        uint64 paidPar,
         bytes32 sigHash
     ) external {
         _SHAKeeper.execAlongRight(
@@ -329,9 +329,9 @@ contract GeneralKeeper is AccessControl {
         uint32 triggerDate,
         uint8 exerciseDays,
         uint8 closingDays,
-        uint256 rate,
-        uint256 parValue,
-        uint256 paidPar
+        uint32 rate,
+        uint64 parValue,
+        uint64 paidPar
     ) external {
         _BOOKeeper.createOption(
             typeOfOpt,
@@ -361,7 +361,7 @@ contract GeneralKeeper is AccessControl {
     function addFuture(
         bytes32 sn,
         bytes32 shareNumber,
-        uint256 paidPar
+        uint64 paidPar
     ) external {
         _BOOKeeper.addFuture(sn, shareNumber, paidPar, _msgSender());
     }
@@ -373,7 +373,7 @@ contract GeneralKeeper is AccessControl {
     function requestPledge(
         bytes32 sn,
         bytes32 shareNumber,
-        uint256 paidPar
+        uint64 paidPar
     ) external {
         _BOOKeeper.requestPledge(sn, shareNumber, paidPar, _msgSender());
     }
@@ -400,10 +400,10 @@ contract GeneralKeeper is AccessControl {
 
     function createPledge(
         bytes32 shareNumber,
-        uint256 pledgedPar,
+        uint64 pledgedPar,
         uint40 creditor,
         uint40 debtor,
-        uint256 guaranteedAmt
+        uint64 guaranteedAmt
     ) external {
         _BOPKeeper.createPledge(
             shareNumber,
@@ -418,8 +418,8 @@ contract GeneralKeeper is AccessControl {
     function updatePledge(
         bytes32 sn,
         uint40 creditor,
-        uint256 pledgedPar,
-        uint256 guaranteedAmt
+        uint64 pledgedPar,
+        uint64 guaranteedAmt
     ) external {
         _BOPKeeper.updatePledge(
             sn,

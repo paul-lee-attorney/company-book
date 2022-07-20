@@ -20,10 +20,10 @@ contract BookOfIA is IBookOfIA, DocumentsRepo {
     using EnumerableSet for EnumerableSet.UintSet;
 
     struct Amt {
-        uint256 selAmt;
-        uint256 buyAmt;
-        uint256 orgAmt;
-        uint256 rstAmt;
+        uint64 selAmt;
+        uint64 buyAmt;
+        uint64 orgAmt;
+        uint64 rstAmt;
     }
 
     // IA address => group => Amt
@@ -37,10 +37,10 @@ contract BookOfIA is IBookOfIA, DocumentsRepo {
 
     struct TopGroup {
         uint16 groupNum;
-        uint256 amount;
+        uint64 amount;
         bool isOrgController;
         Amt sumOfIA;
-        uint256 shareRatio;
+        uint16 shareRatio;
     }
 
     // IA address => topGroup
@@ -62,31 +62,31 @@ contract BookOfIA is IBookOfIA, DocumentsRepo {
     function mockDealOfSell(
         address ia,
         uint40 seller,
-        uint256 amount
+        uint64 amount
     ) external onlyDirectKeeper {
         uint16 sellerGroup = _bos.groupNo(seller);
         _mockResults[ia][sellerGroup].selAmt += amount;
-        _groupsConcerned[ia].add(uint256(sellerGroup));
+        _groupsConcerned[ia].add(sellerGroup);
     }
 
     function mockDealOfBuy(
         address ia,
         uint16 ssn,
         uint40 buyer,
-        uint256 amount
+        uint64 amount
     ) external onlyDirectKeeper {
         uint16 buyerGroup = _bos.groupNo(buyer);
 
         if (!_isMocked[ia][ssn]) {
             _mockResults[ia][buyerGroup].buyAmt += amount;
-            _groupsConcerned[ia].add(uint256(buyerGroup));
+            _groupsConcerned[ia].add(buyerGroup);
 
             _isMocked[ia][ssn] = true;
         }
     }
 
     function calculateMockResult(address ia) external onlyDirectKeeper {
-        uint256[] memory groups = _groupsConcerned[ia].values();
+        uint16[] memory groups = _groupsConcerned[ia].valuesToUint16();
 
         delete _topGroups[ia];
         TopGroup storage top = _topGroups[ia];
@@ -141,13 +141,13 @@ contract BookOfIA is IBookOfIA, DocumentsRepo {
         TopGroup storage top = _topGroups[ia];
 
         uint16 controller = _bos.controller();
-        uint256 amtOfCorp = basedOnPar ? _bos.regCap() : _bos.paidCap();
+        uint64 amtOfCorp = basedOnPar ? _bos.regCap() : _bos.paidCap();
         amtOfCorp += top.sumOfIA.rstAmt;
 
-        if (_groupsConcerned[ia].contains(uint256(controller))) {
+        if (_groupsConcerned[ia].contains(controller)) {
             if (top.groupNum == controller) top.isOrgController = true;
         } else {
-            uint256 amtOfController = basedOnPar
+            uint64 amtOfController = basedOnPar
                 ? _bosCal.parOfGroup(controller)
                 : _bosCal.paidOfGroup(controller);
 
@@ -157,7 +157,7 @@ contract BookOfIA is IBookOfIA, DocumentsRepo {
                 top.amount = amtOfController;
             }
         }
-        top.shareRatio = (top.amount * 10000) / amtOfCorp;
+        top.shareRatio = uint16((top.amount * 10000) / amtOfCorp);
     }
 
     // ======== Propose IA ========
@@ -184,8 +184,8 @@ contract BookOfIA is IBookOfIA, DocumentsRepo {
         address ia,
         bytes32 rule,
         bytes32 shareNumber,
-        uint256 parValue,
-        uint256 paidPar
+        uint64 parValue,
+        uint64 paidPar
     ) external onlyDirectKeeper {
         uint16 drager = rule.dragerOfLink();
         uint16 follower = _bos.groupNo(shareNumber.shareholder());
@@ -229,7 +229,7 @@ contract BookOfIA is IBookOfIA, DocumentsRepo {
     function acceptAlongDeal(address ia, bytes32 sn) external onlyKeeper {
         uint16 buyerGroup = _bos.groupNo(sn.buyerOfDeal());
 
-        (, uint256 parValue, uint256 paidPar, , ) = IInvestmentAgreement(ia)
+        (, uint64 parValue, uint64 paidPar, , ) = IInvestmentAgreement(ia)
             .getDeal(sn.sequence());
 
         Amt storage bAmt = _mockResults[ia][buyerGroup];
@@ -254,16 +254,7 @@ contract BookOfIA is IBookOfIA, DocumentsRepo {
         onlyUser
         returns (uint16[])
     {
-        uint256[] memory rawValues = _groupsConcerned[ia].values();
-        uint256 len = rawValues.length;
-        uint16[] memory outputs = new uint16[](len);
-
-        while (len > 0) {
-            outputs[len - 1] = uint16(rawValues[len - 1]);
-            len--;
-        }
-
-        return outputs;
+        return _groupsConcerned[ia].valuesToUint16();
     }
 
     function isConcernedGroup(address ia, uint16 group)
@@ -272,7 +263,7 @@ contract BookOfIA is IBookOfIA, DocumentsRepo {
         onlyUser
         returns (bool)
     {
-        return _groupsConcerned[ia].contains(uint256(group));
+        return _groupsConcerned[ia].contains(group);
     }
 
     function topGroup(address ia)
@@ -283,10 +274,10 @@ contract BookOfIA is IBookOfIA, DocumentsRepo {
         onlyUser
         returns (
             uint16 groupNum,
-            uint256 amount,
+            uint64 amount,
             bool isOrgController,
-            uint256 netIncreasedAmt,
-            uint256 shareRatio
+            uint64 netIncreasedAmt,
+            uint16 shareRatio
         )
     {
         TopGroup storage top = _topGroups[ia];
@@ -304,16 +295,13 @@ contract BookOfIA is IBookOfIA, DocumentsRepo {
         onlyUser
         onlyForCirculated(ia)
         returns (
-            uint256 selAmt,
-            uint256 buyAmt,
-            uint256 orgAmt,
-            uint256 rstAmt
+            uint64 selAmt,
+            uint64 buyAmt,
+            uint64 orgAmt,
+            uint64 rstAmt
         )
     {
-        require(
-            _groupsConcerned[ia].contains(uint256(group)),
-            "NOT concerned group"
-        );
+        require(_groupsConcerned[ia].contains(group), "NOT concerned group");
 
         Amt storage amt = _mockResults[ia][group];
         selAmt = amt.selAmt;

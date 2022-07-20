@@ -14,8 +14,8 @@ interface IBookOfOptions {
         bytes32 indexed sn,
         uint40 rightholder,
         uint40 obligor,
-        uint256 parValue,
-        uint256 paidPar
+        uint64 parValue,
+        uint64 paidPar
     );
 
     event RegisterOpt(bytes32 indexed sn);
@@ -39,13 +39,13 @@ interface IBookOfOptions {
     event AddFuture(
         bytes32 indexed sn,
         bytes32 shareNumber,
-        uint256 parValue,
-        uint256 paidPar
+        uint64 parValue,
+        uint64 paidPar
     );
 
     event DelFuture(bytes32 indexed sn);
 
-    event AddPledge(bytes32 indexed sn, bytes32 shareNumber, uint256 paidPar);
+    event AddPledge(bytes32 indexed sn, bytes32 shareNumber, uint64 paidPar);
 
     event LockOpt(bytes32 indexed sn, bytes32 hashLock);
 
@@ -60,16 +60,16 @@ interface IBookOfOptions {
         uint32 triggerDate,
         uint8 exerciseDays,
         uint8 closingDays,
-        uint256 price,
-        uint256 parValue,
-        uint256 paidPar
+        uint32 price,
+        uint64 parValue,
+        uint64 paidPar
     ) external returns (bytes32 sn);
 
     function updateOption(
         bytes6 ssn,
         uint40 rightholder,
-        uint256 parValue,
-        uint256 paidPar
+        uint64 parValue,
+        uint64 paidPar
     ) external;
 
     function addObligorIntoOpt(bytes6 ssn, uint40 obligor) external;
@@ -85,8 +85,8 @@ interface IBookOfOptions {
     function addFuture(
         bytes6 ssn,
         bytes32 shareNumber,
-        uint256 parValue,
-        uint256 paidPar
+        uint64 parValue,
+        uint64 paidPar
     ) external;
 
     function removeFuture(bytes6 ssn, bytes32 ft) external;
@@ -94,7 +94,7 @@ interface IBookOfOptions {
     function requestPledge(
         bytes6 ssn,
         bytes32 shareNumber,
-        uint256 paidPar
+        uint64 paidPar
     ) external;
 
     function lockOption(bytes6 ssn, bytes32 hashLock) external;
@@ -114,8 +114,8 @@ interface IBookOfOptions {
             bytes32 sn,
             uint40 rightholder,
             uint32 closingDate,
-            uint256 parValue,
-            uint256 paidPar,
+            uint64 parValue,
+            uint64 paidPar,
             bytes32 hashLock,
             uint8 state
         );

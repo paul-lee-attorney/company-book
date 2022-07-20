@@ -28,7 +28,6 @@ contract FirstRefusal is
     BOMSetting,
     DraftControl
 {
-    // using ArrayUtils for uint256[];
     using ArrayUtils for uint40[];
     using SNFactory for bytes;
     using SNParser for bytes32;
@@ -51,7 +50,6 @@ contract FirstRefusal is
 
     // typeOfDeal => bool
     mapping(uint8 => bool) private _isSubject;
-
 
     // ################
     // ##  Modifier  ##

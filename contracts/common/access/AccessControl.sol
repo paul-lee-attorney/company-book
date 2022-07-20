@@ -50,7 +50,7 @@ contract AccessControl is IAccessControl, Roles {
         _;
     }
 
-    modifier currentDate(uint256 date) {
+    modifier currentDate(uint32 date) {
         require(
             date >= now - 15 minutes && date <= now + 15 minutes,
             "not a current date"

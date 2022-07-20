@@ -32,7 +32,7 @@ contract AntiDilution is
     using ObjsRepo for ObjsRepo.MarkChain;
     using ArrayUtils for uint40[];
 
-    mapping(uint256 => EnumerableSet.UintSet) private _obligors;
+    mapping(uint8 => EnumerableSet.UintSet) private _obligors;
 
     ObjsRepo.MarkChain private _benchmarks;
 
@@ -54,7 +54,7 @@ contract AntiDilution is
     // ##   写接口   ##
     // ################
 
-    function setBenchmark(uint8 class, uint64 price) external onlyAttorney {
+    function setBenchmark(uint8 class, uint32 price) external onlyAttorney {
         if (_benchmarks.addMark(class, price)) emit SetBenchmark(class, price);
     }
 
@@ -91,7 +91,7 @@ contract AntiDilution is
         view
         onlyMarked(class)
         onlyUser
-        returns (uint256)
+        returns (uint64)
     {
         return _benchmarks.markedValue(class);
     }
@@ -110,16 +110,16 @@ contract AntiDilution is
         address ia,
         bytes32 snOfDeal,
         bytes32 shareNumber
-    ) external view onlyMarked(shareNumber.class()) onlyUser returns (uint256) {
-        uint256 markPrice = _benchmarks.markedValue(shareNumber.class());
+    ) external view onlyMarked(shareNumber.class()) onlyUser returns (uint64) {
+        uint32 markPrice = _benchmarks.markedValue(shareNumber.class());
 
-        uint256 dealPrice = IInvestmentAgreement(ia).unitPrice(
+        uint32 dealPrice = IInvestmentAgreement(ia).unitPrice(
             snOfDeal.sequence()
         );
 
         require(markPrice > dealPrice, "AntiDilution not triggered");
 
-        (, , uint256 paidPar, , , ) = _bos.getShare(shareNumber.short());
+        (, , uint64 paidPar, , , ) = _bos.getShare(shareNumber.short());
 
         return (paidPar * markPrice) / dealPrice - paidPar;
     }
@@ -134,7 +134,7 @@ contract AntiDilution is
         onlyUser
         returns (bool)
     {
-        uint256 unitPrice = IInvestmentAgreement(ia).unitPrice(sn.sequence());
+        uint32 unitPrice = IInvestmentAgreement(ia).unitPrice(sn.sequence());
 
         if (sn.typeOfDeal() > uint8(EnumsRepo.TypeOfDeal.PreEmptive))
             return false;
@@ -142,7 +142,7 @@ contract AntiDilution is
         else return false;
     }
 
-    function _isExempted(uint256 price, uint40[] consentParties)
+    function _isExempted(uint32 price, uint40[] consentParties)
         private
         view
         returns (bool)
@@ -175,7 +175,7 @@ contract AntiDilution is
 
         (uint40[] memory consentParties, ) = _bom.getYea(uint256(ia));
 
-        uint256 unitPrice = IInvestmentAgreement(ia).unitPrice(sn.sequence());
+        uint32 unitPrice = IInvestmentAgreement(ia).unitPrice(sn.sequence());
 
         return _isExempted(unitPrice, consentParties);
     }

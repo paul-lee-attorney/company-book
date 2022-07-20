@@ -81,9 +81,9 @@ contract BOOKeeper is
         uint32 triggerDate,
         uint8 exerciseDays,
         uint8 closingDays,
-        uint256 rate,
-        uint256 parValue,
-        uint256 paidPar,
+        uint32 rate,
+        uint64 parValue,
+        uint64 paidPar,
         uint40 caller
     ) external onlyDirectKeeper {
         _boo.createOption(
@@ -125,7 +125,7 @@ contract BOOKeeper is
     function addFuture(
         bytes32 sn,
         bytes32 shareNumber,
-        uint256 paidPar,
+        uint64 paidPar,
         uint40 caller
     ) external onlyDirectKeeper onlyRightholder(sn, caller) {
         _bos.decreaseCleanPar(shareNumber.short(), paidPar);
@@ -144,7 +144,7 @@ contract BOOKeeper is
     function requestPledge(
         bytes32 sn,
         bytes32 shareNumber,
-        uint256 paidPar,
+        uint64 paidPar,
         uint40 caller
     ) external onlyDirectKeeper onlySeller(sn, caller) {
         _bos.decreaseCleanPar(shareNumber.short(), paidPar);
@@ -177,7 +177,7 @@ contract BOOKeeper is
         // uint32 closingDate,
         uint40 caller
     ) external onlyDirectKeeper onlyBuyer(sn, caller) {
-        uint256 price = sn.rateOfOpt();
+        uint32 price = sn.rateOfOpt();
 
         _boo.closeOption(sn.shortOfOpt(), hashKey);
 

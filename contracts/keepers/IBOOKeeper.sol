@@ -20,9 +20,9 @@ interface IBOOKeeper {
         uint32 triggerDate,
         uint8 exerciseDays,
         uint8 closingDays,
-        uint256 rate,
-        uint256 parValue,
-        uint256 paidPar,
+        uint32 rate,
+        uint64 parValue,
+        uint64 paidPar,
         uint40 caller
     ) external;
 
@@ -39,7 +39,7 @@ interface IBOOKeeper {
     function addFuture(
         bytes32 sn,
         bytes32 shareNumber,
-        uint256 paidPar,
+        uint64 paidPar,
         uint40 caller
     ) external;
 
@@ -52,7 +52,7 @@ interface IBOOKeeper {
     function requestPledge(
         bytes32 sn,
         bytes32 shareNumber,
-        uint256 paidPar,
+        uint64 paidPar,
         uint40 caller
     ) external;
 

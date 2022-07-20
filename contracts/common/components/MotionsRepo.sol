@@ -28,7 +28,7 @@ contract MotionsRepo is AccessControl {
     }
 
     // motionId => delegateNo => userNo
-    mapping(uint256 => mapping(uint256 => EnumerableSet.UintSet))
+    mapping(uint256 => mapping(uint40 => EnumerableSet.UintSet))
         internal _delegates;
 
     // motionId => authorizers
@@ -62,7 +62,7 @@ contract MotionsRepo is AccessControl {
         uint256 indexed motionId,
         uint40 voter,
         uint8 atitude,
-        uint256 voteAmt
+        uint64 voteAmt
     );
 
     event ExecuteAction(uint256 indexed motionId, bool flag);
@@ -271,7 +271,7 @@ contract MotionsRepo is AccessControl {
         external
         view
         onlyUser
-        returns (uint40[], uint256)
+        returns (uint40[], uint64)
     {
         return _motions[motionId].box.getYea();
     }
@@ -280,7 +280,7 @@ contract MotionsRepo is AccessControl {
         external
         view
         onlyUser
-        returns (uint40[], uint256)
+        returns (uint40[], uint64)
     {
         return _motions[motionId].box.getNay();
     }
@@ -289,7 +289,7 @@ contract MotionsRepo is AccessControl {
         external
         view
         onlyUser
-        returns (uint256)
+        returns (uint64)
     {
         return _motions[motionId].box.sumOfWeight;
     }

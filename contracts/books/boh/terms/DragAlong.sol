@@ -51,7 +51,7 @@ contract DragAlong is IAlongs, ITerm, BOSSetting, BOASetting, DraftControl {
     // ################
 
     modifier dragerGroupExist(uint16 group) {
-        require(_dragerGroups.contains(uint256(group)), "WRONG drager ID");
+        require(_dragerGroups.contains(group), "WRONG drager ID");
         _;
     }
 
@@ -213,7 +213,7 @@ contract DragAlong is IAlongs, ITerm, BOSSetting, BOASetting, DraftControl {
             "caller and target shareholder NOT linked"
         );
 
-        uint256 dealPrice = IInvestmentAgreement(ia).unitPrice(sn.sequence());
+        uint32 dealPrice = IInvestmentAgreement(ia).unitPrice(sn.sequence());
         uint32 closingDate = IInvestmentAgreement(ia).closingDate(
             sn.sequence()
         );
@@ -233,7 +233,7 @@ contract DragAlong is IAlongs, ITerm, BOSSetting, BOASetting, DraftControl {
             else return false;
         }
 
-        (, , , , uint256 issuePrice, ) = _bos.getShare(shareNumber.short());
+        (, , , , uint32 issuePrice, ) = _bos.getShare(shareNumber.short());
         uint32 issueDate = shareNumber.issueDate();
 
         if (
@@ -266,7 +266,7 @@ contract DragAlong is IAlongs, ITerm, BOSSetting, BOASetting, DraftControl {
 
         uint16 sellerGroup = _bos.groupNo(seller);
 
-        if (!_dragerGroups.contains(uint256(sellerGroup))) return false;
+        if (!_dragerGroups.contains(sellerGroup)) return false;
 
         bytes32 rule = _links[sellerGroup].rule;
 
@@ -277,7 +277,7 @@ contract DragAlong is IAlongs, ITerm, BOSSetting, BOASetting, DraftControl {
 
         if (_bos.controller() != sellerGroup) return false;
 
-        (, , bool isOrgController, , uint256 shareRatio) = _boa.topGroup(ia);
+        (, , bool isOrgController, , uint16 shareRatio) = _boa.topGroup(ia);
 
         if (!isOrgController) return true;
 
@@ -287,19 +287,19 @@ contract DragAlong is IAlongs, ITerm, BOSSetting, BOASetting, DraftControl {
     }
 
     function _roeOfDeal(
-        uint256 dealPrice,
-        uint256 issuePrice,
+        uint32 dealPrice,
+        uint32 issuePrice,
         uint32 closingDate,
         uint32 issueDateOfShare
-    ) internal pure returns (uint256 roe) {
+    ) internal pure returns (uint16 roe) {
         require(dealPrice > issuePrice, "NEGATIVE selling price");
         require(closingDate > issueDateOfShare, "NEGATIVE holding period");
 
-        uint256 deltaPrice = dealPrice - issuePrice;
+        uint32 deltaPrice = dealPrice - issuePrice;
         uint32 deltaDate = closingDate - issueDateOfShare;
 
-        roe =
-            (deltaPrice * 365000000) /
-            (issuePrice * (uint256(deltaDate) / 864));
+        roe = uint16(
+            (((deltaPrice * 10000) / issuePrice) * 31536000) / deltaDate
+        );
     }
 }

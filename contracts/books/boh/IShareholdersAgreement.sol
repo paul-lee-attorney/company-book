@@ -42,13 +42,13 @@ interface IShareholdersAgreement {
 
     function setAppointerOfViceChairman(uint40 nominator) external;
 
-    function setBoardSeatsQuotaOf(uint40 nominator, uint256 quota) external;
+    function setBoardSeatsQuotaOf(uint40 nominator, uint8 quota) external;
 
     function setRule(
         uint8 typeOfVote,
         uint40 vetoHolder,
-        uint256 ratioHead,
-        uint256 ratioAmount,
+        uint16 ratioHead,
+        uint16 ratioAmount,
         bool onlyAttendance,
         bool impliedConsent,
         bool againstShallBuy,
@@ -96,7 +96,7 @@ interface IShareholdersAgreement {
 
     function maxNumOfDirectors() external view returns (uint8);
 
-    function tenureOfBoard() external view returns (uint256);
+    function tenureOfBoard() external view returns (uint8);
 
     function appointerOfChairman() external view returns (uint40);
 

@@ -212,25 +212,25 @@ library ObjsRepo {
 
     struct SignerGroup {
         // acct => sigSN => sig
-        mapping(uint256 => mapping(uint256 => Signature)) signatures;
+        mapping(uint40 => mapping(uint16 => Signature)) signatures;
         // acct => dealSN => sigSN
-        mapping(uint256 => mapping(uint256 => uint256)) dealToSN;
-        mapping(uint256 => uint256) counterOfSig;
-        mapping(uint256 => uint256) counterOfBlank;
-        uint256 balance;
+        mapping(uint40 => mapping(uint16 => uint16)) dealToSN;
+        mapping(uint40 => uint16) counterOfSig;
+        mapping(uint40 => uint16) counterOfBlank;
+        uint16 balance;
         EnumerableSet.UintSet parties;
     }
 
     function addBlank(
         SignerGroup storage group,
-        uint256 acct,
-        uint256 snOfDeal
+        uint40 acct,
+        uint16 snOfDeal
     ) internal returns (bool flag) {
         if (group.dealToSN[acct][snOfDeal] == 0) {
             group.parties.add(acct);
 
             group.counterOfBlank[acct]++;
-            uint256 sn = group.counterOfBlank[acct];
+            uint16 sn = group.counterOfBlank[acct];
 
             group.dealToSN[acct][snOfDeal] = sn;
             group.signatures[acct][sn].dealSN = uint16(snOfDeal);
@@ -241,19 +241,17 @@ library ObjsRepo {
         }
     }
 
-    function removeParty(SignerGroup storage group, uint256 acct)
+    function removeParty(SignerGroup storage group, uint40 acct)
         internal
         returns (bool flag)
     {
-        uint256 len = group.counterOfBlank[acct];
+        uint16 len = group.counterOfBlank[acct];
 
         if (len > 0 && group.counterOfSig[acct] == 0) {
             group.balance -= len;
 
             while (len > 0) {
-                uint256 snOfDeal = uint256(
-                    group.signatures[acct][len - 1].dealSN
-                );
+                uint16 snOfDeal = group.signatures[acct][len - 1].dealSN;
                 delete group.dealToSN[acct][snOfDeal];
                 delete group.signatures[acct][len - 1];
                 len--;
@@ -273,7 +271,7 @@ library ObjsRepo {
         uint16 snOfDeal,
         bytes32 sigHash
     ) internal returns (bool flag) {
-        uint256 sn = group.dealToSN[acct][snOfDeal];
+        uint16 sn = group.dealToSN[acct][snOfDeal];
 
         if (sn > 0 && group.signatures[acct][sn].sigDate == 0) {
             Signature storage sig = group.signatures[acct][sn];
@@ -309,14 +307,14 @@ library ObjsRepo {
 
     struct BallotsBox {
         EnumerableSet.UintSet supportVoters;
-        uint256 sumOfYea;
+        uint64 sumOfYea;
         EnumerableSet.UintSet againstVoters;
-        uint256 sumOfNay;
+        uint64 sumOfNay;
         EnumerableSet.UintSet abstainVoters;
-        uint256 sumOfAbs;
+        uint64 sumOfAbs;
         mapping(uint256 => Ballot) ballots;
-        uint256 sumOfWeight;
-        uint256[] voters;
+        uint64 sumOfWeight;
+        uint40[] voters;
     }
 
     function add(
@@ -374,7 +372,7 @@ library ObjsRepo {
     function getYea(BallotsBox storage box)
         internal
         view
-        returns (uint40[] membersOfYea, uint256 supportVotes)
+        returns (uint40[] membersOfYea, uint64 supportVotes)
     {
         membersOfYea = box.supportVoters.valuesToUint40();
         supportVotes = box.sumOfYea;
@@ -383,7 +381,7 @@ library ObjsRepo {
     function getNay(BallotsBox storage box)
         internal
         view
-        returns (uint40[] membersOfNay, uint256 againstVotes)
+        returns (uint40[] membersOfNay, uint64 againstVotes)
     {
         membersOfNay = box.againstVoters.valuesToUint40();
         againstVotes = box.sumOfNay;
@@ -420,18 +418,18 @@ library ObjsRepo {
     // ======== TimeLine ========
 
     struct TimeLine {
-        mapping(uint8 => uint256) startDateOf;
+        mapping(uint8 => uint32) startDateOf;
         uint8 currentState;
     }
 
     function setState(TimeLine storage line, uint8 state) internal {
         line.currentState = state;
-        line.startDateOf[state] = block.number;
+        line.startDateOf[state] = uint32(block.timestamp);
     }
 
     function pushToNextState(TimeLine storage line) internal {
         line.currentState++;
-        line.startDateOf[line.currentState] = block.number;
+        line.startDateOf[line.currentState] = uint32(block.timestamp);
     }
 
     function backToPrevState(TimeLine storage line) internal {
@@ -444,7 +442,7 @@ library ObjsRepo {
 
     struct Mark {
         uint40 key;
-        uint64 value;
+        uint32 value;
         uint40 prev;
         uint40 next;
     }
@@ -458,7 +456,7 @@ library ObjsRepo {
     function addMark(
         MarkChain storage c,
         uint40 key,
-        uint64 value
+        uint32 value
     ) internal returns (bool) {
         if (c.marks[key].key == 0) {
             Mark storage m = c.marks[key];
@@ -503,7 +501,7 @@ library ObjsRepo {
     function updateMark(
         MarkChain storage c,
         uint40 key,
-        uint64 value
+        uint32 value
     ) internal returns (bool) {
         Mark storage m = c.marks[key];
 
@@ -553,12 +551,12 @@ library ObjsRepo {
     function markedValue(MarkChain storage c, uint40 key)
         internal
         view
-        returns (uint256 value)
+        returns (uint32 value)
     {
         if (contains(c, key)) value = c.marks[key].value;
     }
 
-    function topValue(MarkChain storage c) internal view returns (uint256) {
+    function topValue(MarkChain storage c) internal view returns (uint32) {
         return c.marks[c.tail].value;
     }
 

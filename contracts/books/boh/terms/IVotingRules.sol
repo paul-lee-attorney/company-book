@@ -12,7 +12,7 @@ interface IVotingRules {
 
     event SetVotingBaseOnPar();
 
-    event SetProposalThreshold(uint256 threshold);
+    event SetProposalThreshold(uint64 threshold);
 
     event SetMaxNumOfDirectors(uint8 num);
 
@@ -22,7 +22,7 @@ interface IVotingRules {
 
     event SetAppointerOfViceChairman(uint40 nominator);
 
-    event SetBoardSeatsQuotaOf(uint40 nominator, uint256 quota);
+    event SetBoardSeatsQuotaOf(uint40 nominator, uint8 quota);
 
     event SetRule(uint8 typeOfVote, bytes32 sn);
 
@@ -47,8 +47,8 @@ interface IVotingRules {
     function setRule(
         uint8 typeOfVote,
         uint40 vetoHolder,
-        uint256 ratioHead,
-        uint256 ratioAmount,
+        uint16 ratioHead,
+        uint16 ratioAmount,
         bool onlyAttendance,
         bool impliedConsent,
         bool partyAsConsent,
@@ -70,7 +70,7 @@ interface IVotingRules {
 
     function maxNumOfDirectors() external view returns (uint8);
 
-    function tenureOfBoard() external view returns (uint256);
+    function tenureOfBoard() external view returns (uint8);
 
     function appointerOfChairman() external view returns (uint40);
 

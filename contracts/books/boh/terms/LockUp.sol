@@ -30,12 +30,12 @@ contract LockUp is ILockUp, ITerm, BOSSetting, BOMSetting, DraftControl {
 
     // 股票锁定柜
     struct Locker {
-        uint256 dueDate;
+        uint32 dueDate;
         EnumerableSet.UintSet keyHolders;
     }
 
     // 基准日条件未成就时，按“2277-09-19”设定到期日
-    uint256 constant REMOTE_FUTURE = 9710553600;
+    uint32 constant REMOTE_FUTURE = uint32(9710553600);
 
     // ssn => Locker
     mapping(bytes6 => Locker) private _lockers;
@@ -55,7 +55,7 @@ contract LockUp is ILockUp, ITerm, BOSSetting, BOMSetting, DraftControl {
     // ##   写接口   ##
     // ################
 
-    function setLocker(bytes32 shareNumber, uint256 dueDate)
+    function setLocker(bytes32 shareNumber, uint32 dueDate)
         external
         onlyAttorney
         shareExist(shareNumber.short())
@@ -114,7 +114,7 @@ contract LockUp is ILockUp, ITerm, BOSSetting, BOMSetting, DraftControl {
         view
         beLocked(ssn)
         onlyUser
-        returns (uint256 dueDate, uint40[] keyHolders)
+        returns (uint32 dueDate, uint40[] keyHolders)
     {
         dueDate = _lockers[ssn].dueDate;
         keyHolders = _lockers[ssn].keyHolders.valuesToUint40();
@@ -134,7 +134,7 @@ contract LockUp is ILockUp, ITerm, BOSSetting, BOMSetting, DraftControl {
         onlyUser
         returns (bool)
     {
-        uint256 closingDate = IInvestmentAgreement(ia).closingDate(
+        uint32 closingDate = IInvestmentAgreement(ia).closingDate(
             sn.sequence()
         );
 

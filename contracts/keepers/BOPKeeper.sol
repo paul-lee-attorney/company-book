@@ -53,7 +53,7 @@ contract BOPKeeper is IBOPKeeper, BOSSetting, BOPSetting {
 
         bytes6 shortShareNumber = sn.shortShareNumberOfPledge();
 
-        (, uint256 orgPledgedPar, uint40 orgCreditor, ) = _bop.getPledge(
+        (, uint64 orgPledgedPar, uint40 orgCreditor, ) = _bop.getPledge(
             sn.short()
         );
 
@@ -69,7 +69,7 @@ contract BOPKeeper is IBOPKeeper, BOSSetting, BOPSetting {
     }
 
     function delPledge(bytes32 sn, uint40 caller) external onlyDirectKeeper {
-        (, uint256 pledgedPar, uint40 creditor, ) = _bop.getPledge(sn.short());
+        (, uint64 pledgedPar, uint40 creditor, ) = _bop.getPledge(sn.short());
 
         require(caller == creditor, "NOT creditor");
 

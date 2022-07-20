@@ -10,7 +10,7 @@ contract ILockUp {
     // ##   Event   ##
     // ################
 
-    event SetLocker(bytes32 indexed shareNumber, uint256 dueDate);
+    event SetLocker(bytes32 indexed shareNumber, uint32 dueDate);
 
     event AddKeyholder(bytes32 indexed shareNumber, uint40 keyholder);
 
@@ -22,7 +22,7 @@ contract ILockUp {
     // ##   Write    ##
     // ################
 
-    function setLocker(bytes32 shareNumber, uint256 dueDate) external;
+    function setLocker(bytes32 shareNumber, uint32 dueDate) external;
 
     function delLocker(bytes32 shareNumber) external;
 
@@ -34,14 +34,12 @@ contract ILockUp {
     // ##  查询接口  ##
     // ################
 
-
     function isLocked(bytes6 ssn) external view returns (bool);
 
     function getLocker(bytes6 ssn)
         public
         view
-        returns (uint256 dueDate, uint40[] keyHolders);
+        returns (uint32 dueDate, uint40[] keyHolders);
 
-    function lockedShares() external view  returns (bytes32[]);
-
+    function lockedShares() external view returns (bytes32[]);
 }

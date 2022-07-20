@@ -187,9 +187,9 @@ contract BookOfPledges is IBookOfPledges, BOSSetting {
         onlyUser
         returns (
             bytes32 sn,
-            uint256 pledgedPar,
+            uint64 pledgedPar,
             uint40 creditor,
-            uint256 guaranteedAmt
+            uint64 guaranteedAmt
         )
     {
         Pledge storage pld = _pledges[ssn];

@@ -70,8 +70,7 @@ contract TagAlong is BOMSetting, DragAlong {
         len = rightholders.length;
 
         while (len > 0) {
-            if (!_supportGroups.contains(uint256(rightholders[len - 1])))
-                return false;
+            if (!_supportGroups.contains(rightholders[len - 1])) return false;
             len--;
         }
 

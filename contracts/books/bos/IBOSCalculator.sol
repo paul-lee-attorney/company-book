@@ -10,9 +10,9 @@ interface IBOSCalculator {
 
     function sharesOfClass(uint8 class) external view returns (bytes32[]);
 
-    function parOfGroup(uint16 group) external view returns (uint256 parValue);
+    function parOfGroup(uint16 group) external view returns (uint64 parValue);
 
-    function paidOfGroup(uint16 group) external view returns (uint256 paidPar);
+    function paidOfGroup(uint16 group) external view returns (uint64 paidPar);
 
     function updateController(bool basedOnPar) external;
 }

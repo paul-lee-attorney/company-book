@@ -15,13 +15,13 @@ interface IInvestmentAgreement {
     event CreateFRDeal(
         bytes32 indexed sn,
         bytes32 shareNumber,
-        uint256 unitPrice,
-        uint256 parValue,
-        uint256 paidPar,
+        uint32 unitPrice,
+        uint64 parValue,
+        uint64 paidPar,
         uint32 closingDate
     );
 
-    event UpdateFRDeal(bytes32 indexed sn, uint256 parValue, uint256 paidPar);
+    event UpdateFRDeal(bytes32 indexed sn, uint64 parValue, uint64 paidPar);
 
     event AcceptFR(bytes32 indexed sn, uint40 sender);
 
@@ -31,9 +31,9 @@ interface IInvestmentAgreement {
 
     event UpdateDeal(
         bytes32 indexed sn,
-        uint256 unitPrice,
-        uint256 parValue,
-        uint256 paidPar,
+        uint32 unitPrice,
+        uint64 parValue,
+        uint64 paidPar,
         uint32 closingDate
     );
 
@@ -85,9 +85,9 @@ interface IInvestmentAgreement {
 
     function updateDeal(
         uint16 ssn,
-        uint256 unitPrice,
-        uint256 parValue,
-        uint256 paidPar,
+        uint32 unitPrice,
+        uint64 parValue,
+        uint64 paidPar,
         uint32 closingDate
     ) external;
 
@@ -102,7 +102,7 @@ interface IInvestmentAgreement {
     function clearDealCP(
         uint16 ssn,
         bytes32 hashLock,
-        uint256 closingDate
+        uint32 closingDate
     ) external;
 
     function closeDeal(uint16 ssn, string hashKey) external;
@@ -123,7 +123,7 @@ interface IInvestmentAgreement {
 
     function counterOfFR(uint16 ssn) external view returns (uint16);
 
-    function sumOfWeight(uint16 ssn) external view returns (uint256);
+    function sumOfWeight(uint16 ssn) external view returns (uint64);
 
     function isTargetDeal(uint16 ssn) external view returns (bool);
 
@@ -140,13 +140,13 @@ interface IInvestmentAgreement {
         view
         returns (
             bytes32 sn,
-            uint256 parValue,
-            uint256 paidPar,
+            uint64 parValue,
+            uint64 paidPar,
             uint8 state, // 0-pending 1-cleared 2-closed 3-terminated
             bytes32 hashLock
         );
 
-    function unitPrice(uint16 ssn) external view returns (uint256);
+    function unitPrice(uint16 ssn) external view returns (uint32);
 
     function closingDate(uint16 ssn) external view returns (uint32);
 

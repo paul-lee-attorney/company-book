@@ -157,20 +157,20 @@ library SNParser {
         return uint8(bytes1(sn << 16));
     }
 
-    function thresholdOfLink(bytes32 sn) internal pure returns (uint256) {
-        return uint256(bytes4(sn << 24));
+    function thresholdOfLink(bytes32 sn) internal pure returns (uint64) {
+        return uint64(bytes4(sn << 24));
     }
 
     function proRataOfLink(bytes32 sn) internal pure returns (bool) {
         return uint8(sn[4]) == 1;
     }
 
-    function unitPriceOfLink(bytes32 sn) internal pure returns (uint256) {
-        return uint256(bytes4(sn << 64));
+    function unitPriceOfLink(bytes32 sn) internal pure returns (uint64) {
+        return uint64(bytes4(sn << 64));
     }
 
-    function roeOfLink(bytes32 sn) internal pure returns (uint256) {
-        return uint256(bytes4(sn << 96));
+    function roeOfLink(bytes32 sn) internal pure returns (uint64) {
+        return uint64(bytes4(sn << 96));
     }
 
     // ======== OptionSN ========
@@ -199,16 +199,16 @@ library SNParser {
         return uint8(sn[8]);
     }
 
-    function rateOfOpt(bytes32 sn) internal pure returns (uint256) {
-        return uint256(bytes4(sn << 72));
+    function rateOfOpt(bytes32 sn) internal pure returns (uint32) {
+        return uint32(bytes4(sn << 72));
     }
 
-    function parValueOfOpt(bytes32 sn) internal pure returns (uint256) {
-        return uint256(bytes4(sn << 104));
+    function parValueOfOpt(bytes32 sn) internal pure returns (uint64) {
+        return uint64(bytes4(sn << 104));
     }
 
-    function paidParOfOpt(bytes32 sn) internal pure returns (uint256) {
-        return uint256(bytes4(sn << 136));
+    function paidParOfOpt(bytes32 sn) internal pure returns (uint64) {
+        return uint64(bytes4(sn << 136));
     }
 
     function logOperator(bytes32 sn) internal pure returns (uint8) {
@@ -263,12 +263,12 @@ library SNParser {
         return bytes6(sn);
     }
 
-    function parValueOfFt(bytes32 sn) internal pure returns (uint256) {
-        return uint256(uint64(sn >> 144));
+    function parValueOfFt(bytes32 sn) internal pure returns (uint64) {
+        return uint64(uint64(sn >> 144));
     }
 
-    function paidParOfFt(bytes32 sn) internal pure returns (uint256) {
-        return uint256(uint64(sn >> 80));
+    function paidParOfFt(bytes32 sn) internal pure returns (uint64) {
+        return uint64(uint64(sn >> 80));
     }
 
     // ======== Pledge ========
@@ -303,12 +303,12 @@ library SNParser {
 
     // ========= VotingRule ========
 
-    function ratioHeadOfVR(bytes32 sn) internal pure returns (uint256) {
-        return uint256(bytes2(sn));
+    function ratioHeadOfVR(bytes32 sn) internal pure returns (uint16) {
+        return uint16(bytes2(sn));
     }
 
-    function ratioAmountOfVR(bytes32 sn) internal pure returns (uint256) {
-        return uint256(bytes2(sn << 16));
+    function ratioAmountOfVR(bytes32 sn) internal pure returns (uint16) {
+        return uint16(bytes2(sn << 16));
     }
 
     function onlyAttendanceOfVR(bytes32 sn) internal pure returns (bool) {
@@ -374,8 +374,8 @@ library SNParser {
     }
 
     // ======== AntiDilution ========
-    function priceOfMark(bytes32 sn) internal pure returns (uint256) {
-        return uint256(bytes29(sn << 24));
+    function priceOfMark(bytes32 sn) internal pure returns (uint32) {
+        return uint32(bytes29(sn << 24));
     }
 
     function classOfMark(bytes32 sn) internal pure returns (uint8) {

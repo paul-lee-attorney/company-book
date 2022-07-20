@@ -59,8 +59,8 @@ contract SHAKeeper is ISHAKeeper, BOASetting, SHASetting, BOSSetting {
         bytes32 sn,
         bool dragAlong,
         bytes32 shareNumber,
-        uint256 parValue,
-        uint256 paidPar,
+        uint64 parValue,
+        uint64 paidPar,
         uint40 caller,
         bytes32 sigHash
     ) external onlyDirectKeeper onlyExecuted(ia) withinReviewPeriod(ia) {
@@ -89,8 +89,8 @@ contract SHAKeeper is ISHAKeeper, BOASetting, SHASetting, BOSSetting {
         address ia,
         bytes32 sn,
         bytes32 shareNumber,
-        uint256 parValue,
-        uint256 paidPar,
+        uint64 parValue,
+        uint64 paidPar,
         uint40 caller
     ) private {
         uint40 drager = IInvestmentAgreement(ia)
@@ -159,10 +159,10 @@ contract SHAKeeper is ISHAKeeper, BOASetting, SHASetting, BOSSetting {
         address ia,
         bytes32 sn,
         bytes32 alongSN,
-        uint256 parValue,
-        uint256 paidPar
+        uint64 parValue,
+        uint64 paidPar
     ) private {
-        uint256 unitPrice = IInvestmentAgreement(ia).unitPrice(sn.sequence());
+        uint32 unitPrice = IInvestmentAgreement(ia).unitPrice(sn.sequence());
 
         uint32 closingDate = IInvestmentAgreement(ia).closingDate(
             sn.sequence()
@@ -180,7 +180,7 @@ contract SHAKeeper is ISHAKeeper, BOASetting, SHASetting, BOSSetting {
     function _lockDealSubject(
         address ia,
         bytes32 alongSN,
-        uint256 parValue
+        uint64 parValue
     ) private returns (bool flag) {
         if (IInvestmentAgreement(ia).lockDealSubject(alongSN.sequence())) {
             _bos.decreaseCleanPar(alongSN.shortShareNumberOfDeal(), parValue);
@@ -222,7 +222,7 @@ contract SHAKeeper is ISHAKeeper, BOASetting, SHASetting, BOSSetting {
             uint8(EnumsRepo.TermTitle.ANTI_DILUTION)
         );
 
-        uint256 giftPar = IAntiDilution(ad).giftPar(ia, sn, shareNumber);
+        uint64 giftPar = IAntiDilution(ad).giftPar(ia, sn, shareNumber);
         uint40[] memory obligors = IAntiDilution(ad).obligors(
             shareNumber.class()
         );
@@ -233,7 +233,7 @@ contract SHAKeeper is ISHAKeeper, BOASetting, SHASetting, BOSSetting {
     function _createGiftDeals(
         address ia,
         uint16 ssn,
-        uint256 giftPar,
+        uint64 giftPar,
         uint40[] obligors,
         uint40 caller,
         bytes32 sigHash
@@ -242,7 +242,7 @@ contract SHAKeeper is ISHAKeeper, BOASetting, SHASetting, BOSSetting {
             bytes32[] memory sharesInHand = _bos.sharesInHand(obligors[i]);
 
             for (uint256 j = 0; j < sharesInHand.length; j++) {
-                (bytes32 snOfGiftDeal, uint256 result) = _createGift(
+                (bytes32 snOfGiftDeal, uint64 result) = _createGift(
                     ia,
                     ssn,
                     sharesInHand[j],
@@ -264,10 +264,10 @@ contract SHAKeeper is ISHAKeeper, BOASetting, SHASetting, BOSSetting {
         address ia,
         uint16 ssn,
         bytes32 shareNumber,
-        uint256 giftPar,
+        uint64 giftPar,
         uint40 caller
-    ) private returns (bytes32 snOfGiftDeal, uint256 result) {
-        uint256 targetCleanPar = _bos.cleanPar(shareNumber.short());
+    ) private returns (bytes32 snOfGiftDeal, uint64 result) {
+        uint64 targetCleanPar = _bos.cleanPar(shareNumber.short());
 
         if (targetCleanPar > 0) {
             snOfGiftDeal = IInvestmentAgreement(ia).createDeal(
@@ -279,7 +279,7 @@ contract SHAKeeper is ISHAKeeper, BOASetting, SHASetting, BOSSetting {
                 ssn
             );
 
-            uint256 lockAmount = (targetCleanPar < giftPar)
+            uint64 lockAmount = (targetCleanPar < giftPar)
                 ? targetCleanPar
                 : giftPar;
 
@@ -302,7 +302,7 @@ contract SHAKeeper is ISHAKeeper, BOASetting, SHASetting, BOSSetting {
     function _updateGiftDeal(
         address ia,
         bytes32 snOfGiftDeal,
-        uint256 lockAmount
+        uint64 lockAmount
     ) private {
         uint32 closingDate = IInvestmentAgreement(ia).closingDate(
             snOfGiftDeal.preSSNOfDeal()

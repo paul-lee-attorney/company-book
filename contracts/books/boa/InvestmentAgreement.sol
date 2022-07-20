@@ -63,9 +63,9 @@ contract InvestmentAgreement is IInvestmentAgreement, BOSSetting, SigPage {
     struct Deal {
         bytes32 sn;
         bytes32 shareNumber;
-        uint256 unitPrice;
-        uint256 parValue;
-        uint256 paidPar;
+        uint32 unitPrice;
+        uint64 parValue;
+        uint64 paidPar;
         uint32 closingDate;
         ObjsRepo.TimeLine states;
         bytes32 hashLock;
@@ -204,11 +204,9 @@ contract InvestmentAgreement is IInvestmentAgreement, BOSSetting, SigPage {
         }
 
         if (shareNumber > bytes32(0))
-            _dealsConcerned[shareNumber.shareholder()].add(
-                uint256(_counterOfDeals)
-            );
+            _dealsConcerned[shareNumber.shareholder()].add(_counterOfDeals);
 
-        _dealsConcerned[buyer].add(uint256(_counterOfDeals));
+        _dealsConcerned[buyer].add(_counterOfDeals);
         _isBuyerOfDeal[buyer][_counterOfDeals] = true;
 
         emit CreateDeal(sn, shareNumber);
@@ -218,9 +216,9 @@ contract InvestmentAgreement is IInvestmentAgreement, BOSSetting, SigPage {
 
     function updateDeal(
         uint16 ssn,
-        uint256 unitPrice,
-        uint256 parValue,
-        uint256 paidPar,
+        uint32 unitPrice,
+        uint64 parValue,
+        uint64 paidPar,
         uint32 closingDate
     ) public dealExist(ssn) attorneyOrKeeper {
         require(parValue > 0, "parValue is ZERO");
@@ -421,8 +419,8 @@ contract InvestmentAgreement is IInvestmentAgreement, BOSSetting, SigPage {
         onlyUser
         returns (
             bytes32 sn,
-            uint256 parValue,
-            uint256 paidPar,
+            uint64 parValue,
+            uint64 paidPar,
             uint8 state, // 0-pending 1-locked 2-cleared 3-closed 4-terminated
             bytes32 hashLock
         )
@@ -441,7 +439,7 @@ contract InvestmentAgreement is IInvestmentAgreement, BOSSetting, SigPage {
         view
         onlyUser
         dealExist(ssn)
-        returns (uint256)
+        returns (uint32)
     {
         return _deals[ssn].unitPrice;
     }

@@ -84,11 +84,11 @@ interface IBookOfDirectors {
         view
         returns (bool);
 
-    function getYea(uint256 motionId) external view returns (uint40[], uint256);
+    function getYea(uint256 motionId) external view returns (uint40[], uint64);
 
-    function getNay(uint256 motionId) external view returns (uint40[], uint256);
+    function getNay(uint256 motionId) external view returns (uint40[], uint64);
 
-    function sumOfVoteAmt(uint256 motionId) external view returns (uint256);
+    function sumOfVoteAmt(uint256 motionId) external view returns (uint64);
 
     function isVoted(uint256 motionId, uint40 acct)
         external

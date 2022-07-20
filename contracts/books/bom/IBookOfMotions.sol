@@ -7,35 +7,11 @@ pragma solidity ^0.4.24;
 pragma experimental ABIEncoderV2;
 
 interface IBookOfMotions {
-    // //##############
-    // //##  Event   ##
-    // //##############
-
-    // event AuthorizeToPropose(
-    //     uint40 rightholder,
-    //     uint40 delegate,
-    //     uint256 actionId
-    // );
-
-    // event ProposeMotion(
-    //     uint256 indexed motionId,
-    //     uint8 typeOfMotion,
-    //     address[] targets,
-    //     bytes[] params,
-    //     bytes32 desHash,
-    //     bytes32 sn
-    // );
-
-    // event Vote(
-    //     uint256 indexed motionId,
-    //     uint40 voter,
-    //     uint8 atitude,
-    //     uint256 voteAmt
-    // );
+    //##############
+    //##  Event   ##
+    //##############
 
     event VoteCounting(uint256 indexed motionId, uint8 result);
-
-    // event ExecuteAction(uint256 indexed actionId, bool flag);
 
     //##################
     //##    写接口    ##
@@ -78,7 +54,7 @@ interface IBookOfMotions {
     function requestToBuy(address ia, bytes32 sn)
         external
         view
-        returns (uint256 parValue, uint256 paidPar);
+        returns (uint64 parValue, uint64 paidPar);
 
     //##################
     //##    读接口    ##
@@ -101,14 +77,14 @@ interface IBookOfMotions {
     function getYea(uint256 motionId)
         external
         view
-        returns (uint40[] membersOfYea, uint256 supportPar);
+        returns (uint40[] membersOfYea, uint64 supportPar);
 
     function getNay(uint256 motionId)
         external
         view
-        returns (uint40[] membersOfNay, uint256 againstPar);
+        returns (uint40[] membersOfNay, uint64 againstPar);
 
-    function sumOfVoteAmt(uint256 motionId) external view returns (uint256);
+    function sumOfVoteAmt(uint256 motionId) external view returns (uint64);
 
     function isVoted(uint256 motionId, uint40 acct)
         external

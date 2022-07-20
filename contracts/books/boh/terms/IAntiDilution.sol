@@ -14,9 +14,9 @@ interface IAntiDilution {
 
     event DelBenchmark(uint8 indexed class);
 
-    event AddObligor(uint256 indexed class, uint40 obligor);
+    event AddObligor(uint8 indexed class, uint40 obligor);
 
-    event RemoveObligor(uint256 indexed class, uint40 obligor);
+    event RemoveObligor(uint8 indexed class, uint40 obligor);
 
     // ################
     // ##   Write    ##
@@ -36,7 +36,7 @@ interface IAntiDilution {
 
     function isMarked(uint8 class) external view returns (bool);
 
-    function getBenchmark(uint8 class) external view returns (uint256);
+    function getBenchmark(uint8 class) external view returns (uint64);
 
     function obligors(uint8 class) external view returns (uint40[]);
 
@@ -44,5 +44,5 @@ interface IAntiDilution {
         address ia,
         bytes32 snOfDeal,
         bytes32 shareNumber
-    ) external view returns (uint256);
+    ) external view returns (uint64);
 }

@@ -31,7 +31,7 @@ contract Roles is IRoles, RegCenterSetting {
         external
         theUser(roleAdmin(role))
     {
-        if (_roles[role].roleGroup.add(uint256(user)))
+        if (_roles[role].roleGroup.add(user))
             emit RoleGranted(role, user, _msgSender());
     }
 
@@ -60,7 +60,7 @@ contract Roles is IRoles, RegCenterSetting {
     }
 
     function _removeRole(bytes32 role, uint40 acct) private {
-        if (_roles[role].roleGroup.remove(uint256(acct)))
+        if (_roles[role].roleGroup.remove(acct))
             emit RoleRevoked(role, acct, _msgSender());
     }
 
@@ -81,7 +81,7 @@ contract Roles is IRoles, RegCenterSetting {
         onlyUser
         returns (bool)
     {
-        return _roles[role].roleGroup.contains(uint256(acct));
+        return _roles[role].roleGroup.contains(acct);
     }
 
     function roleMembers(bytes32 role) public view onlyUser returns (uint40[]) {

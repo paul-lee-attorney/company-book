@@ -14,14 +14,14 @@ contract FirstRefusalToolKits is InvestmentAgreement {
 
     struct Record {
         uint16 ssn; // FR sequence number
-        uint256 weight; // FR rightholder's voting weight
+        uint64 weight; // FR rightholder's voting weight
     }
 
     // dealSN => counterOfFR
     mapping(uint16 => uint16) private _counterOfFR;
 
     // dealSN => accumulatedWeight
-    mapping(uint16 => uint256) private _sumOfWeight;
+    mapping(uint16 => uint64) private _sumOfWeight;
 
     // dealSN => counterOfFR => ssn
     mapping(uint16 => mapping(uint16 => Record)) private _records;
@@ -54,7 +54,7 @@ contract FirstRefusalToolKits is InvestmentAgreement {
         if (_counterOfFR[ssn] == 1)
             targetDeal.states.setState(uint8(EnumsRepo.StateOfDeal.Terminated));
 
-        uint256 weight = _bos.voteInHand(acct);
+        uint64 weight = _bos.voteInHand(acct);
         require(weight > 0, "first refusal request has ZERO weight");
 
         Record storage record = _records[ssn][_counterOfFR[ssn]];
@@ -79,10 +79,10 @@ contract FirstRefusalToolKits is InvestmentAgreement {
         while (len > 0) {
             Record storage record = _records[ssn][len];
 
-            uint256 parValue = (targetDeal.parValue * record.weight) /
+            uint64 parValue = (targetDeal.parValue * record.weight) /
                 _sumOfWeight[ssn];
 
-            uint256 paidPar = (targetDeal.paidPar * record.weight) /
+            uint64 paidPar = (targetDeal.paidPar * record.weight) /
                 _sumOfWeight[ssn];
 
             updateDeal(
@@ -122,7 +122,7 @@ contract FirstRefusalToolKits is InvestmentAgreement {
         return _counterOfFR[ssn];
     }
 
-    function sumOfWeight(uint16 ssn) external view onlyUser returns (uint256) {
+    function sumOfWeight(uint16 ssn) external view onlyUser returns (uint64) {
         return _sumOfWeight[ssn];
     }
 

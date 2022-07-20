@@ -29,11 +29,11 @@ contract BookOfOptions is IBookOfOptions, BOSSetting {
         uint40 rightholder;
         EnumerableSet.UintSet obligors;
         uint32 closingDate;
-        uint256 parValue;
-        uint256 paidPar;
-        uint256 futurePar;
-        uint256 futurePaid;
-        uint256 pledgePaid;
+        uint64 parValue;
+        uint64 paidPar;
+        uint64 futurePar;
+        uint64 futurePaid;
+        uint64 pledgePaid;
         bytes32 hashLock;
         uint8 state; // 0-pending; 1-issued; 2-executed; 3-futureReady; 4-pledgeReady; 5-closed; 6-revoked; 7-expired;
     }
@@ -108,7 +108,7 @@ contract BookOfOptions is IBookOfOptions, BOSSetting {
         uint32 triggerDate,
         uint8 exerciseDays,
         uint8 closingDays,
-        uint256 rate
+        uint32 rate
     ) public pure returns (bytes32 sn) {
         bytes memory _sn = new bytes(32);
 
@@ -117,7 +117,7 @@ contract BookOfOptions is IBookOfOptions, BOSSetting {
         _sn = _sn.dateToSN(3, triggerDate);
         _sn[7] = bytes1(exerciseDays);
         _sn[8] = bytes1(closingDays);
-        _sn = _sn.dateToSN(9, uint32(rate));
+        _sn = _sn.dateToSN(9, rate);
 
         sn = _sn.bytesToBytes32();
     }
@@ -129,9 +129,9 @@ contract BookOfOptions is IBookOfOptions, BOSSetting {
         uint32 triggerDate,
         uint8 exerciseDays,
         uint8 closingDays,
-        uint256 rate,
-        uint256 parValue,
-        uint256 paidPar
+        uint32 rate,
+        uint64 parValue,
+        uint64 paidPar
     ) external onlyKeeper returns (bytes32 sn) {
         // require(typeOfOpt < 4, "typeOfOpt overflow");
         require(triggerDate >= now + 15 minutes, "triggerDate NOT future");
@@ -290,8 +290,8 @@ contract BookOfOptions is IBookOfOptions, BOSSetting {
 
     function _createFuture(
         bytes32 shareNumber,
-        uint256 parValue,
-        uint256 paidPar
+        uint64 parValue,
+        uint64 paidPar
     ) internal pure returns (bytes32 ft) {
         bytes memory _ft = new bytes(32);
 
@@ -305,8 +305,8 @@ contract BookOfOptions is IBookOfOptions, BOSSetting {
     function addFuture(
         bytes6 ssn,
         bytes32 shareNumber,
-        uint256 parValue,
-        uint256 paidPar
+        uint64 parValue,
+        uint64 paidPar
     ) external onlyKeeper optionExist(ssn) {
         Option storage opt = _options[ssn];
 
@@ -377,7 +377,7 @@ contract BookOfOptions is IBookOfOptions, BOSSetting {
     function requestPledge(
         bytes6 ssn,
         bytes32 shareNumber,
-        uint256 paidPar
+        uint64 paidPar
     ) external onlyKeeper optionExist(ssn) {
         Option storage opt = _options[ssn];
 
@@ -480,8 +480,8 @@ contract BookOfOptions is IBookOfOptions, BOSSetting {
             bytes32 sn,
             uint40 rightholder,
             uint32 closingDate,
-            uint256 parValue,
-            uint256 paidPar,
+            uint64 parValue,
+            uint64 paidPar,
             bytes32 hashLock,
             uint8 state
         )

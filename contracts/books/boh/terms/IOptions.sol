@@ -31,9 +31,9 @@ interface IOptions {
         uint32 triggerDate,
         uint8 exerciseDays,
         uint8 closingDays,
-        uint256 rate,
-        uint256 parValue,
-        uint256 paidPar
+        uint32 rate,
+        uint64 parValue,
+        uint64 paidPar
     ) external;
 
     function addConditions(

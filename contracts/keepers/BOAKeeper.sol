@@ -111,7 +111,7 @@ contract BOAKeeper is
     }
 
     function _releaseCleanParOfDeal(address ia, bytes32 sn) private {
-        (, uint256 parValue, , , ) = IInvestmentAgreement(ia).getDeal(
+        (, uint64 parValue, , , ) = IInvestmentAgreement(ia).getDeal(
             sn.sequence()
         );
 
@@ -160,15 +160,15 @@ contract BOAKeeper is
             caller
         );
         uint256 len = seqList.length;
-        uint256 amount;
+        uint64 amount;
 
         while (len > 0) {
             uint16 seq = seqList[len - 1];
 
             (
                 bytes32 sn,
-                uint256 parValue,
-                uint256 paidPar,
+                uint64 parValue,
+                uint64 paidPar,
                 ,
 
             ) = IInvestmentAgreement(ia).getDeal(seq);
@@ -201,7 +201,7 @@ contract BOAKeeper is
         address ia,
         bytes32 sn,
         bytes32 hashLock,
-        uint256 closingDate,
+        uint32 closingDate,
         uint40 caller
     ) external onlyDirectKeeper {
         require(
@@ -302,10 +302,10 @@ contract BOAKeeper is
             sn.sequence()
         );
 
-        (, uint256 parValue, uint256 paidPar, , ) = IInvestmentAgreement(ia)
+        (, uint64 parValue, uint64 paidPar, , ) = IInvestmentAgreement(ia)
             .getDeal(sn.sequence());
 
-        uint256 unitPrice = IInvestmentAgreement(ia).unitPrice(sn.sequence());
+        uint32 unitPrice = IInvestmentAgreement(ia).unitPrice(sn.sequence());
 
         //释放Share的质押标记(若需)，执行交易
         if (shareNumber > bytes32(0)) {
@@ -323,8 +323,8 @@ contract BOAKeeper is
                 sn.classOfDeal(),
                 parValue,
                 paidPar,
-                block.timestamp, //paidInDeadline
-                block.timestamp, //issueDate
+                uint32(block.timestamp), //paidInDeadline
+                uint32(block.timestamp), //issueDate
                 unitPrice //issuePrice
             );
         }

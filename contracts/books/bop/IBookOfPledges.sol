@@ -71,9 +71,9 @@ interface IBookOfPledges {
         view
         returns (
             bytes32 shareNumber,
-            uint256 pledgedPar,
+            uint64 pledgedPar,
             uint40 creditor,
-            uint256 guaranteedAmt
+            uint64 guaranteedAmt
         );
 
     function isPledge(bytes32 sn) external view returns (bool);

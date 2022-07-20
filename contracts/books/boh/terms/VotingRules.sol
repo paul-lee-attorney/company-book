@@ -31,10 +31,6 @@ contract VotingRules is IVotingRules, DraftControl {
     // typeOfVote => Rule: 1-CI 2-ST(to 3rd Party) 3-ST(to otherMember) 4-(1&3) 5-(2&3) 6-(1&2&3) 7-(1&2)
     bytes32[12] private _votingRules;
 
-    // bool private _basedOnPar;
-
-    // uint256 private _proposalThreshold;
-
     struct Governance {
         bool basedOnPar;
         uint16 proposalThreshold;
@@ -159,8 +155,8 @@ contract VotingRules is IVotingRules, DraftControl {
     function setRule(
         uint8 typeOfVote,
         uint40 vetoHolder,
-        uint256 ratioHead,
-        uint256 ratioAmount,
+        uint16 ratioHead,
+        uint16 ratioAmount,
         bool onlyAttendance,
         bool impliedConsent,
         bool partyAsConsent,
@@ -173,8 +169,8 @@ contract VotingRules is IVotingRules, DraftControl {
 
         bytes memory _sn = new bytes(32);
 
-        _sn = _sn.intToSN(0, ratioHead, 2);
-        _sn = _sn.intToSN(2, ratioAmount, 2);
+        _sn = _sn.sequenceToSN(0, ratioHead);
+        _sn = _sn.sequenceToSN(2, ratioAmount);
         _sn = _sn.boolToSN(4, onlyAttendance);
         _sn = _sn.boolToSN(5, impliedConsent);
         _sn = _sn.boolToSN(6, partyAsConsent);
@@ -215,7 +211,7 @@ contract VotingRules is IVotingRules, DraftControl {
         return _ruleOfGovernance.maxNumOfDirectors;
     }
 
-    function tenureOfBoard() external view onlyUser returns (uint256) {
+    function tenureOfBoard() external view onlyUser returns (uint8) {
         return _ruleOfGovernance.tenureOfBoard;
     }
 

@@ -60,7 +60,7 @@ contract BOSCalculator is IBOSCalculator, BOSSetting {
         public
         view
         onlyUser
-        returns (uint256 parValue)
+        returns (uint64 parValue)
     {
         require(_bos.isGroup(group), "GROUP not exist");
 
@@ -76,7 +76,7 @@ contract BOSCalculator is IBOSCalculator, BOSSetting {
         public
         view
         onlyUser
-        returns (uint256 paidPar)
+        returns (uint64 paidPar)
     {
         require(_bos.isGroup(group), "GROUP not exist");
 

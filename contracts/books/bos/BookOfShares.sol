@@ -5,18 +5,25 @@
 
 pragma solidity ^0.4.24;
 
-// import "./MembersRepo.sol";
 import "./IBookOfShares.sol";
 
 import "../../common/lib/SNFactory.sol";
 import "../../common/lib/SNParser.sol";
 import "../../common/lib/ObjsRepo.sol";
 import "../../common/lib/Checkpoints.sol";
+import "../../common/lib/EnumsRepo.sol";
 import "../../common/lib/EnumerableSet.sol";
 
+import "../../common/access/AccessControl.sol";
+import "../../common/ruting/IBookSetting.sol";
 import "../../common/ruting/SHASetting.sol";
 
-contract BookOfShares is IBookOfShares, SHASetting {
+contract BookOfShares is
+    IBookOfShares,
+    IBookSetting,
+    SHASetting,
+    AccessControl
+{
     using SNFactory for bytes;
     using SNParser for bytes32;
     using ObjsRepo for ObjsRepo.SNList;
@@ -64,21 +71,29 @@ contract BookOfShares is IBookOfShares, SHASetting {
 
     // ==== Member ====
 
-    EnumerableSet.UintSet private _members;
+    struct Member {
+        EnumerableSet.Bytes32Set sharesInHand;
+        Checkpoints.History votesInHand;
+        uint16 groupNo;
+    }
+
+    mapping(uint40 => Member) private _members;
+
+    EnumerableSet.UintSet private _membersList;
 
     Checkpoints.History private _qtyOfMembers;
 
-    mapping(uint40 => EnumerableSet.Bytes32Set) private _sharesInHand;
+    // mapping(uint40 => EnumerableSet.Bytes32Set) private _sharesInHand;
 
-    mapping(uint40 => Checkpoints.History) private _votesInHand;
+    // mapping(uint40 => Checkpoints.History) private _votesInHand;
 
-    uint8 private _maxQtyOfMembers;
+    uint16 private _maxQtyOfMembers;
 
     // ==== Group ====
 
     mapping(uint16 => EnumerableSet.UintSet) private _membersOfGroup;
 
-    mapping(uint40 => uint16) private _groupNo;
+    // mapping(uint40 => uint16) private _groupNo;
 
     EnumerableSet.UintSet private _groupsList;
 
@@ -101,12 +116,12 @@ contract BookOfShares is IBookOfShares, SHASetting {
     }
 
     modifier onlyMember() {
-        require(_members.contains(_msgSender()), "NOT Member");
+        require(_membersList.contains(_msgSender()), "NOT Member");
         _;
     }
 
     modifier memberExist(uint40 acct) {
-        require(_members.contains(acct), "Acct is NOT Member");
+        require(_membersList.contains(acct), "Acct is NOT Member");
         _;
     }
 
@@ -119,9 +134,13 @@ contract BookOfShares is IBookOfShares, SHASetting {
     //##    写接口    ##
     //##################
 
-    constructor(bytes32 regNumHash, uint8 max) public {
+    constructor(bytes32 regNumHash, uint16 max) public {
         _maxQtyOfMembers = max;
         _regNumHash = regNumHash;
+    }
+
+    function setBooks(address[8] books) external onlyDirectKeeper {
+        _setBOH(books[uint8(EnumsRepo.NameOfBook.BOH)]);
     }
 
     // ==== IssueShare ====
@@ -386,21 +405,21 @@ contract BookOfShares is IBookOfShares, SHASetting {
         emit CapDecrease(par, regCap, paid, paidCap, blocknumber);
     }
 
-    function decreaseCleanPar(bytes6 ssn, uint64 parValue)
+    function decreaseCleanPar(bytes6 ssn, uint64 paidPar)
         external
         onlyKeeper
         shareExist(ssn)
         notFreezed(ssn)
     {
-        require(parValue > 0, "ZERO parValue");
+        require(paidPar > 0, "ZERO paidPar");
 
         Share storage share = _shares[ssn];
 
-        require(parValue <= share.cleanPar, "INSUFFICIENT cleanPar");
+        require(paidPar <= share.cleanPar, "INSUFFICIENT cleanPar");
 
-        share.cleanPar -= parValue;
+        share.cleanPar -= paidPar;
 
-        emit DecreaseCleanPar(ssn, parValue);
+        emit DecreaseCleanPar(ssn, paidPar);
     }
 
     function increaseCleanPar(bytes6 ssn, uint64 paidPar)
@@ -449,31 +468,34 @@ contract BookOfShares is IBookOfShares, SHASetting {
 
     // ==== MembersRepo ====
 
-    function setMaxQtyOfMembers(uint8 max) external onlyOwner {
+    function setMaxQtyOfMembers(uint16 max) external onlyOwner {
         _maxQtyOfMembers = max;
         emit SetMaxQtyOfMembers(max);
     }
 
     function _addMember(uint40 acct, uint64 parValue) internal {
         require(
-            _members.length() < _maxQtyOfMembers,
+            _membersList.length() < _maxQtyOfMembers,
             "Qty of Members overflow"
         );
 
-        if (_members.add(acct)) {
+        if (_membersList.add(acct)) {
             _rc.investIn(acct, parValue, true);
-            _qtyOfMembers.push(uint64(_members.length()), 1);
-            emit AddMember(acct, uint8(_members.length()));
+            _qtyOfMembers.push(uint64(_membersList.length()), 1);
+            emit AddMember(acct, uint16(_membersList.length()));
         }
     }
 
     function _removeMember(uint40 acct) internal {
-        if (_members.remove(acct)) {
-            delete _sharesInHand[acct];
-            if (_groupNo[acct] > 0) removeMemberFromGroup(acct, _groupNo[acct]);
-            _qtyOfMembers.push(uint64(_members.length()), 0);
+        if (_membersList.remove(acct)) {
+            Member storage member = _members[acct];
+
+            delete member.sharesInHand;
+
+            if (member.groupNo > 0) removeMemberFromGroup(acct, member.groupNo);
+            _qtyOfMembers.push(uint64(_membersList.length()), 0);
             _rc.exitOut(acct);
-            emit RemoveMember(acct, uint8(_members.length()));
+            emit RemoveMember(acct, uint16(_membersList.length()));
         }
     }
 
@@ -485,7 +507,8 @@ contract BookOfShares is IBookOfShares, SHASetting {
         Share storage share = _shares[ssn];
 
         _increaseAmountToMember(acct, share.parValue, share.paidPar);
-        _sharesInHand[acct].add(share.shareNumber);
+
+        _members[acct].sharesInHand.add(share.shareNumber);
 
         emit AddShareToMember(share.shareNumber, acct);
     }
@@ -497,9 +520,9 @@ contract BookOfShares is IBookOfShares, SHASetting {
     {
         Share storage share = _shares[ssn];
 
-        _sharesInHand[acct].remove(share.shareNumber);
+        _members[acct].sharesInHand.remove(share.shareNumber);
 
-        if (_sharesInHand[acct].length() == 0) _removeMember(acct);
+        if (_members[acct].sharesInHand.length() == 0) _removeMember(acct);
         else _decreaseAmountFromMember(acct, share.parValue, share.paidPar);
 
         emit RemoveShareFromMember(share.shareNumber, acct);
@@ -510,9 +533,9 @@ contract BookOfShares is IBookOfShares, SHASetting {
         uint64 parValue,
         uint64 paidPar
     ) internal {
-        (uint64 oldPar, uint64 oldPaid) = _votesInHand[acct].latest();
+        (uint64 oldPar, uint64 oldPaid) = _members[acct].votesInHand.latest();
 
-        uint64 blocknumber = _votesInHand[acct].push(
+        uint64 blocknumber = _members[acct].votesInHand.push(
             oldPar + parValue,
             oldPaid + paidPar
         );
@@ -527,12 +550,12 @@ contract BookOfShares is IBookOfShares, SHASetting {
         uint64 parValue,
         uint64 paidPar
     ) internal {
-        (uint64 oldPar, uint64 oldPaid) = _votesInHand[acct].latest();
+        (uint64 oldPar, uint64 oldPaid) = _members[acct].votesInHand.latest();
 
         require(oldPar >= parValue, "parValue over flow");
         require(oldPaid >= paidPar, "paidPar over flow");
 
-        uint64 blocknumber = _votesInHand[acct].push(
+        uint64 blocknumber = _members[acct].votesInHand.push(
             oldPar - parValue,
             oldPaid - paidPar
         );
@@ -544,16 +567,16 @@ contract BookOfShares is IBookOfShares, SHASetting {
 
     // ==== Group ====
 
-    function addMemberToGroup(uint40 acct, uint16 group) public onlyKeeper {
+    function addMemberToGroup(uint40 acct, uint16 group) external onlyKeeper {
         require(group > 0, "ZERO group");
         require(group <= _counterOfGroups + 1, "group OVER FLOW");
-        require(_groupNo[acct] == 0, "belongs to another group");
+        require(_members[acct].groupNo == 0, "belongs to another group");
 
         _groupsList.add(group);
 
         if (group > _counterOfGroups) _counterOfGroups = group;
 
-        _groupNo[acct] = group;
+        _members[acct].groupNo = group;
 
         _membersOfGroup[group].add(acct);
 
@@ -565,7 +588,9 @@ contract BookOfShares is IBookOfShares, SHASetting {
         groupExist(group)
         onlyKeeper
     {
-        require(_groupNo[acct] == group, "WRONG group number");
+        Member storage member = _members[acct];
+
+        require(member.groupNo == group, "WRONG group number");
 
         _membersOfGroup[group].remove(acct);
 
@@ -574,7 +599,7 @@ contract BookOfShares is IBookOfShares, SHASetting {
             _groupsList.remove(group);
         }
 
-        _groupNo[acct] == 0;
+        member.groupNo == 0;
 
         emit RemoveMemberFromGroup(acct, group);
     }
@@ -598,32 +623,31 @@ contract BookOfShares is IBookOfShares, SHASetting {
     }
 
     // ==== SharesRepo ====
-    function counterOfShares() external view onlyUser returns (uint16) {
+    function counterOfShares() external view returns (uint16) {
         return _counterOfShares;
     }
 
-    function counterOfClasses() external view onlyUser returns (uint8) {
+    function counterOfClasses() external view returns (uint8) {
         return _counterOfClasses;
     }
 
-    function regCap() external view onlyUser returns (uint64 par) {
+    function regCap() external view returns (uint64 par) {
         (par, ) = _ownersEquity.latest();
     }
 
-    function paidCap() external view onlyUser returns (uint64 paid) {
+    function paidCap() external view returns (uint64 paid) {
         (, paid) = _ownersEquity.latest();
     }
 
     function capAtBlock(uint64 blocknumber)
         external
         view
-        onlyUser
         returns (uint64 par, uint64 paid)
     {
         (par, paid) = _ownersEquity.getAtBlock(blocknumber);
     }
 
-    function totalVote() external view onlyUser returns (uint64 vote) {
+    function totalVote() external view returns (uint64 vote) {
         if (_getSHA().basedOnPar()) (vote, ) = _ownersEquity.latest();
         else (, vote) = _ownersEquity.latest();
     }
@@ -631,7 +655,6 @@ contract BookOfShares is IBookOfShares, SHASetting {
     function totalVoteAtBlock(uint64 blocknumber)
         external
         view
-        onlyUser
         returns (uint64 vote)
     {
         if (_getSHA().basedOnPar())
@@ -639,15 +662,15 @@ contract BookOfShares is IBookOfShares, SHASetting {
         else (, vote) = _ownersEquity.getAtBlock(blocknumber);
     }
 
-    function isShare(bytes6 ssn) external view onlyUser returns (bool) {
+    function isShare(bytes6 ssn) external view returns (bool) {
         return _snList.contains(ssn);
     }
 
-    function snList() external view onlyUser returns (bytes32[]) {
+    function snList() external view returns (bytes32[]) {
         return _snList.values();
     }
 
-    function cleanPar(bytes6 ssn) external view onlyUser returns (uint64) {
+    function cleanPar(bytes6 ssn) external view returns (uint64) {
         return _shares[ssn].cleanPar;
     }
 
@@ -655,7 +678,6 @@ contract BookOfShares is IBookOfShares, SHASetting {
         external
         view
         shareExist(ssn)
-        onlyUser
         returns (
             bytes32 shareNumber,
             uint64 parValue,
@@ -677,108 +699,98 @@ contract BookOfShares is IBookOfShares, SHASetting {
 
     // ==== MembersRepo ====
 
-    function maxQtyOfMembers() external view onlyUser returns (uint8) {
+    function maxQtyOfMembers() external view returns (uint16) {
         return _maxQtyOfMembers;
     }
 
-    function isMember(uint40 acct) public view onlyUser returns (bool) {
-        return _members.contains(acct);
+    function isMember(uint40 acct) public view returns (bool) {
+        return _membersList.contains(acct);
     }
 
-    function members() external view onlyUser returns (uint40[]) {
-        return _members.valuesToUint40();
+    function members() external view returns (uint40[]) {
+        return _membersList.valuesToUint40();
     }
 
-    function qtyOfmembersAtBlock(uint64 blockNumber)
+    function qtyOfMembersAtBlock(uint64 blockNumber)
         external
         view
-        onlyUser
-        returns (uint8)
+        returns (uint16)
     {
         (uint256 qty, ) = _qtyOfMembers.getAtBlock(blockNumber);
-        return (uint8(qty));
+        return (uint16(qty));
     }
 
     function parInHand(uint40 acct)
         external
         view
         memberExist(acct)
-        onlyUser
         returns (uint64 par)
     {
-        (par, ) = _votesInHand[acct].latest();
+        (par, ) = _members[acct].votesInHand.latest();
     }
 
     function paidInHand(uint40 acct)
         external
         view
         memberExist(acct)
-        onlyUser
         returns (uint64 paid)
     {
-        (, paid) = _votesInHand[acct].latest();
+        (, paid) = _members[acct].votesInHand.latest();
     }
 
     function voteInHand(uint40 acct)
         external
         view
         memberExist(acct)
-        onlyUser
         returns (uint64 vote)
     {
-        if (_getSHA().basedOnPar()) (vote, ) = _votesInHand[acct].latest();
-        else (, vote) = _votesInHand[acct].latest();
+        if (_getSHA().basedOnPar())
+            (vote, ) = _members[acct].votesInHand.latest();
+        else (, vote) = _members[acct].votesInHand.latest();
     }
 
     function votesAtBlock(uint40 acct, uint64 blockNumber)
         external
         view
-        onlyUser
         returns (uint64 vote)
     {
         if (_getSHA().basedOnPar())
-            (vote, ) = _votesInHand[acct].getAtBlock(blockNumber);
-        else (, vote) = _votesInHand[acct].getAtBlock(blockNumber);
+            (vote, ) = _members[acct].votesInHand.getAtBlock(blockNumber);
+        else (, vote) = _members[acct].votesInHand.getAtBlock(blockNumber);
     }
 
     function sharesInHand(uint40 acct)
         external
         view
         memberExist(acct)
-        onlyUser
         returns (bytes32[])
     {
-        return _sharesInHand[acct].values();
+        return _members[acct].sharesInHand.values();
     }
 
     // ==== Group ====
 
-    function counterOfGroups() external view onlyUser returns (uint16) {
+    function counterOfGroups() external view returns (uint16) {
         return _counterOfGroups;
     }
 
-    function controller() external view onlyUser returns (uint16) {
+    function controller() external view returns (uint16) {
         return _controller;
     }
 
-    function groupNo(uint40 acct) external view onlyUser returns (uint16) {
-        return _groupNo[acct];
+    function groupNo(uint40 acct) external view returns (uint16) {
+        return _members[acct].groupNo;
     }
 
-    function membersOfGroup(uint16 group)
-        external
-        view
-        onlyUser
-        returns (uint40[])
-    {
+    function membersOfGroup(uint16 group) external view returns (uint40[]) {
         return _membersOfGroup[group].valuesToUint40();
     }
 
-    function isGroup(uint16 group) external view onlyUser returns (bool) {
+    function isGroup(uint16 group) external view returns (bool) {
         return _groupsList.contains(group);
     }
 
-    function groupsList() external view onlyUser returns (uint16[]) {
+    function groupsList() external view returns (uint16[]) {
         return _groupsList.valuesToUint16();
     }
 }

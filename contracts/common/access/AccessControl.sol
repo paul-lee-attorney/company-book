@@ -6,17 +6,31 @@
 pragma solidity ^0.4.24;
 
 import "./Roles.sol";
-
 import "./IAccessControl.sol";
+
+// import "./RegCenterSetting.sol";
+
+// import "../lib/RolesRepo.sol";
 
 contract AccessControl is IAccessControl, Roles {
     bytes32 public constant KEEPERS = bytes32("Keepers");
 
-    bytes32 public constant READERS = bytes32("Readers");
-
     uint40 private _directKeeper;
-
     uint40 private _owner;
+
+    // ##################
+    // ##   Event      ##
+    // ##################
+
+    event Init(
+        uint40 indexed owner,
+        uint40 indexed directKeeper,
+        address regCenter
+    );
+
+    event AbandonOwnership();
+
+    event QuitEntity(uint8 roleOfUser);
 
     // ##################
     // ##   修饰器     ##
@@ -45,19 +59,6 @@ contract AccessControl is IAccessControl, Roles {
         _;
     }
 
-    modifier onlyReader() {
-        require(hasRole(READERS, _msgSender()), "not READER");
-        _;
-    }
-
-    modifier currentDate(uint32 date) {
-        require(
-            date >= now - 15 minutes && date <= now + 15 minutes,
-            "not a current date"
-        );
-        _;
-    }
-
     // ##################
     // ##    写端口    ##
     // ##################
@@ -76,12 +77,11 @@ contract AccessControl is IAccessControl, Roles {
         _directKeeper = directKeeper;
 
         _setRoleAdmin(KEEPERS, _directKeeper);
-        _setRoleAdmin(READERS, _owner);
 
         emit Init(_owner, _directKeeper, _rc);
     }
 
-    function abandonOwnership() public ownerOrDirectKeeper {
+    function abandonOwnership() external ownerOrDirectKeeper {
         _owner = 0;
         emit AbandonOwnership();
     }
@@ -95,11 +95,11 @@ contract AccessControl is IAccessControl, Roles {
     // ##   查询端口   ##
     // ##################
 
-    function getOwner() public view onlyUser returns (uint40) {
+    function getOwner() public view returns (uint40) {
         return _owner;
     }
 
-    function getDirectKeeper() public view onlyUser returns (uint40) {
+    function getDirectKeeper() public view returns (uint40) {
         return _directKeeper;
     }
 }

@@ -142,7 +142,7 @@ contract FirstRefusal is
     // ##  查询接口  ##
     // ################
 
-    function isSubject(uint8 typeOfDeal) public view onlyUser returns (bool) {
+    function isSubject(uint8 typeOfDeal) public view returns (bool) {
         return _isSubject[typeOfDeal];
     }
 
@@ -150,7 +150,6 @@ contract FirstRefusal is
         public
         view
         beRestricted(typeOfDeal)
-        onlyUser
         returns (bytes32)
     {
         return _firstRefusals[typeOfDeal].rule;
@@ -160,7 +159,6 @@ contract FirstRefusal is
         public
         view
         beRestricted(typeOfDeal)
-        onlyUser
         returns (bool)
     {
         FR storage fr = _firstRefusals[typeOfDeal];
@@ -173,7 +171,6 @@ contract FirstRefusal is
         public
         view
         beRestricted(typeOfDeal)
-        onlyUser
         returns (uint40[])
     {
         FR storage fr = _firstRefusals[typeOfDeal];
@@ -186,12 +183,7 @@ contract FirstRefusal is
     // ##  Term接口  ##
     // ################
 
-    function isTriggered(address ia, bytes32 sn)
-        public
-        view
-        onlyUser
-        returns (bool)
-    {
+    function isTriggered(address ia, bytes32 sn) public view returns (bool) {
         require(
             IInvestmentAgreement(ia).isDeal(sn.sequence()),
             "deal not exist"
@@ -200,12 +192,7 @@ contract FirstRefusal is
         return _isSubject[sn.typeOfDeal()];
     }
 
-    function isExempted(address ia, bytes32 sn)
-        external
-        view
-        onlyUser
-        returns (bool)
-    {
+    function isExempted(address ia, bytes32 sn) external view returns (bool) {
         if (!isTriggered(ia, sn)) return true;
         bytes32 rule = _firstRefusals[sn.typeOfDeal()].rule;
 

@@ -148,7 +148,6 @@ contract DragAlong is IAlongs, ITerm, BOSSetting, BOASetting, DraftControl {
         external
         view
         dragerGroupExist(dragerGroup)
-        onlyUser
         returns (bytes32)
     {
         return _links[dragerGroup].rule;
@@ -157,7 +156,6 @@ contract DragAlong is IAlongs, ITerm, BOSSetting, BOASetting, DraftControl {
     function isFollowerGroup(uint16 dragerGroup, uint16 followerGroup)
         public
         view
-        onlyUser
         dragerGroupExist(dragerGroup)
         returns (bool)
     {
@@ -167,7 +165,6 @@ contract DragAlong is IAlongs, ITerm, BOSSetting, BOASetting, DraftControl {
     function isLinked(uint40 drager, uint40 follower)
         public
         view
-        onlyUser
         returns (bool)
     {
         uint16 dragerGroup = _bos.groupNo(drager);
@@ -176,11 +173,11 @@ contract DragAlong is IAlongs, ITerm, BOSSetting, BOASetting, DraftControl {
         return isFollowerGroup(dragerGroup, followerGroup);
     }
 
-    function isDragerGroup(uint16 group) external view onlyUser returns (bool) {
+    function isDragerGroup(uint16 group) external view returns (bool) {
         return _dragerGroups.contains(group);
     }
 
-    function dragerGroups() external view onlyUser returns (uint16[]) {
+    function dragerGroups() external view returns (uint16[]) {
         return _dragerGroups.valuesToUint16();
     }
 
@@ -188,7 +185,6 @@ contract DragAlong is IAlongs, ITerm, BOSSetting, BOASetting, DraftControl {
         external
         view
         dragerGroupExist(dragerGroup)
-        onlyUser
         returns (uint16[])
     {
         return _links[dragerGroup].followerGroups.valuesToUint16();
@@ -248,12 +244,7 @@ contract DragAlong is IAlongs, ITerm, BOSSetting, BOASetting, DraftControl {
     // ##  Term接口  ##
     // ################
 
-    function isTriggered(address ia, bytes32 sn)
-        public
-        view
-        onlyUser
-        returns (bool)
-    {
+    function isTriggered(address ia, bytes32 sn) public view returns (bool) {
         if (_boa.currentState(ia) != uint8(EnumsRepo.BODStates.Circulated))
             return false;
 

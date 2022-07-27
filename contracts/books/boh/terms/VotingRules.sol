@@ -190,49 +190,39 @@ contract VotingRules is IVotingRules, DraftControl {
     // ##   读接口   ##
     // ################
 
-    function votingRules(uint8 typeOfVote)
-        external
-        view
-        onlyUser
-        returns (bytes32)
-    {
+    function votingRules(uint8 typeOfVote) external view returns (bytes32) {
         return _votingRules[typeOfVote];
     }
 
-    function basedOnPar() external view onlyUser returns (bool) {
+    function basedOnPar() external view returns (bool) {
         return _ruleOfGovernance.basedOnPar;
     }
 
-    function proposalThreshold() external view onlyUser returns (uint16) {
+    function proposalThreshold() external view returns (uint16) {
         return _ruleOfGovernance.proposalThreshold;
     }
 
-    function maxNumOfDirectors() external view onlyUser returns (uint8) {
+    function maxNumOfDirectors() external view returns (uint8) {
         return _ruleOfGovernance.maxNumOfDirectors;
     }
 
-    function tenureOfBoard() external view onlyUser returns (uint8) {
+    function tenureOfBoard() external view returns (uint8) {
         return _ruleOfGovernance.tenureOfBoard;
     }
 
-    function appointerOfChairman() external view onlyUser returns (uint40) {
+    function appointerOfChairman() external view returns (uint40) {
         return _ruleOfGovernance.appointerOfChairman;
     }
 
-    function appointerOfViceChairman() external view onlyUser returns (uint40) {
+    function appointerOfViceChairman() external view returns (uint40) {
         return _ruleOfGovernance.appointerOfViceChairman;
     }
 
-    function sumOfBoardSeatsQuota() external view onlyUser returns (uint8) {
+    function sumOfBoardSeatsQuota() external view returns (uint8) {
         return _ruleOfGovernance.sumOfBoardSeatsQuota;
     }
 
-    function boardSeatsQuotaOf(uint40 acct)
-        external
-        view
-        onlyUser
-        returns (uint8)
-    {
+    function boardSeatsQuotaOf(uint40 acct) external view returns (uint8) {
         return _ruleOfGovernance.boardSeatsQuotaOf[acct];
     }
 }

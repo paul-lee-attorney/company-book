@@ -42,7 +42,7 @@ contract BookOfSHA is IBookOfSHA, ITerm, DocumentsRepo {
     //##    读接口    ##
     //##################
 
-    function pointer() external view onlyUser returns (address) {
+    function pointer() external view returns (address) {
         return _pointer;
     }
 }

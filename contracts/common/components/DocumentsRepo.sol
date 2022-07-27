@@ -5,6 +5,8 @@
 
 pragma solidity ^0.4.24;
 
+import "../access/AccessControl.sol";
+
 import "../lib/EnumsRepo.sol";
 import "../lib/SNFactory.sol";
 import "../lib/SNParser.sol";
@@ -14,12 +16,19 @@ import "../lib/EnumerableSet.sol";
 
 import "./ISigPage.sol";
 
+import "../ruting/IBookSetting.sol";
 import "../ruting/BOSSetting.sol";
 import "../ruting/SHASetting.sol";
 
 import "../utils/CloneFactory.sol";
 
-contract DocumentsRepo is CloneFactory, SHASetting, BOSSetting {
+contract DocumentsRepo is
+    CloneFactory,
+    IBookSetting,
+    SHASetting,
+    BOSSetting,
+    AccessControl
+{
     using SNFactory for bytes;
     using SNParser for bytes32;
     using ObjsRepo for ObjsRepo.TimeLine;
@@ -124,6 +133,11 @@ contract DocumentsRepo is CloneFactory, SHASetting, BOSSetting {
     //##################
     //##    写接口    ##
     //##################
+
+    function setBooks(address[8] books) external {
+        _setBOH(books[uint8(EnumsRepo.NameOfBook.BOH)]);
+        _setBOS(books[uint8(EnumsRepo.NameOfBook.BOS)]);
+    }
 
     function setTemplate(address body) external onlyOwner {
         _template = body;
@@ -237,19 +251,19 @@ contract DocumentsRepo is CloneFactory, SHASetting, BOSSetting {
     //##    读接口    ##
     //##################
 
-    function bookName() external view onlyUser returns (string) {
+    function bookName() external view returns (string) {
         return _bookName;
     }
 
-    function template() external view onlyUser returns (address) {
+    function template() external view returns (address) {
         return _template;
     }
 
-    function isRegistered(address body) external view onlyUser returns (bool) {
+    function isRegistered(address body) external view returns (bool) {
         return _isRegistered[body];
     }
 
-    function counterOfDocs() external view onlyUser returns (uint16) {
+    function counterOfDocs() external view returns (uint16) {
         return _counterOfDocs;
     }
 
@@ -257,7 +271,6 @@ contract DocumentsRepo is CloneFactory, SHASetting, BOSSetting {
         external
         view
         onlyRegistered(body)
-        onlyUser
         returns (bool)
     {
         Doc storage doc = _docs[body];
@@ -274,7 +287,6 @@ contract DocumentsRepo is CloneFactory, SHASetting, BOSSetting {
     function isCirculated(address body)
         external
         view
-        onlyUser
         onlyRegistered(body)
         returns (bool)
     {
@@ -283,11 +295,11 @@ contract DocumentsRepo is CloneFactory, SHASetting, BOSSetting {
             uint8(EnumsRepo.BODStates.Circulated);
     }
 
-    function qtyOfDocs() external view onlyUser returns (uint256) {
+    function qtyOfDocs() external view returns (uint256) {
         return _docsList.length();
     }
 
-    function docsList() external view onlyUser returns (bytes32[]) {
+    function docsList() external view returns (bytes32[]) {
         return _docsList.values();
     }
 
@@ -295,7 +307,6 @@ contract DocumentsRepo is CloneFactory, SHASetting, BOSSetting {
         external
         view
         onlyRegistered(body)
-        onlyUser
         returns (bytes32 sn, bytes32 docHash)
     {
         Doc storage doc = _docs[body];
@@ -308,7 +319,6 @@ contract DocumentsRepo is CloneFactory, SHASetting, BOSSetting {
         external
         view
         onlyRegistered(body)
-        onlyUser
         returns (uint8)
     {
         return _docs[body].states.currentState;
@@ -318,7 +328,6 @@ contract DocumentsRepo is CloneFactory, SHASetting, BOSSetting {
         external
         view
         onlyRegistered(body)
-        onlyUser
         returns (uint32)
     {
         require(state <= _docs[body].states.currentState, "state overflow");
@@ -329,7 +338,6 @@ contract DocumentsRepo is CloneFactory, SHASetting, BOSSetting {
         external
         view
         onlyRegistered(body)
-        onlyUser
         returns (uint32)
     {
         return _docs[body].reviewDeadlineBN;
@@ -339,7 +347,6 @@ contract DocumentsRepo is CloneFactory, SHASetting, BOSSetting {
         external
         view
         onlyRegistered(body)
-        onlyUser
         returns (uint32)
     {
         return _docs[body].votingDeadlineBN;

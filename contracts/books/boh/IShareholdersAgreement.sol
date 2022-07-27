@@ -16,6 +16,24 @@ interface IShareholdersAgreement {
 
     event RemoveTerm(uint8 indexed title);
 
+    // ==== VotingRules ====
+
+    event SetVotingBaseOnPar();
+
+    event SetProposalThreshold(uint64 threshold);
+
+    event SetMaxNumOfDirectors(uint8 num);
+
+    event SetTenureOfBoard(uint8 numOfYear);
+
+    event SetAppointerOfChairman(uint40 nominator);
+
+    event SetAppointerOfViceChairman(uint40 nominator);
+
+    event SetBoardSeatsQuotaOf(uint40 nominator, uint8 quota);
+
+    event SetRule(uint8 typeOfVote, bytes32 sn);
+
     //##################
     //##    写接口    ##
     //##################

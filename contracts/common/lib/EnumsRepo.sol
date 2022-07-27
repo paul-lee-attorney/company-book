@@ -6,6 +6,17 @@
 pragma solidity ^0.4.24;
 
 library EnumsRepo {
+    enum NameOfBook {
+        BOA,
+        BOD,
+        BOH,
+        BOM,
+        BOO,
+        BOP,
+        BOS,
+        BOSCal
+    }
+
     enum TypeOfVertex {
         ZeroPoint,
         EOA,

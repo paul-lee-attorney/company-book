@@ -22,7 +22,7 @@ interface IRegCenter {
     // ##    写端口    ##
     // ##################
 
-    function regUser(uint8 roleOfUser, uint40 entity) external;
+    function regUser(uint8 roleOfUser, uint40 entity) external returns (uint40);
 
     function quitEntity(uint8 roleOfUser) external;
 

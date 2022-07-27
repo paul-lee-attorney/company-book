@@ -14,8 +14,11 @@ import "../books/boa/InvestmentAgreement.sol";
 import "../books/boh/terms/IAlongs.sol";
 import "../books/boh/terms/IFirstRefusal.sol";
 
+import "../common/access/AccessControl.sol";
+
 import "../common/components/ISigPage.sol";
 
+import "../common/ruting/IBookSetting.sol";
 import "../common/ruting/BOASetting.sol";
 import "../common/ruting/BOSSetting.sol";
 import "../common/ruting/SHASetting.sol";
@@ -25,7 +28,14 @@ import "../common/lib/EnumsRepo.sol";
 
 import "./ISHAKeeper.sol";
 
-contract SHAKeeper is ISHAKeeper, BOASetting, SHASetting, BOSSetting {
+contract SHAKeeper is
+    ISHAKeeper,
+    IBookSetting,
+    BOASetting,
+    BOSSetting,
+    SHASetting,
+    AccessControl
+{
     using SNParser for bytes32;
 
     // ##################
@@ -51,6 +61,12 @@ contract SHAKeeper is ISHAKeeper, BOASetting, SHASetting, BOSSetting {
     // ####################
     // ##   SHA Rights   ##
     // ####################
+
+    function setBooks(address[8] books) external onlyDirectKeeper {
+        _setBOA(books[uint8(EnumsRepo.NameOfBook.BOA)]);
+        _setBOH(books[uint8(EnumsRepo.NameOfBook.BOH)]);
+        _setBOS(books[uint8(EnumsRepo.NameOfBook.BOS)]);
+    }
 
     // ======== TagAlong & DragAlong ========
 

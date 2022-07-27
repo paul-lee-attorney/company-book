@@ -6,24 +6,36 @@
 pragma solidity ^0.4.24;
 pragma experimental ABIEncoderV2;
 
-import "../common/ruting/BOSSetting.sol";
+import "../common/ruting/IBookSetting.sol";
 import "../common/ruting/BODSetting.sol";
 import "../common/ruting/BOMSetting.sol";
+import "../common/ruting/BOSSetting.sol";
 import "../common/ruting/SHASetting.sol";
 
 import "../common/lib/SNParser.sol";
 import "../common/lib/EnumsRepo.sol";
 
+import "../common/access/AccessControl.sol";
+
 import "./IBODKeeper.sol";
 
 contract BODKeeper is
     IBODKeeper,
+    IBookSetting,
     BODSetting,
     SHASetting,
     BOMSetting,
-    BOSSetting
+    BOSSetting,
+    AccessControl
 {
     using SNParser for bytes32;
+
+    function setBooks(address[8] books) external onlyDirectKeeper {
+        _setBOD(books[uint8(EnumsRepo.NameOfBook.BOD)]);
+        _setBOH(books[uint8(EnumsRepo.NameOfBook.BOH)]);
+        _setBOM(books[uint8(EnumsRepo.NameOfBook.BOM)]);
+        _setBOS(books[uint8(EnumsRepo.NameOfBook.BOS)]);
+    }
 
     function appointDirector(
         uint40 candidate,

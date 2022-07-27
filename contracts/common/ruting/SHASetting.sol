@@ -8,14 +8,14 @@ pragma solidity ^0.4.24;
 import "../../books/boh/IShareholdersAgreement.sol";
 import "../../books/boh/IBookOfSHA.sol";
 
-import "../access/AccessControl.sol";
+// import "../access/AccessControl.sol";
 
-import "./IBookSetting.sol";
-
-contract SHASetting is IBookSetting, AccessControl {
+contract SHASetting {
     IBookOfSHA internal _boh;
 
-    function setBOH(address boh) external onlyDirectKeeper {
+    event SetBOH(address boh);
+
+    function _setBOH(address boh) internal {
         _boh = IBookOfSHA(boh);
         emit SetBOH(boh);
     }

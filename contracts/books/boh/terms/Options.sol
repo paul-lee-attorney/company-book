@@ -218,21 +218,15 @@ contract Options is IOptions, BOSSetting, DraftControl {
     // ##  查询接口  ##
     // ################
 
-    function counterOfOptions() external view onlyUser returns (uint16) {
+    function counterOfOptions() external view returns (uint16) {
         return _counterOfOptions;
     }
 
-    function sn(bytes6 ssn)
-        external
-        view
-        optionExist(ssn)
-        onlyUser
-        returns (bytes32)
-    {
+    function sn(bytes6 ssn) external view optionExist(ssn) returns (bytes32) {
         return _options[ssn].sn;
     }
 
-    function isOption(bytes6 ssn) external view onlyUser returns (bool) {
+    function isOption(bytes6 ssn) external view returns (bool) {
         return _snList.contains(ssn);
     }
 
@@ -240,7 +234,6 @@ contract Options is IOptions, BOSSetting, DraftControl {
         external
         view
         optionExist(ssn)
-        onlyUser
         returns (bool)
     {
         return _options[ssn].obligors.contains(acct);
@@ -250,7 +243,6 @@ contract Options is IOptions, BOSSetting, DraftControl {
         external
         view
         optionExist(ssn)
-        onlyUser
         returns (uint40[])
     {
         return _options[ssn].obligors.valuesToUint40();
@@ -260,7 +252,6 @@ contract Options is IOptions, BOSSetting, DraftControl {
         external
         view
         optionExist(ssn)
-        onlyUser
         returns (bool)
     {
         return _options[ssn].rightholder == acct;
@@ -270,13 +261,12 @@ contract Options is IOptions, BOSSetting, DraftControl {
         external
         view
         optionExist(ssn)
-        onlyUser
         returns (uint40)
     {
         return _options[ssn].rightholder;
     }
 
-    function snList() external view onlyUser returns (bytes32[]) {
+    function snList() external view returns (bytes32[]) {
         return _snList.values();
     }
 }

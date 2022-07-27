@@ -14,7 +14,7 @@ contract EntitiesMapping {
     using EnumerableSet for EnumerableSet.UintSet;
 
     struct Entity {
-        // role => user
+        // mappingRole => user
         mapping(uint8 => uint40) members;
     }
 

@@ -306,14 +306,14 @@ library ObjsRepo {
     }
 
     struct BallotsBox {
-        EnumerableSet.UintSet supportVoters;
-        uint64 sumOfYea;
-        EnumerableSet.UintSet againstVoters;
-        uint64 sumOfNay;
-        EnumerableSet.UintSet abstainVoters;
-        uint64 sumOfAbs;
-        mapping(uint256 => Ballot) ballots;
         uint64 sumOfWeight;
+        uint64 sumOfYea;
+        uint64 sumOfNay;
+        uint64 sumOfAbs;
+        EnumerableSet.UintSet supportVoters;
+        EnumerableSet.UintSet againstVoters;
+        EnumerableSet.UintSet abstainVoters;
+        mapping(uint256 => Ballot) ballots;
         uint40[] voters;
     }
 

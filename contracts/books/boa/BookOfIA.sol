@@ -162,23 +162,23 @@ contract BookOfIA is IBookOfIA, DocumentsRepo {
 
     // ======== Propose IA ========
 
-    function proposeIA(
-        address ia,
-        uint32 proposeDate,
-        uint40 caller
-    )
-        public
-        onlyDirectKeeper
-        onlyRegistered(ia)
-        currentDate(proposeDate)
-        onlyForCirculated(ia)
-    {
-        Doc storage doc = _docs[ia];
+    // function proposeIA(
+    //     address ia,
+    //     uint32 proposeDate,
+    //     uint40 caller
+    // )
+    //     public
+    //     onlyDirectKeeper
+    //     onlyRegistered(ia)
+    //     currentDate(proposeDate)
+    //     onlyForCirculated(ia)
+    // {
+    //     Doc storage doc = _docs[ia];
 
-        require(doc.reviewDeadlineBN <= block.number, "still in review period");
+    //     require(doc.reviewDeadlineBN <= block.number, "still in review period");
 
-        pushToNextState(ia, caller);
-    }
+    //     pushToNextState(ia, caller);
+    // }
 
     function addAlongDeal(
         address ia,
@@ -248,19 +248,13 @@ contract BookOfIA is IBookOfIA, DocumentsRepo {
     //##    读接口    ##
     //##################
 
-    function groupsConcerned(address ia)
-        external
-        view
-        onlyUser
-        returns (uint16[])
-    {
+    function groupsConcerned(address ia) external view returns (uint16[]) {
         return _groupsConcerned[ia].valuesToUint16();
     }
 
     function isConcernedGroup(address ia, uint16 group)
         external
         view
-        onlyUser
         returns (bool)
     {
         return _groupsConcerned[ia].contains(group);
@@ -271,7 +265,6 @@ contract BookOfIA is IBookOfIA, DocumentsRepo {
         view
         onlyRegistered(ia)
         onlyForCirculated(ia)
-        onlyUser
         returns (
             uint16 groupNum,
             uint64 amount,
@@ -292,7 +285,6 @@ contract BookOfIA is IBookOfIA, DocumentsRepo {
     function mockResults(address ia, uint16 group)
         external
         view
-        onlyUser
         onlyForCirculated(ia)
         returns (
             uint64 selAmt,
@@ -311,7 +303,7 @@ contract BookOfIA is IBookOfIA, DocumentsRepo {
     }
 
     // 1-CI 2-ST(to 3rd) 3-ST(internal) 4-(1&3) 5-(2&3) 6-(1&2&3) 7-(1&2)
-    function typeOfIA(address ia) public view onlyUser returns (uint8 output) {
+    function typeOfIA(address ia) public view returns (uint8 output) {
         bytes32[] memory dealsList = IInvestmentAgreement(ia).dealsList();
         uint256 len = dealsList.length;
         uint8[3] memory signal;

@@ -27,12 +27,10 @@ interface IAccessControl {
     function init(
         uint40 owner,
         uint40 directKeeper,
-        address usersList
+        address regCenter
     ) external;
 
-    // function setUsersList(address ul) external;
-
-    function regThisContract() external;
+    // function regThisContract() external;
 
     function abandonOwnership() external;
 

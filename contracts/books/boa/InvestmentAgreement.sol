@@ -5,19 +5,25 @@
 
 pragma solidity ^0.4.24;
 
+import "../../common/ruting/IBookSetting.sol";
 import "../../common/ruting/BOSSetting.sol";
 
 import "../../common/lib/SNFactory.sol";
 import "../../common/lib/SNParser.sol";
+import "../../common/lib/EnumsRepo.sol";
 import "../../common/lib/EnumerableSet.sol";
 import "../../common/lib/ObjsRepo.sol";
-import "../../common/lib/EnumsRepo.sol";
 
 import "../../common/components/SigPage.sol";
 
 import "./IInvestmentAgreement.sol";
 
-contract InvestmentAgreement is IInvestmentAgreement, BOSSetting, SigPage {
+contract InvestmentAgreement is
+    IInvestmentAgreement,
+    IBookSetting,
+    BOSSetting,
+    SigPage
+{
     using SNFactory for bytes;
     using SNParser for bytes32;
     using ObjsRepo for ObjsRepo.SeqList;
@@ -107,6 +113,10 @@ contract InvestmentAgreement is IInvestmentAgreement, BOSSetting, SigPage {
     //##################
     //##    写接口    ##
     //##################
+
+    function setBooks(address[9] books) external onlyDirectKeeper {
+        _setBOS(books[uint8(EnumsRepo.NameOfBook.BOS)]);
+    }
 
     function _createSN(
         uint8 class,
@@ -404,11 +414,11 @@ contract InvestmentAgreement is IInvestmentAgreement, BOSSetting, SigPage {
     //  ##       查询接口              ##
     //  #################################
 
-    function isDeal(uint16 ssn) external view onlyUser returns (bool) {
+    function isDeal(uint16 ssn) external view returns (bool) {
         return _dealsList.contains(ssn);
     }
 
-    function counterOfDeals() external view onlyUser returns (uint16) {
+    function counterOfDeals() external view returns (uint16) {
         return _counterOfDeals;
     }
 
@@ -416,7 +426,6 @@ contract InvestmentAgreement is IInvestmentAgreement, BOSSetting, SigPage {
         external
         view
         dealExist(ssn)
-        onlyUser
         returns (
             bytes32 sn,
             uint64 parValue,
@@ -437,7 +446,6 @@ contract InvestmentAgreement is IInvestmentAgreement, BOSSetting, SigPage {
     function unitPrice(uint16 ssn)
         external
         view
-        onlyUser
         dealExist(ssn)
         returns (uint32)
     {
@@ -447,7 +455,6 @@ contract InvestmentAgreement is IInvestmentAgreement, BOSSetting, SigPage {
     function closingDate(uint16 ssn)
         external
         view
-        onlyUser
         dealExist(ssn)
         returns (uint32)
     {
@@ -457,23 +464,17 @@ contract InvestmentAgreement is IInvestmentAgreement, BOSSetting, SigPage {
     function shareNumberOfDeal(uint16 ssn)
         external
         view
-        onlyUser
         dealExist(ssn)
         returns (bytes32)
     {
         return _deals[ssn].shareNumber;
     }
 
-    function dealsList() external view onlyUser returns (bytes32[]) {
+    function dealsList() external view returns (bytes32[]) {
         return _dealsList.values();
     }
 
-    function dealsConcerned(uint40 acct)
-        external
-        view
-        onlyUser
-        returns (uint16[])
-    {
+    function dealsConcerned(uint40 acct) external view returns (uint16[]) {
         require(isParty(acct), "not a party");
         return _dealsConcerned[acct].valuesToUint16();
     }
@@ -481,7 +482,6 @@ contract InvestmentAgreement is IInvestmentAgreement, BOSSetting, SigPage {
     function isBuyerOfDeal(uint40 acct, uint16 seq)
         external
         view
-        onlyUser
         returns (bool)
     {
         require(isParty(acct), "not a party");

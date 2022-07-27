@@ -13,10 +13,11 @@ import "../boa/IInvestmentAgreement.sol";
 import "../../common/components/ISigPage.sol";
 import "../../common/components/MotionsRepo.sol";
 
+import "../../common/ruting/IBookSetting.sol";
 import "../../common/ruting/BOASetting.sol";
 import "../../common/ruting/SHASetting.sol";
-import "../../common/ruting/BOSSetting.sol";
 import "../../common/ruting/BODSetting.sol";
+import "../../common/ruting/BOSSetting.sol";
 
 import "../../common/lib/SNFactory.sol";
 import "../../common/lib/SNParser.sol";
@@ -26,20 +27,29 @@ import "../../common/lib/ObjsRepo.sol";
 
 contract BookOfMotions is
     IBookOfMotions,
-    MotionsRepo,
-    SHASetting,
+    IBookSetting,
     BOASetting,
+    SHASetting,
+    BODSetting,
     BOSSetting,
-    BODSetting
+    MotionsRepo
 {
     using SNFactory for bytes;
     using SNParser for bytes32;
     using EnumerableSet for EnumerableSet.UintSet;
-    using ObjsRepo for ObjsRepo.BallotsBox;
+
+    // using ObjsRepo for ObjsRepo.BallotsBox;
 
     //##################
     //##    写接口    ##
     //##################
+
+    function setBooks(address[8] books) external onlyDirectKeeper {
+        _setBOA(books[uint8(EnumsRepo.NameOfBook.BOA)]);
+        _setBOH(books[uint8(EnumsRepo.NameOfBook.BOH)]);
+        _setBOD(books[uint8(EnumsRepo.NameOfBook.BOD)]);
+        _setBOS(books[uint8(EnumsRepo.NameOfBook.BOS)]);
+    }
 
     function nominateDirector(uint40 candidate, uint40 nominator)
         external
@@ -115,41 +125,48 @@ contract BookOfMotions is
         _authorizeDelegate(authorizer, delegate, motionId);
     }
 
-    function proposeAction(
-        uint8 actionType,
-        address[] targets,
-        bytes[] params,
-        bytes32 desHash,
-        uint40 submitter
-    ) external onlyDirectKeeper {
-        uint256 actionId = _hashAction(actionType, targets, params, desHash);
-        require(
-            _proposalWeight(actionId, submitter) >=
-                _getSHA().proposalThreshold(),
-            "insufficient voting weight"
-        );
-        bytes32 rule = _getSHA().votingRules(actionType);
+    // function proposeAction(
+    //     uint8 actionType,
+    //     address[] targets,
+    //     bytes32[] params,
+    //     bytes32 desHash,
+    //     uint40 submitter
+    // ) external onlyDirectKeeper {
+    //     bytes[] memory paramsBytes = _toBytes(params);
 
-        bytes32 sn = _createSN(
-            actionType,
-            submitter,
-            uint32(block.timestamp),
-            uint32(block.number) +
-                (uint32(rule.votingDaysOfVR()) * 24 * _rc.blocksPerHour()),
-            uint32(block.number),
-            0
-        );
+    //     uint256 actionId = _hashAction(
+    //         actionType,
+    //         targets,
+    //         paramsBytes,
+    //         desHash
+    //     );
+    //     require(
+    //         _proposalWeight(actionId, submitter) >=
+    //             _getSHA().proposalThreshold(),
+    //         "insufficient voting weight"
+    //     );
+    //     bytes32 rule = _getSHA().votingRules(actionType);
 
-        _proposeMotion(
-            actionId,
-            rule,
-            sn,
-            actionType,
-            targets,
-            params,
-            desHash
-        );
-    }
+    //     bytes32 sn = _createSN(
+    //         actionType,
+    //         submitter,
+    //         uint32(block.timestamp),
+    //         uint32(block.number) +
+    //             (uint32(rule.votingDaysOfVR()) * 24 * _rc.blocksPerHour()),
+    //         uint32(block.number),
+    //         0
+    //     );
+
+    //     _proposeMotion(
+    //         actionId,
+    //         rule,
+    //         sn,
+    //         actionType,
+    //         targets,
+    //         paramsBytes,
+    //         desHash
+    //     );
+    // }
 
     function _proposalWeight(uint256 actionId, uint40 acct)
         private

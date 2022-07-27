@@ -7,14 +7,22 @@ pragma solidity ^0.4.24;
 
 import "../../common/lib/SNFactory.sol";
 import "../../common/lib/SNParser.sol";
+import "../../common/lib/EnumsRepo.sol";
 import "../../common/lib/EnumerableSet.sol";
 import "../../common/lib/ObjsRepo.sol";
 
+import "../../common/access/AccessControl.sol";
+import "../../common/ruting/IBookSetting.sol";
 import "../../common/ruting/BOSSetting.sol";
 
 import "./IBookOfPledges.sol";
 
-contract BookOfPledges is IBookOfPledges, BOSSetting {
+contract BookOfPledges is
+    IBookOfPledges,
+    IBookSetting,
+    BOSSetting,
+    AccessControl
+{
     using SNFactory for bytes;
     using SNParser for bytes32;
     using ObjsRepo for ObjsRepo.SNList;
@@ -63,6 +71,10 @@ contract BookOfPledges is IBookOfPledges, BOSSetting {
     //##################
     //##    写接口    ##
     //##################
+
+    function setBooks(address[8] books) external onlyDirectKeeper {
+        _setBOS(books[uint8(EnumsRepo.NameOfBook.BOS)]);
+    }
 
     function _createSN(
         uint8 typeOfPledge,
@@ -172,11 +184,11 @@ contract BookOfPledges is IBookOfPledges, BOSSetting {
         return _counterOfPledges;
     }
 
-    function isPledge(bytes6 ssn) external view onlyUser returns (bool) {
+    function isPledge(bytes6 ssn) external view returns (bool) {
         return _snList.contains(ssn);
     }
 
-    function snList() external view onlyUser returns (bytes32[]) {
+    function snList() external view returns (bytes32[]) {
         return _snList.values();
     }
 
@@ -184,7 +196,6 @@ contract BookOfPledges is IBookOfPledges, BOSSetting {
         external
         view
         pledgeExist(ssn)
-        onlyUser
         returns (
             bytes32 sn,
             uint64 pledgedPar,

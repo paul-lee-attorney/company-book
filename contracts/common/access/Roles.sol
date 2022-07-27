@@ -1,4 +1,4 @@
-/*
+/* *
  * Copyright 2021-2022 LI LI of JINGTIAN & GONGCHENG.
  * All Rights Reserved.
  * */
@@ -10,18 +10,16 @@ import "./IRoles.sol";
 
 import "../lib/EnumerableSet.sol";
 
-import "./IRoles.sol";
-
 contract Roles is IRoles, RegCenterSetting {
     using EnumerableSet for EnumerableSet.UintSet;
 
-    struct RoleData {
-        EnumerableSet.UintSet roleGroup;
+    struct Data {
+        EnumerableSet.UintSet members;
         uint40 admin;
     }
 
-    // NameOfRole => RoleData
-    mapping(bytes32 => RoleData) private _roles;
+    // NameOfRole => Data
+    mapping(bytes32 => Data) private _roles;
 
     // ##################
     // ##    写端口    ##
@@ -31,7 +29,7 @@ contract Roles is IRoles, RegCenterSetting {
         external
         theUser(roleAdmin(role))
     {
-        if (_roles[role].roleGroup.add(user))
+        if (_roles[role].members.add(user))
             emit RoleGranted(role, user, _msgSender());
     }
 
@@ -60,7 +58,7 @@ contract Roles is IRoles, RegCenterSetting {
     }
 
     function _removeRole(bytes32 role, uint40 acct) private {
-        if (_roles[role].roleGroup.remove(acct))
+        if (_roles[role].members.remove(acct))
             emit RoleRevoked(role, acct, _msgSender());
     }
 
@@ -75,20 +73,15 @@ contract Roles is IRoles, RegCenterSetting {
     // ##   查询端口   ##
     // ##################
 
-    function hasRole(bytes32 role, uint40 acct)
-        public
-        view
-        onlyUser
-        returns (bool)
-    {
-        return _roles[role].roleGroup.contains(acct);
+    function hasRole(bytes32 role, uint40 acct) public view returns (bool) {
+        return _roles[role].members.contains(acct);
     }
 
-    function roleMembers(bytes32 role) public view onlyUser returns (uint40[]) {
-        return _roles[role].roleGroup.valuesToUint40();
+    function roleMembers(bytes32 role) public view returns (uint40[]) {
+        return _roles[role].members.valuesToUint40();
     }
 
-    function roleAdmin(bytes32 role) public view onlyUser returns (uint40) {
+    function roleAdmin(bytes32 role) public view returns (uint40) {
         return _roles[role].admin;
     }
 }

@@ -163,15 +163,15 @@ contract MotionsRepo is AccessControl {
         emit ProposeMotion(motionId, motionType, targets, params, desHash, sn);
     }
 
-    function _hashAction(
-        uint8 actionType,
-        address[] target,
-        bytes[] params,
-        bytes32 desHash
-    ) internal pure returns (uint256) {
-        return
-            uint256(keccak256(abi.encode(actionType, target, params, desHash)));
-    }
+    // function _hashAction(
+    //     uint8 actionType,
+    //     address[] target,
+    //     bytes[] params,
+    //     bytes32 desHash
+    // ) internal pure returns (uint256) {
+    //     return
+    //         uint256(keccak256(abi.encode(actionType, target, params, desHash)));
+    // }
 
     function _castVote(
         uint256 motionId,
@@ -187,43 +187,62 @@ contract MotionsRepo is AccessControl {
         }
     }
 
-    function execAction(
-        uint8 actionType,
-        address[] targets,
-        bytes[] params,
-        bytes32 desHash
-    ) external onlyDirectKeeper returns (uint256) {
-        uint256 motionId = _hashAction(actionType, targets, params, desHash);
+    // function _toBytes(bytes32[] input) internal pure returns (bytes[]) {
+    //     uint256 len = input.length;
+    //     bytes[] memory output = new bytes[](len);
 
-        require(_motionIds.contains(motionId), "motion not proposed");
+    //     while (len > 0) {
+    //         output[len - 1] = abi.encodePacked(input[len - 1]);
+    //         len--;
+    //     }
 
-        Motion storage motion = _motions[motionId];
+    //     return output;
+    // }
 
-        require(
-            motion.state == uint8(EnumsRepo.StateOfMotion.Passed),
-            "voting NOT end"
-        );
+    // function execAction(
+    //     uint8 actionType,
+    //     address[] targets,
+    //     bytes32[] params,
+    //     bytes32 desHash
+    // ) external onlyDirectKeeper returns (uint256) {
+    //     bytes[] memory paramsBytes = _toBytes(params);
 
-        motion.state = uint8(EnumsRepo.StateOfMotion.Executed);
-        if (_execute(targets, params)) emit ExecuteAction(motionId, true);
-        else emit ExecuteAction(motionId, false);
+    //     uint256 motionId = _hashAction(
+    //         actionType,
+    //         targets,
+    //         paramsBytes,
+    //         desHash
+    //     );
 
-        return motionId;
-    }
+    //     require(_motionIds.contains(motionId), "motion not proposed");
 
-    function _execute(address[] memory targets, bytes[] memory params)
-        private
-        returns (bool)
-    {
-        bool success;
+    //     Motion storage motion = _motions[motionId];
 
-        for (uint256 i = 0; i < targets.length; i++) {
-            success = targets[i].call(params[i]);
-            if (!success) return success;
-        }
+    //     require(
+    //         motion.state == uint8(EnumsRepo.StateOfMotion.Passed),
+    //         "voting NOT end"
+    //     );
 
-        return success;
-    }
+    //     motion.state = uint8(EnumsRepo.StateOfMotion.Executed);
+    //     if (_execute(targets, paramsBytes)) emit ExecuteAction(motionId, true);
+    //     else emit ExecuteAction(motionId, false);
+
+    //     return motionId;
+    // }
+
+    // function _execute(address[] memory targets, bytes[] memory params)
+    //     private
+    //     returns (bool)
+    // {
+    //     bool success;
+
+    //     for (uint256 i = 0; i < targets.length; i++) {
+    //         success = targets[i].call(params[i]);
+    //         if (!success) return success;
+    //     }
+
+    //     return success;
+    // }
 
     //##################
     //##    读接口    ##

@@ -292,20 +292,20 @@ contract GeneralKeeper is AccessControl {
         _BOMKeeper.voteCounting(ia, _msgSender());
     }
 
-    function execAction(
-        uint8 actionType,
-        address[] targets,
-        bytes[] params,
-        bytes32 desHash
-    ) external returns (uint256) {
-        _BOMKeeper.execAction(
-            actionType,
-            targets,
-            params,
-            desHash,
-            _msgSender()
-        );
-    }
+    // function execAction(
+    //     uint8 actionType,
+    //     address[] targets,
+    //     bytes32[] params,
+    //     bytes32 desHash
+    // ) external returns (uint256) {
+    //     _BOMKeeper.execAction(
+    //         actionType,
+    //         targets,
+    //         params,
+    //         desHash,
+    //         _msgSender()
+    //     );
+    // }
 
     function requestToBuy(
         address ia,

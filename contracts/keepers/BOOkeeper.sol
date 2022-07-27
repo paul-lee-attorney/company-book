@@ -5,10 +5,11 @@
 
 pragma solidity ^0.4.24;
 
-import "../books/boa//IInvestmentAgreement.sol";
+import "../books/boa/IInvestmentAgreement.sol";
 
 import "../common/access/AccessControl.sol";
 
+import "../common/ruting/IBookSetting.sol";
 import "../common/ruting/SHASetting.sol";
 import "../common/ruting/BOASetting.sol";
 import "../common/ruting/BOMSetting.sol";
@@ -16,9 +17,11 @@ import "../common/ruting/BOPSetting.sol";
 import "../common/ruting/BOOSetting.sol";
 import "../common/ruting/BOSSetting.sol";
 
+import "../common/lib/EnumsRepo.sol";
 import "../common/lib/SNParser.sol";
+import "../common/access/AccessControl.sol";
 
-import "../common/ruting/IBookSetting.sol";
+// import "../common/ruting/IBookSetting.sol";
 import "../common/access/IAccessControl.sol";
 import "../common/components/ISigPage.sol";
 
@@ -26,12 +29,14 @@ import "./IBOOKeeper.sol";
 
 contract BOOKeeper is
     IBOOKeeper,
+    IBookSetting,
     BOASetting,
     SHASetting,
     BOMSetting,
     BOPSetting,
     BOOSetting,
-    BOSSetting
+    BOSSetting,
+    AccessControl
 {
     using SNParser for bytes32;
 
@@ -74,6 +79,15 @@ contract BOOKeeper is
     // ##################
     // ##    Option    ##
     // ##################
+
+    function setBooks(address[8] books) external onlyDirectKeeper {
+        _setBOA(books[uint8(EnumsRepo.NameOfBook.BOA)]);
+        _setBOH(books[uint8(EnumsRepo.NameOfBook.BOH)]);
+        _setBOM(books[uint8(EnumsRepo.NameOfBook.BOM)]);
+        _setBOP(books[uint8(EnumsRepo.NameOfBook.BOP)]);
+        _setBOO(books[uint8(EnumsRepo.NameOfBook.BOO)]);
+        _setBOS(books[uint8(EnumsRepo.NameOfBook.BOS)]);
+    }
 
     function createOption(
         uint8 typeOfOpt,

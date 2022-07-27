@@ -63,11 +63,11 @@ interface IBookOfIA {
 
     function calculateMockResult(address ia) external;
 
-    function proposeIA(
-        address ia,
-        uint32 proposeDate,
-        uint40 caller
-    ) external;
+    // function proposeIA(
+    //     address ia,
+    //     uint32 proposeDate,
+    //     uint40 caller
+    // ) external;
 
     function addAlongDeal(
         address ia,

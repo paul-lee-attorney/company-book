@@ -5,19 +5,33 @@
 
 pragma solidity ^0.4.24;
 
+import "../common/ruting/IBookSetting.sol";
 import "../common/ruting/BOSSetting.sol";
 import "../common/ruting/BOPSetting.sol";
 
+import "../common/lib/EnumsRepo.sol";
 import "../common/lib/SNParser.sol";
+import "../common/access/AccessControl.sol";
 
 import "./IBOPKeeper.sol";
 
-contract BOPKeeper is IBOPKeeper, BOSSetting, BOPSetting {
+contract BOPKeeper is
+    IBOPKeeper,
+    IBookSetting,
+    BOPSetting,
+    BOSSetting,
+    AccessControl
+{
     using SNParser for bytes32;
 
     // ################
     // ##   Pledge   ##
     // ################
+
+    function setBooks(address[8] books) external onlyDirectKeeper {
+        _setBOP(books[uint8(EnumsRepo.NameOfBook.BOP)]);
+        _setBOS(books[uint8(EnumsRepo.NameOfBook.BOS)]);
+    }
 
     function createPledge(
         // uint32 createDate,

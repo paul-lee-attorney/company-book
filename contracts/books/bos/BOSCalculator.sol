@@ -5,25 +5,32 @@
 
 pragma solidity ^0.4.24;
 
+import "../../common/lib/EnumsRepo.sol";
 import "../../common/lib/SNParser.sol";
 
+import "../../common/ruting/IBookSetting.sol";
 import "../../common/ruting/BOSSetting.sol";
+import "../../common/access/AccessControl.sol";
 
 import "./IBOSCalculator.sol";
 
-contract BOSCalculator is IBOSCalculator, BOSSetting {
+contract BOSCalculator is
+    IBOSCalculator,
+    IBookSetting,
+    BOSSetting,
+    AccessControl
+{
     using SNParser for bytes32;
 
     //##################
     //##   查询接口   ##
     //##################
 
-    function membersOfClass(uint8 class)
-        external
-        view
-        onlyUser
-        returns (uint40[])
-    {
+    function setBooks(address[8] books) external onlyDirectKeeper {
+        _setBOS(books[uint8(EnumsRepo.NameOfBook.BOS)]);
+    }
+
+    function membersOfClass(uint8 class) external view returns (uint40[]) {
         require(class < _bos.counterOfClasses(), "class over flow");
 
         bytes32[] memory list = _bos.snList();
@@ -37,12 +44,7 @@ contract BOSCalculator is IBOSCalculator, BOSSetting {
         return members;
     }
 
-    function sharesOfClass(uint8 class)
-        external
-        view
-        onlyUser
-        returns (bytes32[])
-    {
+    function sharesOfClass(uint8 class) external view returns (bytes32[]) {
         require(class < _bos.counterOfClasses(), "class over flow");
 
         bytes32[] memory list = _bos.snList();
@@ -56,12 +58,7 @@ contract BOSCalculator is IBOSCalculator, BOSSetting {
         return shares;
     }
 
-    function parOfGroup(uint16 group)
-        public
-        view
-        onlyUser
-        returns (uint64 parValue)
-    {
+    function parOfGroup(uint16 group) public view returns (uint64 parValue) {
         require(_bos.isGroup(group), "GROUP not exist");
 
         uint40[] memory members = _bos.membersOfGroup(group);
@@ -72,12 +69,7 @@ contract BOSCalculator is IBOSCalculator, BOSSetting {
             parValue += _bos.parInHand(members[i]);
     }
 
-    function paidOfGroup(uint16 group)
-        public
-        view
-        onlyUser
-        returns (uint64 paidPar)
-    {
+    function paidOfGroup(uint16 group) public view returns (uint64 paidPar) {
         require(_bos.isGroup(group), "GROUP not exist");
 
         uint40[] memory members = _bos.membersOfGroup(group);

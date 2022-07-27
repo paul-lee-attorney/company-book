@@ -28,15 +28,18 @@ import "../common/ruting/SHASetting.sol";
 
 import "../common/lib/SNParser.sol";
 import "../common/lib/EnumsRepo.sol";
+import "../common/access/AccessControl.sol";
 
 import "./IBOAKeeper.sol";
 
 contract BOAKeeper is
     IBOAKeeper,
+    IBookSetting,
     BOASetting,
     SHASetting,
     BOMSetting,
-    BOSSetting
+    BOSSetting,
+    AccessControl
 {
     using SNParser for bytes32;
 
@@ -75,6 +78,13 @@ contract BOAKeeper is
     // ##   InvestmentAgreement   ##
     // #############################
 
+    function setBooks(address[8] books) external onlyDirectKeeper {
+        _setBOA(books[uint8(EnumsRepo.NameOfBook.BOA)]);
+        _setBOH(books[uint8(EnumsRepo.NameOfBook.BOH)]);
+        _setBOM(books[uint8(EnumsRepo.NameOfBook.BOM)]);
+        _setBOS(books[uint8(EnumsRepo.NameOfBook.BOS)]);
+    }
+
     function createIA(uint8 typOfIA, uint40 caller) external onlyDirectKeeper {
         require(_bos.isMember(caller), "caller not MEMBER");
 
@@ -82,8 +92,12 @@ contract BOAKeeper is
 
         IAccessControl(ia).init(caller, _rc.userNo(this), address(_rc));
 
-        IBookSetting(ia).setBOS(address(_bos));
-        IBookSetting(ia).setBOSCal(address(_bosCal));
+        address[8] books;
+
+        books[uint8(EnumsRepo.NameOfBook.BOS)] = address(_bos);
+        books[uint8(EnumsRepo.NameOfBook.BOSCal)] = address(_bosCal);
+
+        IBookSetting(ia).setBooks(books);
 
         _copyRoleTo(ia, KEEPERS);
     }

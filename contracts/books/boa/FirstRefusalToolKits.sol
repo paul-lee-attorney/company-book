@@ -118,19 +118,19 @@ contract FirstRefusalToolKits is InvestmentAgreement {
     //  ##       查询接口              ##
     //  #################################
 
-    function counterOfFR(uint16 ssn) external view onlyUser returns (uint16) {
+    function counterOfFR(uint16 ssn) external view returns (uint16) {
         return _counterOfFR[ssn];
     }
 
-    function sumOfWeight(uint16 ssn) external view onlyUser returns (uint64) {
+    function sumOfWeight(uint16 ssn) external view returns (uint64) {
         return _sumOfWeight[ssn];
     }
 
-    function isTargetDeal(uint16 ssn) external view onlyUser returns (bool) {
+    function isTargetDeal(uint16 ssn) external view returns (bool) {
         return _counterOfFR[ssn] > 0;
     }
 
-    function frDeals(uint16 ssn) external view onlyUser returns (uint16[]) {
+    function frDeals(uint16 ssn) external view returns (uint16[]) {
         require(_counterOfFR[ssn] > 0, "not a target deal of FR");
 
         uint16 len = _counterOfFR[ssn];

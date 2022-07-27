@@ -31,7 +31,8 @@ library Checkpoints {
     ) internal returns (uint64) {
         uint256 pos = self._checkpoints.length;
         if (
-            pos > 0 && self._checkpoints[pos - 1]._blockNumber == block.number
+            pos > 0 &&
+            self._checkpoints[pos - 1]._blockNumber == uint32(block.number)
         ) {
             self._checkpoints[pos - 1]._par = uint64(par);
             self._checkpoints[pos - 1]._paid = uint64(paid);

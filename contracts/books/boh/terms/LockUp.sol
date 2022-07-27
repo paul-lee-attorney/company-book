@@ -105,7 +105,7 @@ contract LockUp is ILockUp, ITerm, BOSSetting, BOMSetting, DraftControl {
     // ##  查询接口  ##
     // ################
 
-    function isLocked(bytes6 ssn) external view onlyUser returns (bool) {
+    function isLocked(bytes6 ssn) external view returns (bool) {
         return _ssnList.contains(ssn);
     }
 
@@ -113,14 +113,13 @@ contract LockUp is ILockUp, ITerm, BOSSetting, BOMSetting, DraftControl {
         public
         view
         beLocked(ssn)
-        onlyUser
         returns (uint32 dueDate, uint40[] keyHolders)
     {
         dueDate = _lockers[ssn].dueDate;
         keyHolders = _lockers[ssn].keyHolders.valuesToUint40();
     }
 
-    function lockedShares() external view onlyUser returns (bytes32[]) {
+    function lockedShares() external view returns (bytes32[]) {
         return _ssnList.values();
     }
 
@@ -128,12 +127,7 @@ contract LockUp is ILockUp, ITerm, BOSSetting, BOMSetting, DraftControl {
     // ##  Term接口  ##
     // ################
 
-    function isTriggered(address ia, bytes32 sn)
-        external
-        view
-        onlyUser
-        returns (bool)
-    {
+    function isTriggered(address ia, bytes32 sn) external view returns (bool) {
         uint32 closingDate = IInvestmentAgreement(ia).closingDate(
             sn.sequence()
         );
@@ -169,12 +163,7 @@ contract LockUp is ILockUp, ITerm, BOSSetting, BOMSetting, DraftControl {
         }
     }
 
-    function isExempted(address ia, bytes32 sn)
-        external
-        view
-        onlyUser
-        returns (bool)
-    {
+    function isExempted(address ia, bytes32 sn) external view returns (bool) {
         (uint40[] memory consentParties, ) = _bom.getYea(uint256(ia));
 
         uint40[] memory signers = ISigPage(ia).parties();

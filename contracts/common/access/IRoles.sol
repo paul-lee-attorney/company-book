@@ -28,9 +28,9 @@ interface IRoles {
     // ##    写端口    ##
     // ##################
 
-    function grantRole(bytes32 role, uint40 account) external;
+    function grantRole(bytes32 role, uint40 user) external;
 
-    function revokeRole(bytes32 role, uint40 account) external;
+    function revokeRole(bytes32 role, uint40 user) external;
 
     function renounceRole(bytes32 role) external;
 
@@ -40,9 +40,9 @@ interface IRoles {
     // ##   查询端口   ##
     // ##################
 
-    function hasRole(bytes32 role, uint40 account) external view returns (bool);
+    function hasRole(bytes32 role, uint40 acct) external view returns (bool);
 
-    function members(bytes32 role) external view returns (uint40[]);
+    function roleMembers(bytes32 role) external view returns (uint40[]);
 
-    function getRoleAdmin(bytes32 role) external view returns (bytes32);
+    function roleAdmin(bytes32 role) external view returns (uint40);
 }

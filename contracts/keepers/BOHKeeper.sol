@@ -16,24 +16,26 @@ import "../common/ruting/BOOSetting.sol";
 import "../common/ruting/BOSSetting.sol";
 import "../common/ruting/BODSetting.sol";
 import "../common/ruting/SHASetting.sol";
-import "../common/access/IAccessControl.sol";
 import "../common/ruting/IBookSetting.sol";
-import "../common/access/IRoles.sol";
+
+import "../common/access/IAccessControl.sol";
 
 import "../common/lib/SNParser.sol";
 import "../common/lib/EnumsRepo.sol";
 
-import "./IBOHKeeper.sol";
+import "../common/access/AccessControl.sol";
 
-// import "../common/utils/Context.sol";
+import "./IBOHKeeper.sol";
 
 contract BOHKeeper is
     IBOHKeeper,
-    BOSSetting,
+    IBookSetting,
+    BODSetting,
     SHASetting,
     BOMSetting,
     BOOSetting,
-    BODSetting
+    BOSSetting,
+    AccessControl
 {
     using SNParser for bytes32;
 
@@ -62,6 +64,14 @@ contract BOHKeeper is
     // ##   SHA   ##
     // #############
 
+    function setBooks(address[8] books) external onlyDirectKeeper {
+        _setBOD(books[uint8(EnumsRepo.NameOfBook.BOD)]);
+        _setBOH(books[uint8(EnumsRepo.NameOfBook.BOH)]);
+        _setBOM(books[uint8(EnumsRepo.NameOfBook.BOM)]);
+        _setBOO(books[uint8(EnumsRepo.NameOfBook.BOO)]);
+        _setBOS(books[uint8(EnumsRepo.NameOfBook.BOS)]);
+    }
+
     function addTermTemplate(
         uint8 title,
         address add,
@@ -80,9 +90,11 @@ contract BOHKeeper is
         IAccessControl(sha).init(caller, _rc.userNo(this), address(_rc));
 
         IShareholdersAgreement(sha).setTermsTemplate(termsTemplate);
-        IBookSetting(sha).setBOM(address(_bom));
-        IBookSetting(sha).setBOS(address(_bos));
-        IBookSetting(sha).setBOSCal(address(_bosCal));
+
+        address[8] memory books;
+        books[uint8(EnumsRepo.NameOfBook.BOM)] = address(_bom);
+        books[uint8(EnumsRepo.NameOfBook.BOS)] = address(_bos);
+        books[uint8(EnumsRepo.NameOfBook.BOSCal)] = address(_bosCal);
 
         _copyRoleTo(sha, KEEPERS);
     }
@@ -125,11 +137,11 @@ contract BOHKeeper is
         if (ISigPage(sha).established()) _boh.pushToNextState(sha, caller);
     }
 
-    function effectiveSHA(
-        address sha,
-        uint40 caller,
-        uint32 sigDate
-    ) external onlyDirectKeeper onlyPartyOf(sha, caller) currentDate(sigDate) {
+    function effectiveSHA(address sha, uint40 caller)
+        external
+        onlyDirectKeeper
+        onlyPartyOf(sha, caller)
+    {
         require(
             _boh.currentState(sha) == uint8(EnumsRepo.BODStates.Established),
             "SHA not executed yet"
@@ -145,7 +157,7 @@ contract BOHKeeper is
             len--;
         }
 
-        _boh.changePointer(sha, caller, sigDate);
+        _boh.changePointer(sha, caller, uint32(block.timestamp));
 
         _bod.setMaxNumOfDirectors(
             IShareholdersAgreement(sha).maxNumOfDirectors()

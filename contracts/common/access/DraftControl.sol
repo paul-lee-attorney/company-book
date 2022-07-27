@@ -74,7 +74,7 @@ contract DraftControl is IDraftControl, AccessControl {
     // ##   查询端口   ##
     // ##################
 
-    function getGC() public view onlyUser returns (uint40) {
+    function getGC() public view returns (uint40) {
         return _generalCounsel;
     }
 }

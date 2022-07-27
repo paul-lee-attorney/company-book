@@ -40,13 +40,13 @@ interface IBookOfDirectors {
 
     // ======== Motions ========
 
-    function proposeAction(
-        uint8 actionType,
-        address[] target,
-        bytes[] params,
-        bytes32 desHash,
-        uint40 submitter
-    ) external;
+    // function proposeAction(
+    //     uint8 actionType,
+    //     address[] target,
+    //     bytes[] params,
+    //     bytes32 desHash,
+    //     uint40 submitter
+    // ) external;
 
     function castVote(
         uint256 motionId,
@@ -57,12 +57,12 @@ interface IBookOfDirectors {
 
     function voteCounting(uint256 motionId) external;
 
-    function execAction(
-        uint8 actionType,
-        address[] targets,
-        bytes[] params,
-        bytes32 desHash
-    ) external returns (uint256);
+    // function execAction(
+    //     uint8 actionType,
+    //     address[] targets,
+    //     bytes32[] params,
+    //     bytes32 desHash
+    // ) external returns (uint256);
 
     //##################
     //##    读接口    ##

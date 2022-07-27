@@ -17,13 +17,19 @@ import "../../common/lib/EnumsRepo.sol";
 import "../../common/lib/EnumerableSet.sol";
 import "../../common/lib/ObjsRepo.sol";
 
+import "../../common/ruting/IBookSetting.sol";
 import "../../common/ruting/SHASetting.sol";
 
-contract BookOfDirectors is IBookOfDirectors, MotionsRepo, SHASetting {
+contract BookOfDirectors is
+    IBookOfDirectors,
+    IBookSetting,
+    SHASetting,
+    MotionsRepo
+{
     using SNFactory for bytes;
     using SNParser for bytes32;
     using EnumerableSet for EnumerableSet.UintSet;
-    using ObjsRepo for ObjsRepo.BallotsBox;
+    // using ObjsRepo for ObjsRepo.BallotsBox;
 
     struct Director {
         uint8 title; // 1-Chairman; 2-ViceChairman; 3-Director;
@@ -52,7 +58,7 @@ contract BookOfDirectors is IBookOfDirectors, MotionsRepo, SHASetting {
     modifier directorExist(uint40 acct) {
         require(_directorsList.contains(acct), "not a director");
         require(
-            _directors[acct].expirationBN >= now + 15 minutes,
+            _directors[acct].expirationBN >= uint32(now + 15 minutes),
             "tenure expired"
         );
         _;
@@ -62,46 +68,57 @@ contract BookOfDirectors is IBookOfDirectors, MotionsRepo, SHASetting {
     //##    写接口    ##
     //##################
 
-    function proposeAction(
-        uint8 actionType,
-        address[] targets,
-        bytes[] params,
-        bytes32 desHash,
-        uint40 submitter
-    ) external onlyDirectKeeper {
-        require(
-            _directorsList.contains(submitter),
-            "submitter is not Director"
-        );
-        require(
-            _directors[submitter].expirationBN >= block.number,
-            "tenure expired"
-        );
-
-        uint256 actionId = _hashAction(actionType, targets, params, desHash);
-
-        bytes32 rule = _getSHA().votingRules(actionType);
-
-        bytes32 sn = _createSN(
-            actionType,
-            submitter,
-            uint32(block.timestamp),
-            uint32(block.number) +
-                (uint32(rule.votingDaysOfVR()) * 24 * _rc.blocksPerHour()),
-            uint32(block.number),
-            0
-        );
-
-        _proposeMotion(
-            actionId,
-            rule,
-            sn,
-            actionType,
-            targets,
-            params,
-            desHash
-        );
+    function setBooks(address[8] books) external onlyDirectKeeper {
+        _setBOH(books[uint8(EnumsRepo.NameOfBook.BOH)]);
     }
+
+    // function proposeAction(
+    //     uint8 actionType,
+    //     address[] targets,
+    //     bytes32[] params,
+    //     bytes32 desHash,
+    //     uint40 submitter
+    // ) external onlyDirectKeeper {
+    //     require(
+    //         _directorsList.contains(submitter),
+    //         "submitter is not Director"
+    //     );
+    //     require(
+    //         _directors[submitter].expirationBN >= uint32(block.number),
+    //         "tenure expired"
+    //     );
+
+    //     bytes[] memory paramsBytes = _toBytes(params);
+
+    //     uint256 actionId = _hashAction(
+    //         actionType,
+    //         targets,
+    //         paramsBytes,
+    //         desHash
+    //     );
+
+    //     bytes32 rule = _getSHA().votingRules(actionType);
+
+    //     bytes32 sn = _createSN(
+    //         actionType,
+    //         submitter,
+    //         uint32(block.timestamp),
+    //         uint32(block.number) +
+    //             (uint32(rule.votingDaysOfVR()) * 24 * _rc.blocksPerHour()),
+    //         uint32(block.number),
+    //         0
+    //     );
+
+    //     _proposeMotion(
+    //         actionId,
+    //         rule,
+    //         sn,
+    //         actionType,
+    //         targets,
+    //         paramsBytes,
+    //         desHash
+    //     );
+    // }
 
     function castVote(
         uint256 motionId,
@@ -111,7 +128,7 @@ contract BookOfDirectors is IBookOfDirectors, MotionsRepo, SHASetting {
     ) external onlyDirectKeeper {
         require(_directorsList.contains(caller), "not a director");
         require(
-            _directors[caller].expirationBN >= block.number,
+            _directors[caller].expirationBN >= uint32(block.number),
             "tenure expired"
         );
 
@@ -241,20 +258,19 @@ contract BookOfDirectors is IBookOfDirectors, MotionsRepo, SHASetting {
     //##    读接口    ##
     //##################
 
-    function maxNumOfDirectors() external view onlyUser returns (uint8) {
+    function maxNumOfDirectors() external view returns (uint8) {
         return _maxNumOfDirectors;
     }
 
     function appointmentCounter(uint40 appointer)
         external
         view
-        onlyUser
         returns (uint8)
     {
         return _appointmentCounter[appointer];
     }
 
-    function isDirector(uint40 acct) external view onlyUser returns (bool) {
+    function isDirector(uint40 acct) external view returns (bool) {
         return _directorsList.contains(acct);
     }
 
@@ -262,13 +278,12 @@ contract BookOfDirectors is IBookOfDirectors, MotionsRepo, SHASetting {
         external
         view
         directorExist(acct)
-        onlyUser
         returns (bool)
     {
         return (_directors[acct].expirationBN >= block.number);
     }
 
-    function whoIs(uint8 title) external view onlyUser returns (uint40) {
+    function whoIs(uint8 title) external view returns (uint40) {
         require(
             title != uint8(EnumsRepo.TitleOfDirectors.Director),
             "director is not a special title"
@@ -284,7 +299,6 @@ contract BookOfDirectors is IBookOfDirectors, MotionsRepo, SHASetting {
     function titleOfDirector(uint40 acct)
         external
         view
-        onlyUser
         directorExist(acct)
         returns (uint8)
     {
@@ -294,7 +308,6 @@ contract BookOfDirectors is IBookOfDirectors, MotionsRepo, SHASetting {
     function appointerOfDirector(uint40 acct)
         external
         view
-        onlyUser
         directorExist(acct)
         returns (uint40)
     {
@@ -304,7 +317,6 @@ contract BookOfDirectors is IBookOfDirectors, MotionsRepo, SHASetting {
     function inaugurationBNOfDirector(uint40 acct)
         external
         view
-        onlyUser
         directorExist(acct)
         returns (uint32)
     {
@@ -314,18 +326,17 @@ contract BookOfDirectors is IBookOfDirectors, MotionsRepo, SHASetting {
     function expirationBNOfDirector(uint40 acct)
         external
         view
-        onlyUser
         directorExist(acct)
         returns (uint32)
     {
         return _directors[acct].expirationBN;
     }
 
-    function qtyOfDirectors() external view onlyUser returns (uint256) {
+    function qtyOfDirectors() external view returns (uint256) {
         return _directorsList.length();
     }
 
-    function directors() external view onlyUser returns (uint40[]) {
+    function directors() external view returns (uint40[]) {
         return _directorsList.valuesToUint40();
     }
 }

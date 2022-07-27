@@ -9,15 +9,23 @@ import "./IBookOfOptions.sol";
 
 import "../boh/terms/IOptions.sol";
 
-import "../../common/lib/EnumerableSet.sol";
 import "../../common/lib/SNFactory.sol";
 import "../../common/lib/SNParser.sol";
+import "../../common/lib/EnumsRepo.sol";
 import "../../common/lib/EnumerableSet.sol";
 import "../../common/lib/ObjsRepo.sol";
 
+import "../../common/access/AccessControl.sol";
+
+import "../../common/ruting/IBookSetting.sol";
 import "../../common/ruting/BOSSetting.sol";
 
-contract BookOfOptions is IBookOfOptions, BOSSetting {
+contract BookOfOptions is
+    IBookOfOptions,
+    IBookSetting,
+    BOSSetting,
+    AccessControl
+{
     using EnumerableSet for EnumerableSet.Bytes32Set;
     using EnumerableSet for EnumerableSet.UintSet;
     using ObjsRepo for ObjsRepo.SNList;
@@ -86,7 +94,7 @@ contract BookOfOptions is IBookOfOptions, BOSSetting {
     uint16 private _counterOfOptions;
 
     // constructor(address bookeeper) public {
-    //     init(msg.sender, bookeeper);
+    //     init(_msgSender(), bookeeper);
     // }
 
     // ################
@@ -101,6 +109,10 @@ contract BookOfOptions is IBookOfOptions, BOSSetting {
     // ################
     // ##   写接口   ##
     // ################
+
+    function setBooks(address[8] books) external onlyDirectKeeper {
+        _setBOS(books[uint8(EnumsRepo.NameOfBook.BOS)]);
+    }
 
     function createSN(
         uint8 typeOfOpt, //0-call option; 1-put option
@@ -463,11 +475,11 @@ contract BookOfOptions is IBookOfOptions, BOSSetting {
     // ##  查询接口  ##
     // ################
 
-    function counterOfOptions() external view onlyUser returns (uint16) {
+    function counterOfOptions() external view returns (uint16) {
         return _counterOfOptions;
     }
 
-    function isOption(bytes6 ssn) public view onlyUser returns (bool) {
+    function isOption(bytes6 ssn) public view returns (bool) {
         return _snList.contains(ssn);
     }
 
@@ -475,7 +487,6 @@ contract BookOfOptions is IBookOfOptions, BOSSetting {
         external
         view
         optionExist(ssn)
-        onlyUser
         returns (
             bytes32 sn,
             uint40 rightholder,
@@ -496,28 +507,23 @@ contract BookOfOptions is IBookOfOptions, BOSSetting {
         state = opt.state;
     }
 
-    function isObligor(bytes6 ssn, uint40 acct)
-        external
-        view
-        onlyUser
-        returns (bool)
-    {
+    function isObligor(bytes6 ssn, uint40 acct) external view returns (bool) {
         return _options[ssn].obligors.contains(acct);
     }
 
-    function obligors(bytes6 ssn) external view onlyUser returns (uint40[]) {
+    function obligors(bytes6 ssn) external view returns (uint40[]) {
         return _options[ssn].obligors.valuesToUint40();
     }
 
-    function stateOfOption(bytes6 ssn) external view onlyUser returns (uint8) {
+    function stateOfOption(bytes6 ssn) external view returns (uint8) {
         return _options[ssn].state;
     }
 
-    function snList() external view onlyUser returns (bytes32[] list) {
+    function snList() external view returns (bytes32[] list) {
         list = _snList.values();
     }
 
-    function oracles() external view onlyUser returns (uint256 d1, uint256 d2) {
+    function oracles() external view returns (uint256 d1, uint256 d2) {
         d1 = _oracles.data_1;
         d2 = _oracles.data_2;
     }

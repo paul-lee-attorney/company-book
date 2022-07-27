@@ -5,8 +5,9 @@
 
 pragma solidity ^0.4.24;
 
-import "../../boa//IInvestmentAgreement.sol";
+import "../../boa/IInvestmentAgreement.sol";
 
+import "../../../common/ruting/IBookSetting.sol";
 import "../../../common/ruting/BOSSetting.sol";
 import "../../../common/ruting/BOMSetting.sol";
 import "../../../common/access/DraftControl.sol";
@@ -23,6 +24,7 @@ import "./ITerm.sol";
 contract AntiDilution is
     IAntiDilution,
     ITerm,
+    IBookSetting,
     BOSSetting,
     BOMSetting,
     DraftControl
@@ -54,6 +56,11 @@ contract AntiDilution is
     // ##   写接口   ##
     // ################
 
+    function setBooks(address[8] books) external onlyDirectKeeper {
+        _setBOS(books[uint8(EnumsRepo.NameOfBook.BOS)]);
+        _setBOM(books[uint8(EnumsRepo.NameOfBook.BOM)]);
+    }
+
     function setBenchmark(uint8 class, uint32 price) external onlyAttorney {
         if (_benchmarks.addMark(class, price)) emit SetBenchmark(class, price);
     }
@@ -82,7 +89,7 @@ contract AntiDilution is
     // ##  查询接口  ##
     // ################
 
-    function isMarked(uint8 class) external view onlyUser returns (bool) {
+    function isMarked(uint8 class) external view returns (bool) {
         return _benchmarks.contains(class);
     }
 
@@ -90,7 +97,6 @@ contract AntiDilution is
         external
         view
         onlyMarked(class)
-        onlyUser
         returns (uint64)
     {
         return _benchmarks.markedValue(class);
@@ -100,7 +106,6 @@ contract AntiDilution is
         external
         view
         onlyMarked(class)
-        onlyUser
         returns (uint40[])
     {
         return _obligors[class].valuesToUint40();
@@ -110,7 +115,7 @@ contract AntiDilution is
         address ia,
         bytes32 snOfDeal,
         bytes32 shareNumber
-    ) external view onlyMarked(shareNumber.class()) onlyUser returns (uint64) {
+    ) external view onlyMarked(shareNumber.class()) returns (uint64) {
         uint32 markPrice = _benchmarks.markedValue(shareNumber.class());
 
         uint32 dealPrice = IInvestmentAgreement(ia).unitPrice(
@@ -128,12 +133,7 @@ contract AntiDilution is
     // ##  Term接口  ##
     // ################
 
-    function isTriggered(address ia, bytes32 sn)
-        public
-        view
-        onlyUser
-        returns (bool)
-    {
+    function isTriggered(address ia, bytes32 sn) public view returns (bool) {
         uint32 unitPrice = IInvestmentAgreement(ia).unitPrice(sn.sequence());
 
         if (sn.typeOfDeal() > uint8(EnumsRepo.TypeOfDeal.PreEmptive))
@@ -165,12 +165,7 @@ contract AntiDilution is
         return true;
     }
 
-    function isExempted(address ia, bytes32 sn)
-        public
-        view
-        onlyUser
-        returns (bool)
-    {
+    function isExempted(address ia, bytes32 sn) public view returns (bool) {
         if (!isTriggered(ia, sn)) return true;
 
         (uint40[] memory consentParties, ) = _bom.getYea(uint256(ia));

@@ -8,6 +8,7 @@ pragma experimental ABIEncoderV2;
 
 import "../books/boa//IInvestmentAgreement.sol";
 
+import "../common/ruting/IBookSetting.sol";
 import "../common/ruting/BOSSetting.sol";
 import "../common/ruting/BOASetting.sol";
 import "../common/ruting/BODSetting.sol";
@@ -20,17 +21,20 @@ import "../common/lib/SNParser.sol";
 import "../common/components/ISigPage.sol";
 
 import "../common/lib/EnumsRepo.sol";
+import "../common/access/AccessControl.sol";
 
 import "./IBOMKeeper.sol";
 
 contract BOMKeeper is
     IBOMKeeper,
+    IBookSetting,
     BOASetting,
     BODSetting,
     BOMSetting,
     SHASetting,
     BOOSetting,
-    BOSSetting
+    BOSSetting,
+    AccessControl
 {
     using SNParser for bytes32;
 
@@ -51,6 +55,15 @@ contract BOMKeeper is
     // ################
     // ##   Motion   ##
     // ################
+
+    function setBooks(address[8] books) external onlyDirectKeeper {
+        _setBOA(books[uint8(EnumsRepo.NameOfBook.BOA)]);
+        _setBOD(books[uint8(EnumsRepo.NameOfBook.BOD)]);
+        _setBOH(books[uint8(EnumsRepo.NameOfBook.BOH)]);
+        _setBOM(books[uint8(EnumsRepo.NameOfBook.BOM)]);
+        _setBOO(books[uint8(EnumsRepo.NameOfBook.BOO)]);
+        _setBOS(books[uint8(EnumsRepo.NameOfBook.BOS)]);
+    }
 
     function authorizeToPropose(
         uint40 caller,
@@ -89,15 +102,15 @@ contract BOMKeeper is
         _boa.pushToNextState(ia, caller);
     }
 
-    function proposeAction(
-        uint8 actionType,
-        address[] target,
-        bytes[] params,
-        bytes32 desHash,
-        uint40 submitter
-    ) external onlyDirectKeeper memberExist(submitter) {
-        _bom.proposeAction(actionType, target, params, desHash, submitter);
-    }
+    // function proposeAction(
+    //     uint8 actionType,
+    //     address[] target,
+    //     bytes32[] params,
+    //     bytes32 desHash,
+    //     uint40 submitter
+    // ) external onlyDirectKeeper memberExist(submitter) {
+    //     _bom.proposeAction(actionType, target, params, desHash, submitter);
+    // }
 
     function castVote(
         address ia,
@@ -118,17 +131,17 @@ contract BOMKeeper is
         _boa.pushToNextState(ia, caller);
     }
 
-    function execAction(
-        uint8 actionType,
-        address[] targets,
-        bytes[] params,
-        bytes32 desHash,
-        uint40 caller
-    ) external returns (uint256) {
-        require(_bod.isDirector(caller), "caller is not a Director");
-        require(!_rc.isContract(caller), "caller is not an EOA");
-        return _bom.execAction(actionType, targets, params, desHash);
-    }
+    // function execAction(
+    //     uint8 actionType,
+    //     address[] targets,
+    //     bytes32[] params,
+    //     bytes32 desHash,
+    //     uint40 caller
+    // ) external returns (uint256) {
+    //     require(_bod.isDirector(caller), "caller is not a Director");
+    //     require(!_rc.isContract(caller), "caller is not an EOA");
+    //     return _bom.execAction(actionType, targets, params, desHash);
+    // }
 
     function requestToBuy(
         address ia,

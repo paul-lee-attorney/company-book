@@ -16,6 +16,8 @@ contract RegCenterSetting {
 
     event SetRegCenter(address rc);
 
+    event RegThisContract(uint40 userNo);
+
     // ##################
     // ##   修饰器     ##
     // ##################
@@ -43,7 +45,8 @@ contract RegCenterSetting {
     }
 
     function regThisContract(uint8 roleOfUser, uint40 entity) public {
-        _rc.regUser(roleOfUser, entity);
+        uint40 userNo = _rc.regUser(roleOfUser, entity);
+        emit RegThisContract(userNo);
     }
 
     function _msgSender() internal returns (uint40) {

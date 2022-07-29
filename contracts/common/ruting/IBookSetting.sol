@@ -30,19 +30,21 @@ interface IBookSetting {
     //##  write   ##
     //##############
 
-    function setBooks(address[8] books) external;
+    // function setBooks(address[8] books) external;
 
-    // function setBOSCal(address bosCal) external;
+    function setBOA(address boa) external;
 
-    // function setBOA(address boa) external;
+    function setAgrmtCal(address agrmtCal) external;
 
-    // function setAgrmtCal(address agrmtCal) external;
+    function setBOH(address boh) external;
 
-    // function setBOH(address boh) external;
+    function setBOM(address bom) external;
 
-    // function setBOM(address bom) external;
+    function setBOO(address boo) external;
 
-    // function setBOO(address boo) external;
+    function setBOP(address boo) external;
 
-    // function setBOP(address boo) external;
+    function setBOS(address bos) external;
+
+    function setBOSCal(address bosCal) external;
 }

@@ -7,14 +7,14 @@ pragma solidity ^0.4.24;
 
 import "../../books/boo/IBookOfOptions.sol";
 
-// import "../access/AccessControl.sol";
+import "../access/AccessControl.sol";
 
-contract BOOSetting {
+contract BOOSetting is AccessControl {
     IBookOfOptions internal _boo;
 
     event SetBOO(address boo);
 
-    function _setBOO(address boo) internal {
+    function setBOO(address boo) external onlyManager(1) {
         _boo = IBookOfOptions(boo);
         emit SetBOO(boo);
     }

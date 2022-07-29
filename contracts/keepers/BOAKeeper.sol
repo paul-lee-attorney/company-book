@@ -5,17 +5,8 @@
 
 pragma solidity ^0.4.24;
 
-import "../books/boh/terms/IAntiDilution.sol";
-import "../books/boh/ShareholdersAgreement.sol";
-import "../books/boh/terms/ITerm.sol";
-
 import "../books/boa/IInvestmentAgreement.sol";
-import "../books/boa/InvestmentAgreement.sol";
 
-import "../books/boh/terms/IAlongs.sol";
-import "../books/boh/terms/IFirstRefusal.sol";
-
-import "../common/access/IRoles.sol";
 import "../common/access/IAccessControl.sol";
 
 import "../common/components/ISigPage.sol";
@@ -28,18 +19,15 @@ import "../common/ruting/SHASetting.sol";
 
 import "../common/lib/SNParser.sol";
 import "../common/lib/EnumsRepo.sol";
-import "../common/access/AccessControl.sol";
 
 import "./IBOAKeeper.sol";
 
 contract BOAKeeper is
     IBOAKeeper,
-    IBookSetting,
     BOASetting,
     SHASetting,
     BOMSetting,
-    BOSSetting,
-    AccessControl
+    BOSSetting
 {
     using SNParser for bytes32;
 
@@ -65,7 +53,10 @@ contract BOAKeeper is
     }
 
     modifier onlyOwnerOf(address body, uint40 caller) {
-        require(IAccessControl(body).getOwner() == caller, "NOT Owner of Doc");
+        require(
+            IAccessControl(body).getManager(0) == caller,
+            "NOT Owner of Doc"
+        );
         _;
     }
 
@@ -78,33 +69,27 @@ contract BOAKeeper is
     // ##   InvestmentAgreement   ##
     // #############################
 
-    function setBooks(address[8] books) external onlyDirectKeeper {
-        _setBOA(books[uint8(EnumsRepo.NameOfBook.BOA)]);
-        _setBOH(books[uint8(EnumsRepo.NameOfBook.BOH)]);
-        _setBOM(books[uint8(EnumsRepo.NameOfBook.BOM)]);
-        _setBOS(books[uint8(EnumsRepo.NameOfBook.BOS)]);
-    }
-
-    function createIA(uint8 typOfIA, uint40 caller) external onlyDirectKeeper {
+    function createIA(uint8 typOfIA, uint40 caller) external onlyManager(1) {
         require(_bos.isMember(caller), "caller not MEMBER");
 
         address ia = _boa.createDoc(typOfIA, caller);
 
-        IAccessControl(ia).init(caller, _rc.userNo(this), address(_rc));
+        IAccessControl(ia).init(_rc.primeKey(caller), this, address(_rc));
 
-        address[8] books;
+        // address[8] books;
 
-        books[uint8(EnumsRepo.NameOfBook.BOS)] = address(_bos);
-        books[uint8(EnumsRepo.NameOfBook.BOSCal)] = address(_bosCal);
+        // books[uint8(EnumsRepo.NameOfBook.BOS)] = address(_bos);
+        // books[uint8(EnumsRepo.NameOfBook.BOSCal)] = address(_bosCal);
 
-        IBookSetting(ia).setBooks(books);
+        IBookSetting(ia).setBOS(_bos);
+        IBookSetting(ia).setBOSCal(_bosCal);
 
-        _copyRoleTo(ia, KEEPERS);
+        _copyRoleTo(KEEPERS, ia);
     }
 
     function removeIA(address ia, uint40 caller)
         external
-        onlyDirectKeeper
+        onlyManager(1)
         onlyOwnerOf(ia, caller)
         notEstablished(ia)
     {
@@ -137,12 +122,14 @@ contract BOAKeeper is
 
     function circulateIA(address ia, uint40 submitter)
         external
-        onlyDirectKeeper
+        onlyManager(1)
         onlyOwnerOf(ia, submitter)
     {
-        require(IDraftControl(ia).finalized(), "let GC finalize IA first");
+        require(IAccessControl(ia).finalized(), "let GC finalize IA first");
 
-        IAccessControl(ia).abandonOwnership();
+        IAccessControl(ia).setManager(0, 0);
+
+        // IAccessControl(ia).abandonOwnership();
 
         _boa.circulateIA(ia, submitter);
     }
@@ -153,7 +140,7 @@ contract BOAKeeper is
         address ia,
         uint40 caller,
         bytes32 sigHash
-    ) external onlyDirectKeeper onlyPartyOf(ia, caller) {
+    ) external onlyManager(1) onlyPartyOf(ia, caller) {
         require(
             _boa.currentState(ia) == uint8(EnumsRepo.BODStates.Circulated),
             "IA not in Circulated State"
@@ -217,7 +204,7 @@ contract BOAKeeper is
         bytes32 hashLock,
         uint32 closingDate,
         uint40 caller
-    ) external onlyDirectKeeper {
+    ) external onlyManager(1) {
         require(
             _boa.currentState(ia) == uint8(EnumsRepo.BODStates.Voted),
             "wrong state of BOD"
@@ -276,7 +263,7 @@ contract BOAKeeper is
         bytes32 sn,
         string hashKey,
         uint40 caller
-    ) external onlyDirectKeeper {
+    ) external onlyManager(1) {
         require(
             _boa.currentState(ia) == uint8(EnumsRepo.BODStates.Voted),
             "InvestmentAgreement NOT in voted state"
@@ -308,10 +295,7 @@ contract BOAKeeper is
         if (len == 0) _boa.pushToNextState(ia, caller);
     }
 
-    function transferTargetShare(address ia, bytes32 sn)
-        public
-        onlyDirectKeeper
-    {
+    function transferTargetShare(address ia, bytes32 sn) public onlyManager(1) {
         bytes32 shareNumber = IInvestmentAgreement(ia).shareNumberOfDeal(
             sn.sequence()
         );
@@ -355,7 +339,7 @@ contract BOAKeeper is
         uint40 caller,
         // uint32 sigDate,
         string hashKey
-    ) external onlyDirectKeeper {
+    ) external onlyManager(1) {
         require(_boa.isRegistered(ia), "IA NOT registered");
         require(
             _boa.currentState(ia) == uint8(EnumsRepo.BODStates.Voted),

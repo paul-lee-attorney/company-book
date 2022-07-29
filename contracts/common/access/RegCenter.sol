@@ -1,15 +1,21 @@
-/*
+/* *
  * Copyright 2021-2022 LI LI of JINGTIAN & GONGCHENG.
  * All Rights Reserved.
  * */
 
 pragma solidity ^0.4.24;
 
-import "./IRegCenter.sol";
-import "../lib/EnumsRepo.sol";
 import "./EntitiesMapping.sol";
+import "./IRegCenter.sol";
+
+import "../lib/EnumsRepo.sol";
+import "../lib/EnumerableSet.sol";
+import "../lib/RolesRepo.sol";
 
 contract RegCenter is IRegCenter, EntitiesMapping {
+    using EnumerableSet for EnumerableSet.UintSet;
+    using RolesRepo for RolesRepo.Roles;
+
     struct User {
         address primeKey;
         address backupKey;
@@ -28,6 +34,11 @@ contract RegCenter is IRegCenter, EntitiesMapping {
     uint40 private _counterOfUsers;
 
     uint32 private _BLOCKS_PER_HOUR;
+
+    // ==== Role ====
+
+    // docUserNo =>Roles
+    mapping(uint40 => RolesRepo.Roles) private _roles;
 
     constructor(uint32 blocks_per_hour) public {
         regUser(uint8(EnumsRepo.RoleOfUser.EOA), 0);
@@ -48,11 +59,16 @@ contract RegCenter is IRegCenter, EntitiesMapping {
         _;
     }
 
+    modifier onlyContract() {
+        require(_isContract(msg.sender), "not a contract");
+        _;
+    }
+
     // ##################
     // ##    写端口    ##
     // ##################
 
-    function regUser(uint8 roleOfUser, uint40 entity) public {
+    function regUser(uint8 roleOfUser, uint40 entity) public returns (uint40) {
         require(!_usedKeys[msg.sender], "already registered");
 
         _counterOfUsers++;
@@ -80,6 +96,8 @@ contract RegCenter is IRegCenter, EntitiesMapping {
 
             _joinEntity(entity, _counterOfUsers, roleOfUser);
         }
+
+        return _counterOfUsers;
     }
 
     function quitEntity(uint8 roleOfUser) external {
@@ -201,6 +219,108 @@ contract RegCenter is IRegCenter, EntitiesMapping {
         return _changeTitle(usrDirector, _userNo[msg.sender], title);
     }
 
+    // ==== Roles ====
+
+    function _getRegUserNo(address caller, address addrOfOriginator)
+        private
+        returns (uint40 doc, uint40 originator)
+    {
+        doc = _userNo[caller];
+        require(doc > 0, "contract not registered");
+
+        originator = _userNo[addrOfOriginator];
+        require(originator > 0, "originator not registered");
+    }
+
+    function setManager(
+        uint8 title,
+        address addrOfOriginator,
+        address addrOfAcct
+    ) external onlyContract returns (bool) {
+        (uint40 doc, uint40 originator) = _getRegUserNo(
+            msg.sender,
+            addrOfOriginator
+        );
+        uint40 acct = _userNo[addrOfAcct];
+
+        return _roles[doc].setManager(title, originator, acct);
+    }
+
+    function grantRole(
+        bytes32 role,
+        address addrOfOriginator,
+        uint40 acct
+    ) external onlyContract returns (bool) {
+        (uint40 doc, uint40 originator) = _getRegUserNo(
+            msg.sender,
+            addrOfOriginator
+        );
+        return _roles[doc].grantRole(role, originator, acct);
+    }
+
+    function revokeRole(
+        bytes32 role,
+        address addrOfOriginator,
+        uint40 acct
+    ) external onlyContract returns (bool) {
+        (uint40 doc, uint40 originator) = _getRegUserNo(
+            msg.sender,
+            addrOfOriginator
+        );
+        return _roles[doc].revokeRole(role, originator, acct);
+    }
+
+    function renounceRole(bytes32 role, address addrOfOriginator)
+        external
+        onlyContract
+        returns (bool)
+    {
+        (uint40 doc, uint40 originator) = _getRegUserNo(
+            msg.sender,
+            addrOfOriginator
+        );
+        return _roles[doc].renounceRole(role, originator);
+    }
+
+    function abandonRole(bytes32 role, address addrOfOriginator)
+        external
+        onlyContract
+        returns (bool)
+    {
+        (uint40 doc, uint40 originator) = _getRegUserNo(
+            msg.sender,
+            addrOfOriginator
+        );
+        return _roles[doc].abandonRole(role, originator);
+    }
+
+    function setRoleAdmin(
+        bytes32 role,
+        address addrOfOriginator,
+        uint40 acct
+    ) external onlyContract returns (bool) {
+        (uint40 doc, uint40 originator) = _getRegUserNo(
+            msg.sender,
+            addrOfOriginator
+        );
+        return _roles[doc].setRoleAdmin(role, originator, acct);
+    }
+
+    function copyRoleTo(
+        bytes32 role,
+        address addrOfOriginator,
+        address addrOfTo
+    ) external onlyContract returns (bool) {
+        (uint40 doc, uint40 originator) = _getRegUserNo(
+            msg.sender,
+            addrOfOriginator
+        );
+        uint40 to = _userNo[addrOfTo];
+        require(to > 0 && _isContract(to), "To is not a registered contract");
+
+        return _roles[doc].copyRoleTo(role, originator, _roles[to]);
+    }
+
     // ##################
     // ##   查询端口   ##
     // ##################
@@ -296,6 +416,7 @@ contract RegCenter is IRegCenter, EntitiesMapping {
 
     function getUpBranches(uint40 origin)
         external
+        view
         returns (uint40[] entities, uint88[] connections)
     {
         return _getUpBranches(origin);
@@ -303,6 +424,7 @@ contract RegCenter is IRegCenter, EntitiesMapping {
 
     function getDownBranches(uint40 origin)
         external
+        view
         returns (uint40[] entities, uint88[] connections)
     {
         return _getDownBranches(origin);
@@ -310,8 +432,56 @@ contract RegCenter is IRegCenter, EntitiesMapping {
 
     function getRoundGraph(uint40 origin)
         external
+        view
         returns (uint40[] entities, uint88[] connections)
     {
         return _getRoundGraph(origin);
+    }
+
+    // ==== Role ====
+    function hasRole(bytes32 role, address addrOfOriginator)
+        external
+        view
+        onlyContract
+        returns (bool)
+    {
+        (uint40 doc, uint40 originator) = _getRegUserNo(
+            msg.sender,
+            addrOfOriginator
+        );
+
+        return _roles[doc].hasRole(role, originator);
+    }
+
+    function isManager(uint8 title, address addrOfOriginator)
+        external
+        view
+        onlyContract
+        returns (bool)
+    {
+        (uint40 doc, uint40 originator) = _getRegUserNo(
+            msg.sender,
+            addrOfOriginator
+        );
+
+        return _roles[doc].isManager(title, originator);
+    }
+
+    function getManager(uint8 title) public view onlyContract returns (uint40) {
+        require(title < 3, "title overflow");
+        uint40 doc = _userNo[msg.sender];
+        require(doc > 0, "contract is not registered");
+
+        return _roles[doc].managers[title];
+    }
+
+    function getManagerKey(uint8 title)
+        external
+        view
+        onlyContract
+        returns (address)
+    {
+        uint40 manager = getManager(title);
+        return _users[manager].primeKey;
     }
 }

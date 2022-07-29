@@ -24,9 +24,9 @@ interface IBOHKeeper {
 
     function createSHA(uint8 docType, uint40 caller) external;
 
-    function removeSHA(address body, uint40 caller) external;
+    function removeSHA(address sha, uint40 caller) external;
 
-    function circulateSHA(address body, uint40 caller) external;
+    function circulateSHA(address sha, uint40 caller) external;
 
     function signSHA(
         address sha,
@@ -34,5 +34,5 @@ interface IBOHKeeper {
         bytes32 sigHash
     ) external;
 
-    function effectiveSHA(address body, uint40 caller) external;
+    function effectiveSHA(address sha, uint40 caller) external;
 }

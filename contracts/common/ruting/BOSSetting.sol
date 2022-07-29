@@ -8,9 +8,9 @@ pragma solidity ^0.4.24;
 import "../../books/bos/IBookOfShares.sol";
 import "../../books/bos/IBOSCalculator.sol";
 
-// import "../access/AccessControl.sol";
+import "../access/AccessControl.sol";
 
-contract BOSSetting {
+contract BOSSetting is AccessControl {
     IBookOfShares internal _bos;
     IBOSCalculator internal _bosCal;
 
@@ -18,10 +18,10 @@ contract BOSSetting {
 
     event SetBOSCal(address cal);
 
-    // modifier onlyMember() {
-    //     require(_bos.isMember(_msgSender()), "NOT Member");
-    //     _;
-    // }
+    modifier onlyMember() {
+        require(_bos.isMember(_msgSender()), "NOT Member");
+        _;
+    }
 
     modifier memberExist(uint40 acct) {
         require(_bos.isMember(acct), "member NOT exist");
@@ -30,8 +30,8 @@ contract BOSSetting {
 
     // modifier onlyStakeholders() {
     //     require(
-    //         _msgSender() == getOwner() ||
-    //             _msgSender() == getDirectKeeper() ||
+    //         _msgSender() == getManagerKey(0) ||
+    //             _msgSender() == getManager(1) ||
     //             _bos.isMember(_msgSender()),
     //         "NOT Stakeholders"
     //     );
@@ -47,12 +47,12 @@ contract BOSSetting {
     // ##    写端口    ##
     // ##################
 
-    function _setBOS(address bos) internal {
+    function setBOS(address bos) external onlyManager(1) {
         _bos = IBookOfShares(bos);
         emit SetBOS(bos);
     }
 
-    function _setBOSCal(address cal) internal {
+    function setBOSCal(address cal) external onlyManager(1) {
         _bosCal = IBOSCalculator(cal);
         emit SetBOSCal(cal);
     }

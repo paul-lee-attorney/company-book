@@ -6,10 +6,11 @@
 pragma solidity ^0.4.24;
 
 import "./InvestmentAgreement.sol";
+import "./IFirstRefusalToolKits.sol";
 
 import "../../common/lib/ObjsRepo.sol";
 
-contract FirstRefusalToolKits is InvestmentAgreement {
+contract FirstRefusalToolKits is IFirstRefusalToolKits, InvestmentAgreement {
     using ObjsRepo for ObjsRepo.TimeLine;
 
     struct Record {
@@ -102,7 +103,7 @@ contract FirstRefusalToolKits is InvestmentAgreement {
         uint40 acct,
         // uint32 acceptDate,
         bytes32 sigHash
-    ) external onlyDirectKeeper dealExist(ssn) {
+    ) external onlyManager(1) dealExist(ssn) {
         uint16 len = _counterOfFR[ssn];
 
         while (len > 0) {

@@ -37,7 +37,7 @@ interface IOptions {
     ) external;
 
     function addConditions(
-        uint16 sequence,
+        bytes6 ssn,
         uint8 logicOperator,
         uint8 compareOperator_1,
         uint32 para_1,
@@ -72,5 +72,5 @@ interface IOptions {
 
     function rightholder(bytes6 ssn) external view returns (uint40);
 
-    function snList() external view returns (bytes32[] list);
+    function snList() external view returns (bytes32[]);
 }

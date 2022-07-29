@@ -9,7 +9,6 @@ import "../../boa//IInvestmentAgreement.sol";
 
 import "../../../common/ruting/BOSSetting.sol";
 import "../../../common/ruting/BOMSetting.sol";
-import "../../../common/access/DraftControl.sol";
 
 import "../../../common/lib/ArrayUtils.sol";
 import "../../../common/lib/EnumerableSet.sol";
@@ -21,13 +20,7 @@ import "../../../common/components/ISigPage.sol";
 import "./IFirstRefusal.sol";
 import "./ITerm.sol";
 
-contract FirstRefusal is
-    IFirstRefusal,
-    ITerm,
-    BOSSetting,
-    BOMSetting,
-    DraftControl
-{
+contract FirstRefusal is IFirstRefusal, ITerm, BOSSetting, BOMSetting {
     using ArrayUtils for uint40[];
     using SNFactory for bytes;
     using SNParser for bytes32;

@@ -18,12 +18,7 @@ import "../../common/components/SigPage.sol";
 
 import "./IInvestmentAgreement.sol";
 
-contract InvestmentAgreement is
-    IInvestmentAgreement,
-    IBookSetting,
-    BOSSetting,
-    SigPage
-{
+contract InvestmentAgreement is IInvestmentAgreement, BOSSetting, SigPage {
     using SNFactory for bytes;
     using SNParser for bytes32;
     using ObjsRepo for ObjsRepo.SeqList;
@@ -114,10 +109,6 @@ contract InvestmentAgreement is
     //##    写接口    ##
     //##################
 
-    function setBooks(address[9] books) external onlyDirectKeeper {
-        _setBOS(books[uint8(EnumsRepo.NameOfBook.BOS)]);
-    }
-
     function _createSN(
         uint8 class,
         uint16 sequence,
@@ -200,7 +191,7 @@ contract InvestmentAgreement is
 
         _dealsList.add(sn);
 
-        if (finalized) {
+        if (_finalized) {
             if (
                 shareNumber > bytes32(0) &&
                 typeOfDeal != uint8(EnumsRepo.TypeOfDeal.DragAlong) &&
@@ -308,7 +299,7 @@ contract InvestmentAgreement is
         );
 
         require(
-            closingDate <= closingDeadline,
+            closingDate <= closingDeadline(),
             "closingDate LATER than deadline"
         );
 
@@ -354,7 +345,7 @@ contract InvestmentAgreement is
         uint16 ssn,
         // uint32 sigDate,
         string hashKey
-    ) external onlyCleared(ssn) onlyDirectKeeper {
+    ) external onlyCleared(ssn) onlyManager(1) {
         Deal storage deal = _deals[ssn];
 
         require(

@@ -7,14 +7,14 @@ pragma solidity ^0.4.24;
 
 import "../../books/bom/IBookOfMotions.sol";
 
-// import "../access/AccessControl.sol";
+import "../access/AccessControl.sol";
 
-contract BOMSetting {
+contract BOMSetting is AccessControl {
     IBookOfMotions internal _bom;
 
     event SetBOM(address bom);
 
-    function _setBOM(address bom) internal {
+    function setBOM(address bom) external onlyManager(1) {
         _bom = IBookOfMotions(bom);
         emit SetBOM(bom);
     }

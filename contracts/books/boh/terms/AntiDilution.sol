@@ -10,7 +10,7 @@ import "../../boa/IInvestmentAgreement.sol";
 import "../../../common/ruting/IBookSetting.sol";
 import "../../../common/ruting/BOSSetting.sol";
 import "../../../common/ruting/BOMSetting.sol";
-import "../../../common/access/DraftControl.sol";
+import "../../../common/access/AccessControl.sol";
 
 import "../../../common/lib/ArrayUtils.sol";
 import "../../../common/lib/SNParser.sol";
@@ -21,14 +21,7 @@ import "../../../common/lib/ObjsRepo.sol";
 import "./IAntiDilution.sol";
 import "./ITerm.sol";
 
-contract AntiDilution is
-    IAntiDilution,
-    ITerm,
-    IBookSetting,
-    BOSSetting,
-    BOMSetting,
-    DraftControl
-{
+contract AntiDilution is IAntiDilution, ITerm, BOSSetting, BOMSetting {
     using SNParser for bytes32;
     using EnumerableSet for EnumerableSet.UintSet;
     using ObjsRepo for ObjsRepo.MarkChain;
@@ -56,11 +49,6 @@ contract AntiDilution is
     // ##   写接口   ##
     // ################
 
-    function setBooks(address[8] books) external onlyDirectKeeper {
-        _setBOS(books[uint8(EnumsRepo.NameOfBook.BOS)]);
-        _setBOM(books[uint8(EnumsRepo.NameOfBook.BOM)]);
-    }
-
     function setBenchmark(uint8 class, uint32 price) external onlyAttorney {
         if (_benchmarks.addMark(class, price)) emit SetBenchmark(class, price);
     }
@@ -69,20 +57,21 @@ contract AntiDilution is
         if (_benchmarks.removeMark(class)) emit DelBenchmark(class);
     }
 
-    function addObligor(uint8 class, uint40 acct)
+    function addObligor(uint8 class, uint40 obligor)
         external
         onlyAttorney
         onlyMarked(class)
     {
-        if (_obligors[class].add(acct)) emit AddObligor(class, acct);
+        if (_obligors[class].add(obligor)) emit AddObligor(class, obligor);
     }
 
-    function removeObligor(uint8 class, uint40 acct)
+    function removeObligor(uint8 class, uint40 obligor)
         external
         onlyAttorney
         onlyMarked(class)
     {
-        if (_obligors[class].remove(acct)) emit RemoveObligor(class, acct);
+        if (_obligors[class].remove(obligor))
+            emit RemoveObligor(class, obligor);
     }
 
     // ################
@@ -116,9 +105,9 @@ contract AntiDilution is
         bytes32 snOfDeal,
         bytes32 shareNumber
     ) external view onlyMarked(shareNumber.class()) returns (uint64) {
-        uint32 markPrice = _benchmarks.markedValue(shareNumber.class());
+        uint64 markPrice = _benchmarks.markedValue(shareNumber.class());
 
-        uint32 dealPrice = IInvestmentAgreement(ia).unitPrice(
+        uint64 dealPrice = IInvestmentAgreement(ia).unitPrice(
             snOfDeal.sequence()
         );
 
@@ -134,7 +123,7 @@ contract AntiDilution is
     // ################
 
     function isTriggered(address ia, bytes32 sn) public view returns (bool) {
-        uint32 unitPrice = IInvestmentAgreement(ia).unitPrice(sn.sequence());
+        uint64 unitPrice = IInvestmentAgreement(ia).unitPrice(sn.sequence());
 
         if (sn.typeOfDeal() > uint8(EnumsRepo.TypeOfDeal.PreEmptive))
             return false;

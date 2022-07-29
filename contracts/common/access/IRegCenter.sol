@@ -1,4 +1,4 @@
-/*
+/* *
  * Copyright 2021-2022 LI LI of JINGTIAN & GONGCHENG.
  * All Rights Reserved.
  * */
@@ -53,6 +53,46 @@ interface IRegCenter {
     function changeTitle(uint40 usrDirector, uint8 title)
         external
         returns (bool);
+
+    // ==== Roles ====
+
+    function setManager(
+        uint8 title,
+        address addrOfOriginator,
+        address acct
+    ) external returns (bool);
+
+    function grantRole(
+        bytes32 role,
+        address addrOfOriginator,
+        uint40 acct
+    ) external returns (bool);
+
+    function revokeRole(
+        bytes32 role,
+        address addrOfOriginator,
+        uint40 acct
+    ) external returns (bool);
+
+    function renounceRole(bytes32 role, address addrOfOriginator)
+        external
+        returns (bool);
+
+    function abandonRole(bytes32 role, address addrOfOriginator)
+        external
+        returns (bool);
+
+    function setRoleAdmin(
+        bytes32 role,
+        address addrOfOriginator,
+        uint40 acct
+    ) external returns (bool);
+
+    function copyRoleTo(
+        bytes32 role,
+        address addrOfOriginator,
+        address addrOfTo
+    ) external returns (bool);
 
     // ##################
     // ##   查询端口   ##
@@ -112,13 +152,31 @@ interface IRegCenter {
 
     function getUpBranches(uint40 origin)
         external
+        view
         returns (uint40[] entities, uint88[] connections);
 
     function getDownBranches(uint40 origin)
         external
+        view
         returns (uint40[] entities, uint88[] connections);
 
     function getRoundGraph(uint40 origin)
         external
+        view
         returns (uint40[] entities, uint88[] connections);
+
+    // ==== Role ====
+    function hasRole(bytes32 role, address addrOfOriginator)
+        external
+        view
+        returns (bool);
+
+    function isManager(uint8 title, address addrOfOriginator)
+        external
+        view
+        returns (bool);
+
+    function getManager(uint8 title) external view returns (uint40);
+
+    function getManagerKey(uint8 title) external view returns (address);
 }

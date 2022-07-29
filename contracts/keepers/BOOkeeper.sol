@@ -5,39 +5,15 @@
 
 pragma solidity ^0.4.24;
 
-import "../books/boa/IInvestmentAgreement.sol";
-
-import "../common/access/AccessControl.sol";
-
 import "../common/ruting/IBookSetting.sol";
-import "../common/ruting/SHASetting.sol";
-import "../common/ruting/BOASetting.sol";
-import "../common/ruting/BOMSetting.sol";
-import "../common/ruting/BOPSetting.sol";
 import "../common/ruting/BOOSetting.sol";
 import "../common/ruting/BOSSetting.sol";
 
-import "../common/lib/EnumsRepo.sol";
 import "../common/lib/SNParser.sol";
-import "../common/access/AccessControl.sol";
-
-// import "../common/ruting/IBookSetting.sol";
-import "../common/access/IAccessControl.sol";
-import "../common/components/ISigPage.sol";
 
 import "./IBOOKeeper.sol";
 
-contract BOOKeeper is
-    IBOOKeeper,
-    IBookSetting,
-    BOASetting,
-    SHASetting,
-    BOMSetting,
-    BOPSetting,
-    BOOSetting,
-    BOSSetting,
-    AccessControl
-{
+contract BOOKeeper is IBOOKeeper, BOOSetting, BOSSetting {
     using SNParser for bytes32;
 
     // ##################
@@ -80,15 +56,6 @@ contract BOOKeeper is
     // ##    Option    ##
     // ##################
 
-    function setBooks(address[8] books) external onlyDirectKeeper {
-        _setBOA(books[uint8(EnumsRepo.NameOfBook.BOA)]);
-        _setBOH(books[uint8(EnumsRepo.NameOfBook.BOH)]);
-        _setBOM(books[uint8(EnumsRepo.NameOfBook.BOM)]);
-        _setBOP(books[uint8(EnumsRepo.NameOfBook.BOP)]);
-        _setBOO(books[uint8(EnumsRepo.NameOfBook.BOO)]);
-        _setBOS(books[uint8(EnumsRepo.NameOfBook.BOS)]);
-    }
-
     function createOption(
         uint8 typeOfOpt,
         uint40 rightholder,
@@ -99,7 +66,7 @@ contract BOOKeeper is
         uint64 parValue,
         uint64 paidPar,
         uint40 caller
-    ) external onlyDirectKeeper {
+    ) external onlyManager(1) {
         _boo.createOption(
             typeOfOpt,
             rightholder,
@@ -115,7 +82,7 @@ contract BOOKeeper is
 
     function joinOptionAsObligor(bytes32 sn, uint40 caller)
         external
-        onlyDirectKeeper
+        onlyManager(1)
     {
         _boo.addObligorIntoOpt(sn.shortOfOpt(), caller);
     }
@@ -124,13 +91,13 @@ contract BOOKeeper is
         bytes32 sn,
         uint40 obligor,
         uint40 caller
-    ) external onlyDirectKeeper onlyRightholder(sn, caller) {
+    ) external onlyManager(1) onlyRightholder(sn, caller) {
         _boo.removeObligorFromOpt(sn.shortOfOpt(), obligor);
     }
 
     function execOption(bytes32 sn, uint40 caller)
         external
-        onlyDirectKeeper
+        onlyManager(1)
         onlyRightholder(sn, caller)
     {
         _boo.execOption(sn.shortOfOpt());
@@ -141,7 +108,7 @@ contract BOOKeeper is
         bytes32 shareNumber,
         uint64 paidPar,
         uint40 caller
-    ) external onlyDirectKeeper onlyRightholder(sn, caller) {
+    ) external onlyManager(1) onlyRightholder(sn, caller) {
         _bos.decreaseCleanPar(shareNumber.short(), paidPar);
         _boo.addFuture(sn.shortOfOpt(), shareNumber, paidPar, paidPar);
     }
@@ -150,7 +117,7 @@ contract BOOKeeper is
         bytes32 sn,
         bytes32 ft,
         uint40 caller
-    ) external onlyDirectKeeper onlyRightholder(sn, caller) {
+    ) external onlyManager(1) onlyRightholder(sn, caller) {
         _boo.removeFuture(sn.shortOfOpt(), ft);
         _bos.increaseCleanPar(ft.shortShareNumberOfFt(), ft.paidParOfFt());
     }
@@ -160,7 +127,7 @@ contract BOOKeeper is
         bytes32 shareNumber,
         uint64 paidPar,
         uint40 caller
-    ) external onlyDirectKeeper onlySeller(sn, caller) {
+    ) external onlyManager(1) onlySeller(sn, caller) {
         _bos.decreaseCleanPar(shareNumber.short(), paidPar);
         _boo.requestPledge(sn.shortOfOpt(), shareNumber, paidPar);
     }
@@ -169,7 +136,7 @@ contract BOOKeeper is
         bytes32 sn,
         bytes32 hashLock,
         uint40 caller
-    ) external onlyDirectKeeper onlySeller(sn, caller) {
+    ) external onlyManager(1) onlySeller(sn, caller) {
         _boo.lockOption(sn.shortOfOpt(), hashLock);
     }
 
@@ -190,7 +157,7 @@ contract BOOKeeper is
         string hashKey,
         // uint32 closingDate,
         uint40 caller
-    ) external onlyDirectKeeper onlyBuyer(sn, caller) {
+    ) external onlyManager(1) onlyBuyer(sn, caller) {
         uint32 price = sn.rateOfOpt();
 
         _boo.closeOption(sn.shortOfOpt(), hashKey);
@@ -214,7 +181,7 @@ contract BOOKeeper is
 
     function revokeOption(bytes32 sn, uint40 caller)
         external
-        onlyDirectKeeper
+        onlyManager(1)
         onlyRightholder(sn, caller)
     {
         _boo.revokeOption(sn.shortOfOpt());
@@ -225,7 +192,7 @@ contract BOOKeeper is
 
     function releasePledges(bytes32 sn, uint40 caller)
         external
-        onlyDirectKeeper
+        onlyManager(1)
         onlyRightholder(sn, caller)
     {
         (, , , , , , uint8 state) = _boo.getOption(sn.shortOfOpt());

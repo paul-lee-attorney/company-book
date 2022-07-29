@@ -69,7 +69,9 @@ interface IShareholdersAgreement {
         uint16 ratioAmount,
         bool onlyAttendance,
         bool impliedConsent,
+        bool partyAsConsent,
         bool againstShallBuy,
+        uint8 reviewDays,
         uint8 votingDays,
         uint8 execDaysForPutOpt
     ) external;
@@ -102,7 +104,7 @@ interface IShareholdersAgreement {
         uint8 title,
         address ia,
         bytes32 snOfDeal
-    ) external returns (bool);
+    ) external view returns (bool);
 
     // ======== VotingRule ========
 

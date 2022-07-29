@@ -7,11 +7,9 @@ pragma solidity ^0.4.24;
 
 import "./IBookOfSHA.sol";
 
-import "./terms/ITerm.sol";
-
 import "../../common/components/DocumentsRepo.sol";
 
-contract BookOfSHA is IBookOfSHA, ITerm, DocumentsRepo {
+contract BookOfSHA is IBookOfSHA, DocumentsRepo {
     address private _pointer;
 
     // constructor(
@@ -28,7 +26,7 @@ contract BookOfSHA is IBookOfSHA, ITerm, DocumentsRepo {
         address body,
         uint40 caller,
         uint32 sigDate
-    ) external onlyDirectKeeper onlyRegistered(body) {
+    ) external onlyManager(1) onlyRegistered(body) {
         if (_pointer != address(0)) pushToNextState(_pointer, caller);
 
         pushToNextState(body, caller);

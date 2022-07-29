@@ -6,7 +6,7 @@
 pragma solidity ^0.4.24;
 pragma experimental ABIEncoderV2;
 
-import "../books/boa//IInvestmentAgreement.sol";
+import "../books/boa/IInvestmentAgreement.sol";
 
 import "../common/ruting/IBookSetting.sol";
 import "../common/ruting/BOSSetting.sol";
@@ -21,20 +21,17 @@ import "../common/lib/SNParser.sol";
 import "../common/components/ISigPage.sol";
 
 import "../common/lib/EnumsRepo.sol";
-import "../common/access/AccessControl.sol";
 
 import "./IBOMKeeper.sol";
 
 contract BOMKeeper is
     IBOMKeeper,
-    IBookSetting,
     BOASetting,
     BODSetting,
     BOMSetting,
     SHASetting,
     BOOSetting,
-    BOSSetting,
-    AccessControl
+    BOSSetting
 {
     using SNParser for bytes32;
 
@@ -56,26 +53,17 @@ contract BOMKeeper is
     // ##   Motion   ##
     // ################
 
-    function setBooks(address[8] books) external onlyDirectKeeper {
-        _setBOA(books[uint8(EnumsRepo.NameOfBook.BOA)]);
-        _setBOD(books[uint8(EnumsRepo.NameOfBook.BOD)]);
-        _setBOH(books[uint8(EnumsRepo.NameOfBook.BOH)]);
-        _setBOM(books[uint8(EnumsRepo.NameOfBook.BOM)]);
-        _setBOO(books[uint8(EnumsRepo.NameOfBook.BOO)]);
-        _setBOS(books[uint8(EnumsRepo.NameOfBook.BOS)]);
-    }
-
     function authorizeToPropose(
         uint40 caller,
         uint40 delegate,
         uint256 actionId
-    ) external onlyDirectKeeper memberExist(caller) {
+    ) external onlyManager(1) memberExist(caller) {
         _bom.authorizeToPropose(caller, delegate, actionId);
     }
 
     function proposeMotion(address ia, uint40 caller)
         external
-        onlyDirectKeeper
+        onlyManager(1)
         memberExist(caller)
         onlyPartyOf(ia, caller)
     {
@@ -108,7 +96,7 @@ contract BOMKeeper is
     //     bytes32[] params,
     //     bytes32 desHash,
     //     uint40 submitter
-    // ) external onlyDirectKeeper memberExist(submitter) {
+    // ) external onlyManager(1) memberExist(submitter) {
     //     _bom.proposeAction(actionType, target, params, desHash, submitter);
     // }
 
@@ -117,14 +105,14 @@ contract BOMKeeper is
         uint8 attitude,
         uint40 caller,
         bytes32 sigHash
-    ) external onlyDirectKeeper notPartyOf(ia, caller) {
+    ) external onlyManager(1) notPartyOf(ia, caller) {
         require(_bos.isMember(caller), "not a shareholder");
         _bom.castVote(uint256(ia), attitude, caller, sigHash);
     }
 
     function voteCounting(address ia, uint40 caller)
         external
-        onlyDirectKeeper
+        onlyManager(1)
         onlyPartyOf(ia, caller)
     {
         _bom.voteCounting(uint256(ia));
@@ -148,7 +136,7 @@ contract BOMKeeper is
         bytes32 sn,
         uint40 againstVoter,
         uint40 caller
-    ) external onlyDirectKeeper {
+    ) external onlyManager(1) {
         require(
             _bom.state(uint256(ia)) ==
                 uint8(EnumsRepo.StateOfMotion.Rejected_ToBuy),

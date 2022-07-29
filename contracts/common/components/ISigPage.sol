@@ -12,15 +12,11 @@ interface ISigPage {
 
     event DocFinalized();
 
-    event BackToFinalized();
-
     event DocEstablished();
 
     event SetSigDeadline(uint32 deadline);
 
     event SetClosingDeadline(uint32 deadline);
-
-    event AddParty(uint40 acct);
 
     event RemoveParty(uint40 acct);
 
@@ -28,7 +24,7 @@ interface ISigPage {
 
     event SignDeal(uint40 acct, uint16 sn, bytes32 sigHash);
 
-    event SignDoc(uint40 acct, bytes32 sigHash);
+    // event SignDoc(uint40 acct, bytes32 sigHash);
 
     //####################
     //##    设置接口    ##
@@ -38,7 +34,7 @@ interface ISigPage {
 
     function setClosingDeadline(uint32 deadline) external;
 
-    function removePartyFromDoc(address acct) external;
+    function removePartyFromDoc(uint40 acct) external;
 
     function finalizeDoc() external;
 
@@ -46,7 +42,7 @@ interface ISigPage {
 
     function acceptDoc(bytes32 sigHash) external;
 
-    function addBlank(uint40 acct, uint16 sn) external;
+    function addBlank(uint40 acct, uint16 ssn) external;
 
     function signDeal(
         uint16 ssn,
@@ -58,15 +54,13 @@ interface ISigPage {
     //##    查询接口    ##
     //####################
 
-    function established() external returns (bool);
+    function established() external view returns (bool);
 
-    function sigDeadline() external returns (uint32);
+    function sigDeadline() external view returns (uint32);
 
-    function closingDeadline() external returns (uint32);
+    function closingDeadline() external view returns (uint32);
 
-    function isParty(address acct) external returns (bool);
-
-    function isSigner(address acct) external returns (bool);
+    function isParty(uint40 acct) external view returns (bool);
 
     function isInitSigner(uint40 acct) external view returns (bool);
 
@@ -74,16 +68,12 @@ interface ISigPage {
 
     function qtyOfParties() external view returns (uint256);
 
-    function qtyOfBlankForParty(uint40 acct) external view returns (uint16);
-
-    function qtyOfSigForParty(uint40 acct) external view returns (uint16);
-
-    function sigDateOfDeal(uint40 acct, uint16 sn)
+    function sigDateOfDeal(uint40 acct, uint16 ssn)
         external
         view
         returns (uint32);
 
-    function sigHashOfDeal(uint40 acct, uint16 sn)
+    function sigHashOfDeal(uint40 acct, uint16 ssn)
         external
         view
         returns (bytes32);
@@ -97,6 +87,4 @@ interface ISigPage {
         uint16 sn,
         string src
     ) external view returns (bool);
-
-    function partyDulySigned(uint40 acct) external view returns (bool);
 }

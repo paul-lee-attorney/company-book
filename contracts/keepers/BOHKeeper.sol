@@ -5,9 +5,8 @@
 
 pragma solidity ^0.4.24;
 
-import "../books/boh//IShareholdersAgreement.sol";
-import "../books/boh/terms//IGroupsUpdate.sol";
-import "../books/boh/ShareholdersAgreement.sol";
+import "../books/boh/IShareholdersAgreement.sol";
+import "../books/boh/terms/IGroupsUpdate.sol";
 
 import "../common/components/ISigPage.sol";
 
@@ -23,19 +22,15 @@ import "../common/access/IAccessControl.sol";
 import "../common/lib/SNParser.sol";
 import "../common/lib/EnumsRepo.sol";
 
-import "../common/access/AccessControl.sol";
-
 import "./IBOHKeeper.sol";
 
 contract BOHKeeper is
     IBOHKeeper,
-    IBookSetting,
     BODSetting,
     SHASetting,
     BOMSetting,
     BOOSetting,
-    BOSSetting,
-    AccessControl
+    BOSSetting
 {
     using SNParser for bytes32;
 
@@ -51,7 +46,7 @@ contract BOHKeeper is
     }
 
     modifier onlyOwnerOf(address body, uint40 caller) {
-        require(IAccessControl(body).getOwner() == caller, "not Owner");
+        require(IAccessControl(body).getManager(0) == caller, "not Owner");
         _;
     }
 
@@ -64,58 +59,51 @@ contract BOHKeeper is
     // ##   SHA   ##
     // #############
 
-    function setBooks(address[8] books) external onlyDirectKeeper {
-        _setBOD(books[uint8(EnumsRepo.NameOfBook.BOD)]);
-        _setBOH(books[uint8(EnumsRepo.NameOfBook.BOH)]);
-        _setBOM(books[uint8(EnumsRepo.NameOfBook.BOM)]);
-        _setBOO(books[uint8(EnumsRepo.NameOfBook.BOO)]);
-        _setBOS(books[uint8(EnumsRepo.NameOfBook.BOS)]);
-    }
-
     function addTermTemplate(
         uint8 title,
         address add,
         uint40 caller
-    ) external onlyDirectKeeper {
-        require(caller == getOwner(), "caller is not Owner");
+    ) external onlyManager(1) {
+        require(caller == getManager(0), "caller is not Owner");
 
         termsTemplate[title] = add;
         emit AddTemplate(title, add);
     }
 
-    function createSHA(uint8 docType, uint40 caller) external onlyDirectKeeper {
+    function createSHA(uint8 docType, uint40 caller) external onlyManager(1) {
         require(_bos.isMember(caller), "not MEMBER");
         address sha = _boh.createDoc(docType, caller);
 
-        IAccessControl(sha).init(caller, _rc.userNo(this), address(_rc));
+        IAccessControl(sha).init(_rc.primeKey(caller), this, address(_rc));
 
         IShareholdersAgreement(sha).setTermsTemplate(termsTemplate);
 
-        address[8] memory books;
-        books[uint8(EnumsRepo.NameOfBook.BOM)] = address(_bom);
-        books[uint8(EnumsRepo.NameOfBook.BOS)] = address(_bos);
-        books[uint8(EnumsRepo.NameOfBook.BOSCal)] = address(_bosCal);
+        IBookSetting(sha).setBOS(_bos);
+        IBookSetting(sha).setBOS(_bosCal);
+        IBookSetting(sha).setBOS(_bom);
 
-        _copyRoleTo(sha, KEEPERS);
+        _copyRoleTo(KEEPERS, sha);
     }
 
     function removeSHA(address sha, uint40 caller)
         external
-        onlyDirectKeeper
+        onlyManager(1)
         onlyOwnerOf(sha, caller)
         notEstablished(sha)
     {
-        _boh.removeDoc(sha, caller);
+        _boh.removeDoc(sha);
     }
 
     function circulateSHA(address sha, uint40 caller)
         external
-        onlyDirectKeeper
+        onlyManager(1)
         onlyOwnerOf(sha, caller)
     {
-        require(IDraftControl(sha).finalized(), "let GC finalize SHA first");
+        require(IAccessControl(sha).finalized(), "let GC finalize SHA first");
 
-        IAccessControl(sha).abandonOwnership();
+        IAccessControl(sha).setManager(0, 0);
+
+        // IAccessControl(sha).abandonOwnership();
 
         _boh.circulateDoc(sha, bytes32(0), caller);
     }
@@ -126,7 +114,7 @@ contract BOHKeeper is
         address sha,
         uint40 caller,
         bytes32 sigHash
-    ) external onlyDirectKeeper onlyPartyOf(sha, caller) {
+    ) external onlyManager(1) onlyPartyOf(sha, caller) {
         require(
             _boh.currentState(sha) == uint8(EnumsRepo.BODStates.Circulated),
             "SHA not in Circulated State"
@@ -139,7 +127,7 @@ contract BOHKeeper is
 
     function effectiveSHA(address sha, uint40 caller)
         external
-        onlyDirectKeeper
+        onlyManager(1)
         onlyPartyOf(sha, caller)
     {
         require(

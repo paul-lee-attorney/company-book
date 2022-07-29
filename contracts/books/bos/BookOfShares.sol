@@ -18,12 +18,7 @@ import "../../common/access/AccessControl.sol";
 import "../../common/ruting/IBookSetting.sol";
 import "../../common/ruting/SHASetting.sol";
 
-contract BookOfShares is
-    IBookOfShares,
-    IBookSetting,
-    SHASetting,
-    AccessControl
-{
+contract BookOfShares is IBookOfShares, SHASetting {
     using SNFactory for bytes;
     using SNParser for bytes32;
     using ObjsRepo for ObjsRepo.SNList;
@@ -137,10 +132,6 @@ contract BookOfShares is
     constructor(bytes32 regNumHash, uint16 max) public {
         _maxQtyOfMembers = max;
         _regNumHash = regNumHash;
-    }
-
-    function setBooks(address[8] books) external onlyDirectKeeper {
-        _setBOH(books[uint8(EnumsRepo.NameOfBook.BOH)]);
     }
 
     // ==== IssueShare ====
@@ -468,7 +459,7 @@ contract BookOfShares is
 
     // ==== MembersRepo ====
 
-    function setMaxQtyOfMembers(uint16 max) external onlyOwner {
+    function setMaxQtyOfMembers(uint16 max) external onlyManager(0) {
         _maxQtyOfMembers = max;
         emit SetMaxQtyOfMembers(max);
     }

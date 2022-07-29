@@ -1,4 +1,4 @@
-/*
+/* *
  * Copyright 2021-2022 LI LI of JINGTIAN & GONGCHENG.
  * All Rights Reserved.
  * */
@@ -9,21 +9,6 @@ interface IInvestmentAgreement {
     //##################
     //##    Event     ##
     //##################
-
-    // ======== FRDeal ========
-
-    event CreateFRDeal(
-        bytes32 indexed sn,
-        bytes32 shareNumber,
-        uint32 unitPrice,
-        uint64 parValue,
-        uint64 paidPar,
-        uint32 closingDate
-    );
-
-    event UpdateFRDeal(bytes32 indexed sn, uint64 parValue, uint64 paidPar);
-
-    event AcceptFR(bytes32 indexed sn, uint40 sender);
 
     // ======== normalDeal ========
 
@@ -58,20 +43,6 @@ interface IInvestmentAgreement {
     //##    写接口    ##
     //##################
 
-    // ======== FristRefusal ========
-
-    function execFirstRefusalRight(
-        uint16 ssn,
-        uint40 acct,
-        bytes32 sigHash
-    ) external returns (bytes32);
-
-    function acceptFR(
-        uint16 ssn,
-        uint40 acct,
-        bytes32 sigHash
-    ) external;
-
     // ======== InvestmentAgreement ========
 
     function createDeal(
@@ -81,7 +52,7 @@ interface IInvestmentAgreement {
         uint40 buyer,
         uint16 group,
         uint16 preSSN
-    ) external returns (bytes32 sn);
+    ) external returns (bytes32);
 
     function updateDeal(
         uint16 ssn,
@@ -91,13 +62,13 @@ interface IInvestmentAgreement {
         uint32 closingDate
     ) external;
 
-    function delDeal(uint16 sn) external;
+    function delDeal(uint16 ssn) external;
 
     function lockDealSubject(uint16 ssn) external returns (bool flag);
 
     function releaseDealSubject(uint16 ssn) external returns (bool flag);
 
-    function finalizeIA() external;
+    // function finalizeIA() external;
 
     function clearDealCP(
         uint16 ssn,
@@ -118,16 +89,6 @@ interface IInvestmentAgreement {
     //  ######################
     //  ##     查询接口     ##
     //  ######################
-
-    // ======== FirstRefusal ========
-
-    function counterOfFR(uint16 ssn) external view returns (uint16);
-
-    function sumOfWeight(uint16 ssn) external view returns (uint64);
-
-    function isTargetDeal(uint16 ssn) external view returns (bool);
-
-    function frDeals(uint16 ssn) external view returns (uint16[]);
 
     // ======== InvestmentAgreement ========
 

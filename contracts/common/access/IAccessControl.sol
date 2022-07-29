@@ -11,28 +11,36 @@ interface IAccessControl {
     // ##################
 
     event Init(
-        uint40 indexed owner,
-        uint40 indexed directKeeper,
+        address indexed owner,
+        address indexed directKeeper,
         address regCenter
     );
 
-    event AbandonOwnership();
+    event RegThisContract(uint40 userNo);
+
+    event SetManager(uint8 title, address originator, address acct);
+
+    event LockContents();
 
     event QuitEntity(uint8 roleOfUser);
+
+    event CopyRoleTo(bytes32 role, address to);
 
     // ##################
     // ##    写端口    ##
     // ##################
 
     function init(
-        uint40 owner,
-        uint40 directKeeper,
+        address owner,
+        address directKeeper,
         address regCenter
     ) external;
 
-    // function regThisContract() external;
+    function regThisContract(uint8 roleOfUser, uint40 entity) external;
 
-    function abandonOwnership() external;
+    function setManager(uint8 title, address acct) external;
+
+    function lockContents() external;
 
     function quitEntity(uint8 roleOfUser) external;
 
@@ -40,7 +48,9 @@ interface IAccessControl {
     // ##   查询端口   ##
     // ##################
 
-    function getOwner() external view returns (uint40);
+    function getManager(uint8 title) external view returns (uint40);
 
-    function getDirectKeeper() external view returns (uint40);
+    function getManagerKey(uint8 title) external view returns (address);
+
+    function finalized() external view returns (bool);
 }

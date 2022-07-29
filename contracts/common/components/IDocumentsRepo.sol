@@ -1,28 +1,24 @@
-/*
+/* *
  * Copyright 2021-2022 LI LI of JINGTIAN & GONGCHENG.
  * All Rights Reserved.
  * */
 
 pragma solidity ^0.4.24;
 
-interface IBookOfSHA {
+interface IDocumentsRepo {
     //##############
     //##  Event   ##
     //##############
 
-    event ChangePointer(address indexed pointer, address indexed body);
+    event SetTemplate(address temp);
+
+    event UpdateStateOfDoc(bytes32 indexed sn, uint8 state, uint40 caller);
+
+    event RemoveDoc(bytes32 indexed sn);
 
     //##################
     //##    写接口    ##
     //##################
-
-    function changePointer(
-        address body,
-        uint40 caller,
-        uint32 sigDate
-    ) external;
-
-    // ==== DocumentsRepo ====
 
     function setTemplate(address body) external;
 
@@ -43,10 +39,6 @@ interface IBookOfSHA {
     //##################
     //##    读接口    ##
     //##################
-
-    function pointer() external view returns (address);
-
-    // ==== DocumentsRepo ====
 
     function template() external view returns (address);
 

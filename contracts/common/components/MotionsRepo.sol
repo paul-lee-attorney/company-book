@@ -14,7 +14,9 @@ import "../../common/lib/EnumsRepo.sol";
 import "../../common/lib/EnumerableSet.sol";
 import "../../common/lib/ObjsRepo.sol";
 
-contract MotionsRepo is AccessControl {
+import "./IMotionsRepo.sol";
+
+contract MotionsRepo is IMotionsRepo, AccessControl {
     using SNFactory for bytes;
     using SNParser for bytes32;
     using EnumerableSet for EnumerableSet.UintSet;
@@ -204,7 +206,7 @@ contract MotionsRepo is AccessControl {
     //     address[] targets,
     //     bytes32[] params,
     //     bytes32 desHash
-    // ) external onlyDirectKeeper returns (uint256) {
+    // ) external onlyManager(1) returns (uint256) {
     //     bytes[] memory paramsBytes = _toBytes(params);
 
     //     uint256 motionId = _hashAction(
@@ -252,7 +254,6 @@ contract MotionsRepo is AccessControl {
         external
         view
         onlyProposed(motionId)
-        onlyUser
         returns (bytes32)
     {
         return _motions[motionId].votingRule;
@@ -262,7 +263,6 @@ contract MotionsRepo is AccessControl {
         external
         view
         onlyProposed(motionId)
-        onlyUser
         returns (uint8)
     {
         return _motions[motionId].state;
@@ -271,7 +271,6 @@ contract MotionsRepo is AccessControl {
     function votedYea(uint256 motionId, uint40 acct)
         external
         view
-        onlyUser
         returns (bool)
     {
         return _motions[motionId].box.votedYea(acct);
@@ -280,52 +279,30 @@ contract MotionsRepo is AccessControl {
     function votedNay(uint256 motionId, uint40 acct)
         external
         view
-        onlyUser
         returns (bool)
     {
         return _motions[motionId].box.votedNay(acct);
     }
 
-    function getYea(uint256 motionId)
-        external
-        view
-        onlyUser
-        returns (uint40[], uint64)
-    {
+    function getYea(uint256 motionId) external view returns (uint40[], uint64) {
         return _motions[motionId].box.getYea();
     }
 
-    function getNay(uint256 motionId)
-        external
-        view
-        onlyUser
-        returns (uint40[], uint64)
-    {
+    function getNay(uint256 motionId) external view returns (uint40[], uint64) {
         return _motions[motionId].box.getNay();
     }
 
-    function sumOfVoteAmt(uint256 motionId)
-        external
-        view
-        onlyUser
-        returns (uint64)
-    {
+    function sumOfVoteAmt(uint256 motionId) external view returns (uint64) {
         return _motions[motionId].box.sumOfWeight;
     }
 
-    function isVoted(uint256 motionId, uint40 acct)
-        public
-        view
-        onlyUser
-        returns (bool)
-    {
+    function isVoted(uint256 motionId, uint40 acct) public view returns (bool) {
         return _motions[motionId].box.isVoted(acct);
     }
 
     function getVote(uint256 motionId, uint40 acct)
         external
         view
-        onlyUser
         returns (
             uint64 weight,
             uint8 attitude,
@@ -342,7 +319,6 @@ contract MotionsRepo is AccessControl {
     function isPassed(uint256 motionId)
         external
         view
-        onlyUser
         onlyProposed(motionId)
         returns (bool)
     {
@@ -353,7 +329,6 @@ contract MotionsRepo is AccessControl {
     function isRejected(uint256 motionId)
         external
         view
-        onlyUser
         onlyProposed(motionId)
         returns (bool)
     {

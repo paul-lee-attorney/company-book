@@ -7,14 +7,14 @@ pragma solidity ^0.4.24;
 
 import "../../books/bop/IBookOfPledges.sol";
 
-// import "../access/AccessControl.sol";
+import "../access/AccessControl.sol";
 
-contract BOPSetting {
+contract BOPSetting is AccessControl {
     IBookOfPledges internal _bop;
 
     event SetBOP(address bop);
 
-    function _setBOP(address bop) internal {
+    function setBOP(address bop) external onlyManager(1) {
         _bop = IBookOfPledges(bop);
         emit SetBOP(bop);
     }

@@ -65,7 +65,7 @@ contract TagAlong is BOMSetting, DragAlong {
                     .shareNumberOfDeal(sn.sequence())
                     .shareholder()
             )
-        ].followerGroups.valuesToUint16();
+        ].followers.valuesToUint16();
 
         len = rightholders.length;
 

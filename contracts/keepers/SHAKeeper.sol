@@ -8,13 +8,12 @@ pragma solidity ^0.4.24;
 import "../books/boh/terms/IAntiDilution.sol";
 import "../books/boh/terms/ITerm.sol";
 
+import "../books/boa/IFirstRefusalToolKits.sol";
 import "../books/boa/IInvestmentAgreement.sol";
-import "../books/boa/InvestmentAgreement.sol";
+// import "../books/boa/InvestmentAgreement.sol";
 
 import "../books/boh/terms/IAlongs.sol";
 import "../books/boh/terms/IFirstRefusal.sol";
-
-import "../common/access/AccessControl.sol";
 
 import "../common/components/ISigPage.sol";
 
@@ -28,14 +27,7 @@ import "../common/lib/EnumsRepo.sol";
 
 import "./ISHAKeeper.sol";
 
-contract SHAKeeper is
-    ISHAKeeper,
-    IBookSetting,
-    BOASetting,
-    BOSSetting,
-    SHASetting,
-    AccessControl
-{
+contract SHAKeeper is ISHAKeeper, BOASetting, BOSSetting, SHASetting {
     using SNParser for bytes32;
 
     // ##################
@@ -62,12 +54,6 @@ contract SHAKeeper is
     // ##   SHA Rights   ##
     // ####################
 
-    function setBooks(address[8] books) external onlyDirectKeeper {
-        _setBOA(books[uint8(EnumsRepo.NameOfBook.BOA)]);
-        _setBOH(books[uint8(EnumsRepo.NameOfBook.BOH)]);
-        _setBOS(books[uint8(EnumsRepo.NameOfBook.BOS)]);
-    }
-
     // ======== TagAlong & DragAlong ========
 
     function execAlongRight(
@@ -79,7 +65,7 @@ contract SHAKeeper is
         uint64 paidPar,
         uint40 caller,
         bytes32 sigHash
-    ) external onlyDirectKeeper onlyExecuted(ia) withinReviewPeriod(ia) {
+    ) external onlyManager(1) onlyExecuted(ia) withinReviewPeriod(ia) {
         _addAlongDeal(
             dragAlong,
             ia,
@@ -117,7 +103,7 @@ contract SHAKeeper is
             ? _getSHA().getTerm(uint8(EnumsRepo.TermTitle.DRAG_ALONG))
             : _getSHA().getTerm(uint8(EnumsRepo.TermTitle.TAG_ALONG));
 
-        require(ITerm(term).isTriggered(ia, sn.sequence()), "not triggered");
+        require(ITerm(term).isTriggered(ia, sn), "not triggered");
 
         require(
             IAlongs(term).isLinked(drager, shareNumber.shareholder()),
@@ -209,7 +195,7 @@ contract SHAKeeper is
         bytes32 sn,
         uint40 caller,
         bytes32 sigHash
-    ) external onlyDirectKeeper onlyExecuted(ia) withinReviewPeriod(ia) {
+    ) external onlyManager(1) onlyExecuted(ia) withinReviewPeriod(ia) {
         require(caller == sn.buyerOfDeal(), "caller NOT buyer");
         _boa.acceptAlongDeal(ia, sn);
         ISigPage(ia).signDeal(sn.sequence(), caller, sigHash);
@@ -223,7 +209,7 @@ contract SHAKeeper is
         bytes32 shareNumber,
         uint40 caller,
         bytes32 sigHash
-    ) external onlyDirectKeeper onlyExecuted(ia) withinReviewPeriod(ia) {
+    ) external onlyManager(1) onlyExecuted(ia) withinReviewPeriod(ia) {
         require(
             caller == shareNumber.shareholder(),
             "caller is not shareholder"
@@ -337,7 +323,7 @@ contract SHAKeeper is
         address ia,
         bytes32 sn,
         uint40 caller
-    ) external onlyDirectKeeper {
+    ) external onlyManager(1) {
         require(caller == sn.buyerOfDeal(), "caller is not buyer");
         IInvestmentAgreement(ia).takeGift(sn.sequence());
     }
@@ -349,7 +335,7 @@ contract SHAKeeper is
         bytes32 sn,
         uint40 caller,
         bytes32 sigHash
-    ) external onlyDirectKeeper onlyExecuted(ia) withinReviewPeriod(ia) {
+    ) external onlyManager(1) onlyExecuted(ia) withinReviewPeriod(ia) {
         require(!ISigPage(ia).isInitSigner(caller), "caller is an init signer");
 
         address term = _getSHA().getTerm(
@@ -360,7 +346,7 @@ contract SHAKeeper is
             "NOT first refusal rightholder"
         );
 
-        IInvestmentAgreement(ia).execFirstRefusalRight(
+        IFirstRefusalToolKits(ia).execFirstRefusalRight(
             sn.sequence(),
             caller,
             sigHash
@@ -372,7 +358,7 @@ contract SHAKeeper is
         bytes32 sn,
         uint40 caller,
         bytes32 sigHash
-    ) external onlyDirectKeeper onlyExecuted(ia) withinReviewPeriod(ia) {
+    ) external onlyManager(1) onlyExecuted(ia) withinReviewPeriod(ia) {
         if (sn.typeOfDeal() == uint8(EnumsRepo.TypeOfDeal.CapitalIncrease))
             require(
                 _bos.groupNo(caller) == _bos.controller(),
@@ -387,6 +373,6 @@ contract SHAKeeper is
                 "not seller of Deal"
             );
 
-        IInvestmentAgreement(ia).acceptFR(sn.sequence(), caller, sigHash);
+        IFirstRefusalToolKits(ia).acceptFR(sn.sequence(), caller, sigHash);
     }
 }

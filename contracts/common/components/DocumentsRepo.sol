@@ -5,16 +5,13 @@
 
 pragma solidity ^0.4.24;
 
-import "../access/AccessControl.sol";
+import "./IDocumentsRepo.sol";
 
 import "../lib/EnumsRepo.sol";
 import "../lib/SNFactory.sol";
 import "../lib/SNParser.sol";
-
 import "../lib/ObjsRepo.sol";
 import "../lib/EnumerableSet.sol";
-
-import "./ISigPage.sol";
 
 import "../ruting/IBookSetting.sol";
 import "../ruting/BOSSetting.sol";
@@ -22,19 +19,12 @@ import "../ruting/SHASetting.sol";
 
 import "../utils/CloneFactory.sol";
 
-contract DocumentsRepo is
-    CloneFactory,
-    IBookSetting,
-    SHASetting,
-    BOSSetting,
-    AccessControl
-{
+contract DocumentsRepo is IDocumentsRepo, CloneFactory, SHASetting, BOSSetting {
     using SNFactory for bytes;
     using SNParser for bytes32;
     using ObjsRepo for ObjsRepo.TimeLine;
     using EnumerableSet for EnumerableSet.Bytes32Set;
 
-    string private _bookName;
     address private _template;
 
     /*
@@ -72,31 +62,9 @@ contract DocumentsRepo is
     // addrOfBody => bool
     mapping(address => bool) private _isRegistered;
 
-    // bytes32[] private _docsList;
-
     EnumerableSet.Bytes32Set private _docsList;
 
     uint16 private _counterOfDocs;
-
-    constructor(
-        string bookName,
-        uint40 _owner,
-        uint40 _bookeeper,
-        address _rc
-    ) public {
-        _bookName = bookName;
-        init(_owner, _bookeeper, _rc);
-    }
-
-    //##############
-    //##  Event   ##
-    //##############
-
-    event SetTemplate(address temp);
-
-    event UpdateStateOfDoc(bytes32 indexed sn, uint8 state, uint40 caller);
-
-    event RemoveDoc(bytes32 indexed sn, uint40 caller);
 
     //####################
     //##    modifier    ##
@@ -134,12 +102,7 @@ contract DocumentsRepo is
     //##    写接口    ##
     //##################
 
-    function setBooks(address[8] books) external {
-        _setBOH(books[uint8(EnumsRepo.NameOfBook.BOH)]);
-        _setBOS(books[uint8(EnumsRepo.NameOfBook.BOS)]);
-    }
-
-    function setTemplate(address body) external onlyOwner {
+    function setTemplate(address body) external onlyManager(0) {
         _template = body;
         emit SetTemplate(body);
     }
@@ -164,7 +127,7 @@ contract DocumentsRepo is
 
     function createDoc(uint8 docType, uint40 creator)
         external
-        onlyDirectKeeper
+        onlyManager(1)
         tempReady
         returns (address body)
     {
@@ -192,9 +155,9 @@ contract DocumentsRepo is
         emit UpdateStateOfDoc(sn, doc.states.currentState, creator);
     }
 
-    function removeDoc(address body, uint40 caller)
+    function removeDoc(address body)
         external
-        onlyDirectKeeper
+        onlyManager(1)
         onlyRegistered(body)
         onlyForPending(body)
     {
@@ -206,14 +169,14 @@ contract DocumentsRepo is
         delete _docs[body];
         delete _isRegistered[body];
 
-        emit RemoveDoc(sn, caller);
+        emit RemoveDoc(sn);
     }
 
     function circulateDoc(
         address body,
         bytes32 rule,
         uint40 submitter
-    ) public onlyDirectKeeper onlyRegistered(body) onlyForPending(body) {
+    ) public onlyManager(1) onlyRegistered(body) onlyForPending(body) {
         Doc storage doc = _docs[body];
 
         // bytes32 rule = _getSHA().votingRules(doc.sn.typeOfDoc());
@@ -250,10 +213,6 @@ contract DocumentsRepo is
     //##################
     //##    读接口    ##
     //##################
-
-    function bookName() external view returns (string) {
-        return _bookName;
-    }
 
     function template() external view returns (address) {
         return _template;

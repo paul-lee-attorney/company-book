@@ -16,22 +16,6 @@ contract RegCenterSetting {
 
     event SetRegCenter(address rc);
 
-    event RegThisContract(uint40 userNo);
-
-    // ##################
-    // ##   修饰器     ##
-    // ##################
-
-    modifier theUser(uint40 user) {
-        require(_rc.checkID(user, msg.sender), "not the user's primeKey");
-        _;
-    }
-
-    modifier onlyUser() {
-        require(_rc.isUser(msg.sender), "please register first");
-        _;
-    }
-
     // ##################
     // ##    写端口    ##
     // ##################
@@ -42,11 +26,6 @@ contract RegCenterSetting {
 
         _rc = IRegCenter(rc);
         emit SetRegCenter(rc);
-    }
-
-    function regThisContract(uint8 roleOfUser, uint40 entity) public {
-        uint40 userNo = _rc.regUser(roleOfUser, entity);
-        emit RegThisContract(userNo);
     }
 
     function _msgSender() internal returns (uint40) {

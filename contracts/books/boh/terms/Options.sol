@@ -6,7 +6,6 @@
 pragma solidity ^0.4.24;
 
 import "../../../common/ruting/BOSSetting.sol";
-import "../../../common/access/DraftControl.sol";
 
 import "../../../common/lib/EnumerableSet.sol";
 import "../../../common/lib/ObjsRepo.sol";
@@ -16,7 +15,7 @@ import "../../../common/lib/SNParser.sol";
 
 import "./IOptions.sol";
 
-contract Options is IOptions, BOSSetting, DraftControl {
+contract Options is IOptions, BOSSetting {
     using SNFactory for bytes;
     using SNParser for bytes32;
     using EnumerableSet for EnumerableSet.UintSet;
@@ -230,7 +229,7 @@ contract Options is IOptions, BOSSetting, DraftControl {
         return _snList.contains(ssn);
     }
 
-    function isObligor(bytes6 ssn, uint32 acct)
+    function isObligor(bytes6 ssn, uint40 acct)
         external
         view
         optionExist(ssn)

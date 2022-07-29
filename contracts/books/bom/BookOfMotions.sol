@@ -10,6 +10,7 @@ import "./IBookOfMotions.sol";
 
 import "../boa/IInvestmentAgreement.sol";
 
+import "../../common/components/IDocumentsRepo.sol";
 import "../../common/components/ISigPage.sol";
 import "../../common/components/MotionsRepo.sol";
 
@@ -27,7 +28,6 @@ import "../../common/lib/ObjsRepo.sol";
 
 contract BookOfMotions is
     IBookOfMotions,
-    IBookSetting,
     BOASetting,
     SHASetting,
     BODSetting,
@@ -44,16 +44,9 @@ contract BookOfMotions is
     //##    写接口    ##
     //##################
 
-    function setBooks(address[8] books) external onlyDirectKeeper {
-        _setBOA(books[uint8(EnumsRepo.NameOfBook.BOA)]);
-        _setBOH(books[uint8(EnumsRepo.NameOfBook.BOH)]);
-        _setBOD(books[uint8(EnumsRepo.NameOfBook.BOD)]);
-        _setBOS(books[uint8(EnumsRepo.NameOfBook.BOS)]);
-    }
-
     function nominateDirector(uint40 candidate, uint40 nominator)
         external
-        onlyDirectKeeper
+        onlyManager(1)
     {
         bytes32 rule = _getSHA().votingRules(
             uint8(EnumsRepo.TypeOfVoting.ElectDirector)
@@ -84,7 +77,7 @@ contract BookOfMotions is
 
     function proposeMotion(address ia, uint40 submitter)
         external
-        onlyDirectKeeper
+        onlyManager(1)
     {
         require(ISigPage(ia).established(), "doc is not established");
 
@@ -98,8 +91,8 @@ contract BookOfMotions is
             motionType,
             submitter,
             uint32(block.timestamp),
-            _boa.votingDeadlineBNOf(ia),
-            _boa.reviewDeadlineBNOf(ia),
+            IDocumentsRepo(_boa).votingDeadlineBNOf(ia),
+            IDocumentsRepo(_boa).reviewDeadlineBNOf(ia),
             0
         );
 
@@ -118,7 +111,7 @@ contract BookOfMotions is
         uint40 authorizer,
         uint40 delegate,
         uint256 motionId
-    ) external onlyDirectKeeper {
+    ) external onlyManager(1) {
         require(_bos.isMember(authorizer), "authorizer is not a member");
         require(_bos.isMember(delegate), "delegate is not a member");
 
@@ -131,7 +124,7 @@ contract BookOfMotions is
     //     bytes32[] params,
     //     bytes32 desHash,
     //     uint40 submitter
-    // ) external onlyDirectKeeper {
+    // ) external onlyManager(1) {
     //     bytes[] memory paramsBytes = _toBytes(params);
 
     //     uint256 actionId = _hashAction(
@@ -192,7 +185,7 @@ contract BookOfMotions is
         bytes32 sigHash
     )
         external
-        onlyDirectKeeper
+        onlyManager(1)
         notVotedTo(motionId, caller)
         beforeExpire(motionId)
     {
@@ -206,7 +199,7 @@ contract BookOfMotions is
 
     function voteCounting(uint256 motionId)
         external
-        onlyDirectKeeper
+        onlyManager(1)
         onlyProposed(motionId)
         afterExpire(motionId)
     {
@@ -329,7 +322,7 @@ contract BookOfMotions is
     function requestToBuy(address ia, bytes32 sn)
         external
         view
-        onlyDirectKeeper
+        onlyManager(1)
         returns (uint64 parValue, uint64 paidPar)
     {
         require(

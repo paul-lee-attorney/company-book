@@ -20,12 +20,7 @@ import "../../common/lib/ObjsRepo.sol";
 import "../../common/ruting/IBookSetting.sol";
 import "../../common/ruting/SHASetting.sol";
 
-contract BookOfDirectors is
-    IBookOfDirectors,
-    IBookSetting,
-    SHASetting,
-    MotionsRepo
-{
+contract BookOfDirectors is IBookOfDirectors, SHASetting, MotionsRepo {
     using SNFactory for bytes;
     using SNParser for bytes32;
     using EnumerableSet for EnumerableSet.UintSet;
@@ -68,17 +63,13 @@ contract BookOfDirectors is
     //##    写接口    ##
     //##################
 
-    function setBooks(address[8] books) external onlyDirectKeeper {
-        _setBOH(books[uint8(EnumsRepo.NameOfBook.BOH)]);
-    }
-
     // function proposeAction(
     //     uint8 actionType,
     //     address[] targets,
     //     bytes32[] params,
     //     bytes32 desHash,
     //     uint40 submitter
-    // ) external onlyDirectKeeper {
+    // ) external onlyManager(1) {
     //     require(
     //         _directorsList.contains(submitter),
     //         "submitter is not Director"
@@ -125,7 +116,7 @@ contract BookOfDirectors is
         uint8 attitude,
         uint40 caller,
         bytes32 sigHash
-    ) external onlyDirectKeeper {
+    ) external onlyManager(1) {
         require(_directorsList.contains(caller), "not a director");
         require(
             _directors[caller].expirationBN >= uint32(block.number),
@@ -145,7 +136,7 @@ contract BookOfDirectors is
 
     function voteCounting(uint256 motionId)
         external
-        onlyDirectKeeper
+        onlyManager(1)
         onlyProposed(motionId)
         afterExpire(motionId)
     {
@@ -181,7 +172,7 @@ contract BookOfDirectors is
         uint40 appointer,
         uint40 candidate,
         uint8 title
-    ) external onlyDirectKeeper {
+    ) external onlyManager(1) {
         _addDirector(candidate, appointer, title);
     }
 
@@ -229,7 +220,7 @@ contract BookOfDirectors is
 
     function takePosition(uint40 candidate, uint40 nominator)
         external
-        onlyDirectKeeper
+        onlyManager(1)
     {
         _addDirector(
             candidate,
@@ -238,7 +229,7 @@ contract BookOfDirectors is
         );
     }
 
-    function removeDirector(uint40 acct) external onlyDirectKeeper {
+    function removeDirector(uint40 acct) external onlyManager(1) {
         if (_directorsList.remove(acct)) {
             uint8 title = _directors[acct].title;
             if (uint40(_whoIs[title]) == acct) delete _whoIs[title];

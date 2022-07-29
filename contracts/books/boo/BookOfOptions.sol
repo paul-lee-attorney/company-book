@@ -15,17 +15,9 @@ import "../../common/lib/EnumsRepo.sol";
 import "../../common/lib/EnumerableSet.sol";
 import "../../common/lib/ObjsRepo.sol";
 
-import "../../common/access/AccessControl.sol";
-
-import "../../common/ruting/IBookSetting.sol";
 import "../../common/ruting/BOSSetting.sol";
 
-contract BookOfOptions is
-    IBookOfOptions,
-    IBookSetting,
-    BOSSetting,
-    AccessControl
-{
+contract BookOfOptions is IBookOfOptions, BOSSetting {
     using EnumerableSet for EnumerableSet.Bytes32Set;
     using EnumerableSet for EnumerableSet.UintSet;
     using ObjsRepo for ObjsRepo.SNList;
@@ -93,10 +85,6 @@ contract BookOfOptions is
 
     uint16 private _counterOfOptions;
 
-    // constructor(address bookeeper) public {
-    //     init(_msgSender(), bookeeper);
-    // }
-
     // ################
     // ##  Modifier  ##
     // ################
@@ -110,18 +98,14 @@ contract BookOfOptions is
     // ##   写接口   ##
     // ################
 
-    function setBooks(address[8] books) external onlyDirectKeeper {
-        _setBOS(books[uint8(EnumsRepo.NameOfBook.BOS)]);
-    }
-
-    function createSN(
+    function _createSN(
         uint8 typeOfOpt, //0-call option; 1-put option
         uint16 sequence,
         uint32 triggerDate,
         uint8 exerciseDays,
         uint8 closingDays,
         uint32 rate
-    ) public pure returns (bytes32 sn) {
+    ) private pure returns (bytes32 sn) {
         bytes memory _sn = new bytes(32);
 
         _sn[0] = bytes1(typeOfOpt);
@@ -155,7 +139,7 @@ contract BookOfOptions is
 
         _counterOfOptions++;
 
-        sn = createSN(
+        sn = _createSN(
             typeOfOpt,
             _counterOfOptions,
             triggerDate,
@@ -519,8 +503,16 @@ contract BookOfOptions is
         return _options[ssn].state;
     }
 
-    function snList() external view returns (bytes32[] list) {
-        list = _snList.values();
+    function futures(bytes6 ssn) external view returns (bytes32[]) {
+        return _futures[ssn].values();
+    }
+
+    function pledges(bytes6 ssn) external view returns (bytes32[]) {
+        return _pledges[ssn].values();
+    }
+
+    function snList() external view returns (bytes32[]) {
+        return _snList.values();
     }
 
     function oracles() external view returns (uint256 d1, uint256 d2) {

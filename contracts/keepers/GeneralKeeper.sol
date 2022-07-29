@@ -27,10 +27,6 @@ contract GeneralKeeper is AccessControl {
     IBOOKeeper private _BOOKeeper;
     IBOPKeeper private _BOPKeeper;
 
-    constructor(uint40 bookeeper, address regCenter) public {
-        init(_msgSender(), bookeeper, regCenter);
-    }
-
     // ###############
     // ##   Event   ##
     // ###############
@@ -55,49 +51,49 @@ contract GeneralKeeper is AccessControl {
     // ##   AccessControl   ##
     // ######################
 
-    function setBOAKeeper(address keeper) external onlyDirectKeeper {
+    function setBOAKeeper(address keeper) external onlyManager(1) {
         _BOAKeeper = IBOAKeeper(keeper);
-        IAccessControl(keeper).init(getOwner(), _rc.userNo(this), address(_rc));
+        IAccessControl(keeper).init(getManagerKey(0), this, _rc);
         emit SetBOAKeeper(keeper);
     }
 
-    function setBODKeeper(address keeper) external onlyDirectKeeper {
+    function setBODKeeper(address keeper) external onlyManager(1) {
         _BODKeeper = IBODKeeper(keeper);
-        IAccessControl(keeper).init(getOwner(), _rc.userNo(this), address(_rc));
+        IAccessControl(keeper).init(getManagerKey(0), this, _rc);
         emit SetBODKeeper(keeper);
     }
 
-    function setBOHKeeper(address keeper) external onlyDirectKeeper {
+    function setBOHKeeper(address keeper) external onlyManager(1) {
         _BOHKeeper = IBOHKeeper(keeper);
-        IAccessControl(keeper).init(getOwner(), _rc.userNo(this), address(_rc));
+        IAccessControl(keeper).init(getManagerKey(0), this, _rc);
         emit SetBOHKeeper(keeper);
     }
 
-    function setBOMKeeper(address keeper) external onlyDirectKeeper {
+    function setBOMKeeper(address keeper) external onlyManager(1) {
         _BOMKeeper = IBOMKeeper(keeper);
-        IAccessControl(keeper).init(getOwner(), _rc.userNo(this), address(_rc));
+        IAccessControl(keeper).init(getManagerKey(0), this, _rc);
         emit SetBOMKeeper(keeper);
     }
 
-    function setBOOKeeper(address keeper) external onlyDirectKeeper {
+    function setBOOKeeper(address keeper) external onlyManager(1) {
         _BOOKeeper = IBOOKeeper(keeper);
-        IAccessControl(keeper).init(getOwner(), _rc.userNo(this), address(_rc));
+        IAccessControl(keeper).init(getManagerKey(0), this, _rc);
         emit SetBOOKeeper(keeper);
     }
 
-    function setBOPKeeper(address keeper) external onlyDirectKeeper {
+    function setBOPKeeper(address keeper) external onlyManager(1) {
         _BOPKeeper = IBOPKeeper(keeper);
-        IAccessControl(keeper).init(getOwner(), _rc.userNo(this), address(_rc));
+        IAccessControl(keeper).init(getManagerKey(0), this, _rc);
         emit SetBOPKeeper(keeper);
     }
 
-    function setKeepers(address target, address keeper)
-        external
-        onlyDirectKeeper
-    {
-        IRoles(target).grantRole(KEEPERS, _rc.userNo(keeper));
-        emit SetKeepers(target, keeper);
-    }
+    // function setKeepers(address target, address keeper)
+    //     external
+    //     onlyManager(1)
+    // {
+    //     IRoles(target).grantRole(KEEPERS, keeper);
+    //     emit SetKeepers(target, keeper);
+    // }
 
     // ###################
     // ##   BOAKeeper   ##
@@ -143,7 +139,7 @@ contract GeneralKeeper is AccessControl {
         bytes32 sn,
         string hashKey
     ) external {
-        _BOAKeeper.revokeDeal(ia, sn, hashKey, _msgSender());
+        _BOAKeeper.revokeDeal(ia, sn, _msgSender(), hashKey);
     }
 
     // ###################
@@ -318,10 +314,6 @@ contract GeneralKeeper is AccessControl {
     // #################
     // ##  BOOKeeper  ##
     // #################
-
-    function termsTemplate(uint256 index) external returns (address) {
-        _BOOKeeper.termsTemplate(index, _msgSender());
-    }
 
     function createOption(
         uint8 typeOfOpt,

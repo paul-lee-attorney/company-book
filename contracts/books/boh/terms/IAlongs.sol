@@ -35,7 +35,7 @@ interface IAlongs {
 
     function removeFollower(uint16 drager, uint16 follower) external;
 
-    function delTag(uint16 drager) external;
+    function delLink(uint16 drager) external;
 
     // ################
     // ##  查询接口  ##
@@ -50,10 +50,12 @@ interface IAlongs {
         view
         returns (bool);
 
-    function isLinked(address dragerAddr, address followerAddr)
+    function isLinked(uint40 usrDrager, uint40 usrFollower)
         external
         view
         returns (bool);
+
+    function dragers() external view returns (uint16[]);
 
     function followers(uint16 drager) external view returns (uint16[]);
 

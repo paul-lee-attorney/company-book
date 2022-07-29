@@ -9,7 +9,6 @@ import "../../boa//IInvestmentAgreement.sol";
 
 import "../../../common/ruting/BOSSetting.sol";
 import "../../../common/ruting/BOMSetting.sol";
-import "../../../common/access/DraftControl.sol";
 
 import "../../../common/lib/ArrayUtils.sol";
 import "../../../common/lib/SNParser.sol";
@@ -22,7 +21,7 @@ import "./ILockUp.sol";
 
 import "./ITerm.sol";
 
-contract LockUp is ILockUp, ITerm, BOSSetting, BOMSetting, DraftControl {
+contract LockUp is ILockUp, ITerm, BOSSetting, BOMSetting {
     using ArrayUtils for uint40[];
     using SNParser for bytes32;
     using ObjsRepo for ObjsRepo.SNList;

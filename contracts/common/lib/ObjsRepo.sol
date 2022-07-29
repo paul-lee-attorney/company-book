@@ -201,99 +201,6 @@ library ObjsRepo {
         return list.bytes32Set.values();
     }
 
-    // ======== SignerGroup ========
-
-    struct Signature {
-        uint16 dealSN;
-        uint32 blockNumber;
-        uint32 sigDate;
-        bytes32 sigHash;
-    }
-
-    struct SignerGroup {
-        // acct => sigSN => sig
-        mapping(uint40 => mapping(uint16 => Signature)) signatures;
-        // acct => dealSN => sigSN
-        mapping(uint40 => mapping(uint16 => uint16)) dealToSN;
-        mapping(uint40 => uint16) counterOfSig;
-        mapping(uint40 => uint16) counterOfBlank;
-        uint16 balance;
-        EnumerableSet.UintSet parties;
-    }
-
-    function addBlank(
-        SignerGroup storage group,
-        uint40 acct,
-        uint16 snOfDeal
-    ) internal returns (bool flag) {
-        if (group.dealToSN[acct][snOfDeal] == 0) {
-            group.parties.add(acct);
-
-            group.counterOfBlank[acct]++;
-            uint16 sn = group.counterOfBlank[acct];
-
-            group.dealToSN[acct][snOfDeal] = sn;
-            group.signatures[acct][sn].dealSN = uint16(snOfDeal);
-
-            group.balance++;
-
-            flag = true;
-        }
-    }
-
-    function removeParty(SignerGroup storage group, uint40 acct)
-        internal
-        returns (bool flag)
-    {
-        uint16 len = group.counterOfBlank[acct];
-
-        if (len > 0 && group.counterOfSig[acct] == 0) {
-            group.balance -= len;
-
-            while (len > 0) {
-                uint16 snOfDeal = group.signatures[acct][len - 1].dealSN;
-                delete group.dealToSN[acct][snOfDeal];
-                delete group.signatures[acct][len - 1];
-                len--;
-            }
-
-            delete group.counterOfBlank[acct];
-
-            group.parties.remove(acct);
-
-            flag = true;
-        }
-    }
-
-    function signDeal(
-        SignerGroup storage group,
-        uint40 acct,
-        uint16 snOfDeal,
-        bytes32 sigHash
-    ) internal returns (bool flag) {
-        uint16 sn = group.dealToSN[acct][snOfDeal];
-
-        if (sn > 0 && group.signatures[acct][sn].sigDate == 0) {
-            Signature storage sig = group.signatures[acct][sn];
-
-            sig.blockNumber = uint32(block.number);
-            sig.sigDate = uint32(block.timestamp);
-            sig.sigHash = sigHash;
-
-            if (snOfDeal == 0) {
-                Signature storage docSig = group.signatures[acct][0];
-                docSig.blockNumber = uint32(block.number);
-                docSig.sigDate = uint32(block.timestamp);
-                docSig.sigHash = sigHash;
-            }
-
-            group.counterOfSig[acct]++;
-            group.balance--;
-
-            flag = true;
-        }
-    }
-
     // ======== BallotsBox ========
 
     struct Ballot {
@@ -442,7 +349,7 @@ library ObjsRepo {
 
     struct Mark {
         uint40 key;
-        uint32 value;
+        uint64 value;
         uint40 prev;
         uint40 next;
     }
@@ -456,7 +363,7 @@ library ObjsRepo {
     function addMark(
         MarkChain storage c,
         uint40 key,
-        uint32 value
+        uint64 value
     ) internal returns (bool) {
         if (c.marks[key].key == 0) {
             Mark storage m = c.marks[key];
@@ -501,7 +408,7 @@ library ObjsRepo {
     function updateMark(
         MarkChain storage c,
         uint40 key,
-        uint32 value
+        uint64 value
     ) internal returns (bool) {
         Mark storage m = c.marks[key];
 
@@ -551,12 +458,12 @@ library ObjsRepo {
     function markedValue(MarkChain storage c, uint40 key)
         internal
         view
-        returns (uint32 value)
+        returns (uint64 value)
     {
         if (contains(c, key)) value = c.marks[key].value;
     }
 
-    function topValue(MarkChain storage c) internal view returns (uint32) {
+    function topValue(MarkChain storage c) internal view returns (uint64) {
         return c.marks[c.tail].value;
     }
 

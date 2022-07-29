@@ -10,10 +10,6 @@ interface IBOOKeeper {
     // ##  BOOKeeper  ##
     // #################
 
-    function termsTemplate(uint256 index, uint40 caller)
-        external
-        returns (address);
-
     function createOption(
         uint8 typeOfOpt,
         uint40 rightholder,

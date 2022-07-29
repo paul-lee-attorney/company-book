@@ -22,7 +22,7 @@ interface IAntiDilution {
     // ##   Write    ##
     // ################
 
-    function setBenchmark(uint8 class, uint64 price) external;
+    function setBenchmark(uint8 class, uint32 price) external;
 
     function delBenchmark(uint8 class) external;
 

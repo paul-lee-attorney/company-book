@@ -7,14 +7,14 @@ pragma solidity ^0.4.24;
 
 import "../../books/bod/IBookOfDirectors.sol";
 
-// import "../access/AccessControl.sol";
+import "../access/AccessControl.sol";
 
-contract BODSetting {
+contract BODSetting is AccessControl {
     IBookOfDirectors internal _bod;
 
     event SetBOD(address bod);
 
-    function _setBOD(address bod) internal {
+    function setBOD(address bod) external onlyManager(1) {
         _bod = IBookOfDirectors(bod);
         emit SetBOD(bod);
     }

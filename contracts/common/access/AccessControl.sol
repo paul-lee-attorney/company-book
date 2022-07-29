@@ -1,61 +1,64 @@
-/*
+/* *
  * Copyright 2021-2022 LI LI of JINGTIAN & GONGCHENG.
  * All Rights Reserved.
  * */
 
 pragma solidity ^0.4.24;
 
-import "./Roles.sol";
 import "./IAccessControl.sol";
+import "./RegCenterSetting.sol";
 
-// import "./RegCenterSetting.sol";
+contract AccessControl is IAccessControl, RegCenterSetting {
+    bool internal _finalized;
 
-// import "../lib/RolesRepo.sol";
-
-contract AccessControl is IAccessControl, Roles {
-    bytes32 public constant KEEPERS = bytes32("Keepers");
-
-    uint40 private _directKeeper;
-    uint40 private _owner;
-
-    // ##################
-    // ##   Event      ##
-    // ##################
-
-    event Init(
-        uint40 indexed owner,
-        uint40 indexed directKeeper,
-        address regCenter
-    );
-
-    event AbandonOwnership();
-
-    event QuitEntity(uint8 roleOfUser);
+    bytes32 constant KEEPERS = keccak256("Keepers");
+    bytes32 constant ATTORNEYS = keccak256("Attorneys");
 
     // ##################
     // ##   修饰器     ##
     // ##################
 
-    modifier onlyOwner() {
-        require(_msgSender() == _owner, "not owner");
+    modifier onlyManager(uint8 title) {
+        require(_rc.isManager(title, msg.sender), "not owner");
         _;
     }
 
-    modifier onlyDirectKeeper() {
-        require(_msgSender() == _directKeeper, "not direct keeper");
+    modifier onlyOwnerOrBookeeper() {
+        require(
+            _rc.isManager(0, msg.sender) || _rc.isManager(1, msg.sender),
+            "neither owner nor bookeeper"
+        );
         _;
     }
 
     modifier onlyKeeper() {
-        require(hasRole(KEEPERS, _msgSender()), "not Keeper");
+        require(_rc.hasRole(KEEPERS, msg.sender), "not Keeper");
         _;
     }
 
-    modifier ownerOrDirectKeeper() {
+    modifier onlyAttorney() {
+        require(_rc.hasRole(ATTORNEYS, msg.sender), "not Attorney");
+        _;
+    }
+
+    modifier attorneyOrKeeper() {
         require(
-            _msgSender() == _owner || _msgSender() == _directKeeper,
-            "not owner or directKeeper"
+            _rc.hasRole(ATTORNEYS, msg.sender) ||
+                _rc.hasRole(KEEPERS, msg.sender),
+            "not Attorney or Bookeeper"
         );
+        _;
+    }
+
+    // ==== DocState ====
+
+    modifier onlyPending() {
+        require(!_finalized, "Doc is _finalized");
+        _;
+    }
+
+    modifier onlyFinalized() {
+        require(_finalized, "Doc is still pending");
         _;
     }
 
@@ -64,42 +67,67 @@ contract AccessControl is IAccessControl, Roles {
     // ##################
 
     function init(
-        uint40 owner,
-        uint40 directKeeper,
+        address owner,
+        address directKeeper,
         address regCenter
     ) public {
         _setRegCenter(regCenter);
 
-        require(_owner == 0, "already set _owner ");
-        require(_directKeeper == 0, "already set _directKeeper");
+        _rc.setManager(0, msg.sender, owner);
+        _rc.setManager(1, msg.sender, directKeeper);
 
-        _owner = owner;
-        _directKeeper = directKeeper;
-
-        _setRoleAdmin(KEEPERS, _directKeeper);
-
-        emit Init(_owner, _directKeeper, _rc);
+        emit Init(owner, directKeeper, _rc);
     }
 
-    function abandonOwnership() external ownerOrDirectKeeper {
-        _owner = 0;
-        emit AbandonOwnership();
+    function regThisContract(uint8 roleOfUser, uint40 entity)
+        external
+        onlyManager(0)
+    {
+        uint40 userNo = _rc.regUser(roleOfUser, entity);
+        emit RegThisContract(userNo);
     }
 
-    function quitEntity(uint8 roleOfUser) external ownerOrDirectKeeper {
+    function setManager(uint8 title, address acct)
+        external
+        onlyOwnerOrBookeeper
+    {
+        _rc.setManager(title, msg.sender, acct);
+        emit SetManager(title, msg.sender, acct);
+    }
+
+    function lockContents() public onlyPending {
+        _rc.abandonRole(ATTORNEYS, msg.sender);
+        _rc.setManager(2, msg.sender, address(0));
+        _finalized = true;
+
+        emit LockContents();
+    }
+
+    function quitEntity(uint8 roleOfUser) external onlyManager(0) {
         _rc.quitEntity(roleOfUser);
+
         emit QuitEntity(roleOfUser);
+    }
+
+    function _copyRoleTo(bytes32 role, address to) internal {
+        _rc.copyRoleTo(role, msg.sender, to);
+
+        emit CopyRoleTo(role, to);
     }
 
     // ##################
     // ##   查询端口   ##
     // ##################
 
-    function getOwner() public view returns (uint40) {
-        return _owner;
+    function getManager(uint8 title) public view returns (uint40) {
+        return _rc.getManager(title);
     }
 
-    function getDirectKeeper() public view returns (uint40) {
-        return _directKeeper;
+    function getManagerKey(uint8 title) public view returns (address) {
+        return _rc.getManagerKey(title);
+    }
+
+    function finalized() external view returns (bool) {
+        return _finalized;
     }
 }

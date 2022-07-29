@@ -5,13 +5,13 @@
 
 pragma solidity ^0.4.24;
 
-import "../../../common/access/DraftControl.sol";
+import "../../../common/access/AccessControl.sol";
 
 import "../../../common/lib/SNFactory.sol";
 
 import "./IVotingRules.sol";
 
-contract VotingRules is IVotingRules, DraftControl {
+contract VotingRules is IVotingRules, AccessControl {
     using SNFactory for bytes;
 
     // struct snInfo {

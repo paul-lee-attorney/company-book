@@ -1,4 +1,4 @@
-/*
+/* *
  * Copyright 2021 LI LI of JINGTIAN & GONGCHENG.
  * */
 
@@ -12,8 +12,6 @@ import "../../common/components/DocumentsRepo.sol";
 import "../../common/lib/SNParser.sol";
 import "../../common/lib/EnumsRepo.sol";
 import "../../common/lib/EnumerableSet.sol";
-
-import "../../common/ruting/SHASetting.sol";
 
 contract BookOfIA is IBookOfIA, DocumentsRepo {
     using SNParser for bytes32;
@@ -39,8 +37,8 @@ contract BookOfIA is IBookOfIA, DocumentsRepo {
         uint16 groupNum;
         uint64 amount;
         bool isOrgController;
-        Amt sumOfIA;
         uint16 shareRatio;
+        Amt sumOfIA;
     }
 
     // IA address => topGroup
@@ -50,10 +48,7 @@ contract BookOfIA is IBookOfIA, DocumentsRepo {
     //##  Write I/O  ##
     //#################
 
-    function circulateIA(address ia, uint40 submitter)
-        external
-        onlyDirectKeeper
-    {
+    function circulateIA(address ia, uint40 submitter) external onlyManager(1) {
         bytes32 rule = _getSHA().votingRules(typeOfIA(ia));
 
         circulateDoc(ia, rule, submitter);
@@ -63,7 +58,7 @@ contract BookOfIA is IBookOfIA, DocumentsRepo {
         address ia,
         uint40 seller,
         uint64 amount
-    ) external onlyDirectKeeper {
+    ) external onlyManager(1) {
         uint16 sellerGroup = _bos.groupNo(seller);
         _mockResults[ia][sellerGroup].selAmt += amount;
         _groupsConcerned[ia].add(sellerGroup);
@@ -74,7 +69,7 @@ contract BookOfIA is IBookOfIA, DocumentsRepo {
         uint16 ssn,
         uint40 buyer,
         uint64 amount
-    ) external onlyDirectKeeper {
+    ) external onlyManager(1) {
         uint16 buyerGroup = _bos.groupNo(buyer);
 
         if (!_isMocked[ia][ssn]) {
@@ -85,7 +80,7 @@ contract BookOfIA is IBookOfIA, DocumentsRepo {
         }
     }
 
-    function calculateMockResult(address ia) external onlyDirectKeeper {
+    function calculateMockResult(address ia) external onlyManager(1) {
         uint16[] memory groups = _groupsConcerned[ia].valuesToUint16();
 
         delete _topGroups[ia];
@@ -168,7 +163,7 @@ contract BookOfIA is IBookOfIA, DocumentsRepo {
     //     uint40 caller
     // )
     //     public
-    //     onlyDirectKeeper
+    //     onlyManager(1)
     //     onlyRegistered(ia)
     //     currentDate(proposeDate)
     //     onlyForCirculated(ia)
@@ -186,7 +181,7 @@ contract BookOfIA is IBookOfIA, DocumentsRepo {
         bytes32 shareNumber,
         uint64 parValue,
         uint64 paidPar
-    ) external onlyDirectKeeper {
+    ) external onlyManager(1) {
         uint16 drager = rule.dragerOfLink();
         uint16 follower = _bos.groupNo(shareNumber.shareholder());
 

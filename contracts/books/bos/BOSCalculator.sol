@@ -14,21 +14,12 @@ import "../../common/access/AccessControl.sol";
 
 import "./IBOSCalculator.sol";
 
-contract BOSCalculator is
-    IBOSCalculator,
-    IBookSetting,
-    BOSSetting,
-    AccessControl
-{
+contract BOSCalculator is IBOSCalculator, BOSSetting {
     using SNParser for bytes32;
 
     //##################
     //##   查询接口   ##
     //##################
-
-    function setBooks(address[8] books) external onlyDirectKeeper {
-        _setBOS(books[uint8(EnumsRepo.NameOfBook.BOS)]);
-    }
 
     function membersOfClass(uint8 class) external view returns (uint40[]) {
         require(class < _bos.counterOfClasses(), "class over flow");

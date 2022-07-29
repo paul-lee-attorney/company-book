@@ -6,6 +6,11 @@
 pragma solidity ^0.4.24;
 
 library EnumsRepo {
+    enum TitleOfManagers {
+        Owner,
+        Bookeeper,
+        GeneralCounsel
+    }
     enum NameOfBook {
         BOA,
         BOD,

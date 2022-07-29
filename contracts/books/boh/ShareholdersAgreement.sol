@@ -6,13 +6,8 @@
 pragma solidity ^0.4.24;
 
 import "./IShareholdersAgreement.sol";
-
 import "./terms/ITerm.sol";
-// import "./terms/VotingRules.sol";
-
 import "../../common/access/IAccessControl.sol";
-import "../../common/access/IDraftControl.sol";
-
 import "../../common/components/SigPage.sol";
 
 import "../../common/lib/SNFactory.sol";
@@ -28,7 +23,6 @@ import "../../common/utils/CloneFactory.sol";
 contract ShareholdersAgreement is
     IShareholdersAgreement,
     CloneFactory,
-    IBookSetting,
     BOMSetting,
     BOSSetting,
     SigPage
@@ -108,12 +102,7 @@ contract ShareholdersAgreement is
     //##    写接口    ##
     //##################
 
-    function setBooks(address[8] books) external onlyDirectKeeper {
-        _setBOM(books[uint8(EnumsRepo.NameOfBook.BOM)]);
-        _setBOS(books[uint8(EnumsRepo.NameOfBook.BOS)]);
-    }
-
-    function setTermsTemplate(address[15] templates) external onlyDirectKeeper {
+    function setTermsTemplate(address[15] templates) external onlyManager(1) {
         for (uint8 i = 0; i < 15; i++) {
             _setTemplate(i, templates[i]);
         }
@@ -143,18 +132,19 @@ contract ShareholdersAgreement is
     {
         body = createClone(_tempOfTitle[title]);
 
-        IAccessControl(body).init(getOwner(), _rc.userNo(this), address(_rc));
+        IAccessControl(body).init(getManagerKey(0), this, address(_rc));
 
-        IDraftControl(body).setGeneralCounsel(_rc.userNo(this));
+        IAccessControl(body).setManager(2, this);
 
-        _copyRoleTo(body, ATTORNEYS);
-        _copyRoleTo(body, KEEPERS);
+        _copyRoleTo(ATTORNEYS, body);
+        _copyRoleTo(KEEPERS, body);
 
-        address[8] memory books;
-        books[uint8(EnumsRepo.NameOfBook.BOS)] = address(_bos);
-        books[uint8(EnumsRepo.NameOfBook.BOM)] = address(_bom);
+        // address[8] memory books;
+        // books[uint8(EnumsRepo.NameOfBook.BOS)] = address(_bos);
+        // books[uint8(EnumsRepo.NameOfBook.BOM)] = address(_bom);
 
-        IBookSetting(body).setBooks(books);
+        IBookSetting(body).setBOS(address(_bos));
+        IBookSetting(body).setBOM(address(_bom));
 
         _titleToBody[title] = body;
 
@@ -175,12 +165,12 @@ contract ShareholdersAgreement is
         emit RemoveTerm(title);
     }
 
-    function finalizeSHA() external onlyGC {
+    function finalizeSHA() external onlyManager(2) {
         address[] memory clauses = _bodies.values();
         uint256 len = clauses.length;
 
         for (uint256 i = 0; i < len; i++) {
-            IDraftControl(clauses[i]).lockContents();
+            IAccessControl(clauses[i]).lockContents();
         }
 
         finalizeDoc();
@@ -322,7 +312,7 @@ contract ShareholdersAgreement is
     function termIsTriggered(
         uint8 title,
         address ia,
-        uint8 snOfDeal
+        bytes32 snOfDeal
     ) public view titleExist(title) returns (bool) {
         return ITerm(_titleToBody[title]).isTriggered(ia, snOfDeal);
     }
@@ -330,7 +320,7 @@ contract ShareholdersAgreement is
     function termIsExempted(
         uint8 title,
         address ia,
-        uint8 snOfDeal
+        bytes32 snOfDeal
     ) external view titleExist(title) returns (bool) {
         if (!termIsTriggered(title, ia, snOfDeal)) return true;
 

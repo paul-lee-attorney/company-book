@@ -9,29 +9,16 @@ import "../common/ruting/IBookSetting.sol";
 import "../common/ruting/BOSSetting.sol";
 import "../common/ruting/BOPSetting.sol";
 
-import "../common/lib/EnumsRepo.sol";
 import "../common/lib/SNParser.sol";
-import "../common/access/AccessControl.sol";
 
 import "./IBOPKeeper.sol";
 
-contract BOPKeeper is
-    IBOPKeeper,
-    IBookSetting,
-    BOPSetting,
-    BOSSetting,
-    AccessControl
-{
+contract BOPKeeper is IBOPKeeper, BOPSetting, BOSSetting {
     using SNParser for bytes32;
 
     // ################
     // ##   Pledge   ##
     // ################
-
-    function setBooks(address[8] books) external onlyDirectKeeper {
-        _setBOP(books[uint8(EnumsRepo.NameOfBook.BOP)]);
-        _setBOS(books[uint8(EnumsRepo.NameOfBook.BOS)]);
-    }
 
     function createPledge(
         // uint32 createDate,
@@ -41,7 +28,7 @@ contract BOPKeeper is
         uint40 debtor,
         uint64 guaranteedAmt,
         uint40 caller
-    ) external onlyDirectKeeper {
+    ) external onlyManager(1) {
         require(shareNumber.shareholder() == caller, "NOT shareholder");
 
         _bos.decreaseCleanPar(shareNumber.short(), pledgedPar);
@@ -62,7 +49,7 @@ contract BOPKeeper is
         uint64 pledgedPar,
         uint64 guaranteedAmt,
         uint40 caller
-    ) external onlyDirectKeeper {
+    ) external onlyManager(1) {
         require(pledgedPar > 0, "ZERO pledgedPar");
 
         bytes6 shortShareNumber = sn.shortShareNumberOfPledge();
@@ -82,7 +69,7 @@ contract BOPKeeper is
         _bop.updatePledge(sn.short(), creditor, pledgedPar, guaranteedAmt);
     }
 
-    function delPledge(bytes32 sn, uint40 caller) external onlyDirectKeeper {
+    function delPledge(bytes32 sn, uint40 caller) external onlyManager(1) {
         (, uint64 pledgedPar, uint40 creditor, ) = _bop.getPledge(sn.short());
 
         require(caller == creditor, "NOT creditor");

@@ -24,11 +24,11 @@ interface IBookOfOptions {
 
     event RemoveObligorFromOpt(bytes32 sn, uint40 obligor);
 
-    event DelOpt(bytes32 indexed sn);
+    // event DelOpt(bytes32 indexed sn);
 
     event CloseOpt(bytes32 indexed sn, string hashKey);
 
-    event SetOptState(bytes32 indexed sn, uint8 state);
+    // event SetOptState(bytes32 indexed sn, uint8 state);
 
     event ExecOpt(bytes32 indexed sn);
 
@@ -60,17 +60,10 @@ interface IBookOfOptions {
         uint32 triggerDate,
         uint8 exerciseDays,
         uint8 closingDays,
-        uint32 price,
+        uint32 rate,
         uint64 parValue,
         uint64 paidPar
     ) external returns (bytes32 sn);
-
-    function updateOption(
-        bytes6 ssn,
-        uint40 rightholder,
-        uint64 parValue,
-        uint64 paidPar
-    ) external;
 
     function addObligorIntoOpt(bytes6 ssn, uint40 obligor) external;
 
@@ -78,9 +71,9 @@ interface IBookOfOptions {
 
     function registerOption(address opts) external;
 
-    function setState(bytes32 sn, uint8 state) external;
+    function updateOracle(uint256 d1, uint256 d2) external;
 
-    function execOption(bytes32 sn) external;
+    function execOption(bytes6 ssn) external;
 
     function addFuture(
         bytes6 ssn,
@@ -107,6 +100,10 @@ interface IBookOfOptions {
     // ##  查询接口  ##
     // ################
 
+    function counterOfOptions() external view returns (uint16);
+
+    function isOption(bytes6 ssn) external view returns (bool);
+
     function getOption(bytes6 ssn)
         external
         view
@@ -130,9 +127,7 @@ interface IBookOfOptions {
 
     function pledges(bytes6 ssn) external view returns (bytes32[]);
 
-    function isOption(bytes6 ssn) external view returns (bool);
-
     function snList() external view returns (bytes32[]);
 
-    function counterOfOptions() external view returns (uint16);
+    function oracles() external view returns (uint256 d1, uint256 d2);
 }

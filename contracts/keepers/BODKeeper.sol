@@ -15,33 +15,22 @@ import "../common/ruting/SHASetting.sol";
 import "../common/lib/SNParser.sol";
 import "../common/lib/EnumsRepo.sol";
 
-import "../common/access/AccessControl.sol";
-
 import "./IBODKeeper.sol";
 
 contract BODKeeper is
     IBODKeeper,
-    IBookSetting,
     BODSetting,
     SHASetting,
     BOMSetting,
-    BOSSetting,
-    AccessControl
+    BOSSetting
 {
     using SNParser for bytes32;
-
-    function setBooks(address[8] books) external onlyDirectKeeper {
-        _setBOD(books[uint8(EnumsRepo.NameOfBook.BOD)]);
-        _setBOH(books[uint8(EnumsRepo.NameOfBook.BOH)]);
-        _setBOM(books[uint8(EnumsRepo.NameOfBook.BOM)]);
-        _setBOS(books[uint8(EnumsRepo.NameOfBook.BOS)]);
-    }
 
     function appointDirector(
         uint40 candidate,
         uint8 title,
         uint40 appointer
-    ) external onlyDirectKeeper {
+    ) external onlyManager(1) {
         require(
             _getSHA().boardSeatsQuotaOf(appointer) >
                 _bod.appointmentCounter(appointer),
@@ -76,7 +65,7 @@ contract BODKeeper is
 
     function removeDirector(uint40 director, uint40 appointer)
         external
-        onlyDirectKeeper
+        onlyManager(1)
     {
         require(_bod.isDirector(director), "appointer is not a member");
         require(
@@ -87,7 +76,7 @@ contract BODKeeper is
         _bod.removeDirector(director);
     }
 
-    function quitPosition(uint40 director) external onlyDirectKeeper {
+    function quitPosition(uint40 director) external onlyManager(1) {
         require(_bod.isDirector(director), "appointer is not a member");
 
         _bod.removeDirector(director);
@@ -95,7 +84,7 @@ contract BODKeeper is
 
     function nominateDirector(uint40 candidate, uint40 nominator)
         external
-        onlyDirectKeeper
+        onlyManager(1)
     {
         require(_bos.isMember(nominator), "nominator is not a member");
         _bom.nominateDirector(candidate, nominator);
@@ -103,7 +92,7 @@ contract BODKeeper is
 
     function takePosition(uint40 candidate, uint256 motionId)
         external
-        onlyDirectKeeper
+        onlyManager(1)
     {
         require(_bom.isPassed(motionId), "candidate not be approved");
 

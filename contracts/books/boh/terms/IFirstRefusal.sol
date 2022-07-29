@@ -49,12 +49,4 @@ contract IFirstRefusal {
         returns (bool);
 
     function rightholders(uint8 typeOfDeal) public view returns (uint40[]);
-
-    // ################
-    // ##  Term接口  ##
-    // ################
-
-    function isTriggered(address ia, bytes32 sn) public view returns (bool);
-
-    function isExempted(address ia, bytes32 sn) external view returns (bool);
 }

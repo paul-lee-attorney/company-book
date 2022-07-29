@@ -11,18 +11,11 @@ import "../../common/lib/EnumsRepo.sol";
 import "../../common/lib/EnumerableSet.sol";
 import "../../common/lib/ObjsRepo.sol";
 
-import "../../common/access/AccessControl.sol";
-import "../../common/ruting/IBookSetting.sol";
 import "../../common/ruting/BOSSetting.sol";
 
 import "./IBookOfPledges.sol";
 
-contract BookOfPledges is
-    IBookOfPledges,
-    IBookSetting,
-    BOSSetting,
-    AccessControl
-{
+contract BookOfPledges is IBookOfPledges, BOSSetting {
     using SNFactory for bytes;
     using SNParser for bytes32;
     using ObjsRepo for ObjsRepo.SNList;
@@ -55,10 +48,6 @@ contract BookOfPledges is
 
     ObjsRepo.SNList private _snList;
 
-    constructor(uint40 bookeeper, address regCenter) public {
-        init(_msgSender(), bookeeper, regCenter);
-    }
-
     //##################
     //##   Modifier   ##
     //##################
@@ -71,10 +60,6 @@ contract BookOfPledges is
     //##################
     //##    写接口    ##
     //##################
-
-    function setBooks(address[8] books) external onlyDirectKeeper {
-        _setBOS(books[uint8(EnumsRepo.NameOfBook.BOS)]);
-    }
 
     function _createSN(
         uint8 typeOfPledge,
@@ -103,7 +88,7 @@ contract BookOfPledges is
         uint40 debtor,
         uint64 pledgedPar,
         uint64 guaranteedAmt
-    ) external onlyDirectKeeper shareExist(shareNumber.short()) {
+    ) external onlyManager(1) shareExist(shareNumber.short()) {
         require(pledgedPar > 0, "ZERO pledged parvalue");
 
         _counterOfPledges++;

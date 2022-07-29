@@ -96,4 +96,46 @@ interface IBookOfDirectors {
     function qtyOfDirectors() external view returns (uint256);
 
     function directors() external view returns (uint40[]);
+
+    // ==== MotionsRepo ====
+
+    function votingRule(uint256 motionId) external view returns (bytes32);
+
+    function state(uint256 motionId) external view returns (uint8);
+
+    function votedYea(uint256 motionId, uint40 acct)
+        external
+        view
+        returns (bool);
+
+    function votedNay(uint256 motionId, uint40 acct)
+        external
+        view
+        returns (bool);
+
+    function getYea(uint256 motionId) external view returns (uint40[], uint64);
+
+    function getNay(uint256 motionId) external view returns (uint40[], uint64);
+
+    function sumOfVoteAmt(uint256 motionId) external view returns (uint64);
+
+    function isVoted(uint256 motionId, uint40 acct)
+        external
+        view
+        returns (bool);
+
+    function getVote(uint256 motionId, uint40 acct)
+        external
+        view
+        returns (
+            uint64 weight,
+            uint8 attitude,
+            uint32 blockNumber,
+            uint32 sigDate,
+            bytes32 sigHash
+        );
+
+    function isPassed(uint256 motionId) external view returns (bool);
+
+    function isRejected(uint256 motionId) external view returns (bool);
 }

@@ -10,14 +10,13 @@ import "./IBookOfMotions.sol";
 
 import "../boa/IInvestmentAgreement.sol";
 
-import "../../common/components/IDocumentsRepo.sol";
+// import "../../common/components/IDocumentsRepo.sol";
 import "../../common/components/ISigPage.sol";
 import "../../common/components/MotionsRepo.sol";
 
 import "../../common/ruting/IBookSetting.sol";
 import "../../common/ruting/BOASetting.sol";
 import "../../common/ruting/SHASetting.sol";
-import "../../common/ruting/BODSetting.sol";
 import "../../common/ruting/BOSSetting.sol";
 
 import "../../common/lib/SNFactory.sol";
@@ -30,7 +29,6 @@ contract BookOfMotions is
     IBookOfMotions,
     BOASetting,
     SHASetting,
-    BODSetting,
     BOSSetting,
     MotionsRepo
 {
@@ -91,8 +89,8 @@ contract BookOfMotions is
             motionType,
             submitter,
             uint32(block.timestamp),
-            IDocumentsRepo(_boa).votingDeadlineBNOf(ia),
-            IDocumentsRepo(_boa).reviewDeadlineBNOf(ia),
+            _boa.votingDeadlineBNOf(ia),
+            _boa.reviewDeadlineBNOf(ia),
             0
         );
 

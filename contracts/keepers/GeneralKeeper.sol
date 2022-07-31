@@ -45,7 +45,7 @@ contract GeneralKeeper is AccessControl {
 
     event SetBOPKeeper(address keeper);
 
-    event SetKeepers(address target, address keeper);
+    // event SetKeepers(address target, address keeper);
 
     // ######################
     // ##   AccessControl   ##
@@ -53,37 +53,31 @@ contract GeneralKeeper is AccessControl {
 
     function setBOAKeeper(address keeper) external onlyManager(1) {
         _BOAKeeper = IBOAKeeper(keeper);
-        IAccessControl(keeper).init(getManagerKey(0), this, _rc);
         emit SetBOAKeeper(keeper);
     }
 
     function setBODKeeper(address keeper) external onlyManager(1) {
         _BODKeeper = IBODKeeper(keeper);
-        IAccessControl(keeper).init(getManagerKey(0), this, _rc);
         emit SetBODKeeper(keeper);
     }
 
     function setBOHKeeper(address keeper) external onlyManager(1) {
         _BOHKeeper = IBOHKeeper(keeper);
-        IAccessControl(keeper).init(getManagerKey(0), this, _rc);
         emit SetBOHKeeper(keeper);
     }
 
     function setBOMKeeper(address keeper) external onlyManager(1) {
         _BOMKeeper = IBOMKeeper(keeper);
-        IAccessControl(keeper).init(getManagerKey(0), this, _rc);
         emit SetBOMKeeper(keeper);
     }
 
     function setBOOKeeper(address keeper) external onlyManager(1) {
         _BOOKeeper = IBOOKeeper(keeper);
-        IAccessControl(keeper).init(getManagerKey(0), this, _rc);
         emit SetBOOKeeper(keeper);
     }
 
     function setBOPKeeper(address keeper) external onlyManager(1) {
         _BOPKeeper = IBOPKeeper(keeper);
-        IAccessControl(keeper).init(getManagerKey(0), this, _rc);
         emit SetBOPKeeper(keeper);
     }
 
@@ -100,7 +94,7 @@ contract GeneralKeeper is AccessControl {
     // ###################
 
     function createIA(uint8 typeOfIA) external {
-        _BOAKeeper.createIA(typeOfIA, _msgSender());
+        _BOAKeeper.createIA(typeOfIA, msg.sender);
     }
 
     function removeIA(address body) external {
@@ -249,7 +243,7 @@ contract GeneralKeeper is AccessControl {
     }
 
     function createSHA(uint8 docType) external {
-        _BOHKeeper.createSHA(docType, _msgSender());
+        _BOHKeeper.createSHA(docType, msg.sender);
     }
 
     function removeSHA(address body) external {

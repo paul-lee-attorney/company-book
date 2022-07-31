@@ -70,11 +70,17 @@ contract BOHKeeper is
         emit AddTemplate(title, add);
     }
 
-    function createSHA(uint8 docType, uint40 caller) external onlyManager(1) {
-        require(_bos.isMember(caller), "not MEMBER");
-        address sha = _boh.createDoc(docType, caller);
+    function createSHA(uint8 docType, address caller) external onlyManager(1) {
+        require(_bos.isMember(_rc.userNo(caller)), "not MEMBER");
+        address sha = _boh.createDoc(docType, _rc.userNo(caller));
 
-        IAccessControl(sha).init(_rc.primeKey(caller), this, address(_rc));
+        IAccessControl(sha).init(
+            caller,
+            this,
+            _rc,
+            18,
+            _rc.entityNo(_rc.userNo(this))
+        );
 
         IShareholdersAgreement(sha).setTermsTemplate(termsTemplate);
 
@@ -83,6 +89,8 @@ contract BOHKeeper is
         IBookSetting(sha).setBOS(_bom);
 
         _copyRoleTo(KEEPERS, sha);
+
+        IAccessControl(sha).setManager(1, _boh);
     }
 
     function removeSHA(address sha, uint40 caller)

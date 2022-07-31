@@ -7,6 +7,7 @@ pragma solidity ^0.4.24;
 
 import "../books/boa/IInvestmentAgreement.sol";
 
+// import "../common/access/AccessControl.sol";
 import "../common/access/IAccessControl.sol";
 
 import "../common/components/ISigPage.sol";
@@ -69,22 +70,25 @@ contract BOAKeeper is
     // ##   InvestmentAgreement   ##
     // #############################
 
-    function createIA(uint8 typOfIA, uint40 caller) external onlyManager(1) {
-        require(_bos.isMember(caller), "caller not MEMBER");
+    function createIA(uint8 typOfIA, address caller) external onlyManager(1) {
+        require(_bos.isMember(_rc.userNo(caller)), "caller not MEMBER");
 
-        address ia = _boa.createDoc(typOfIA, caller);
+        address ia = _boa.createDoc(typOfIA, _rc.userNo(caller));
 
-        IAccessControl(ia).init(_rc.primeKey(caller), this, address(_rc));
-
-        // address[8] books;
-
-        // books[uint8(EnumsRepo.NameOfBook.BOS)] = address(_bos);
-        // books[uint8(EnumsRepo.NameOfBook.BOSCal)] = address(_bosCal);
+        IAccessControl(ia).init(
+            caller,
+            this,
+            _rc,
+            17,
+            _rc.entityNo(_rc.userNo(this))
+        );
 
         IBookSetting(ia).setBOS(_bos);
         IBookSetting(ia).setBOSCal(_bosCal);
 
         _copyRoleTo(KEEPERS, ia);
+
+        IAccessControl(ia).setManager(1, _boa);
     }
 
     function removeIA(address ia, uint40 caller)

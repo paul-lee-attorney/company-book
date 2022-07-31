@@ -132,7 +132,13 @@ contract ShareholdersAgreement is
     {
         body = createClone(_tempOfTitle[title]);
 
-        IAccessControl(body).init(getManagerKey(0), this, address(_rc));
+        IAccessControl(body).init(
+            getManagerKey(0),
+            this,
+            _rc,
+            20,
+            _rc.entityNo(_rc.userNo(this))
+        );
 
         IAccessControl(body).setManager(2, this);
 

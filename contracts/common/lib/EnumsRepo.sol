@@ -59,6 +59,10 @@ library EnumsRepo {
         BOOKeeper,
         BOPKeeper,
         SHAKeeper,
+        InvestmentAgreement,
+        ShareholdersAgreement,
+        BOSCalculator,
+        SHATerms,
         EndPoint
     }
 

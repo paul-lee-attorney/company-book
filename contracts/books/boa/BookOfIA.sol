@@ -1,4 +1,4 @@
-/* *
+/*
  * Copyright 2021 LI LI of JINGTIAN & GONGCHENG.
  * */
 
@@ -12,6 +12,8 @@ import "../../common/components/DocumentsRepo.sol";
 import "../../common/lib/SNParser.sol";
 import "../../common/lib/EnumsRepo.sol";
 import "../../common/lib/EnumerableSet.sol";
+
+import "../../common/ruting/SHASetting.sol";
 
 contract BookOfIA is IBookOfIA, DocumentsRepo {
     using SNParser for bytes32;
@@ -37,8 +39,8 @@ contract BookOfIA is IBookOfIA, DocumentsRepo {
         uint16 groupNum;
         uint64 amount;
         bool isOrgController;
-        uint16 shareRatio;
         Amt sumOfIA;
+        uint16 shareRatio;
     }
 
     // IA address => topGroup

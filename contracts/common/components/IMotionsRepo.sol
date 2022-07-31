@@ -5,7 +5,7 @@
 
 pragma solidity ^0.4.24;
 
-// pragma experimental ABIEncoderV2;
+pragma experimental ABIEncoderV2;
 
 interface IMotionsRepo {
     //##############
@@ -71,7 +71,10 @@ interface IMotionsRepo {
 
     function sumOfVoteAmt(uint256 motionId) external view returns (uint64);
 
-    function isVoted(uint256 motionId, uint40 acct) public view returns (bool);
+    function isVoted(uint256 motionId, uint40 acct)
+        external
+        view
+        returns (bool);
 
     function getVote(uint256 motionId, uint40 acct)
         external

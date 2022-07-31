@@ -19,7 +19,7 @@ contract AccessControl is IAccessControl, RegCenterSetting {
     // ##################
 
     modifier onlyManager(uint8 title) {
-        require(_rc.isManager(title, msg.sender), "not owner");
+        require(_rc.isManager(title, msg.sender), "not the specific manager");
         _;
     }
 
@@ -69,9 +69,13 @@ contract AccessControl is IAccessControl, RegCenterSetting {
     function init(
         address owner,
         address directKeeper,
-        address regCenter
+        address regCenter,
+        uint8 roleOfUser,
+        uint40 entity
     ) public {
         _setRegCenter(regCenter);
+
+        _rc.regUser(roleOfUser, entity);
 
         _rc.setManager(0, msg.sender, owner);
         _rc.setManager(1, msg.sender, directKeeper);
@@ -79,13 +83,10 @@ contract AccessControl is IAccessControl, RegCenterSetting {
         emit Init(owner, directKeeper, _rc);
     }
 
-    function regThisContract(uint8 roleOfUser, uint40 entity)
-        external
-        onlyManager(0)
-    {
-        uint40 userNo = _rc.regUser(roleOfUser, entity);
-        emit RegThisContract(userNo);
-    }
+    // function regThisContract(uint8 roleOfUser, uint40 entity) public {
+    //     uint40 userNo = _rc.regUser(roleOfUser, entity);
+    //     emit RegThisContract(userNo);
+    // }
 
     function setManager(uint8 title, address acct)
         external
@@ -109,7 +110,7 @@ contract AccessControl is IAccessControl, RegCenterSetting {
         emit QuitEntity(roleOfUser);
     }
 
-    function _copyRoleTo(bytes32 role, address to) internal {
+    function _copyRoleTo(bytes32 role, address to) internal onlyManager(1) {
         _rc.copyRoleTo(role, msg.sender, to);
 
         emit CopyRoleTo(role, to);

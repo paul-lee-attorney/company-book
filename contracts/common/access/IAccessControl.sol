@@ -33,10 +33,12 @@ interface IAccessControl {
     function init(
         address owner,
         address directKeeper,
-        address regCenter
+        address regCenter,
+        uint8 roleOfUser,
+        uint40 entity
     ) external;
 
-    function regThisContract(uint8 roleOfUser, uint40 entity) external;
+    // function regThisContract(uint8 roleOfUser, uint40 entity) external;
 
     function setManager(uint8 title, address acct) external;
 

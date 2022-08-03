@@ -157,26 +157,6 @@ contract BookOfIA is IBookOfIA, DocumentsRepo {
         top.shareRatio = uint16((top.amount * 10000) / amtOfCorp);
     }
 
-    // ======== Propose IA ========
-
-    // function proposeIA(
-    //     address ia,
-    //     uint32 proposeDate,
-    //     uint40 caller
-    // )
-    //     public
-    //     onlyManager(1)
-    //     onlyRegistered(ia)
-    //     currentDate(proposeDate)
-    //     onlyForCirculated(ia)
-    // {
-    //     Doc storage doc = _docs[ia];
-
-    //     require(doc.reviewDeadlineBN <= block.number, "still in review period");
-
-    //     pushToNextState(ia, caller);
-    // }
-
     function addAlongDeal(
         address ia,
         bytes32 rule,

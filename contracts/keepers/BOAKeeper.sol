@@ -86,7 +86,7 @@ contract BOAKeeper is
         IBookSetting(ia).setBOS(_bos);
         IBookSetting(ia).setBOSCal(_bosCal);
 
-        _copyRoleTo(KEEPERS, ia);
+        // copyRoleTo(KEEPERS, ia);
 
         IAccessControl(ia).setManager(1, _boa);
     }

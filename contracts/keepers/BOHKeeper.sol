@@ -88,7 +88,7 @@ contract BOHKeeper is
         IBookSetting(sha).setBOS(_bosCal);
         IBookSetting(sha).setBOS(_bom);
 
-        _copyRoleTo(KEEPERS, sha);
+        copyRoleTo(KEEPERS, sha);
 
         IAccessControl(sha).setManager(1, _boh);
     }

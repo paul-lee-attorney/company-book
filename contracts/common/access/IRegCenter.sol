@@ -179,4 +179,9 @@ interface IRegCenter {
     function getManager(uint8 title) external view returns (uint40);
 
     function getManagerKey(uint8 title) external view returns (address);
+
+    function getManagerOf(uint8 title, uint40 doc)
+        external
+        view
+        returns (uint40);
 }

@@ -81,6 +81,21 @@ contract GeneralKeeper is AccessControl {
         emit SetBOPKeeper(keeper);
     }
 
+    function setSHAKeeper(address keeper) external onlyManager(1) {
+        _SHAKeeper = ISHAKeeper(keeper);
+        emit SetSHAKeeper(keeper);
+    }
+
+    function grantKeepers(address target) external onlyManager(1) {
+        IAccessControl(target).grantRole(KEEPERS, _rc.userNo(_BOAKeeper));
+        IAccessControl(target).grantRole(KEEPERS, _rc.userNo(_BODKeeper));
+        IAccessControl(target).grantRole(KEEPERS, _rc.userNo(_BOHKeeper));
+        IAccessControl(target).grantRole(KEEPERS, _rc.userNo(_BOMKeeper));
+        IAccessControl(target).grantRole(KEEPERS, _rc.userNo(_BOOKeeper));
+        IAccessControl(target).grantRole(KEEPERS, _rc.userNo(_BOPKeeper));
+        IAccessControl(target).grantRole(KEEPERS, _rc.userNo(_SHAKeeper));
+    }
+
     // function setKeepers(address target, address keeper)
     //     external
     //     onlyManager(1)

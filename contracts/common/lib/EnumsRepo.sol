@@ -42,28 +42,28 @@ library EnumsRepo {
     }
 
     enum RoleOfUser {
-        ZeroPoint,
-        EOA,
-        BookOfShares,
-        BookOfMotions,
-        BookOfDirectors,
-        BookOfIA,
-        BookOfSHA,
-        BookOfOptions,
-        BookOfPledges,
-        GeneralKeeper,
-        BOAKeeper,
-        BODKeeper,
-        BOHKeeper,
-        BOMKeeper,
-        BOOKeeper,
-        BOPKeeper,
-        SHAKeeper,
-        InvestmentAgreement,
-        ShareholdersAgreement,
-        BOSCalculator,
-        SHATerms,
-        EndPoint
+        ZeroPoint, //               0
+        EOA, //                     1
+        BookOfShares, //            2
+        BookOfMotions, //           3
+        BookOfDirectors, //         4
+        BookOfIA, //                5
+        BookOfSHA, //               6
+        BookOfOptions, //           7
+        BookOfPledges, //           8
+        GeneralKeeper, //           9
+        BOAKeeper, //               10
+        BODKeeper, //               11
+        BOHKeeper, //               12
+        BOMKeeper, //               13
+        BOOKeeper, //               14
+        BOPKeeper, //               15
+        SHAKeeper, //               16
+        BOSCalculator, //           17
+        InvestmentAgreement, //     18
+        ShareholdersAgreement, //   19
+        SHATerms, //                20
+        EndPoint //                 21
     }
 
     enum TermTitle {

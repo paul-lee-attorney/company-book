@@ -90,7 +90,7 @@ contract RegCenter is IRegCenter, EntitiesMapping {
             );
         } else if (
             roleOfUser > uint8(EnumsRepo.RoleOfUser.BookOfShares) &&
-            roleOfUser < uint8(EnumsRepo.RoleOfUser.EndPoint)
+            roleOfUser < uint8(EnumsRepo.RoleOfUser.InvestmentAgreement)
         ) {
             require(_isContract(msg.sender), "only CA may join Entity");
 
@@ -316,7 +316,10 @@ contract RegCenter is IRegCenter, EntitiesMapping {
             addrOfOriginator
         );
         uint40 to = _userNo[addrOfTo];
-        require(to > 0 && _isContract(to), "To is not a registered contract");
+        require(
+            to > 0 && _isContract(addrOfTo),
+            "To is not a registered contract"
+        );
 
         return _roles[doc].copyRoleTo(role, originator, _roles[to]);
     }
@@ -468,11 +471,9 @@ contract RegCenter is IRegCenter, EntitiesMapping {
     }
 
     function getManager(uint8 title) public view onlyContract returns (uint40) {
-        require(title < 3, "title overflow");
         uint40 doc = _userNo[msg.sender];
-        require(doc > 0, "contract is not registered");
 
-        return _roles[doc].managers[title];
+        return getManagerOf(title, doc);
     }
 
     function getManagerKey(uint8 title)
@@ -483,5 +484,16 @@ contract RegCenter is IRegCenter, EntitiesMapping {
     {
         uint40 manager = getManager(title);
         return _users[manager].primeKey;
+    }
+
+    function getManagerOf(uint8 title, uint40 doc)
+        public
+        view
+        returns (uint40)
+    {
+        require(title < 3, "title overflow");
+        require(doc > 0, "contract is not registered");
+
+        return _roles[doc].managers[title];
     }
 }

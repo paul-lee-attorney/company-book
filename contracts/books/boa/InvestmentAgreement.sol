@@ -23,43 +23,8 @@ contract InvestmentAgreement is IInvestmentAgreement, BOSSetting, SigPage {
     using SNParser for bytes32;
     using ObjsRepo for ObjsRepo.SeqList;
     using ObjsRepo for ObjsRepo.TimeLine;
+    using ObjsRepo for ObjsRepo.FRDeals;
     using EnumerableSet for EnumerableSet.UintSet;
-
-    /* struct sn{
-        uint8 class; 1
-        uint8 typeOfDeal; 1    
-        uint40 buyer; 5
-        uint16 group; 2
-        bytes6 shortShareNumber; 6
-        uint16 preSN; 2
-        。。。
-        uint16 sequence; 2
-    } 
-    */
-
-    /*
-    enum TypeOfDeal {
-        ZeroPoint,
-        CapitalIncrease,
-        PreEmptive,
-        ShareTransferExt,
-        TagAlong,
-        DragAlong,
-        ShareTransferInt,
-        FirstRefusal,
-        FreeGift
-    }
-    */
-
-    /*
-    enum StateOfDeal {
-        Drafting,
-        Locked,
-        Cleared,
-        Closed,
-        Terminated
-    }
-    */
 
     struct Deal {
         bytes32 sn;
@@ -73,7 +38,7 @@ contract InvestmentAgreement is IInvestmentAgreement, BOSSetting, SigPage {
     }
 
     // sequence => Deal
-    mapping(uint16 => Deal) internal _deals;
+    mapping(uint16 => Deal) private _deals;
 
     ObjsRepo.SeqList private _dealsList;
 
@@ -86,6 +51,10 @@ contract InvestmentAgreement is IInvestmentAgreement, BOSSetting, SigPage {
 
     // party => seq => buyer?
     mapping(uint40 => mapping(uint16 => bool)) private _isBuyerOfDeal;
+
+    // ==== FRDeals ====
+
+    mapping(uint16 => ObjsRepo.FRDeals) private _frDeals;
 
     //##################
     //##   Modifier   ##
@@ -401,6 +370,74 @@ contract InvestmentAgreement is IInvestmentAgreement, BOSSetting, SigPage {
         emit CloseDeal(deal.sn, "0");
     }
 
+    // ==== FRDeals ====
+
+    function execFirstRefusalRight(
+        uint16 ssn,
+        uint40 acct,
+        bytes32 sigHash
+    ) external onlyKeeper dealExist(ssn) returns (bytes32) {
+        Deal storage targetDeal = _deals[ssn];
+
+        bytes32 snOfFR = createDeal(
+            targetDeal.shareNumber == bytes32(0)
+                ? uint8(EnumsRepo.TypeOfDeal.PreEmptive)
+                : uint8(EnumsRepo.TypeOfDeal.FirstRefusal),
+            targetDeal.shareNumber,
+            targetDeal.sn.classOfDeal(),
+            acct,
+            _bos.groupNo(acct),
+            targetDeal.sn.sequence()
+        );
+
+        uint64 weight = _bos.voteInHand(acct);
+        require(weight > 0, "first refusal request has ZERO weight");
+
+        if (_frDeals[ssn].execFirstRefusalRight(snOfFR.sequence(), weight) == 1)
+            targetDeal.states.setState(uint8(EnumsRepo.StateOfDeal.Terminated));
+
+        signDeal(ssn, acct, sigHash);
+
+        return snOfFR;
+    }
+
+    function acceptFR(
+        uint16 ssn,
+        uint40 acct,
+        bytes32 sigHash
+    ) external onlyManager(1) dealExist(ssn) {
+        Deal storage targetDeal = _deals[ssn];
+
+        // uint16 len = _counterOfFR[ssn];
+        uint16 len = _frDeals[ssn].counterOfFR;
+
+        _frDeals[ssn].getRatioOfFRs();
+
+        while (len > 0) {
+            ObjsRepo.Record storage record = _frDeals[ssn].records[len];
+
+            uint64 parValue = (targetDeal.parValue * record.ratio) / 10000;
+
+            uint64 paidPar = (targetDeal.paidPar * record.ratio) / 10000;
+
+            updateDeal(
+                record.ssn,
+                targetDeal.unitPrice,
+                parValue,
+                paidPar,
+                targetDeal.closingDate
+            );
+
+            lockDealSubject(record.ssn);
+
+            signDeal(record.ssn, acct, sigHash);
+
+            len--;
+        }
+
+        emit AcceptFR(_deals[ssn].sn, acct);
+    }
+
     //  #################################
     //  ##       查询接口              ##
     //  #################################
@@ -477,5 +514,23 @@ contract InvestmentAgreement is IInvestmentAgreement, BOSSetting, SigPage {
     {
         require(isParty(acct), "not a party");
         return _isBuyerOfDeal[acct][seq];
+    }
+
+    // ==== FRDeals ====
+
+    function counterOfFR(uint16 ssn) external view returns (uint16) {
+        return _frDeals[ssn].counterOfFR;
+    }
+
+    function sumOfWeight(uint16 ssn) external view returns (uint64) {
+        return _frDeals[ssn].sumOfWeight;
+    }
+
+    function isTargetDeal(uint16 ssn) external view returns (bool) {
+        return _frDeals[ssn].counterOfFR > 0;
+    }
+
+    function frDeals(uint16 ssn) external view returns (uint16[]) {
+        return _frDeals[ssn].getDeals();
     }
 }

@@ -8,7 +8,6 @@ pragma solidity ^0.4.24;
 import "../books/boh/terms/IAntiDilution.sol";
 import "../books/boh/terms/ITerm.sol";
 
-import "../books/boa/IFirstRefusalToolKits.sol";
 import "../books/boa/IInvestmentAgreement.sol";
 // import "../books/boa/InvestmentAgreement.sol";
 
@@ -346,7 +345,7 @@ contract SHAKeeper is ISHAKeeper, BOASetting, BOSSetting, SHASetting {
             "NOT first refusal rightholder"
         );
 
-        IFirstRefusalToolKits(ia).execFirstRefusalRight(
+        IInvestmentAgreement(ia).execFirstRefusalRight(
             sn.sequence(),
             caller,
             sigHash
@@ -373,6 +372,6 @@ contract SHAKeeper is ISHAKeeper, BOASetting, BOSSetting, SHASetting {
                 "not seller of Deal"
             );
 
-        IFirstRefusalToolKits(ia).acceptFR(sn.sequence(), caller, sigHash);
+        IInvestmentAgreement(ia).acceptFR(sn.sequence(), caller, sigHash);
     }
 }

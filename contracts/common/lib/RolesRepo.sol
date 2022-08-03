@@ -152,8 +152,10 @@ library RolesRepo {
         uint40 originator,
         Roles storage to
     ) internal returns (bool) {
-        if (role == KEEPERS) require(originator == self.managers[1]);
-        else if (role == ATTORNEYS) require(originator == self.managers[0]);
+        if (role == KEEPERS)
+            require(originator == self.managers[1], "originator not bookeeper");
+        else if (role == ATTORNEYS)
+            require(originator == self.managers[0], "originator not owner");
 
         to.roles[role] = self.roles[role];
 

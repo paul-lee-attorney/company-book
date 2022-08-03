@@ -142,8 +142,8 @@ contract ShareholdersAgreement is
 
         IAccessControl(body).setManager(2, this);
 
-        _copyRoleTo(ATTORNEYS, body);
-        _copyRoleTo(KEEPERS, body);
+        copyRoleTo(ATTORNEYS, body);
+        copyRoleTo(KEEPERS, body);
 
         // address[8] memory books;
         // books[uint8(EnumsRepo.NameOfBook.BOS)] = address(_bos);

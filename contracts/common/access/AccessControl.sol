@@ -31,6 +31,11 @@ contract AccessControl is IAccessControl, RegCenterSetting {
         _;
     }
 
+    modifier onlyRole(bytes32 role) {
+        require(_rc.hasRole(role, msg.sender), "caller not has Role");
+        _;
+    }
+
     modifier onlyKeeper() {
         require(_rc.hasRole(KEEPERS, msg.sender), "not Keeper");
         _;
@@ -96,6 +101,27 @@ contract AccessControl is IAccessControl, RegCenterSetting {
         emit SetManager(title, msg.sender, acct);
     }
 
+    function grantRole(bytes32 role, uint40 acct) external {
+        if (_rc.grantRole(role, msg.sender, acct)) emit GrantRole(role, acct);
+    }
+
+    function revokeRole(bytes32 role, uint40 acct) external {
+        if (_rc.revokeRole(role, msg.sender, acct)) emit RevokeRole(role, acct);
+    }
+
+    function renounceRole(bytes32 role, uint40 acct) external {
+        if (_rc.renounceRole(role, msg.sender)) emit RenounceRole(role, acct);
+    }
+
+    function abandonRole(bytes32 role) external {
+        if (_rc.abandonRole(role, msg.sender)) emit AbandonRole(role);
+    }
+
+    function setRoleAdmin(bytes32 role, uint40 acct) external onlyManager(0) {
+        if (_rc.setRoleAdmin(role, msg.sender, acct))
+            emit SetRoleAdmin(role, acct);
+    }
+
     function lockContents() public onlyPending {
         _rc.abandonRole(ATTORNEYS, msg.sender);
         _rc.setManager(2, msg.sender, address(0));
@@ -110,9 +136,8 @@ contract AccessControl is IAccessControl, RegCenterSetting {
         emit QuitEntity(roleOfUser);
     }
 
-    function _copyRoleTo(bytes32 role, address to) internal onlyManager(1) {
+    function copyRoleTo(bytes32 role, address to) public onlyManager(0) {
         _rc.copyRoleTo(role, msg.sender, to);
-
         emit CopyRoleTo(role, to);
     }
 

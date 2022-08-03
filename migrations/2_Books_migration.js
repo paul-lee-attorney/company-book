@@ -73,6 +73,8 @@ module.exports = async function (deployer, network, accounts) {
         from: accounts[1]
     });
 
+    // await deployer.deploy(IA);
+
     // ==== Entity / BOS ====
 
     await deployer.deploy(BOS, "0x38301fb0b5fcf3aaa4b97c4771bb6c75546e313b4ce7057c51a8cc6a3ace9d7e", 50);

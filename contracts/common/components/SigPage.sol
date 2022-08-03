@@ -87,21 +87,6 @@ contract SigPage is ISigPage, AccessControl {
         emit SetClosingDeadline(deadline);
     }
 
-    function removePartyFromDoc(uint40 acct) public onlyPending onlyAttorney {
-        if (_parties.remove(acct)) {
-            uint256 len = _snList.length();
-            while (len > 0) {
-                bytes32 sn = _snList.at(len - 1);
-                if (uint40(bytes5(sn)) == acct) {
-                    _snList.remove(sn);
-                    len--;
-                }
-                len--;
-            }
-            emit RemoveParty(acct);
-        }
-    }
-
     function finalizeDoc() public onlyManager(2) onlyPending {
         lockContents();
         _finalized = true;
@@ -145,6 +130,23 @@ contract SigPage is ISigPage, AccessControl {
             _parties.add(acct);
             emit AddBlank(acct, ssn);
         }
+    }
+
+    function removeBlank(uint40 acct, uint16 ssn)
+        public
+        onlyPending
+        onlyAttorney
+    {
+        bytes32 sn = _createSN(acct, ssn);
+
+        if (_snList.remove(sn)) {
+            _parties.remove(acct);
+            emit RemoveBlank(acct, ssn);
+        }
+    }
+
+    function addParty(uint40 acct) external onlyPending onlyAttorney {
+        if (_parties.add(acct)) emit AddParty(acct);
     }
 
     function signDeal(

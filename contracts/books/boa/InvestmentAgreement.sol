@@ -10,7 +10,7 @@ import "../../common/ruting/BOSSetting.sol";
 
 import "../../common/lib/SNFactory.sol";
 import "../../common/lib/SNParser.sol";
-import "../../common/lib/EnumsRepo.sol";
+// import "../../common/lib/EnumsRepo.sol";
 import "../../common/lib/EnumerableSet.sol";
 import "../../common/lib/ObjsRepo.sol";
 
@@ -25,6 +25,26 @@ contract InvestmentAgreement is IInvestmentAgreement, BOSSetting, SigPage {
     using ObjsRepo for ObjsRepo.TimeLine;
     using ObjsRepo for ObjsRepo.FRDeals;
     using EnumerableSet for EnumerableSet.UintSet;
+
+    enum TypeOfDeal {
+        ZeroPoint,
+        CapitalIncrease,
+        PreEmptive,
+        ShareTransferExt,
+        TagAlong,
+        DragAlong,
+        ShareTransferInt,
+        FirstRefusal,
+        FreeGift
+    }
+
+    enum StateOfDeal {
+        Drafting,
+        Locked,
+        Cleared,
+        Closed,
+        Terminated
+    }
 
     struct Deal {
         bytes32 sn;
@@ -62,8 +82,7 @@ contract InvestmentAgreement is IInvestmentAgreement, BOSSetting, SigPage {
 
     modifier onlyCleared(uint16 ssn) {
         require(
-            _deals[ssn].states.currentState ==
-                uint8(EnumsRepo.StateOfDeal.Cleared),
+            _deals[ssn].states.currentState == uint8(StateOfDeal.Cleared),
             "wrong stateOfDeal"
         );
         _;
@@ -117,26 +136,23 @@ contract InvestmentAgreement is IInvestmentAgreement, BOSSetting, SigPage {
 
             if (_bos.isMember(buyer))
                 require(
-                    typeOfDeal ==
-                        uint8(EnumsRepo.TypeOfDeal.ShareTransferInt) ||
-                        typeOfDeal ==
-                        uint8(EnumsRepo.TypeOfDeal.FirstRefusal) ||
-                        typeOfDeal == uint8(EnumsRepo.TypeOfDeal.FreeGift),
+                    typeOfDeal == uint8(TypeOfDeal.ShareTransferInt) ||
+                        typeOfDeal == uint8(TypeOfDeal.FirstRefusal) ||
+                        typeOfDeal == uint8(TypeOfDeal.FreeGift),
                     "wrong typeOfDeal"
                 );
             else
                 require(
-                    typeOfDeal ==
-                        uint8(EnumsRepo.TypeOfDeal.ShareTransferExt) ||
-                        typeOfDeal == uint8(EnumsRepo.TypeOfDeal.TagAlong) ||
-                        typeOfDeal == uint8(EnumsRepo.TypeOfDeal.DragAlong),
+                    typeOfDeal == uint8(TypeOfDeal.ShareTransferExt) ||
+                        typeOfDeal == uint8(TypeOfDeal.TagAlong) ||
+                        typeOfDeal == uint8(TypeOfDeal.DragAlong),
                     "wrong typeOfDeal"
                 );
         } else {
             require(class <= _bos.counterOfClasses(), "class overflow");
             require(
-                typeOfDeal == uint8(EnumsRepo.TypeOfDeal.CapitalIncrease) ||
-                    typeOfDeal == uint8(EnumsRepo.TypeOfDeal.PreEmptive),
+                typeOfDeal == uint8(TypeOfDeal.CapitalIncrease) ||
+                    typeOfDeal == uint8(TypeOfDeal.PreEmptive),
                 "wrong typeOfDeal"
             );
         }
@@ -163,8 +179,8 @@ contract InvestmentAgreement is IInvestmentAgreement, BOSSetting, SigPage {
         if (_finalized) {
             if (
                 shareNumber > bytes32(0) &&
-                typeOfDeal != uint8(EnumsRepo.TypeOfDeal.DragAlong) &&
-                typeOfDeal != uint8(EnumsRepo.TypeOfDeal.FreeGift)
+                typeOfDeal != uint8(TypeOfDeal.DragAlong) &&
+                typeOfDeal != uint8(TypeOfDeal.FreeGift)
             ) addBlank(shareNumber.shareholder(), _counterOfDeals);
             addBlank(buyer, _counterOfDeals);
         } else {
@@ -215,11 +231,11 @@ contract InvestmentAgreement is IInvestmentAgreement, BOSSetting, SigPage {
 
         bytes32 sn = deal.sn;
 
-        if (sn.typeOfDeal() > uint8(EnumsRepo.TypeOfDeal.PreEmptive)) {
-            removePartyFromDoc(deal.shareNumber.shareholder());
+        if (sn.typeOfDeal() > uint8(TypeOfDeal.PreEmptive)) {
+            removeBlank(deal.shareNumber.shareholder(), ssn);
         }
 
-        removePartyFromDoc(sn.buyerOfDeal());
+        removeBlank(sn.buyerOfDeal(), ssn);
 
         delete _deals[ssn];
         _dealsList.remove(sn);
@@ -234,7 +250,7 @@ contract InvestmentAgreement is IInvestmentAgreement, BOSSetting, SigPage {
         returns (bool flag)
     {
         Deal storage deal = _deals[ssn];
-        if (deal.states.currentState == uint8(EnumsRepo.StateOfDeal.Drafting)) {
+        if (deal.states.currentState == uint8(StateOfDeal.Drafting)) {
             deal.states.pushToNextState();
             flag = true;
             emit LockDealSubject(deal.sn);
@@ -248,8 +264,8 @@ contract InvestmentAgreement is IInvestmentAgreement, BOSSetting, SigPage {
         returns (bool flag)
     {
         Deal storage deal = _deals[ssn];
-        if (deal.states.currentState >= uint8(EnumsRepo.StateOfDeal.Locked)) {
-            deal.states.setState(uint8(EnumsRepo.StateOfDeal.Drafting));
+        if (deal.states.currentState >= uint8(StateOfDeal.Locked)) {
+            deal.states.setState(uint8(StateOfDeal.Drafting));
             flag = true;
             emit ReleaseDealSubject(deal.sn);
         }
@@ -273,7 +289,7 @@ contract InvestmentAgreement is IInvestmentAgreement, BOSSetting, SigPage {
         );
 
         require(
-            deal.states.currentState == uint8(EnumsRepo.StateOfDeal.Locked),
+            deal.states.currentState == uint8(StateOfDeal.Locked),
             "Deal state wrong"
         );
 
@@ -323,12 +339,12 @@ contract InvestmentAgreement is IInvestmentAgreement, BOSSetting, SigPage {
         );
 
         require(
-            deal.sn.typeOfDeal() != uint8(EnumsRepo.TypeOfDeal.FreeGift),
+            deal.sn.typeOfDeal() != uint8(TypeOfDeal.FreeGift),
             "FreeGift deal cannot be revoked"
         );
 
         require(
-            deal.states.currentState == uint8(EnumsRepo.StateOfDeal.Cleared),
+            deal.states.currentState == uint8(StateOfDeal.Cleared),
             "wrong state of Deal"
         );
 
@@ -347,20 +363,20 @@ contract InvestmentAgreement is IInvestmentAgreement, BOSSetting, SigPage {
         Deal storage deal = _deals[ssn];
 
         require(
-            deal.sn.typeOfDeal() == uint8(EnumsRepo.TypeOfDeal.FreeGift),
+            deal.sn.typeOfDeal() == uint8(TypeOfDeal.FreeGift),
             "not a gift deal"
         );
 
         require(
             _deals[deal.sn.preSSNOfDeal()].states.currentState ==
-                uint8(EnumsRepo.StateOfDeal.Closed),
+                uint8(StateOfDeal.Closed),
             "Capital Increase not closed"
         );
 
         require(deal.unitPrice == 0, "unitPrice is not zero");
 
         require(
-            deal.states.currentState == uint8(EnumsRepo.StateOfDeal.Locked),
+            deal.states.currentState == uint8(StateOfDeal.Locked),
             "wrong state"
         );
 
@@ -381,8 +397,8 @@ contract InvestmentAgreement is IInvestmentAgreement, BOSSetting, SigPage {
 
         bytes32 snOfFR = createDeal(
             targetDeal.shareNumber == bytes32(0)
-                ? uint8(EnumsRepo.TypeOfDeal.PreEmptive)
-                : uint8(EnumsRepo.TypeOfDeal.FirstRefusal),
+                ? uint8(TypeOfDeal.PreEmptive)
+                : uint8(TypeOfDeal.FirstRefusal),
             targetDeal.shareNumber,
             targetDeal.sn.classOfDeal(),
             acct,
@@ -394,9 +410,9 @@ contract InvestmentAgreement is IInvestmentAgreement, BOSSetting, SigPage {
         require(weight > 0, "first refusal request has ZERO weight");
 
         if (_frDeals[ssn].execFirstRefusalRight(snOfFR.sequence(), weight) == 1)
-            targetDeal.states.setState(uint8(EnumsRepo.StateOfDeal.Terminated));
+            targetDeal.states.setState(uint8(StateOfDeal.Terminated));
 
-        signDeal(ssn, acct, sigHash);
+        signDeal(snOfFR.sequence(), acct, sigHash);
 
         return snOfFR;
     }

@@ -18,9 +18,11 @@ interface ISigPage {
 
     event SetClosingDeadline(uint32 deadline);
 
-    event RemoveParty(uint40 acct);
+    event AddParty(uint40 acct);
 
     event AddBlank(uint40 acct, uint16 sn);
+
+    event RemoveBlank(uint40 acct, uint16 sn);
 
     event SignDeal(uint40 acct, uint16 sn, bytes32 sigHash);
 
@@ -34,7 +36,7 @@ interface ISigPage {
 
     function setClosingDeadline(uint32 deadline) external;
 
-    function removePartyFromDoc(uint40 acct) external;
+    function removeParty(uint40 acct) external;
 
     function finalizeDoc() external;
 

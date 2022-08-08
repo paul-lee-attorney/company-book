@@ -78,8 +78,8 @@ contract BOHKeeper is
             caller,
             this,
             _rc,
-            18,
-            _rc.entityNo(_rc.userNo(this))
+            uint8(EnumsRepo.RoleOfUser.ShareholdersAgreement),
+            _rc.entityNo(this)
         );
 
         IShareholdersAgreement(sha).setTermsTemplate(termsTemplate);
@@ -153,7 +153,7 @@ contract BOHKeeper is
             len--;
         }
 
-        _boh.changePointer(sha, caller, uint32(block.timestamp));
+        _boh.changePointer(sha, caller);
 
         _bod.setMaxNumOfDirectors(
             IShareholdersAgreement(sha).maxNumOfDirectors()

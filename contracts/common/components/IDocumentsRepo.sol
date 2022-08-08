@@ -10,7 +10,7 @@ interface IDocumentsRepo {
     //##  Event   ##
     //##############
 
-    event SetTemplate(address temp);
+    event SetTemplate(address temp, uint8 typeOfDoc);
 
     event UpdateStateOfDoc(bytes32 indexed sn, uint8 state, uint40 caller);
 
@@ -20,7 +20,7 @@ interface IDocumentsRepo {
     //##    写接口    ##
     //##################
 
-    function setTemplate(address body) external;
+    function setTemplate(address body, uint8 typeOfDoc) external;
 
     function createDoc(uint8 docType, uint40 creator)
         external
@@ -40,7 +40,7 @@ interface IDocumentsRepo {
     //##    读接口    ##
     //##################
 
-    function template() external view returns (address);
+    function template(uint8 typeOfDoc) external view returns (address);
 
     function isRegistered(address body) external view returns (bool);
 

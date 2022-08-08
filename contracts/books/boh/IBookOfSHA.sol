@@ -16,15 +16,11 @@ interface IBookOfSHA {
     //##    写接口    ##
     //##################
 
-    function changePointer(
-        address body,
-        uint40 caller,
-        uint32 sigDate
-    ) external;
+    function changePointer(address body, uint40 caller) external;
 
     // ==== DocumentsRepo ====
 
-    function setTemplate(address body) external;
+    function setTemplate(address body, uint8 typeOfDoc) external;
 
     function createDoc(uint8 docType, uint40 creator)
         external
@@ -48,7 +44,7 @@ interface IBookOfSHA {
 
     // ==== DocumentsRepo ====
 
-    function template() external view returns (address);
+    function template(uint8 typeOfDoc) external view returns (address);
 
     function isRegistered(address body) external view returns (bool);
 

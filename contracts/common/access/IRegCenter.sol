@@ -114,7 +114,7 @@ interface IRegCenter {
 
     // ==== Entity ====
 
-    function entityNo(uint40 user) external view returns (uint40);
+    function entityNo(address caller) external view returns (uint40);
 
     function memberOfEntity(uint40 entity, uint8 role)
         external

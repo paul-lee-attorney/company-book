@@ -25,7 +25,7 @@ contract DocumentsRepo is IDocumentsRepo, CloneFactory, SHASetting, BOSSetting {
     using ObjsRepo for ObjsRepo.TimeLine;
     using EnumerableSet for EnumerableSet.Bytes32Set;
 
-    address private _template;
+    address[18] private _templates;
 
     /*
     enum BODStates {
@@ -70,8 +70,8 @@ contract DocumentsRepo is IDocumentsRepo, CloneFactory, SHASetting, BOSSetting {
     //##    modifier    ##
     //####################
 
-    modifier tempReady() {
-        require(_template != address(0), "template NOT set");
+    modifier tempReady(uint8 typeOfDoc) {
+        require(_templates[typeOfDoc] != address(0), "template NOT set");
         _;
     }
 
@@ -102,9 +102,13 @@ contract DocumentsRepo is IDocumentsRepo, CloneFactory, SHASetting, BOSSetting {
     //##    写接口    ##
     //##################
 
-    function setTemplate(address body) external onlyManager(0) {
-        _template = body;
-        emit SetTemplate(body);
+    function setTemplate(address body, uint8 typeOfDoc)
+        external
+        onlyManager(0)
+    {
+        require(typeOfDoc < 18, "typeOfDoc over flow");
+        _templates[typeOfDoc] = body;
+        emit SetTemplate(body, typeOfDoc);
     }
 
     function _createSN(
@@ -126,12 +130,12 @@ contract DocumentsRepo is IDocumentsRepo, CloneFactory, SHASetting, BOSSetting {
     }
 
     function createDoc(uint8 docType, uint40 creator)
-        external
+        public
         onlyManager(1)
-        tempReady
+        tempReady(docType)
         returns (address body)
     {
-        body = createClone(_template);
+        body = createClone(_templates[docType]);
 
         _counterOfDocs++;
 
@@ -163,7 +167,6 @@ contract DocumentsRepo is IDocumentsRepo, CloneFactory, SHASetting, BOSSetting {
     {
         bytes32 sn = _docs[body].sn;
 
-        // _docsList.removeByValue(sn);
         _docsList.remove(sn);
 
         delete _docs[body];
@@ -178,8 +181,6 @@ contract DocumentsRepo is IDocumentsRepo, CloneFactory, SHASetting, BOSSetting {
         uint40 submitter
     ) public onlyManager(1) onlyRegistered(body) onlyForPending(body) {
         Doc storage doc = _docs[body];
-
-        // bytes32 rule = _getSHA().votingRules(doc.sn.typeOfDoc());
 
         doc.reviewDeadlineBN =
             uint32(block.number) +
@@ -211,11 +212,11 @@ contract DocumentsRepo is IDocumentsRepo, CloneFactory, SHASetting, BOSSetting {
     }
 
     //##################
-    //##    读接口    ##
+    //##   read I/O   ##
     //##################
 
-    function template() external view returns (address) {
-        return _template;
+    function template(uint8 typeOfDoc) external view returns (address) {
+        return _templates[typeOfDoc];
     }
 
     function isRegistered(address body) external view returns (bool) {

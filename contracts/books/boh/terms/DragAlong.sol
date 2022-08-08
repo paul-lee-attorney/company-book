@@ -5,7 +5,8 @@
 
 pragma solidity ^0.4.24;
 
-import "../../boa//IInvestmentAgreement.sol";
+import "../../boa/IInvestmentAgreement.sol";
+import "../../boa/IMockResults.sol";
 
 import "../../../common/components/IDocumentsRepo.sol";
 
@@ -191,23 +192,23 @@ contract DragAlong is IAlongs, BOSSetting, BOASetting {
     ) public view onlyKeeper returns (bool) {
         require(isTriggered(ia, sn), "not triggered");
 
-        uint40 drager = IInvestmentAgreement(ia)
-            .shareNumberOfDeal(sn.sequence())
-            .shareholder();
+        // uint40 drager = IInvestmentAgreement(ia)
+        //     .shareNumberOfDeal(sn.sequence())
+        //     .shareholder();
 
-        require(caller == drager, "caller is not drager of DragAlong");
+        // require(caller == drager, "caller is not drager of DragAlong");
 
-        require(
-            isLinked(caller, shareNumber.shareholder()),
-            "caller and target shareholder NOT linked"
-        );
+        // require(
+        //     isLinked(caller, shareNumber.shareholder()),
+        //     "caller and target shareholder NOT linked"
+        // );
 
         uint32 dealPrice = IInvestmentAgreement(ia).unitPrice(sn.sequence());
         uint32 closingDate = IInvestmentAgreement(ia).closingDate(
             sn.sequence()
         );
 
-        bytes32 rule = _links[_bos.groupNo(drager)].rule;
+        bytes32 rule = _links[_bos.groupNo(caller)].rule;
 
         if (
             rule.triggerTypeOfLink() <
@@ -263,7 +264,9 @@ contract DragAlong is IAlongs, BOSSetting, BOASetting {
 
         if (_bos.controller() != sellerGroup) return false;
 
-        (, , bool isOrgController, , uint16 shareRatio) = _boa.topGroup(ia);
+        (, , bool isOrgController, uint16 shareRatio, ) = IMockResults(
+            _boa.mockResultsOfIA(ia)
+        ).topGroup();
 
         if (!isOrgController) return true;
 

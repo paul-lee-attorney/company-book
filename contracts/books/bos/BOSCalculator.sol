@@ -26,13 +26,35 @@ contract BOSCalculator is IBOSCalculator, BOSSetting {
 
         bytes32[] memory list = _bos.snList();
 
-        uint256 len = list.length;
-        uint40[] storage members;
+        uint256 len = _bos.qtyOfMembersAtBlock(uint64(block.number));
+        uint40[] memory members = new uint40[](len);
 
-        for (uint256 i = 0; i < len; i++)
-            if (list[i].class() == class) members.push(list[i].shareholder());
+        uint256 numOfMembers;
+        len = list.length;
 
-        return members;
+        while (len > 0) {
+            if (list[len - 1].class() == class) {
+                uint256 lenOfM = numOfMembers;
+                while (lenOfM > 0) {
+                    if (members[lenOfM - 1] == list[len - 1].shareholder())
+                        break;
+                    lenOfM--;
+                }
+                if (lenOfM == 0) {
+                    numOfMembers++;
+                    members[numOfMembers - 1] = list[len - 1].shareholder();
+                }
+            }
+            len--;
+        }
+
+        uint40[] memory output = new uint40[](numOfMembers);
+
+        assembly {
+            output := members
+        }
+
+        return output;
     }
 
     function sharesOfClass(uint8 class) external view returns (bytes32[]) {
@@ -41,12 +63,25 @@ contract BOSCalculator is IBOSCalculator, BOSSetting {
         bytes32[] memory list = _bos.snList();
 
         uint256 len = list.length;
-        bytes32[] storage shares;
+        bytes32[] memory shares = new bytes32[](len);
 
-        for (uint256 i = 0; i < len; i++)
-            if (list[i].class() == class) shares.push(list[i]);
+        uint256 numOfShares;
 
-        return shares;
+        while (len > 0) {
+            if (list[len - 1].class() == class) {
+                numOfShares++;
+                shares[numOfShares - 1] = list[len - 1];
+            }
+            len--;
+        }
+
+        bytes32[] memory output = new bytes32[](numOfShares);
+
+        assembly {
+            output := shares
+        }
+
+        return output;
     }
 
     function parOfGroup(uint16 group) public view returns (uint64 parValue) {
@@ -56,8 +91,10 @@ contract BOSCalculator is IBOSCalculator, BOSSetting {
 
         uint256 len = members.length;
 
-        for (uint256 i = 0; i < len; i++)
-            parValue += _bos.parInHand(members[i]);
+        while (len > 0) {
+            parValue += _bos.parInHand(members[len - 1]);
+            len--;
+        }
     }
 
     function paidOfGroup(uint16 group) public view returns (uint64 paidPar) {
@@ -67,8 +104,10 @@ contract BOSCalculator is IBOSCalculator, BOSSetting {
 
         uint256 len = members.length;
 
-        for (uint256 i = 0; i < len; i++)
-            paidPar += _bos.paidInHand(members[i]);
+        while (len > 0) {
+            paidPar += _bos.paidInHand(members[len - 1]);
+            len--;
+        }
     }
 
     function updateController(bool basedOnPar) external onlyKeeper {

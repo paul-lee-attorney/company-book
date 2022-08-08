@@ -10,6 +10,7 @@ var LibSNParser = artifacts.require("SNParser");
 var RC = artifacts.require("RegCenter");
 
 var IA = artifacts.require("InvestmentAgreement");
+var FRD = artifacts.require("FirstRefusalDeals");
 var BOA = artifacts.require("BookOfIA");
 var BOD = artifacts.require("BookOfDirectors");
 var SHA = artifacts.require("ShareholdersAgreement");
@@ -148,7 +149,11 @@ module.exports = async function (deployer, network, accounts) {
 
     await deployer.deploy(IA);
     let ia = await IA.deployed();
-    await boa.setTemplate(ia.address);
+    await boa.setTemplate(ia.address, 0);
+
+    await deployer.deploy(FRD);
+    let frd = await FRD.deployed();
+    await boa.setTemplate(frd.address, 1);
 
     await deployer.deploy(BOH);
     let boh = await BOH.deployed();
@@ -156,7 +161,7 @@ module.exports = async function (deployer, network, accounts) {
 
     await deployer.deploy(SHA);
     let sha = await SHA.deployed();
-    await boh.setTemplate(sha.address);
+    await boh.setTemplate(sha.address, 0);
 
     await deployer.deploy(BOM);
     let bom = await BOM.deployed();

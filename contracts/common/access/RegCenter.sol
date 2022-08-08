@@ -223,6 +223,7 @@ contract RegCenter is IRegCenter, EntitiesMapping {
 
     function _getRegUserNo(address caller, address addrOfOriginator)
         private
+        view
         returns (uint40 doc, uint40 originator)
     {
         doc = _userNo[caller];
@@ -366,8 +367,8 @@ contract RegCenter is IRegCenter, EntitiesMapping {
 
     // ==== Entity ====
 
-    function entityNo(uint40 user) external view returns (uint40) {
-        return _entityNo[user];
+    function entityNo(address caller) external view returns (uint40) {
+        return _entityNo[_userNo[caller]];
     }
 
     function memberOfEntity(uint40 entity, uint8 role)

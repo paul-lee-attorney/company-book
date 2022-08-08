@@ -136,8 +136,8 @@ contract ShareholdersAgreement is
             getManagerKey(0),
             this,
             _rc,
-            20,
-            _rc.entityNo(_rc.userNo(this))
+            uint8(EnumsRepo.RoleOfUser.ShareholdersAgreement),
+            _rc.entityNo(this)
         );
 
         IAccessControl(body).setManager(2, this);

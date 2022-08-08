@@ -102,7 +102,7 @@ contract SigPage is ISigPage, AccessControl {
         signDeal(0, _msgSender(), sigHash);
     }
 
-    function _createSN(uint40 acct, uint16 ssn) private returns (bytes32) {
+    function _createSN(uint40 acct, uint16 ssn) private pure returns (bytes32) {
         bytes memory _sn = new bytes(32);
         _sn = _sn.acctToSN(0, acct);
         _sn = _sn.sequenceToSN(5, ssn);

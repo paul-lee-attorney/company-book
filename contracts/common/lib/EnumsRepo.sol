@@ -61,9 +61,11 @@ library EnumsRepo {
         SHAKeeper, //               16
         BOSCalculator, //           17
         InvestmentAgreement, //     18
-        ShareholdersAgreement, //   19
-        SHATerms, //                20
-        EndPoint //                 21
+        FirstRefusalDeals, //       19
+        MockResults, //               20
+        ShareholdersAgreement, //   21
+        SHATerms, //                22
+        EndPoint //                 23
     }
 
     enum TermTitle {

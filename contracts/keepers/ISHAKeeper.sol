@@ -53,7 +53,8 @@ interface ISHAKeeper {
 
     function acceptFirstRefusal(
         address ia,
-        bytes32 sn,
+        bytes32 snOfOD,
+        uint16 ssnOfFR,
         uint40 caller,
         bytes32 sigHash
     ) external;

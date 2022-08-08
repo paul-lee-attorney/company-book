@@ -39,20 +39,6 @@ interface IInvestmentAgreement {
 
     event RevokeDeal(bytes32 indexed sn, string hashKey);
 
-    // ==== FRDeals ====
-    event UpdateFRDeal(bytes32 indexed sn, uint64 parValue, uint64 paidPar);
-
-    event AcceptFR(bytes32 indexed sn, uint40 sender);
-
-    event CreateFRDeal(
-        bytes32 indexed sn,
-        bytes32 shareNumber,
-        uint32 unitPrice,
-        uint64 parValue,
-        uint64 paidPar,
-        uint32 closingDate
-    );
-
     //##################
     //##    写接口    ##
     //##################
@@ -100,20 +86,6 @@ interface IInvestmentAgreement {
 
     function takeGift(uint16 ssn) external;
 
-    // ==== FRDeals ====
-
-    function execFirstRefusalRight(
-        uint16 ssn,
-        uint40 acct,
-        bytes32 sigHash
-    ) external returns (bytes32);
-
-    function acceptFR(
-        uint16 ssn,
-        uint40 acct,
-        bytes32 sigHash
-    ) external;
-
     //  ######################
     //  ##     查询接口     ##
     //  ######################
@@ -143,20 +115,10 @@ interface IInvestmentAgreement {
 
     function dealsList() external view returns (bytes32[]);
 
-    function dealsConcerned(uint40 acct) external view returns (uint16[]);
+    // function dealsConcerned(uint40 acct) external view returns (uint16[]);
 
-    function isBuyerOfDeal(uint40 acct, uint16 seq)
-        external
-        view
-        returns (bool);
-
-    // ==== FirstRefusal ====
-
-    function counterOfFR(uint16 ssn) external view returns (uint16);
-
-    function sumOfWeight(uint16 ssn) external view returns (uint64);
-
-    function isTargetDeal(uint16 ssn) external view returns (bool);
-
-    function frDeals(uint16 ssn) external view returns (uint16[]);
+    // function isBuyerOfDeal(uint40 acct, uint16 seq)
+    //     external
+    //     view
+    //     returns (bool);
 }

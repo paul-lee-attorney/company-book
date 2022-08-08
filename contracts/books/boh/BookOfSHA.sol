@@ -22,11 +22,11 @@ contract BookOfSHA is IBookOfSHA, DocumentsRepo {
     //##    写接口    ##
     //##################
 
-    function changePointer(
-        address body,
-        uint40 caller,
-        uint32 sigDate
-    ) external onlyManager(1) onlyRegistered(body) {
+    function changePointer(address body, uint40 caller)
+        external
+        onlyManager(1)
+        onlyRegistered(body)
+    {
         if (_pointer != address(0)) pushToNextState(_pointer, caller);
 
         pushToNextState(body, caller);

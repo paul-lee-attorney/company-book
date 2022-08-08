@@ -79,14 +79,14 @@ contract BOAKeeper is
             caller,
             this,
             _rc,
-            17,
-            _rc.entityNo(_rc.userNo(this))
+            uint8(EnumsRepo.RoleOfUser.InvestmentAgreement),
+            _rc.entityNo(this)
         );
 
         IBookSetting(ia).setBOS(_bos);
         IBookSetting(ia).setBOSCal(_bosCal);
 
-        // copyRoleTo(KEEPERS, ia);
+        copyRoleTo(KEEPERS, ia);
 
         IAccessControl(ia).setManager(1, _boa);
     }
@@ -133,8 +133,6 @@ contract BOAKeeper is
 
         IAccessControl(ia).setManager(0, 0);
 
-        // IAccessControl(ia).abandonOwnership();
-
         _boa.circulateIA(ia, submitter);
     }
 
@@ -150,55 +148,50 @@ contract BOAKeeper is
             "IA not in Circulated State"
         );
 
-        _mockDealsOfParty(ia, caller);
+        // _mockDealsOfParty(ia, caller);
 
         ISigPage(ia).signDoc(caller, sigHash);
 
         if (ISigPage(ia).established()) {
-            _boa.calculateMockResult(ia);
+            // _boa.calculateMockResult(ia);
             _boa.pushToNextState(ia, caller);
         }
     }
 
-    function _mockDealsOfParty(address ia, uint40 caller) private onlyKeeper {
-        uint16[] memory seqList = IInvestmentAgreement(ia).dealsConcerned(
-            caller
-        );
-        uint256 len = seqList.length;
-        uint64 amount;
+    // function _mockDealsOfParty(address ia, uint40 caller) private onlyKeeper {
+    //     uint16[] memory seqList = IInvestmentAgreement(ia).dealsConcerned(
+    //         caller
+    //     );
+    //     uint256 len = seqList.length;
+    //     uint64 amount;
+    //     while (len > 0) {
+    //         uint16 seq = seqList[len - 1];
+    //         (
+    //             bytes32 sn,
+    //             uint64 parValue,
+    //             uint64 paidPar,
+    //             ,
 
-        while (len > 0) {
-            uint16 seq = seqList[len - 1];
-
-            (
-                bytes32 sn,
-                uint64 parValue,
-                uint64 paidPar,
-                ,
-
-            ) = IInvestmentAgreement(ia).getDeal(seq);
-
-            amount = _getSHA().basedOnPar() ? parValue : paidPar;
-
-            if (!IInvestmentAgreement(ia).isBuyerOfDeal(caller, seq)) {
-                if (IInvestmentAgreement(ia).lockDealSubject(seq)) {
-                    _bos.decreaseCleanPar(
-                        sn.shortShareNumberOfDeal(),
-                        parValue
-                    );
-                    _boa.mockDealOfSell(ia, caller, amount);
-                }
-            } else {
-                if (
-                    sn.typeOfDeal() ==
-                    uint8(EnumsRepo.TypeOfDeal.CapitalIncrease)
-                ) IInvestmentAgreement(ia).lockDealSubject(seq);
-                _boa.mockDealOfBuy(ia, seq, caller, amount);
-            }
-
-            len--;
-        }
-    }
+    //         ) = IInvestmentAgreement(ia).getDeal(seq);
+    //         amount = _getSHA().basedOnPar() ? parValue : paidPar;
+    //         if (!IInvestmentAgreement(ia).isBuyerOfDeal(caller, seq)) {
+    //             if (IInvestmentAgreement(ia).lockDealSubject(seq)) {
+    //                 _bos.decreaseCleanPar(
+    //                     sn.shortShareNumberOfDeal(),
+    //                     parValue
+    //                 );
+    //                 _boa.mockDealOfSell(ia, caller, amount);
+    //             }
+    //         } else {
+    //             if (
+    //                 sn.typeOfDeal() ==
+    //                 uint8(EnumsRepo.TypeOfDeal.CapitalIncrease)
+    //             ) IInvestmentAgreement(ia).lockDealSubject(seq);
+    //             _boa.mockDealOfBuy(ia, seq, caller, amount);
+    //         }
+    //         len--;
+    //     }
+    // }
 
     // ======== Deal Closing ========
 
@@ -249,7 +242,7 @@ contract BOAKeeper is
         EnumsRepo.TermTitle[] terms,
         address ia,
         bytes32 sn
-    ) private {
+    ) private view {
         uint256 len = terms.length;
 
         while (len > 0) {

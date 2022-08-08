@@ -36,7 +36,7 @@ interface ISigPage {
 
     function setClosingDeadline(uint32 deadline) external;
 
-    function removeParty(uint40 acct) external;
+    // function removeParty(uint40 acct) external;
 
     function finalizeDoc() external;
 
@@ -45,6 +45,10 @@ interface ISigPage {
     function acceptDoc(bytes32 sigHash) external;
 
     function addBlank(uint40 acct, uint16 ssn) external;
+
+    function removeBlank(uint40 acct, uint16 ssn) external;
+
+    function addParty(uint40 acct) external;
 
     function signDeal(
         uint16 ssn,
@@ -86,7 +90,7 @@ interface ISigPage {
 
     function dealSigVerify(
         uint40 acct,
-        uint16 sn,
+        uint16 ssn,
         string src
     ) external view returns (bool);
 }

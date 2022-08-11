@@ -6,7 +6,6 @@ pragma solidity ^0.4.24;
 
 import "./IInvestmentAgreement.sol";
 import "./IBookOfIA.sol";
-import "./IFirstRefusalDeals.sol";
 
 import "../../common/components/DocumentsRepo.sol";
 
@@ -14,7 +13,6 @@ import "../../common/lib/SNParser.sol";
 import "../../common/lib/EnumsRepo.sol";
 import "../../common/lib/EnumerableSet.sol";
 
-import "../../common/ruting/SHASetting.sol";
 import "../../common/ruting/IBookSetting.sol";
 
 contract BookOfIA is IBookOfIA, DocumentsRepo {

@@ -5,17 +5,17 @@
 
 pragma solidity ^0.4.24;
 
-import "../../common/lib/SNFactory.sol";
-import "../../common/lib/SNParser.sol";
+// import "../../common/lib/SNFactory.sol";
+// import "../../common/lib/SNParser.sol";
 import "../../common/ruting/BOSSetting.sol";
 import "../../common/ruting/IASetting.sol";
 
-import "./IInvestmentAgreement.sol";
+// import "./IInvestmentAgreement.sol";
 import "./IFirstRefusalDeals.sol";
 
 contract FirstRefusalDeals is IFirstRefusalDeals, IASetting, BOSSetting {
-    using SNFactory for bytes;
-    using SNParser for bytes32;
+    // using SNFactory for bytes;
+    // using SNParser for bytes32;
 
     struct Claim {
         uint64 weight; // FR rightholder's voting weight

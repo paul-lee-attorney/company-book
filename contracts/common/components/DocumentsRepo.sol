@@ -153,7 +153,6 @@ contract DocumentsRepo is IDocumentsRepo, CloneFactory, SHASetting, BOSSetting {
         doc.states.pushToNextState();
 
         _isRegistered[body] = true;
-        // sn.insertToQue(_docsList);
         _docsList.add(sn);
 
         emit UpdateStateOfDoc(sn, doc.states.currentState, creator);

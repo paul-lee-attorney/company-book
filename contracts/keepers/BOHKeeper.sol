@@ -85,12 +85,12 @@ contract BOHKeeper is
         IShareholdersAgreement(sha).setTermsTemplate(termsTemplate);
 
         IBookSetting(sha).setBOS(_bos);
-        IBookSetting(sha).setBOS(_bosCal);
-        IBookSetting(sha).setBOS(_bom);
+        IBookSetting(sha).setBOSCal(_bosCal);
+        IBookSetting(sha).setBOM(_bom);
 
         copyRoleTo(KEEPERS, sha);
 
-        IAccessControl(sha).setManager(1, _boh);
+        // IAccessControl(sha).setManager(1, _boh);
     }
 
     function removeSHA(address sha, uint40 caller)

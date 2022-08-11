@@ -36,8 +36,6 @@ contract BookOfMotions is
     using SNParser for bytes32;
     using EnumerableSet for EnumerableSet.UintSet;
 
-    // using ObjsRepo for ObjsRepo.BallotsBox;
-
     //##################
     //##    写接口    ##
     //##################

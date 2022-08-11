@@ -11,6 +11,7 @@ var RC = artifacts.require("RegCenter");
 
 var IA = artifacts.require("InvestmentAgreement");
 var FRD = artifacts.require("FirstRefusalDeals");
+var MR = artifacts.require("MockResults");
 var BOA = artifacts.require("BookOfIA");
 var BOD = artifacts.require("BookOfDirectors");
 var SHA = artifacts.require("ShareholdersAgreement");
@@ -44,7 +45,7 @@ module.exports = async function (deployer, network, accounts) {
     // ==== Libraries ====
 
     await deployer.deploy(LibEnumerableSet);
-    await deployer.link(LibEnumerableSet, [IA, BOA, BOD, SHA, BOH, BOM, BOO, BOP, BOS, BOSCal, RC, BOAKeeper, BODKeeper, BOHKeeper, BOMKeeper, BOOKeeper, BOPKeeper, SHAKeeper, GK, AD, DA, FR, GU, LU, OP, TA, LibCheckpoints, LibEnumerableSet, LibObjsRepo, LibRelationGraph]);
+    await deployer.link(LibEnumerableSet, [IA, MR, BOA, BOD, SHA, BOH, BOM, BOO, BOP, BOS, BOSCal, RC, BOAKeeper, BODKeeper, BOHKeeper, BOMKeeper, BOOKeeper, BOPKeeper, SHAKeeper, GK, AD, DA, FR, GU, LU, OP, TA, LibCheckpoints, LibEnumerableSet, LibObjsRepo, LibRelationGraph]);
 
     await deployer.deploy(LibArrayUtils);
     await deployer.link(LibArrayUtils, [AD, FR, LU, TA]);
@@ -73,8 +74,6 @@ module.exports = async function (deployer, network, accounts) {
     await rc.regUser(0, 0, {
         from: accounts[1]
     });
-
-    // await deployer.deploy(IA);
 
     // ==== Entity / BOS ====
 
@@ -154,6 +153,10 @@ module.exports = async function (deployer, network, accounts) {
     await deployer.deploy(FRD);
     let frd = await FRD.deployed();
     await boa.setTemplate(frd.address, 1);
+
+    await deployer.deploy(MR);
+    let mr = await MR.deployed();
+    await boa.setTemplate(mr.address, 2);
 
     await deployer.deploy(BOH);
     let boh = await BOH.deployed();

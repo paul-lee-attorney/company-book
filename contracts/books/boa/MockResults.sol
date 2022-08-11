@@ -4,19 +4,18 @@
 
 pragma solidity ^0.4.24;
 
-import "./IInvestmentAgreement.sol";
 import "./IMockResults.sol";
 
-import "../../common/lib/SNParser.sol";
 import "../../common/lib/EnumerableSet.sol";
+import "../../common/lib/SNParser.sol";
 
 import "../../common/ruting/BOSSetting.sol";
 import "../../common/ruting/SHASetting.sol";
 import "../../common/ruting/IASetting.sol";
 
 contract MockResults is IMockResults, IASetting, SHASetting, BOSSetting {
-    using SNParser for bytes32;
     using EnumerableSet for EnumerableSet.UintSet;
+    using SNParser for bytes32;
 
     struct Amt {
         uint64 selAmt;

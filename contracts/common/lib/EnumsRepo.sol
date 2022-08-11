@@ -184,25 +184,4 @@ library EnumsRepo {
         ViceChairman,
         Director
     }
-
-    enum ActionType {
-        CAPITAL_INCREASE,
-        SHARE_TRANSFER,
-        PRE_EMPTIVE,
-        FIRST_REFUSAL,
-        DRAG_ALONG,
-        TAG_ALONG,
-        SET_PLEDGE,
-        RELEASE_PLEDGE,
-        ANTI_DILUTION,
-        ANNUAL_REPORT,
-        PUT_OPTION,
-        CALL_OPTION,
-        VALUE_ADJUST,
-        LIQUIDATION,
-        LIQUID_PRIORITY,
-        LOCKUP_EXEMPT,
-        ANTIDILUTION_EXEMPT,
-        CONVENE_GM
-    }
 }

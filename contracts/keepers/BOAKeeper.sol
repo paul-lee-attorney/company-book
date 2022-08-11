@@ -1,4 +1,4 @@
-/*
+/* *
  * Copyright 2021-2022 LI LI of JINGTIAN & GONGCHENG.
  * All Rights Reserved.
  * */
@@ -7,7 +7,6 @@ pragma solidity ^0.4.24;
 
 import "../books/boa/IInvestmentAgreement.sol";
 
-// import "../common/access/AccessControl.sol";
 import "../common/access/IAccessControl.sol";
 
 import "../common/components/ISigPage.sol";
@@ -88,7 +87,7 @@ contract BOAKeeper is
 
         copyRoleTo(KEEPERS, ia);
 
-        IAccessControl(ia).setManager(1, _boa);
+        // IAccessControl(ia).setManager(1, _boa);
     }
 
     function removeIA(address ia, uint40 caller)

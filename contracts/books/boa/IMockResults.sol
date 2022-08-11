@@ -33,7 +33,7 @@ interface IMockResults {
     //##  Write I/O  ##
     //#################
 
-    function mockDealsOfIA(address ia) external returns (bool);
+    function mockDealsOfIA() external returns (bool);
 
     function addAlongDeal(
         bytes32 rule,

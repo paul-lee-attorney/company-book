@@ -135,12 +135,12 @@ contract FirstRefusal is IFirstRefusal, ITerm, BOSSetting, BOMSetting {
     // ##  查询接口  ##
     // ################
 
-    function isSubject(uint8 typeOfDeal) public view returns (bool) {
+    function isSubject(uint8 typeOfDeal) external view returns (bool) {
         return _isSubject[typeOfDeal];
     }
 
     function ruleOfFR(uint8 typeOfDeal)
-        public
+        external
         view
         beRestricted(typeOfDeal)
         returns (bytes32)

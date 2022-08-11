@@ -189,7 +189,7 @@ contract DragAlong is IAlongs, BOSSetting, BOASetting {
         bytes32 sn,
         bytes32 shareNumber,
         uint40 caller
-    ) public view onlyKeeper returns (bool) {
+    ) external view onlyKeeper returns (bool) {
         require(isTriggered(ia, sn), "not triggered");
 
         // uint40 drager = IInvestmentAgreement(ia)

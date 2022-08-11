@@ -145,10 +145,6 @@ contract ShareholdersAgreement is
         copyRoleTo(ATTORNEYS, body);
         copyRoleTo(KEEPERS, body);
 
-        // address[8] memory books;
-        // books[uint8(EnumsRepo.NameOfBook.BOS)] = address(_bos);
-        // books[uint8(EnumsRepo.NameOfBook.BOM)] = address(_bom);
-
         IBookSetting(body).setBOS(address(_bos));
         IBookSetting(body).setBOM(address(_bom));
 
@@ -175,8 +171,9 @@ contract ShareholdersAgreement is
         address[] memory clauses = _bodies.values();
         uint256 len = clauses.length;
 
-        for (uint256 i = 0; i < len; i++) {
-            IAccessControl(clauses[i]).lockContents();
+        while (len > 0) {
+            IAccessControl(clauses[len - 1]).lockContents();
+            len--;
         }
 
         finalizeDoc();

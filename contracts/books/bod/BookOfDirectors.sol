@@ -24,7 +24,6 @@ contract BookOfDirectors is IBookOfDirectors, SHASetting, MotionsRepo {
     using SNFactory for bytes;
     using SNParser for bytes32;
     using EnumerableSet for EnumerableSet.UintSet;
-    // using ObjsRepo for ObjsRepo.BallotsBox;
 
     struct Director {
         uint8 title; // 1-Chairman; 2-ViceChairman; 3-Director;

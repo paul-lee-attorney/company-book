@@ -18,13 +18,13 @@ library ObjsRepo {
     //======== SNList ========
 
     struct SNList {
-        mapping(bytes6 => bytes32) shortToSN;
+        mapping(uint32 => bytes32) ssnToSN;
         EnumerableSet.Bytes32Set bytes32Set;
     }
 
     function add(SNList storage list, bytes32 value) internal returns (bool) {
         if (list.bytes32Set.add(value)) {
-            list.shortToSN[value.short()] = value;
+            list.ssnToSN[value.ssn()] = value;
             return true;
         }
 
@@ -36,19 +36,19 @@ library ObjsRepo {
         returns (bool)
     {
         if (list.bytes32Set.remove(value)) {
-            delete list.shortToSN[value.short()];
+            delete list.ssnToSN[value.ssn()];
             return true;
         }
 
         return false;
     }
 
-    function contains(SNList storage list, bytes6 ssn)
+    function contains(SNList storage list, uint32 ssn)
         internal
         view
         returns (bool)
     {
-        bytes32 value = list.shortToSN[ssn];
+        bytes32 value = list.ssnToSN[ssn];
         return list.bytes32Set.contains(value);
     }
 

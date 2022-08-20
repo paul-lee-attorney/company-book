@@ -10,6 +10,7 @@ import "./RegCenterSetting.sol";
 
 contract AccessControl is IAccessControl, RegCenterSetting {
     bool internal _finalized;
+    bool private _initiated;
 
     bytes32 constant KEEPERS = keccak256("Keepers");
     bytes32 constant ATTORNEYS = keccak256("Attorneys");
@@ -78,12 +79,16 @@ contract AccessControl is IAccessControl, RegCenterSetting {
         uint8 roleOfUser,
         uint40 entity
     ) public {
+        require(!_initiated, "already initiated.");
+
+        _initiated = true;
+
         _setRegCenter(regCenter);
 
         _rc.regUser(roleOfUser, entity);
 
-        _rc.setManager(0, msg.sender, owner);
-        _rc.setManager(1, msg.sender, directKeeper);
+        _rc.setManager(0, owner);
+        _rc.setManager(1, directKeeper);
 
         emit Init(owner, directKeeper, _rc);
     }
@@ -97,34 +102,36 @@ contract AccessControl is IAccessControl, RegCenterSetting {
         external
         onlyOwnerOrBookeeper
     {
-        _rc.setManager(title, msg.sender, acct);
-        emit SetManager(title, msg.sender, acct);
+        require(
+            title > 1 || _rc.isManager(title, msg.sender),
+            "msg.sender does not has title"
+        );
+        _rc.setManager(title, acct);
     }
 
     function grantRole(bytes32 role, uint40 acct) external {
-        if (_rc.grantRole(role, msg.sender, acct)) emit GrantRole(role, acct);
+        _rc.grantRole(role, msg.sender, acct);
     }
 
     function revokeRole(bytes32 role, uint40 acct) external {
-        if (_rc.revokeRole(role, msg.sender, acct)) emit RevokeRole(role, acct);
+        _rc.revokeRole(role, msg.sender, acct);
     }
 
-    function renounceRole(bytes32 role, uint40 acct) external {
-        if (_rc.renounceRole(role, msg.sender)) emit RenounceRole(role, acct);
+    function renounceRole(bytes32 role) external {
+        _rc.renounceRole(role, msg.sender);
     }
 
     function abandonRole(bytes32 role) external {
-        if (_rc.abandonRole(role, msg.sender)) emit AbandonRole(role);
+        _rc.abandonRole(role, msg.sender);
     }
 
     function setRoleAdmin(bytes32 role, uint40 acct) external onlyManager(0) {
-        if (_rc.setRoleAdmin(role, msg.sender, acct))
-            emit SetRoleAdmin(role, acct);
+        _rc.setRoleAdmin(role, msg.sender, acct);
     }
 
     function lockContents() public onlyPending {
         _rc.abandonRole(ATTORNEYS, msg.sender);
-        _rc.setManager(2, msg.sender, address(0));
+        _rc.setManager(2, address(0));
         _finalized = true;
 
         emit LockContents();
@@ -132,13 +139,10 @@ contract AccessControl is IAccessControl, RegCenterSetting {
 
     function quitEntity(uint8 roleOfUser) external onlyManager(0) {
         _rc.quitEntity(roleOfUser);
-
-        emit QuitEntity(roleOfUser);
     }
 
     function copyRoleTo(bytes32 role, address to) public onlyManager(0) {
         _rc.copyRoleTo(role, msg.sender, to);
-        emit CopyRoleTo(role, to);
     }
 
     // ##################

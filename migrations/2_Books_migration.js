@@ -1,44 +1,44 @@
-var LibArrayUtils = artifacts.require("ArrayUtils");
-var LibCheckpoints = artifacts.require("Checkpoints");
-var LibEnumerableSet = artifacts.require("EnumerableSet");
-var LibEnumsRepo = artifacts.require("EnumsRepo");
-var LibObjsRepo = artifacts.require("ObjsRepo");
-var LibRelationGraph = artifacts.require("RelationGraph");
-var LibSNFactory = artifacts.require("SNFactory");
-var LibSNParser = artifacts.require("SNParser");
+const LibArrayUtils = artifacts.require("ArrayUtils");
+const LibCheckpoints = artifacts.require("Checkpoints");
+const LibEnumerableSet = artifacts.require("EnumerableSet");
+const LibEnumsRepo = artifacts.require("EnumsRepo");
+const LibObjsRepo = artifacts.require("ObjsRepo");
+const LibRelationGraph = artifacts.require("RelationGraph");
+const LibSNFactory = artifacts.require("SNFactory");
+const LibSNParser = artifacts.require("SNParser");
 
-var RC = artifacts.require("RegCenter");
+const RC = artifacts.require("RegCenter");
 
-var IA = artifacts.require("InvestmentAgreement");
-var FRD = artifacts.require("FirstRefusalDeals");
-var MR = artifacts.require("MockResults");
-var BOA = artifacts.require("BookOfIA");
-var BOD = artifacts.require("BookOfDirectors");
-var SHA = artifacts.require("ShareholdersAgreement");
-var BOH = artifacts.require("BookOfSHA");
-var BOM = artifacts.require("BookOfMotions");
-var BOO = artifacts.require("BookOfOptions");
-var BOP = artifacts.require("BookOfPledges");
-var BOS = artifacts.require("BookOfShares");
-var BOSCal = artifacts.require("BOSCalculator");
+const IA = artifacts.require("InvestmentAgreement");
+const FRD = artifacts.require("FirstRefusalDeals");
+const MR = artifacts.require("MockResults");
+const BOA = artifacts.require("BookOfIA");
+const BOD = artifacts.require("BookOfDirectors");
+const SHA = artifacts.require("ShareholdersAgreement");
+const BOH = artifacts.require("BookOfSHA");
+const BOM = artifacts.require("BookOfMotions");
+const BOO = artifacts.require("BookOfOptions");
+const BOP = artifacts.require("BookOfPledges");
+const BOS = artifacts.require("BookOfShares");
+const BOSCal = artifacts.require("BOSCalculator");
 
-var BOAKeeper = artifacts.require("BOAKeeper");
-var BODKeeper = artifacts.require("BODKeeper");
-var BOHKeeper = artifacts.require("BOHKeeper");
-var BOMKeeper = artifacts.require("BOMKeeper");
-var BOOKeeper = artifacts.require("BOOKeeper");
-var BOPKeeper = artifacts.require("BOPKeeper");
-var SHAKeeper = artifacts.require("SHAKeeper");
+const BOAKeeper = artifacts.require("BOAKeeper");
+const BODKeeper = artifacts.require("BODKeeper");
+const BOHKeeper = artifacts.require("BOHKeeper");
+const BOMKeeper = artifacts.require("BOMKeeper");
+const BOOKeeper = artifacts.require("BOOKeeper");
+const BOPKeeper = artifacts.require("BOPKeeper");
+const SHAKeeper = artifacts.require("SHAKeeper");
 
-var GK = artifacts.require("GeneralKeeper");
+const GK = artifacts.require("GeneralKeeper");
 
-var AD = artifacts.require("AntiDilution");
-var DA = artifacts.require("DragAlong");
-var FR = artifacts.require("FirstRefusal");
-var GU = artifacts.require("GroupsUpdate");
-var LU = artifacts.require("LockUp");
-var OP = artifacts.require("Options");
-var TA = artifacts.require("TagAlong");
+const AD = artifacts.require("AntiDilution");
+const DA = artifacts.require("DragAlong");
+const FR = artifacts.require("FirstRefusal");
+const GU = artifacts.require("GroupsUpdate");
+const LU = artifacts.require("LockUp");
+const OP = artifacts.require("Options");
+const TA = artifacts.require("TagAlong");
 
 module.exports = async function (deployer, network, accounts) {
 
@@ -68,10 +68,12 @@ module.exports = async function (deployer, network, accounts) {
     await deployer.deploy(LibRelationGraph);
     await deployer.link(LibRelationGraph, RC);
 
+    // ==== RegCenter ====
+
     await deployer.deploy(RC, 15);
     let rc = await RC.deployed();
 
-    await rc.regUser(0, 0, {
+    await rc.regUser(1, 0, {
         from: accounts[1]
     });
 
@@ -96,8 +98,12 @@ module.exports = async function (deployer, network, accounts) {
     let boaKeeper = await BOAKeeper.deployed();
     await boaKeeper.init(accounts[0], gk.address, rc.address, 10, companyNo.toNumber());
 
-    bos.setManager(1, boaKeeper.address);
-    bosCal.setManager(1, boaKeeper.address);
+    let acct1 = await rc.userNo(accounts[1]);
+
+    await bos.grantRole("0xdea0b28c65859df30ee7d304fe077244fb2f08c9a834ba25ac340474a46a026a", acct1.toNumber());
+
+    await bos.setManager(1, boaKeeper.address);
+    await bosCal.setManager(1, boaKeeper.address);
 
     await deployer.deploy(BODKeeper);
     let bodKeeper = await BODKeeper.deployed();
@@ -141,10 +147,12 @@ module.exports = async function (deployer, network, accounts) {
 
     // ==== Books ====
 
+    await boaKeeper.copyRoleTo("0xdea0b28c65859df30ee7d304fe077244fb2f08c9a834ba25ac340474a46a026a", bos.address);
+
     await deployer.deploy(BOA);
     let boa = await BOA.deployed();
     await boa.init(accounts[0], boaKeeper.address, rc.address, 5, companyNo.toNumber());
-    // await boaKeeper.copyRoleTo("0xdea0b28c65859df30ee7d304fe077244fb2f08c9a834ba25ac340474a46a026a", boa.address);
+    await boaKeeper.copyRoleTo("0xdea0b28c65859df30ee7d304fe077244fb2f08c9a834ba25ac340474a46a026a", boa.address);
 
     await deployer.deploy(IA);
     let ia = await IA.deployed();
@@ -161,6 +169,7 @@ module.exports = async function (deployer, network, accounts) {
     await deployer.deploy(BOH);
     let boh = await BOH.deployed();
     await boh.init(accounts[0], bohKeeper.address, rc.address, 6, companyNo.toNumber());
+    await bohKeeper.copyRoleTo("0xdea0b28c65859df30ee7d304fe077244fb2f08c9a834ba25ac340474a46a026a", boh.address);
 
     await deployer.deploy(SHA);
     let sha = await SHA.deployed();
@@ -174,12 +183,14 @@ module.exports = async function (deployer, network, accounts) {
     await bom.setBOS(bos.address);
     await bom.setBOSCal(bosCal.address);
     await bom.setManager(1, bomKeeper.address);
+    await bomKeeper.copyRoleTo("0xdea0b28c65859df30ee7d304fe077244fb2f08c9a834ba25ac340474a46a026a", bom.address);
 
     await deployer.deploy(BOD);
     let bod = await BOD.deployed();
     await bod.init(accounts[0], accounts[0], rc.address, 4, companyNo.toNumber());
     await bod.setBOH(boh.address);
     await bod.setManager(1, bodKeeper.address);
+    await bodKeeper.copyRoleTo("0xdea0b28c65859df30ee7d304fe077244fb2f08c9a834ba25ac340474a46a026a", bod.address);
 
     await deployer.deploy(BOO);
     let boo = await BOO.deployed();
@@ -187,13 +198,15 @@ module.exports = async function (deployer, network, accounts) {
     await boo.setBOS(bos.address);
     await boo.setBOSCal(bosCal.address);
     await boo.setManager(1, booKeeper.address);
+    await booKeeper.copyRoleTo("0xdea0b28c65859df30ee7d304fe077244fb2f08c9a834ba25ac340474a46a026a", boo.address);
 
     await deployer.deploy(BOP);
     let bop = await BOP.deployed();
     await bop.init(accounts[0], accounts[0], rc.address, 8, companyNo.toNumber());
     await bop.setBOS(bos.address);
     await bop.setBOSCal(bosCal.address);
-    await bop.setManager(1, booKeeper.address);
+    await bop.setManager(1, bopKeeper.address);
+    await bopKeeper.copyRoleTo("0xdea0b28c65859df30ee7d304fe077244fb2f08c9a834ba25ac340474a46a026a", bop.address);
 
     await deployer.deploy(LU);
     let lu = await LU.deployed();

@@ -10,21 +10,21 @@ interface IFirstRefusalDeals {
     //##   Event   ##
     //###############
 
-    event ExecFirstRefusal(uint16 ssnOfOD, uint16 ssnOfFR, uint40 acct);
+    event ExecFirstRefusal(uint16 seqOfOD, uint16 seqOfFR, uint40 acct);
 
-    event AcceptFirstRefusal(uint16 ssnOfOD, uint16 ssnOfFR, uint64 ratio);
+    event AcceptFirstRefusal(uint16 seqOfOD, uint16 seqOfFR, uint64 ratio);
 
     //##################
     //##    写接口    ##
     //##################
 
     function execFirstRefusalRight(
-        uint16 ssnOfOD,
-        uint16 ssnOfFR,
+        uint16 seqOfOD,
+        uint16 seqOfFR,
         uint40 acct
     ) external;
 
-    function acceptFirstRefusal(uint16 ssnOfOD, uint16 ssnOfFR)
+    function acceptFirstRefusal(uint16 seqOfOD, uint16 seqOfFR)
         external
         returns (uint64 ratio);
 
@@ -32,21 +32,21 @@ interface IFirstRefusalDeals {
     //  ##       查询接口              ##
     //  #################################
 
-    function sumOfWeight(uint16 ssnOfOD) external view returns (uint64);
+    function sumOfWeight(uint16 seqOfOD) external view returns (uint64);
 
-    function isTargetDeal(uint16 ssnOfOD) external view returns (bool);
+    function isTargetDeal(uint16 seqOfOD) external view returns (bool);
 
-    function isFRDeal(uint16 ssnOfOD, uint16 ssnOfFR)
+    function isFRDeal(uint16 seqOfOD, uint16 seqOfFR)
         external
         view
         returns (bool);
 
-    function weightOfFR(uint16 ssnOfOD, uint16 ssnOfFR)
+    function weightOfFR(uint16 seqOfOD, uint16 seqOfFR)
         external
         view
         returns (uint64);
 
-    function ratioOfFR(uint16 ssnOfOD, uint16 ssnOfFR)
+    function ratioOfFR(uint16 seqOfOD, uint16 seqOfFR)
         external
         view
         returns (uint64);

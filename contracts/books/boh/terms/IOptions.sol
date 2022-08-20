@@ -10,7 +10,13 @@ interface IOptions {
     // ##   Event    ##
     // ################
 
-    event CreateOpt(bytes32 indexed sn, uint40 rightholder, uint40 obligor);
+    event CreateOpt(
+        bytes32 indexed sn,
+        uint64 parValue,
+        uint64 paidPar,
+        uint40 rightholder,
+        uint40 obligor
+    );
 
     event AddObligorIntoOpt(bytes32 sn, uint40 obligor);
 
@@ -37,7 +43,7 @@ interface IOptions {
     ) external;
 
     function addConditions(
-        bytes6 ssn,
+        uint32 ssn,
         uint8 logicOperator,
         uint8 compareOperator_1,
         uint32 para_1,
@@ -45,32 +51,37 @@ interface IOptions {
         uint32 para_2
     ) external;
 
-    function addObligorIntoOpt(bytes6 ssn, uint40 obligor) external;
+    function addObligorIntoOpt(uint32 ssn, uint40 obligor) external;
 
-    function removeObligorFromOpt(bytes6 ssn, uint40 obligor) external;
+    function removeObligorFromOpt(uint32 ssn, uint40 obligor) external;
 
-    function delOption(bytes6 ssn) external;
+    function delOption(uint32 ssn) external;
 
     // ################
     // ##  查询接口  ##
     // ################
 
-    function counterOfOptions() external view returns (uint16);
+    function counterOfOptions() external view returns (uint32);
 
-    function sn(bytes6 ssn) external view returns (bytes32);
+    function sn(uint32 ssn) external view returns (bytes32);
 
-    function isOption(bytes6 ssn) external view returns (bool);
+    function isOption(uint32 ssn) external view returns (bool);
 
-    function isObligor(bytes6 ssn, uint40 acct) external view returns (bool);
+    function isObligor(uint32 ssn, uint40 acct) external view returns (bool);
 
-    function getObligors(bytes6 ssn) external view returns (uint40[]);
+    function values(uint32 ssn)
+        external
+        view
+        returns (uint64 parValue, uint64 paidPar);
 
-    function isRightholder(bytes6 ssn, uint40 acct)
+    function obligors(uint32 ssn) external view returns (uint40[]);
+
+    function isRightholder(uint32 ssn, uint40 acct)
         external
         view
         returns (bool);
 
-    function rightholder(bytes6 ssn) external view returns (uint40);
+    function rightholder(uint32 ssn) external view returns (uint40);
 
     function snList() external view returns (bytes32[]);
 }

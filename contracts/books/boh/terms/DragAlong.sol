@@ -223,7 +223,7 @@ contract DragAlong is IAlongs, BOSSetting, BOASetting {
             else return false;
         }
 
-        (, , , , uint32 issuePrice, ) = _bos.getShare(shareNumber.short());
+        (, , , , uint32 issuePrice, ) = _bos.getShare(shareNumber.ssn());
         uint32 issueDate = shareNumber.issueDate();
 
         if (

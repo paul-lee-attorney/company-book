@@ -31,7 +31,7 @@ contract BOPKeeper is IBOPKeeper, BOPSetting, BOSSetting {
     ) external onlyManager(1) {
         require(shareNumber.shareholder() == caller, "NOT shareholder");
 
-        _bos.decreaseCleanPar(shareNumber.short(), pledgedPar);
+        _bos.decreaseCleanPar(shareNumber.ssn(), pledgedPar);
 
         _bop.createPledge(
             shareNumber,
@@ -52,10 +52,10 @@ contract BOPKeeper is IBOPKeeper, BOPSetting, BOSSetting {
     ) external onlyManager(1) {
         require(pledgedPar > 0, "ZERO pledgedPar");
 
-        bytes6 shortShareNumber = sn.shortShareNumberOfPledge();
+        uint32 shortShareNumber = sn.shortShareNumberOfPledge();
 
         (, uint64 orgPledgedPar, uint40 orgCreditor, ) = _bop.getPledge(
-            sn.short()
+            sn.ssn()
         );
 
         if (pledgedPar < orgPledgedPar) {
@@ -66,16 +66,16 @@ contract BOPKeeper is IBOPKeeper, BOPSetting, BOSSetting {
             _bos.decreaseCleanPar(shortShareNumber, pledgedPar - orgPledgedPar);
         }
 
-        _bop.updatePledge(sn.short(), creditor, pledgedPar, guaranteedAmt);
+        _bop.updatePledge(sn.ssn(), creditor, pledgedPar, guaranteedAmt);
     }
 
     function delPledge(bytes32 sn, uint40 caller) external onlyManager(1) {
-        (, uint64 pledgedPar, uint40 creditor, ) = _bop.getPledge(sn.short());
+        (, uint64 pledgedPar, uint40 creditor, ) = _bop.getPledge(sn.ssn());
 
         require(caller == creditor, "NOT creditor");
 
         _bos.increaseCleanPar(sn.shortShareNumberOfPledge(), pledgedPar);
 
-        _bop.delPledge(sn.short());
+        _bop.delPledge(sn.ssn());
     }
 }

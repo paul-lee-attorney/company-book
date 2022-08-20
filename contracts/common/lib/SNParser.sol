@@ -43,24 +43,20 @@ library SNParser {
         return uint8(shareNumber[0]);
     }
 
-    function sequence(bytes32 shareNumber) internal pure returns (uint16) {
-        return uint16(bytes2(shareNumber << 8));
+    function ssn(bytes32 shareNumber) internal pure returns (uint32) {
+        return uint32(bytes4(shareNumber << 8));
     }
 
     function issueDate(bytes32 shareNumber) internal pure returns (uint32) {
-        return uint32(bytes4(shareNumber << 24));
-    }
-
-    function short(bytes32 shareNumber) internal pure returns (bytes6) {
-        return bytes6(shareNumber << 8);
+        return uint32(bytes4(shareNumber << 40));
     }
 
     function shareholder(bytes32 shareNumber) internal pure returns (uint40) {
-        return uint40(bytes5(shareNumber << 56));
+        return uint40(bytes5(shareNumber << 72));
     }
 
-    function preSSN(bytes32 shareNumber) internal pure returns (bytes6) {
-        return bytes6(shareNumber << 96);
+    function preSSN(bytes32 shareNumber) internal pure returns (uint32) {
+        return uint32(bytes4(shareNumber << 112));
     }
 
     // ======== DealSN ========
@@ -69,12 +65,12 @@ library SNParser {
         return uint8(sn[0]);
     }
 
-    // function sequenceOfDeal(bytes32 sn) internal pure returns (uint16) {
-    //     return uint16(bytes2(sn << 16));
-    // }
-
     function typeOfDeal(bytes32 sn) internal pure returns (uint8) {
         return uint8(sn[1]);
+    }
+
+    function sequence(bytes32 sn) internal pure returns (uint16) {
+        return uint16(bytes2(sn << 16));
     }
 
     function buyerOfDeal(bytes32 sn) internal pure returns (uint40) {
@@ -85,12 +81,12 @@ library SNParser {
         return uint16(bytes2(sn << 72));
     }
 
-    function shortShareNumberOfDeal(bytes32 sn) internal pure returns (bytes6) {
-        return bytes6(sn << 88);
+    function ssnOfDeal(bytes32 sn) internal pure returns (uint32) {
+        return uint32(bytes4(sn << 88));
     }
 
-    function preSSNOfDeal(bytes32 sn) internal pure returns (uint16) {
-        return uint16(bytes2(sn << 136));
+    function preSeqOfDeal(bytes32 sn) internal pure returns (uint16) {
+        return uint16(bytes2(sn << 120));
     }
 
     // ======== DocSN ========
@@ -99,20 +95,12 @@ library SNParser {
         return uint8(sn[0]);
     }
 
-    // function sequenceOfDoc(bytes32 sn) internal pure returns (uint16) {
-    //     return uint16(bytes2(sn << 8));
-    // }
-
     function createDateOfDoc(bytes32 sn) internal pure returns (uint32) {
-        return uint32(bytes4(sn << 24));
+        return uint32(bytes4(sn << 40));
     }
 
     function creatorOfDoc(bytes32 sn) internal pure returns (uint40) {
-        return uint40(bytes5(sn << 56));
-    }
-
-    function addrOfDoc(bytes32 sn) internal pure returns (address) {
-        return address(bytes20(sn << 96));
+        return uint40(bytes5(sn << 72));
     }
 
     // ======== FirstRefusalRule ========
@@ -179,62 +167,46 @@ library SNParser {
         return uint8(sn[0]);
     }
 
-    // function sequenceOfOpt(bytes32 sn) internal pure returns (uint16) {
-    //     return uint16(bytes2(sn << 8));
-    // }
-
     function triggerDateOfOpt(bytes32 sn) internal pure returns (uint32) {
-        return uint32(bytes4(sn << 24));
-    }
-
-    function shortOfOpt(bytes32 sn) internal pure returns (bytes6) {
-        return bytes6(sn << 8);
+        return uint32(bytes4(sn << 40));
     }
 
     function exerciseDaysOfOpt(bytes32 sn) internal pure returns (uint8) {
-        return uint8(sn[7]);
+        return uint8(sn[9]);
     }
 
     function closingDaysOfOpt(bytes32 sn) internal pure returns (uint8) {
-        return uint8(sn[8]);
+        return uint8(sn[10]);
     }
 
     function rateOfOpt(bytes32 sn) internal pure returns (uint32) {
-        return uint32(bytes4(sn << 72));
-    }
-
-    function parValueOfOpt(bytes32 sn) internal pure returns (uint64) {
-        return uint64(bytes4(sn << 104));
-    }
-
-    function paidParOfOpt(bytes32 sn) internal pure returns (uint64) {
-        return uint64(bytes4(sn << 136));
+        return uint32(bytes4(sn << 88));
     }
 
     function logOperator(bytes32 sn) internal pure returns (uint8) {
-        return uint8(sn[21]);
+        return uint8(sn[15]);
     }
 
     function compOperator_1(bytes32 sn) internal pure returns (uint8) {
-        return uint8(sn[22]);
+        return uint8(sn[16]);
     }
 
-    function para_1(bytes32 sn) internal pure returns (uint256) {
-        return uint256(bytes4(sn << 176));
+    function para_1(bytes32 sn) internal pure returns (uint32) {
+        return uint32(bytes4(sn << 136));
     }
 
     function compOperator_2(bytes32 sn) internal pure returns (uint8) {
-        return uint8(sn[27]);
+        return uint8(sn[21]);
     }
 
-    function para_2(bytes32 sn) internal pure returns (uint256) {
-        return uint256(uint32(sn));
+    function para_2(bytes32 sn) internal pure returns (uint32) {
+        return uint32(bytes4(sn << 176));
     }
 
     function checkConditions(
         bytes32 sn,
-        uint256 data_1,
-        uint256 data_2
+        uint32 data_1,
+        uint32 data_2
     ) internal pure returns (bool) {
         bool flag_1;
         bool flag_2;
@@ -259,16 +231,16 @@ library SNParser {
 
     // ======== Futures ========
 
-    function shortShareNumberOfFt(bytes32 sn) internal pure returns (bytes6) {
-        return bytes6(sn);
+    function shortShareNumberOfFt(bytes32 sn) internal pure returns (uint32) {
+        return uint32(bytes4(sn));
     }
 
     function parValueOfFt(bytes32 sn) internal pure returns (uint64) {
-        return uint64(uint64(sn >> 144));
+        return uint64(bytes8(sn << 32));
     }
 
     function paidParOfFt(bytes32 sn) internal pure returns (uint64) {
-        return uint64(uint64(sn >> 80));
+        return uint64(bytes8(sn << 96));
     }
 
     // ======== Pledge ========
@@ -277,20 +249,16 @@ library SNParser {
         return uint8(sn[0]);
     }
 
-    // function sequenceOfPledge(bytes32 sn) internal pure returns (uint16) {
-    //     return uint16(bytes2(sn << 8));
-    // }
-
     function createDateOfPledge(bytes32 sn) internal pure returns (uint32) {
-        return uint32(bytes4(sn << 24));
+        return uint32(bytes4(sn << 40));
     }
 
     function shortShareNumberOfPledge(bytes32 sn)
         internal
         pure
-        returns (bytes6)
+        returns (uint32)
     {
-        return bytes6(sn << 56);
+        return uint32(bytes4(sn << 72));
     }
 
     function pledgorOfPledge(bytes32 sn) internal pure returns (uint40) {

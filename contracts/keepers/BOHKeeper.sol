@@ -89,8 +89,6 @@ contract BOHKeeper is
         IBookSetting(sha).setBOM(_bom);
 
         copyRoleTo(KEEPERS, sha);
-
-        // IAccessControl(sha).setManager(1, _boh);
     }
 
     function removeSHA(address sha, uint40 caller)

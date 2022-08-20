@@ -18,23 +18,19 @@ interface IBookOfOptions {
         uint64 paidPar
     );
 
-    event RegisterOpt(bytes32 indexed sn);
+    event RegisterOpt(bytes32 indexed sn, uint64 parValue, uint64 paidPar);
 
     event AddObligorIntoOpt(bytes32 sn, uint40 obligor);
 
     event RemoveObligorFromOpt(bytes32 sn, uint40 obligor);
 
-    // event DelOpt(bytes32 indexed sn);
-
     event CloseOpt(bytes32 indexed sn, string hashKey);
-
-    // event SetOptState(bytes32 indexed sn, uint8 state);
 
     event ExecOpt(bytes32 indexed sn);
 
     event RevokeOpt(bytes32 indexed sn);
 
-    event UpdateOracle(uint256 data_1, uint256 data_2);
+    event UpdateOracle(uint32 seq, uint32 data_1, uint32 data_2);
 
     event AddFuture(
         bytes32 indexed sn,
@@ -65,46 +61,50 @@ interface IBookOfOptions {
         uint64 paidPar
     ) external returns (bytes32 sn);
 
-    function addObligorIntoOpt(bytes6 ssn, uint40 obligor) external;
+    function addObligorIntoOpt(uint32 seq, uint40 obligor) external;
 
-    function removeObligorFromOpt(bytes6 ssn, uint40 obligor) external;
+    function removeObligorFromOpt(uint32 seq, uint40 obligor) external;
 
     function registerOption(address opts) external;
 
-    function updateOracle(uint256 d1, uint256 d2) external;
+    function updateOracle(
+        uint32 ssn,
+        uint32 d1,
+        uint32 d2
+    ) external;
 
-    function execOption(bytes6 ssn) external;
+    function execOption(uint32 ssn) external;
 
     function addFuture(
-        bytes6 ssn,
+        uint32 ssn,
         bytes32 shareNumber,
         uint64 parValue,
         uint64 paidPar
     ) external;
 
-    function removeFuture(bytes6 ssn, bytes32 ft) external;
+    function removeFuture(uint32 ssn, bytes32 ft) external;
 
     function requestPledge(
-        bytes6 ssn,
+        uint32 ssn,
         bytes32 shareNumber,
         uint64 paidPar
     ) external;
 
-    function lockOption(bytes6 ssn, bytes32 hashLock) external;
+    function lockOption(uint32 ssn, bytes32 hashLock) external;
 
-    function closeOption(bytes6 ssn, string hashKey) external;
+    function closeOption(uint32 ssn, string hashKey) external;
 
-    function revokeOption(bytes6 ssn) external;
+    function revokeOption(uint32 ssn) external;
 
     // ################
     // ##  查询接口  ##
     // ################
 
-    function counterOfOptions() external view returns (uint16);
+    function counterOfOptions() external view returns (uint32);
 
-    function isOption(bytes6 ssn) external view returns (bool);
+    function isOption(uint32 seq) external view returns (bool);
 
-    function getOption(bytes6 ssn)
+    function getOption(uint32 seq)
         external
         view
         returns (
@@ -117,17 +117,17 @@ interface IBookOfOptions {
             uint8 state
         );
 
-    function isObligor(bytes6 ssn, uint40 acct) external view returns (bool);
+    function isObligor(uint32 seq, uint40 acct) external view returns (bool);
 
-    function obligors(bytes6 ssn) external view returns (uint40[]);
+    function obligors(uint32 seq) external view returns (uint40[]);
 
-    function stateOfOption(bytes6 ssn) external view returns (uint8);
+    function stateOfOption(uint32 seq) external view returns (uint8);
 
-    function futures(bytes6 ssn) external view returns (bytes32[]);
+    function futures(uint32 seq) external view returns (bytes32[]);
 
-    function pledges(bytes6 ssn) external view returns (bytes32[]);
+    function pledges(uint32 seq) external view returns (bytes32[]);
 
     function snList() external view returns (bytes32[]);
 
-    function oracles() external view returns (uint256 d1, uint256 d2);
+    function oracle(uint32 seq) external view returns (uint32 d1, uint32 d2);
 }

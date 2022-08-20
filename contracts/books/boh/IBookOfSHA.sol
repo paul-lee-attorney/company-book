@@ -48,7 +48,7 @@ interface IBookOfSHA {
 
     function isRegistered(address body) external view returns (bool);
 
-    function counterOfDocs() external view returns (uint16);
+    function counterOfDocs() external view returns (uint32);
 
     function passedReview(address body) external view returns (bool);
 

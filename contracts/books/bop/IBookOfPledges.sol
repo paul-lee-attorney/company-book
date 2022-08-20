@@ -38,10 +38,10 @@ interface IBookOfPledges {
         uint64 guaranteedAmt
     ) external;
 
-    function delPledge(bytes6 ssn) external;
+    function delPledge(uint32 seq) external;
 
     function updatePledge(
-        bytes6 ssn,
+        uint32 seq,
         uint40 creditor,
         uint64 pledgedPar,
         uint64 guaranteedAmt
@@ -53,13 +53,13 @@ interface IBookOfPledges {
 
     function pledgesOf(bytes32 shareNumber) external view returns (bytes32[]);
 
-    function counterOfPledges() external view returns (uint16);
+    function counterOfPledges() external view returns (uint32);
 
-    function isPledge(bytes6 ssn) external view returns (bool);
+    function isPledge(uint32 seq) external view returns (bool);
 
     function snList() external view returns (bytes32[]);
 
-    function getPledge(bytes6 ssn)
+    function getPledge(uint32 seq)
         external
         view
         returns (

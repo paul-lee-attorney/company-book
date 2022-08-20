@@ -173,7 +173,7 @@ contract BOMKeeper is
             paidPar
         );
 
-        _boo.execOption(snOfOpt.shortOfOpt());
-        _boo.addFuture(snOfOpt.shortOfOpt(), shareNumber, parValue, paidPar);
+        _boo.execOption(snOfOpt.ssn());
+        _boo.addFuture(snOfOpt.ssn(), shareNumber, parValue, paidPar);
     }
 }

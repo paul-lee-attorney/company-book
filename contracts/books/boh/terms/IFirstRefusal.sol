@@ -39,14 +39,14 @@ contract IFirstRefusal {
     // ##  查询接口  ##
     // ################
 
-    function isSubject(uint8 typeOfDeal) public view returns (bool);
+    function isSubject(uint8 typeOfDeal) external view returns (bool);
 
-    function ruleOfFR(uint8 typeOfDeal) public view returns (bytes32);
+    function ruleOfFR(uint8 typeOfDeal) external view returns (bytes32);
 
     function isRightholder(uint8 typeOfDeal, uint40 acct)
-        public
+        external
         view
         returns (bool);
 
-    function rightholders(uint8 typeOfDeal) public view returns (uint40[]);
+    function rightholders(uint8 typeOfDeal) external view returns (uint40[]);
 }

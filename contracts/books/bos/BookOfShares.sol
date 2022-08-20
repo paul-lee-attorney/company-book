@@ -48,21 +48,28 @@ contract BookOfShares is IBookOfShares, SHASetting {
     //     uint16 sequence; //顺序编码
     //     uint32 issueDate; //发行日期
     //     uint40 shareholder; //股东编号
-    //     bytes6 preSN; //来源股票编号索引（sequence + issueDate)
+    //     uint32 preSN; //来源股票编号索引（sequence + issueDate)
     // }
 
     Checkpoints.History private _ownersEquity;
 
     //ssn => Share
-    mapping(bytes6 => Share) private _shares;
+    mapping(uint32 => Share) private _shares;
 
-    //股权序列号计数器（2**16-1, 0-65535）
-    uint16 private _counterOfShares;
+    //股权序列号计数器（2**32-1, 0-4294967295）
+    uint32 private _counterOfShares;
 
     //类别序列号计数器(2**8-1, 0-255)
     uint8 private _counterOfClasses;
 
     ObjsRepo.SNList private _snList;
+
+    struct Locker {
+        uint64 amount; //实缴金额
+        bytes32 hashLock; //哈希锁
+    }
+    // ssn => Locker
+    mapping(uint32 => Locker) private _lockers;
 
     // ==== Member ====
 
@@ -100,12 +107,12 @@ contract BookOfShares is IBookOfShares, SHASetting {
     //##   Modifier   ##
     //##################
 
-    modifier notFreezed(bytes6 ssn) {
+    modifier notFreezed(uint32 ssn) {
         require(_shares[ssn].state < 4, "FREEZED share");
         _;
     }
 
-    modifier shareExist(bytes6 ssn) {
+    modifier shareExist(uint32 ssn) {
         require(_snList.contains(ssn), "ssn NOT exist");
         _;
     }
@@ -174,7 +181,7 @@ contract BookOfShares is IBookOfShares, SHASetting {
         _issueShare(shareNumber, parValue, paidPar, paidInDeadline, issuePrice);
 
         // 将股票编号加入《股东名册》记载的股东名下
-        _addShareToMember(shareNumber.short(), shareholder);
+        _addShareToMember(shareNumber.sequence(), shareholder);
 
         // 增加“认缴出资”和“实缴出资”金额
         _capIncrease(parValue, paidPar);
@@ -182,13 +189,37 @@ contract BookOfShares is IBookOfShares, SHASetting {
 
     // ==== PayInCapital ====
 
-    function payInCapital(
-        bytes6 ssn,
+    function setPayInAmount(
+        uint32 ssn,
         uint64 amount,
-        uint32 paidInDate
-    ) external onlyKeeper {
+        bytes32 hashLock
+    ) external shareExist(ssn) onlyManager(1) {
+        require(amount > 0, "zero payIn amount");
+        require(hashLock > bytes32(0), "zero payIn hashLock");
+
+        Locker storage locker = _lockers[ssn];
+        locker.amount = amount;
+        locker.hashLock = hashLock;
+
+        emit SetPayInAmount(ssn, amount, hashLock);
+    }
+
+    function requestPaidInCapital(uint32 ssn, string hashKey)
+        external
+        shareExist(ssn)
+        onlyManager(1)
+    {
+        require(
+            _lockers[ssn].hashLock == keccak256(bytes(hashKey)),
+            "wrong key"
+        );
+
+        uint64 amount = _lockers[ssn].amount;
+
+        require(amount > 0, "zero payIn amount");
+
         // 增加“股票”项下实缴出资金额
-        _payInCapital(ssn, amount, paidInDate);
+        _payInCapital(ssn, amount);
 
         _increaseAmountToMember(
             _shares[ssn].shareNumber.shareholder(),
@@ -198,12 +229,15 @@ contract BookOfShares is IBookOfShares, SHASetting {
 
         // 增加公司的“实缴出资”总额
         _capIncrease(0, amount);
+
+        // remove payInAmount;
+        _lockers[ssn].amount = 0;
     }
 
     // ==== TransferShare ====
 
     function transferShare(
-        bytes6 ssn,
+        uint32 ssn,
         uint64 parValue,
         uint64 paidPar,
         uint40 to,
@@ -227,7 +261,7 @@ contract BookOfShares is IBookOfShares, SHASetting {
             _counterOfShares,
             uint32(block.timestamp),
             to,
-            bytes5(shareNumber << 8)
+            shareNumber.ssn()
         );
 
         _issueShare(
@@ -242,7 +276,7 @@ contract BookOfShares is IBookOfShares, SHASetting {
     }
 
     function decreaseCapital(
-        bytes6 ssn,
+        uint32 ssn,
         uint64 parValue,
         uint64 paidPar
     ) external onlyKeeper {
@@ -254,7 +288,7 @@ contract BookOfShares is IBookOfShares, SHASetting {
     }
 
     function _decreaseShareAmount(
-        bytes6 ssn,
+        uint32 ssn,
         uint64 parValue,
         uint64 paidPar
     ) private {
@@ -286,18 +320,18 @@ contract BookOfShares is IBookOfShares, SHASetting {
 
     function _createShareNumber(
         uint8 class,
-        uint16 sequenceNumber,
+        uint32 ssn,
         uint32 issueDate,
         uint40 shareholder,
-        bytes6 preSN
+        uint32 preSSN
     ) internal pure returns (bytes32 sn) {
         bytes memory _sn = new bytes(32);
 
         _sn[0] = bytes1(class);
-        _sn = _sn.sequenceToSN(1, sequenceNumber);
-        _sn = _sn.dateToSN(3, issueDate);
-        _sn = _sn.acctToSN(7, shareholder);
-        _sn = _sn.shortToSN(12, preSN);
+        _sn = _sn.dateToSN(1, ssn);
+        _sn = _sn.dateToSN(5, issueDate);
+        _sn = _sn.acctToSN(9, shareholder);
+        _sn = _sn.dateToSN(14, preSSN);
 
         sn = _sn.bytesToBytes32();
     }
@@ -309,7 +343,7 @@ contract BookOfShares is IBookOfShares, SHASetting {
         uint32 paidInDeadline,
         uint32 unitPrice
     ) internal {
-        bytes6 ssn = shareNumber.short();
+        uint32 ssn = shareNumber.sequence();
 
         Share storage share = _shares[ssn];
 
@@ -331,7 +365,7 @@ contract BookOfShares is IBookOfShares, SHASetting {
         );
     }
 
-    function _deregisterShare(bytes6 ssn) internal {
+    function _deregisterShare(uint32 ssn) internal {
         bytes32 shareNumber = _shares[ssn].shareNumber;
 
         delete _shares[ssn];
@@ -341,13 +375,11 @@ contract BookOfShares is IBookOfShares, SHASetting {
         emit DeregisterShare(shareNumber);
     }
 
-    function _payInCapital(
-        bytes6 ssn,
-        uint64 amount,
-        uint32 paidInDate
-    ) internal {
-        require(paidInDate > 0, "ZERO paidInDate");
-        require(paidInDate <= now + 2 hours, "paidInDate NOT a PAST time");
+    function _payInCapital(uint32 ssn, uint64 amount) internal {
+        // // require(paidInDate > 0, "ZERO paidInDate");
+        // require(paidInDate <= now + 2 hours, "paidInDate NOT a PAST time");
+
+        uint32 paidInDate = uint32(block.timestamp);
 
         Share storage share = _shares[ssn];
 
@@ -361,7 +393,7 @@ contract BookOfShares is IBookOfShares, SHASetting {
     }
 
     function _subAmountFromShare(
-        bytes6 ssn,
+        uint32 ssn,
         uint64 parValue,
         uint64 paidPar
     ) internal {
@@ -396,7 +428,7 @@ contract BookOfShares is IBookOfShares, SHASetting {
         emit CapDecrease(par, regCap, paid, paidCap, blocknumber);
     }
 
-    function decreaseCleanPar(bytes6 ssn, uint64 paidPar)
+    function decreaseCleanPar(uint32 ssn, uint64 paidPar)
         external
         onlyKeeper
         shareExist(ssn)
@@ -413,7 +445,7 @@ contract BookOfShares is IBookOfShares, SHASetting {
         emit DecreaseCleanPar(ssn, paidPar);
     }
 
-    function increaseCleanPar(bytes6 ssn, uint64 paidPar)
+    function increaseCleanPar(uint32 ssn, uint64 paidPar)
         external
         shareExist(ssn)
     {
@@ -435,7 +467,7 @@ contract BookOfShares is IBookOfShares, SHASetting {
 
     /// @param ssn - 股票短号
     /// @param state - 股票状态 （0：正常，1：出质，2：远期占用; 3:1+2; 4:查封; 5:1+4; 6:2+4; 7:1+2+4 ）
-    function updateShareState(bytes6 ssn, uint8 state)
+    function updateShareState(uint32 ssn, uint8 state)
         external
         onlyKeeper
         shareExist(ssn)
@@ -447,7 +479,7 @@ contract BookOfShares is IBookOfShares, SHASetting {
 
     /// @param ssn - 股票短号
     /// @param paidInDeadline - 实缴出资期限
-    function updatePaidInDeadline(bytes6 ssn, uint32 paidInDeadline)
+    function updatePaidInDeadline(uint32 ssn, uint32 paidInDeadline)
         external
         onlyKeeper
         shareExist(ssn)
@@ -490,7 +522,7 @@ contract BookOfShares is IBookOfShares, SHASetting {
         }
     }
 
-    function _addShareToMember(bytes6 ssn, uint40 acct)
+    function _addShareToMember(uint32 ssn, uint40 acct)
         internal
         shareExist(ssn)
         memberExist(acct)
@@ -504,7 +536,7 @@ contract BookOfShares is IBookOfShares, SHASetting {
         emit AddShareToMember(share.shareNumber, acct);
     }
 
-    function _removeShareFromMember(bytes6 ssn, uint40 acct)
+    function _removeShareFromMember(uint32 ssn, uint40 acct)
         internal
         shareExist(ssn)
         memberExist(acct)
@@ -614,7 +646,7 @@ contract BookOfShares is IBookOfShares, SHASetting {
     }
 
     // ==== SharesRepo ====
-    function counterOfShares() external view returns (uint16) {
+    function counterOfShares() external view returns (uint32) {
         return _counterOfShares;
     }
 
@@ -653,7 +685,7 @@ contract BookOfShares is IBookOfShares, SHASetting {
         else (, vote) = _ownersEquity.getAtBlock(blocknumber);
     }
 
-    function isShare(bytes6 ssn) external view returns (bool) {
+    function isShare(uint32 ssn) external view returns (bool) {
         return _snList.contains(ssn);
     }
 
@@ -661,11 +693,11 @@ contract BookOfShares is IBookOfShares, SHASetting {
         return _snList.values();
     }
 
-    function cleanPar(bytes6 ssn) external view returns (uint64) {
+    function cleanPar(uint32 ssn) external view returns (uint64) {
         return _shares[ssn].cleanPar;
     }
 
-    function getShare(bytes6 ssn)
+    function getShare(uint32 ssn)
         external
         view
         shareExist(ssn)
@@ -686,6 +718,18 @@ contract BookOfShares is IBookOfShares, SHASetting {
         paidInDeadline = share.paidInDeadline;
         unitPrice = share.unitPrice;
         state = share.state;
+    }
+
+    // ==== PayInCapital ====
+    function getLocker(uint32 ssn)
+        external
+        shareExist(ssn)
+        returns (uint64 amount, bytes32 hashLock)
+    {
+        Locker storage locker = _lockers[ssn];
+
+        amount = locker.amount;
+        hashLock = locker.hashLock;
     }
 
     // ==== MembersRepo ====

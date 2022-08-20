@@ -149,7 +149,7 @@ contract FirstRefusal is IFirstRefusal, ITerm, BOSSetting, BOMSetting {
     }
 
     function isRightholder(uint8 typeOfDeal, uint40 acct)
-        public
+        external
         view
         beRestricted(typeOfDeal)
         returns (bool)
@@ -161,7 +161,7 @@ contract FirstRefusal is IFirstRefusal, ITerm, BOSSetting, BOMSetting {
     }
 
     function rightholders(uint8 typeOfDeal)
-        public
+        external
         view
         beRestricted(typeOfDeal)
         returns (uint40[])

@@ -50,10 +50,9 @@ contract DocumentsRepo is IDocumentsRepo, CloneFactory, SHASetting, BOSSetting {
 
     // struct snInfo {
     //     uint8 docType;           1
-    //     uint16 sequence;         2
+    //     uint32 sequence;         4
     //     uint32 createDate;       4
-    //     uint40 creator;          4
-    //     address addrOfDoc;       20
+    //     uint40 creator;          5
     // }
 
     // addrOfBody => Doc
@@ -64,7 +63,7 @@ contract DocumentsRepo is IDocumentsRepo, CloneFactory, SHASetting, BOSSetting {
 
     EnumerableSet.Bytes32Set private _docsList;
 
-    uint16 private _counterOfDocs;
+    uint32 private _counterOfDocs;
 
     //####################
     //##    modifier    ##
@@ -113,18 +112,16 @@ contract DocumentsRepo is IDocumentsRepo, CloneFactory, SHASetting, BOSSetting {
 
     function _createSN(
         uint8 docType,
-        uint16 sequence,
+        uint32 ssn,
         uint32 createDate,
-        uint40 creator,
-        address body
+        uint40 creator
     ) private pure returns (bytes32 sn) {
         bytes memory _sn = new bytes(32);
 
         _sn[0] = bytes1(docType);
-        _sn = _sn.sequenceToSN(1, sequence);
-        _sn = _sn.dateToSN(3, createDate);
-        _sn = _sn.acctToSN(7, creator);
-        _sn = _sn.addrToSN(12, body);
+        _sn = _sn.dateToSN(1, ssn);
+        _sn = _sn.dateToSN(5, createDate);
+        _sn = _sn.acctToSN(9, creator);
 
         sn = _sn.bytesToBytes32();
     }
@@ -143,8 +140,7 @@ contract DocumentsRepo is IDocumentsRepo, CloneFactory, SHASetting, BOSSetting {
             docType,
             _counterOfDocs,
             uint32(block.timestamp),
-            creator,
-            body
+            creator
         );
 
         Doc storage doc = _docs[body];
@@ -222,7 +218,7 @@ contract DocumentsRepo is IDocumentsRepo, CloneFactory, SHASetting, BOSSetting {
         return _isRegistered[body];
     }
 
-    function counterOfDocs() external view returns (uint16) {
+    function counterOfDocs() external view returns (uint32) {
         return _counterOfDocs;
     }
 

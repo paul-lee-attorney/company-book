@@ -37,7 +37,7 @@ contract LockUp is ILockUp, ITerm, BOSSetting, BOMSetting {
     uint32 constant REMOTE_FUTURE = uint32(9710553600);
 
     // ssn => Locker
-    mapping(bytes6 => Locker) private _lockers;
+    mapping(uint32 => Locker) private _lockers;
 
     ObjsRepo.SNList private _ssnList;
 
@@ -45,7 +45,7 @@ contract LockUp is ILockUp, ITerm, BOSSetting, BOMSetting {
     // ##  Modifier  ##
     // ################
 
-    modifier beLocked(bytes6 ssn) {
+    modifier beLocked(uint32 ssn) {
         require(_ssnList.contains(ssn), "share NOT locked");
         _;
     }
@@ -57,35 +57,35 @@ contract LockUp is ILockUp, ITerm, BOSSetting, BOMSetting {
     function setLocker(bytes32 shareNumber, uint32 dueDate)
         external
         onlyAttorney
-        shareExist(shareNumber.short())
+        shareExist(shareNumber.ssn())
     {
-        _lockers[shareNumber.short()].dueDate = dueDate == 0
+        _lockers[shareNumber.ssn()].dueDate = dueDate == 0
             ? REMOTE_FUTURE
             : dueDate;
 
         _ssnList.add(shareNumber);
 
-        emit SetLocker(shareNumber, _lockers[shareNumber.short()].dueDate);
+        emit SetLocker(shareNumber, _lockers[shareNumber.ssn()].dueDate);
     }
 
     function delLocker(bytes32 shareNumber)
         external
         onlyAttorney
-        beLocked(shareNumber.short())
+        beLocked(shareNumber.ssn())
     {
-        delete _lockers[shareNumber.short()];
+        delete _lockers[shareNumber.ssn()];
 
         _ssnList.remove(shareNumber);
 
-        emit DelLocker(shareNumber.short());
+        emit DelLocker(shareNumber);
     }
 
     function addKeyholder(bytes32 shareNumber, uint40 keyholder)
         external
         onlyAttorney
-        beLocked(shareNumber.short())
+        beLocked(shareNumber.ssn())
     {
-        if (_lockers[shareNumber.short()].keyHolders.add(keyholder)) {
+        if (_lockers[shareNumber.ssn()].keyHolders.add(keyholder)) {
             emit AddKeyholder(shareNumber, keyholder);
         }
     }
@@ -93,9 +93,9 @@ contract LockUp is ILockUp, ITerm, BOSSetting, BOMSetting {
     function removeKeyholder(bytes32 shareNumber, uint40 keyholder)
         external
         onlyAttorney
-        beLocked(shareNumber.short())
+        beLocked(shareNumber.ssn())
     {
-        if (_lockers[shareNumber.short()].keyHolders.remove(keyholder)) {
+        if (_lockers[shareNumber.ssn()].keyHolders.remove(keyholder)) {
             emit RemoveKeyholder(shareNumber, keyholder);
         }
     }
@@ -104,11 +104,11 @@ contract LockUp is ILockUp, ITerm, BOSSetting, BOMSetting {
     // ##  查询接口  ##
     // ################
 
-    function isLocked(bytes6 ssn) external view returns (bool) {
+    function isLocked(uint32 ssn) external view returns (bool) {
         return _ssnList.contains(ssn);
     }
 
-    function getLocker(bytes6 ssn)
+    function getLocker(uint32 ssn)
         public
         view
         beLocked(ssn)
@@ -132,7 +132,7 @@ contract LockUp is ILockUp, ITerm, BOSSetting, BOMSetting {
         );
 
         uint8 typeOfDeal = sn.typeOfDeal();
-        bytes6 ssn = sn.shortShareNumberOfDeal();
+        uint32 ssn = sn.ssnOfDeal();
 
         if (
             typeOfDeal > 1 &&
@@ -143,7 +143,7 @@ contract LockUp is ILockUp, ITerm, BOSSetting, BOMSetting {
         return false;
     }
 
-    function _isExempted(bytes6 ssn, uint40[] agreedParties)
+    function _isExempted(uint32 ssn, uint40[] agreedParties)
         private
         view
         returns (bool)
@@ -169,7 +169,7 @@ contract LockUp is ILockUp, ITerm, BOSSetting, BOMSetting {
 
         uint40[] memory agreedParties = consentParties.combine(signers);
 
-        bytes6 ssn = sn.shortShareNumberOfDeal();
+        uint32 ssn = sn.ssnOfDeal();
 
         return _isExempted(ssn, agreedParties);
     }

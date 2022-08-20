@@ -34,9 +34,9 @@ contract ILockUp {
     // ##  查询接口  ##
     // ################
 
-    function isLocked(bytes6 ssn) external view returns (bool);
+    function isLocked(uint32 ssn) external view returns (bool);
 
-    function getLocker(bytes6 ssn)
+    function getLocker(uint32 ssn)
         public
         view
         returns (uint32 dueDate, uint40[] keyHolders);

@@ -58,8 +58,8 @@ contract MockResults is IMockResults, IASetting, SHASetting, BOSSetting {
                 (, amount, , , ) = _ia.getDeal(sn.sequence());
             else (, , amount, , ) = _ia.getDeal(sn.sequence());
 
-            bytes6 short = sn.shortShareNumberOfDeal();
-            if (short > bytes6(0)) _mockDealOfSell(short, amount);
+            uint32 short = sn.ssnOfDeal();
+            if (short > 0) _mockDealOfSell(short, amount);
 
             _mockDealOfBuy(sn, amount);
 
@@ -71,8 +71,8 @@ contract MockResults is IMockResults, IASetting, SHASetting, BOSSetting {
         return true;
     }
 
-    function _mockDealOfSell(bytes6 short, uint64 amount) private {
-        (bytes32 shareNumber, , , , , ) = _bos.getShare(short);
+    function _mockDealOfSell(uint32 ssn, uint64 amount) private {
+        (bytes32 shareNumber, , , , , ) = _bos.getShare(ssn);
         uint16 sellerGroup = _bos.groupNo(shareNumber.shareholder());
 
         _mockResults[sellerGroup].selAmt += amount;

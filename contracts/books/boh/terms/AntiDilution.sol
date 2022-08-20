@@ -113,7 +113,7 @@ contract AntiDilution is IAntiDilution, ITerm, BOSSetting, BOMSetting {
 
         require(markPrice > dealPrice, "AntiDilution not triggered");
 
-        (, , uint64 paidPar, , , ) = _bos.getShare(shareNumber.short());
+        (, , uint64 paidPar, , , ) = _bos.getShare(shareNumber.ssn());
 
         return (paidPar * markPrice) / dealPrice - paidPar;
     }

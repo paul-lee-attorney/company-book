@@ -233,85 +233,88 @@ contract RegCenter is IRegCenter, EntitiesMapping {
         require(originator > 0, "originator not registered");
     }
 
-    function setManager(
-        uint8 title,
-        address addrOfOriginator,
-        address addrOfAcct
-    ) external onlyContract returns (bool) {
-        (uint40 doc, uint40 originator) = _getRegUserNo(
-            msg.sender,
-            addrOfOriginator
-        );
+    function setManager(uint8 title, address addrOfAcct) external onlyContract {
+        uint40 doc = _userNo[msg.sender];
         uint40 acct = _userNo[addrOfAcct];
 
-        return _roles[doc].setManager(title, originator, acct);
+        _roles[doc].setManager(title, acct);
+
+        emit SetManager(doc, title, acct);
     }
 
     function grantRole(
         bytes32 role,
         address addrOfOriginator,
         uint40 acct
-    ) external onlyContract returns (bool) {
+    ) external onlyContract {
         (uint40 doc, uint40 originator) = _getRegUserNo(
             msg.sender,
             addrOfOriginator
         );
-        return _roles[doc].grantRole(role, originator, acct);
+        _roles[doc].grantRole(role, originator, acct);
+
+        emit GrantRole(doc, role, acct);
     }
 
     function revokeRole(
         bytes32 role,
         address addrOfOriginator,
         uint40 acct
-    ) external onlyContract returns (bool) {
+    ) external onlyContract {
         (uint40 doc, uint40 originator) = _getRegUserNo(
             msg.sender,
             addrOfOriginator
         );
-        return _roles[doc].revokeRole(role, originator, acct);
+        _roles[doc].revokeRole(role, originator, acct);
+
+        emit RevokeRole(doc, role, acct);
     }
 
     function renounceRole(bytes32 role, address addrOfOriginator)
         external
         onlyContract
-        returns (bool)
     {
         (uint40 doc, uint40 originator) = _getRegUserNo(
             msg.sender,
             addrOfOriginator
         );
-        return _roles[doc].renounceRole(role, originator);
+        _roles[doc].renounceRole(role, originator);
+
+        emit RenounceRole(doc, role, originator);
     }
 
     function abandonRole(bytes32 role, address addrOfOriginator)
         external
         onlyContract
-        returns (bool)
     {
         (uint40 doc, uint40 originator) = _getRegUserNo(
             msg.sender,
             addrOfOriginator
         );
-        return _roles[doc].abandonRole(role, originator);
+        _roles[doc].abandonRole(role, originator);
+
+        emit AbandonRole(doc, role);
     }
 
     function setRoleAdmin(
         bytes32 role,
         address addrOfOriginator,
         uint40 acct
-    ) external onlyContract returns (bool) {
+    ) external onlyContract {
         (uint40 doc, uint40 originator) = _getRegUserNo(
             msg.sender,
             addrOfOriginator
         );
-        return _roles[doc].setRoleAdmin(role, originator, acct);
+        _roles[doc].setRoleAdmin(role, originator, acct);
+
+        emit SetRoleAdmin(doc, role, acct);
     }
 
     function copyRoleTo(
         bytes32 role,
         address addrOfOriginator,
         address addrOfTo
-    ) external onlyContract returns (bool) {
+    ) external onlyContract {
         (uint40 doc, uint40 originator) = _getRegUserNo(
             msg.sender,
             addrOfOriginator
@@ -322,7 +325,14 @@ contract RegCenter is IRegCenter, EntitiesMapping {
             "To is not a registered contract"
         );
 
-        return _roles[doc].copyRoleTo(role, originator, _roles[to]);
+        require(
+            _roles[to].isManager(1, doc),
+            "srcDoc is not bookeeper of partyTo"
+        );
+
+        _roles[doc].copyRoleTo(role, originator, _roles[to]);
+
+        emit CopyRoleTo(msg.sender, role, addrOfTo);
     }
 
     // ##################

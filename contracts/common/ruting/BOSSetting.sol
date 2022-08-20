@@ -38,7 +38,7 @@ contract BOSSetting is AccessControl {
     //     _;
     // }
 
-    modifier shareExist(bytes6 ssn) {
+    modifier shareExist(uint32 ssn) {
         require(_bos.isShare(ssn), "shareNumber NOT exist");
         _;
     }

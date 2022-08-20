@@ -22,6 +22,18 @@ interface IBOAKeeper {
         bytes32 sigHash
     ) external;
 
+    function setPayInAmount(
+        uint32 ssn,
+        uint64 amount,
+        bytes32 hashLock
+    ) external;
+
+    function requestPaidInCapital(
+        uint32 ssn,
+        string hashKey,
+        uint40 caller
+    ) external;
+
     function pushToCoffer(
         address ia,
         bytes32 sn,

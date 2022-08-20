@@ -124,6 +124,20 @@ contract GeneralKeeper is AccessControl {
         _BOAKeeper.signIA(ia, _msgSender(), sigHash);
     }
 
+    // ==== PayInCapital ====
+
+    function setPayInAmount(
+        uint32 ssn,
+        uint64 amount,
+        bytes32 hashLock
+    ) external onlyManager(1) {
+        _BOAKeeper.setPayInAmount(ssn, amount, hashLock);
+    }
+
+    function requestPaidInCapital(uint32 ssn, string hashKey) external {
+        _BOAKeeper.requestPaidInCapital(ssn, hashKey, _msgSender());
+    }
+
     // ======== Deal Closing ========
 
     function pushToCoffer(

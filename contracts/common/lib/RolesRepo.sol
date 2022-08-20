@@ -27,47 +27,17 @@ library RolesRepo {
     function setManager(
         Roles storage self,
         uint8 title,
-        uint40 originator,
         uint40 acct
-    ) internal returns (bool) {
-        require(originator > 0, "zero originator");
+    ) internal {
+        self.managers[title] = acct;
 
-        // ==== Owner ====
-        if (title == 0) {
-            require(
-                self.managers[0] == 0 ||
-                    self.managers[0] == originator ||
-                    self.managers[1] == originator,
-                "originator is not owner"
-            );
-            self.managers[0] = acct;
-            return true;
-
-            // ==== Bookeeper ====
-        } else if (title == 1) {
-            require(
-                self.managers[1] == 0 || self.managers[1] == originator,
-                "originator is not Bookeeper"
-            );
-            require(acct > 0, "ZERO userNo");
-
-            self.managers[1] = acct;
+        // ==== BooKeeper ====
+        if (title == 1) {
             self.roles[KEEPERS].admin = acct;
-
-            return true;
-
             // ==== GeneralCounsel ====
         } else if (title == 2) {
-            require(
-                originator == self.managers[0] ||
-                    originator == self.managers[1],
-                "neither Owner nor Bookeeper"
-            );
-            self.managers[2] = acct;
             self.roles[ATTORNEYS].admin = acct;
-
-            return true;
-        } else return false;
+        }
     }
 
     // ==== role ====
@@ -77,10 +47,9 @@ library RolesRepo {
         bytes32 role,
         uint40 originator,
         uint40 acct
-    ) internal returns (bool) {
+    ) internal {
         require(originator == roleAdmin(self, role), "originator not admin");
         self.roles[role].isMember[acct] = true;
-        return true;
     }
 
     function revokeRole(
@@ -88,35 +57,34 @@ library RolesRepo {
         bytes32 role,
         uint40 originator,
         uint40 acct
-    ) internal returns (bool) {
+    ) internal {
         require(originator == roleAdmin(self, role), "originator not admin");
-        return _removeRole(self, role, acct);
+
+        delete self.roles[role].isMember[acct];
     }
 
     function renounceRole(
         Roles storage self,
         bytes32 role,
         uint40 originator
-    ) internal returns (bool) {
-        return _removeRole(self, role, originator);
+    ) internal {
+        delete self.roles[role].isMember[originator];
     }
 
     function abandonRole(
         Roles storage self,
         bytes32 role,
         uint40 originator
-    ) internal returns (bool) {
-        if (role == KEEPERS) return false;
-        else
-            require(
-                originator == self.managers[0] ||
-                    originator == roleAdmin(self, role),
-                "originator not owner or roleAdmin"
-            );
+    ) internal {
+        require(role == KEEPERS, "KEEPERS cannot be abandoned");
+
+        require(
+            originator == self.managers[0] ||
+                originator == roleAdmin(self, role),
+            "originator not owner or roleAdmin"
+        );
 
         delete self.roles[role];
-
-        return true;
     }
 
     // very important API for role admin setting, which shall be only exposed to AccessControl func.
@@ -125,25 +93,20 @@ library RolesRepo {
         bytes32 role,
         uint40 originator,
         uint40 acct
-    ) internal returns (bool) {
+    ) internal {
         if (role == KEEPERS)
             require(originator == self.managers[1], "originator not bookeeper");
         else require(originator == self.managers[0], "originator not owner");
 
-        // require(acct > 0, "zero acct");
-        // require(roleAdmin(self, role) == 0, "already set role admin");
-
         self.roles[role].admin = acct;
-        return true;
     }
 
     function _removeRole(
         Roles storage self,
         bytes32 role,
         uint40 acct
-    ) private returns (bool) {
+    ) private {
         delete self.roles[role].isMember[acct];
-        return false;
     }
 
     function copyRoleTo(
@@ -153,7 +116,7 @@ library RolesRepo {
         Roles storage to
     ) internal returns (bool) {
         if (role == KEEPERS)
-            require(originator == self.managers[1], "originator not bookeeper");
+            require(originator == self.managers[0], "originator not owner");
         else if (role == ATTORNEYS)
             require(originator == self.managers[0], "originator not owner");
 

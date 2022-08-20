@@ -126,7 +126,7 @@ contract ShareholdersAgreement is
 
     function createTerm(uint8 title)
         external
-        onlyAttorney
+        onlyManager(0)
         tempReadyFor(title)
         returns (address body)
     {
@@ -145,8 +145,8 @@ contract ShareholdersAgreement is
         copyRoleTo(ATTORNEYS, body);
         copyRoleTo(KEEPERS, body);
 
-        IBookSetting(body).setBOS(address(_bos));
-        IBookSetting(body).setBOM(address(_bom));
+        IBookSetting(body).setBOS(_bos);
+        IBookSetting(body).setBOM(_bom);
 
         _titleToBody[title] = body;
 

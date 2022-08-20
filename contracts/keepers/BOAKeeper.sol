@@ -86,8 +86,6 @@ contract BOAKeeper is
         IBookSetting(ia).setBOSCal(_bosCal);
 
         copyRoleTo(KEEPERS, ia);
-
-        // IAccessControl(ia).setManager(1, _boa);
     }
 
     function removeIA(address ia, uint40 caller)
@@ -118,7 +116,7 @@ contract BOAKeeper is
         );
 
         if (IInvestmentAgreement(ia).releaseDealSubject(sn.sequence()))
-            _bos.increaseCleanPar(sn.shortShareNumberOfDeal(), parValue);
+            _bos.increaseCleanPar(sn.ssnOfDeal(), parValue);
     }
 
     // ======== Circulate IA ========
@@ -176,7 +174,7 @@ contract BOAKeeper is
     //         if (!IInvestmentAgreement(ia).isBuyerOfDeal(caller, seq)) {
     //             if (IInvestmentAgreement(ia).lockDealSubject(seq)) {
     //                 _bos.decreaseCleanPar(
-    //                     sn.shortShareNumberOfDeal(),
+    //                     sn.ssnOfDeal(),
     //                     parValue
     //                 );
     //                 _boa.mockDealOfSell(ia, caller, amount);
@@ -191,6 +189,29 @@ contract BOAKeeper is
     //         len--;
     //     }
     // }
+
+    // ======== PayInCapital ========
+
+    function setPayInAmount(
+        uint32 ssn,
+        uint64 amount,
+        bytes32 hashLock
+    ) external onlyManager(1) {
+        _bos.setPayInAmount(ssn, amount, hashLock);
+    }
+
+    function requestPaidInCapital(
+        uint32 ssn,
+        string hashKey,
+        uint40 caller
+    ) external onlyManager(1) {
+        (bytes32 shareNumber, , , , , ) = _bos.getShare(ssn);
+        require(
+            caller == shareNumber.shareholder(),
+            "caller is not shareholder"
+        );
+        _bos.requestPaidInCapital(ssn, hashKey);
+    }
 
     // ======== Deal Closing ========
 
@@ -303,9 +324,9 @@ contract BOAKeeper is
 
         //释放Share的质押标记(若需)，执行交易
         if (shareNumber > bytes32(0)) {
-            _bos.increaseCleanPar(sn.shortShareNumberOfDeal(), parValue);
+            _bos.increaseCleanPar(sn.ssnOfDeal(), parValue);
             _bos.transferShare(
-                shareNumber.short(),
+                shareNumber.ssn(),
                 parValue,
                 paidPar,
                 sn.buyerOfDeal(),

@@ -55,36 +55,36 @@ interface IInvestmentAgreement {
     ) external returns (bytes32);
 
     function updateDeal(
-        uint16 ssn,
+        uint16 seq,
         uint32 unitPrice,
         uint64 parValue,
         uint64 paidPar,
         uint32 closingDate
     ) external;
 
-    function delDeal(uint16 ssn) external;
+    function delDeal(uint16 seq) external;
 
-    function lockDealSubject(uint16 ssn) external returns (bool flag);
+    function lockDealSubject(uint16 seq) external returns (bool flag);
 
-    function releaseDealSubject(uint16 ssn) external returns (bool flag);
+    function releaseDealSubject(uint16 seq) external returns (bool flag);
 
     // function finalizeIA() external;
 
     function clearDealCP(
-        uint16 ssn,
+        uint16 seq,
         bytes32 hashLock,
         uint32 closingDate
     ) external;
 
-    function closeDeal(uint16 ssn, string hashKey) external;
+    function closeDeal(uint16 seq, string hashKey) external;
 
     function revokeDeal(
-        uint16 ssn,
+        uint16 seq,
         // uint32 sigDate,
         string hashKey
     ) external;
 
-    function takeGift(uint16 ssn) external;
+    function takeGift(uint16 seq) external;
 
     //  ######################
     //  ##     查询接口     ##
@@ -92,11 +92,11 @@ interface IInvestmentAgreement {
 
     // ======== InvestmentAgreement ========
 
-    function isDeal(uint16 ssn) external view returns (bool);
+    function isDeal(uint16 seq) external view returns (bool);
 
     function counterOfDeals() external view returns (uint16);
 
-    function getDeal(uint16 ssn)
+    function getDeal(uint16 seq)
         external
         view
         returns (
@@ -107,11 +107,11 @@ interface IInvestmentAgreement {
             bytes32 hashLock
         );
 
-    function unitPrice(uint16 ssn) external view returns (uint32);
+    function unitPrice(uint16 seq) external view returns (uint32);
 
-    function closingDate(uint16 ssn) external view returns (uint32);
+    function closingDate(uint16 seq) external view returns (uint32);
 
-    function shareNumberOfDeal(uint16 ssn) external view returns (bytes32);
+    function shareNumberOfDeal(uint16 seq) external view returns (bytes32);
 
     function dealsList() external view returns (bytes32[]);
 

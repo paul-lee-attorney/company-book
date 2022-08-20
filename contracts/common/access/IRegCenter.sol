@@ -18,6 +18,20 @@ interface IRegCenter {
 
     event ResetBackupKeyFlag(uint40 indexed userNo);
 
+    event SetManager(uint40 cont, uint8 title, uint40 acct);
+
+    event GrantRole(uint40 cont, bytes32 role, uint40 acct);
+
+    event RevokeRole(uint40 cont, bytes32 role, uint40 acct);
+
+    event RenounceRole(uint40 cont, bytes32 role, uint40 acct);
+
+    event AbandonRole(uint40 cont, bytes32 role);
+
+    event SetRoleAdmin(uint40 cont, bytes32 role, uint40 acct);
+
+    event CopyRoleTo(address from, bytes32 role, address to);
+
     // ##################
     // ##    写端口    ##
     // ##################
@@ -56,43 +70,35 @@ interface IRegCenter {
 
     // ==== Roles ====
 
-    function setManager(
-        uint8 title,
-        address addrOfOriginator,
-        address acct
-    ) external returns (bool);
+    function setManager(uint8 title, address acct) external;
 
     function grantRole(
         bytes32 role,
         address addrOfOriginator,
         uint40 acct
-    ) external returns (bool);
+    ) external;
 
     function revokeRole(
         bytes32 role,
         address addrOfOriginator,
         uint40 acct
-    ) external returns (bool);
+    ) external;
 
-    function renounceRole(bytes32 role, address addrOfOriginator)
-        external
-        returns (bool);
+    function renounceRole(bytes32 role, address addrOfOriginator) external;
 
-    function abandonRole(bytes32 role, address addrOfOriginator)
-        external
-        returns (bool);
+    function abandonRole(bytes32 role, address addrOfOriginator) external;
 
     function setRoleAdmin(
         bytes32 role,
         address addrOfOriginator,
         uint40 acct
-    ) external returns (bool);
+    ) external;
 
     function copyRoleTo(
         bytes32 role,
         address addrOfOriginator,
         address addrOfTo
-    ) external returns (bool);
+    ) external;
 
     // ##################
     // ##   查询端口   ##

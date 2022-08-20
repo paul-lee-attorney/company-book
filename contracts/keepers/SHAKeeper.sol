@@ -197,7 +197,7 @@ contract SHAKeeper is ISHAKeeper, BOASetting, BOSSetting, SHASetting {
         uint64 parValue
     ) private returns (bool flag) {
         if (IInvestmentAgreement(ia).lockDealSubject(alongSN.sequence())) {
-            _bos.decreaseCleanPar(alongSN.shortShareNumberOfDeal(), parValue);
+            _bos.decreaseCleanPar(alongSN.ssnOfDeal(), parValue);
             flag = true;
         }
     }
@@ -286,7 +286,7 @@ contract SHAKeeper is ISHAKeeper, BOASetting, BOSSetting, SHASetting {
         uint64 giftPar,
         uint40 caller
     ) private returns (bytes32 snOfGiftDeal, uint64 result) {
-        uint64 targetCleanPar = _bos.cleanPar(shareNumber.short());
+        uint64 targetCleanPar = _bos.cleanPar(shareNumber.ssn());
 
         if (targetCleanPar > 0) {
             snOfGiftDeal = IInvestmentAgreement(ia).createDeal(
@@ -309,7 +309,7 @@ contract SHAKeeper is ISHAKeeper, BOASetting, BOSSetting, SHASetting {
                     snOfGiftDeal.sequence()
                 )
             ) {
-                _bos.decreaseCleanPar(shareNumber.short(), lockAmount);
+                _bos.decreaseCleanPar(shareNumber.ssn(), lockAmount);
                 // _boa.mockDealOfSell(ia, caller, lockAmount);
             }
 
@@ -324,7 +324,7 @@ contract SHAKeeper is ISHAKeeper, BOASetting, BOSSetting, SHASetting {
         uint64 lockAmount
     ) private {
         uint32 closingDate = IInvestmentAgreement(ia).closingDate(
-            snOfGiftDeal.preSSNOfDeal()
+            snOfGiftDeal.preSeqOfDeal()
         );
 
         IInvestmentAgreement(ia).updateDeal(
@@ -384,13 +384,13 @@ contract SHAKeeper is ISHAKeeper, BOASetting, BOSSetting, SHASetting {
         bytes32 snOfOD,
         uint40 caller
     ) private returns (bytes32 snOfFR) {
-        bytes6 ssnOfOD = snOfOD.shortShareNumberOfDeal();
+        uint32 ssnOfOD = snOfOD.ssnOfDeal();
 
-        if (ssnOfOD > bytes6(0))
+        if (ssnOfOD > 0)
             (bytes32 shareNumber, , , , , ) = _bos.getShare(ssnOfOD);
 
         snOfFR = IInvestmentAgreement(ia).createDeal(
-            ssnOfOD == bytes6(0)
+            ssnOfOD == 0
                 ? uint8(EnumsRepo.TypeOfDeal.PreEmptive)
                 : uint8(EnumsRepo.TypeOfDeal.FirstRefusal),
             shareNumber,

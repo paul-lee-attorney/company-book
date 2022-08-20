@@ -55,7 +55,7 @@ contract InvestmentAgreement is IInvestmentAgreement, BOSSetting, SigPage {
         bytes32 hashLock;
     }
 
-    // sequence => Deal
+    // seq => Deal
     mapping(uint16 => Deal) private _deals;
 
     ObjsRepo.SeqList private _dealsList;
@@ -74,16 +74,16 @@ contract InvestmentAgreement is IInvestmentAgreement, BOSSetting, SigPage {
     //##   Modifier   ##
     //##################
 
-    modifier onlyCleared(uint16 ssn) {
+    modifier onlyCleared(uint16 seq) {
         require(
-            _deals[ssn].states.currentState == uint8(StateOfDeal.Cleared),
+            _deals[seq].states.currentState == uint8(StateOfDeal.Cleared),
             "wrong stateOfDeal"
         );
         _;
     }
 
-    modifier dealExist(uint16 ssn) {
-        require(_dealsList.contains(ssn), "NOT a deal sn");
+    modifier dealExist(uint16 seq) {
+        require(_dealsList.contains(seq), "NOT a deal sn");
         _;
     }
 
@@ -93,22 +93,22 @@ contract InvestmentAgreement is IInvestmentAgreement, BOSSetting, SigPage {
 
     function _createSN(
         uint8 class,
-        uint16 sequence,
+        uint16 seq,
         uint8 typeOfDeal,
         uint40 buyer,
         uint16 group,
         bytes32 shareNumber,
-        uint16 preSSN
+        uint16 preSeq
     ) internal pure returns (bytes32) {
         bytes memory _sn = new bytes(32);
 
         _sn[0] = bytes1(class);
-        _sn = _sn.sequenceToSN(1, sequence);
+        _sn = _sn.sequenceToSN(1, seq);
         _sn[3] = bytes1(typeOfDeal);
         _sn = _sn.acctToSN(4, buyer);
         _sn = _sn.sequenceToSN(9, group);
-        _sn = _sn.shortToSN(11, shareNumber.short());
-        _sn = _sn.sequenceToSN(17, preSSN);
+        _sn = _sn.dateToSN(11, shareNumber.sequence());
+        _sn = _sn.sequenceToSN(15, preSeq);
 
         return _sn.bytesToBytes32();
     }
@@ -119,13 +119,16 @@ contract InvestmentAgreement is IInvestmentAgreement, BOSSetting, SigPage {
         uint8 class,
         uint40 buyer,
         uint16 group,
-        uint16 preSSN
+        uint16 preSeq
     ) public attorneyOrKeeper returns (bytes32) {
         require(buyer != 0, "buyer is ZERO address");
         require(group > 0, "ZERO group");
 
         if (shareNumber > bytes32(0)) {
-            require(_bos.isShare(shareNumber.short()), "shareNumber not exist");
+            require(
+                _bos.isShare(shareNumber.sequence()),
+                "shareNumber not exist"
+            );
             require(shareNumber.class() == class, "class NOT correct");
 
             if (_bos.isMember(buyer))
@@ -160,7 +163,7 @@ contract InvestmentAgreement is IInvestmentAgreement, BOSSetting, SigPage {
             buyer,
             group,
             shareNumber,
-            preSSN
+            preSeq
         );
 
         Deal storage deal = _deals[_counterOfDeals];
@@ -195,17 +198,17 @@ contract InvestmentAgreement is IInvestmentAgreement, BOSSetting, SigPage {
     }
 
     function updateDeal(
-        uint16 ssn,
+        uint16 seq,
         uint32 unitPrice,
         uint64 parValue,
         uint64 paidPar,
         uint32 closingDate
-    ) public dealExist(ssn) attorneyOrKeeper {
+    ) public dealExist(seq) attorneyOrKeeper {
         require(parValue > 0, "parValue is ZERO");
         require(parValue >= paidPar, "paidPar overflow");
         require(closingDate > block.number, "closingDate shall be future");
 
-        Deal storage deal = _deals[ssn];
+        Deal storage deal = _deals[seq];
 
         deal.unitPrice = unitPrice;
         deal.parValue = parValue;
@@ -215,35 +218,35 @@ contract InvestmentAgreement is IInvestmentAgreement, BOSSetting, SigPage {
         emit UpdateDeal(deal.sn, unitPrice, parValue, paidPar, closingDate);
     }
 
-    function delDeal(uint16 ssn)
+    function delDeal(uint16 seq)
         external
         onlyPending
-        dealExist(ssn)
+        dealExist(seq)
         onlyAttorney
     {
-        Deal storage deal = _deals[ssn];
+        Deal storage deal = _deals[seq];
 
         bytes32 sn = deal.sn;
 
         if (sn.typeOfDeal() > uint8(TypeOfDeal.PreEmptive)) {
-            removeBlank(deal.shareNumber.shareholder(), ssn);
+            removeBlank(deal.shareNumber.shareholder(), seq);
         }
 
-        removeBlank(sn.buyerOfDeal(), ssn);
+        removeBlank(sn.buyerOfDeal(), seq);
 
-        delete _deals[ssn];
+        delete _deals[seq];
         _dealsList.remove(sn);
 
         emit DelDeal(sn);
     }
 
-    function lockDealSubject(uint16 ssn)
+    function lockDealSubject(uint16 seq)
         public
         onlyKeeper
-        dealExist(ssn)
+        dealExist(seq)
         returns (bool flag)
     {
-        Deal storage deal = _deals[ssn];
+        Deal storage deal = _deals[seq];
         if (deal.states.currentState == uint8(StateOfDeal.Drafting)) {
             deal.states.pushToNextState();
             flag = true;
@@ -251,13 +254,13 @@ contract InvestmentAgreement is IInvestmentAgreement, BOSSetting, SigPage {
         }
     }
 
-    function releaseDealSubject(uint16 ssn)
+    function releaseDealSubject(uint16 seq)
         external
         onlyKeeper
-        dealExist(ssn)
+        dealExist(seq)
         returns (bool flag)
     {
-        Deal storage deal = _deals[ssn];
+        Deal storage deal = _deals[seq];
         if (deal.states.currentState >= uint8(StateOfDeal.Locked)) {
             deal.states.setState(uint8(StateOfDeal.Drafting));
             flag = true;
@@ -266,11 +269,11 @@ contract InvestmentAgreement is IInvestmentAgreement, BOSSetting, SigPage {
     }
 
     function clearDealCP(
-        uint16 ssn,
+        uint16 seq,
         bytes32 hashLock,
         uint32 closingDate
-    ) external onlyKeeper dealExist(ssn) {
-        Deal storage deal = _deals[ssn];
+    ) external onlyKeeper dealExist(seq) {
+        Deal storage deal = _deals[seq];
 
         require(
             uint32(block.timestamp) < closingDate,
@@ -301,12 +304,12 @@ contract InvestmentAgreement is IInvestmentAgreement, BOSSetting, SigPage {
         );
     }
 
-    function closeDeal(uint16 ssn, string hashKey)
+    function closeDeal(uint16 seq, string hashKey)
         external
-        onlyCleared(ssn)
+        onlyCleared(seq)
         onlyKeeper
     {
-        Deal storage deal = _deals[ssn];
+        Deal storage deal = _deals[seq];
 
         require(
             deal.hashLock == keccak256(bytes(hashKey)),
@@ -321,11 +324,11 @@ contract InvestmentAgreement is IInvestmentAgreement, BOSSetting, SigPage {
     }
 
     function revokeDeal(
-        uint16 ssn,
+        uint16 seq,
         // uint32 sigDate,
         string hashKey
-    ) external onlyCleared(ssn) onlyManager(1) {
-        Deal storage deal = _deals[ssn];
+    ) external onlyCleared(seq) onlyManager(1) {
+        Deal storage deal = _deals[seq];
 
         require(
             deal.closingDate < now - 15 minutes,
@@ -353,8 +356,8 @@ contract InvestmentAgreement is IInvestmentAgreement, BOSSetting, SigPage {
         emit RevokeDeal(deal.sn, hashKey);
     }
 
-    function takeGift(uint16 ssn) external onlyKeeper {
-        Deal storage deal = _deals[ssn];
+    function takeGift(uint16 seq) external onlyKeeper {
+        Deal storage deal = _deals[seq];
 
         require(
             deal.sn.typeOfDeal() == uint8(TypeOfDeal.FreeGift),
@@ -362,7 +365,7 @@ contract InvestmentAgreement is IInvestmentAgreement, BOSSetting, SigPage {
         );
 
         require(
-            _deals[deal.sn.preSSNOfDeal()].states.currentState ==
+            _deals[deal.sn.preSeqOfDeal()].states.currentState ==
                 uint8(StateOfDeal.Closed),
             "Capital Increase not closed"
         );
@@ -384,18 +387,18 @@ contract InvestmentAgreement is IInvestmentAgreement, BOSSetting, SigPage {
     //  ##       查询接口              ##
     //  #################################
 
-    function isDeal(uint16 ssn) external view returns (bool) {
-        return _dealsList.contains(ssn);
+    function isDeal(uint16 seq) external view returns (bool) {
+        return _dealsList.contains(seq);
     }
 
     function counterOfDeals() external view returns (uint16) {
         return _counterOfDeals;
     }
 
-    function getDeal(uint16 ssn)
+    function getDeal(uint16 seq)
         external
         view
-        dealExist(ssn)
+        dealExist(seq)
         returns (
             bytes32 sn,
             uint64 parValue,
@@ -404,7 +407,7 @@ contract InvestmentAgreement is IInvestmentAgreement, BOSSetting, SigPage {
             bytes32 hashLock
         )
     {
-        Deal storage deal = _deals[ssn];
+        Deal storage deal = _deals[seq];
 
         sn = deal.sn;
         parValue = deal.parValue;
@@ -413,31 +416,31 @@ contract InvestmentAgreement is IInvestmentAgreement, BOSSetting, SigPage {
         hashLock = deal.hashLock;
     }
 
-    function unitPrice(uint16 ssn)
+    function unitPrice(uint16 seq)
         external
         view
-        dealExist(ssn)
+        dealExist(seq)
         returns (uint32)
     {
-        return _deals[ssn].unitPrice;
+        return _deals[seq].unitPrice;
     }
 
-    function closingDate(uint16 ssn)
+    function closingDate(uint16 seq)
         external
         view
-        dealExist(ssn)
+        dealExist(seq)
         returns (uint32)
     {
-        return _deals[ssn].closingDate;
+        return _deals[seq].closingDate;
     }
 
-    function shareNumberOfDeal(uint16 ssn)
+    function shareNumberOfDeal(uint16 seq)
         external
         view
-        dealExist(ssn)
+        dealExist(seq)
         returns (bytes32)
     {
-        return _deals[ssn].shareNumber;
+        return _deals[seq].shareNumber;
     }
 
     function dealsList() external view returns (bytes32[]) {

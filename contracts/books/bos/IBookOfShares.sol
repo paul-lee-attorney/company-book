@@ -20,10 +20,10 @@ interface IBookOfShares {
         uint32 unitPrice
     );
 
-    event PayInCapital(bytes6 indexed ssn, uint64 amount, uint32 paidInDate);
+    event PayInCapital(uint32 indexed ssn, uint64 amount, uint32 paidInDate);
 
     event SubAmountFromShare(
-        bytes6 indexed ssn,
+        uint32 indexed ssn,
         uint64 parValue,
         uint64 paidPar
     );
@@ -46,13 +46,15 @@ interface IBookOfShares {
 
     event DeregisterShare(bytes32 indexed shareNumber);
 
-    event UpdateShareState(bytes6 indexed ssn, uint8 state);
+    event UpdateShareState(uint32 indexed ssn, uint8 state);
 
-    event UpdatePaidInDeadline(bytes6 indexed ssn, uint32 paidInDeadline);
+    event UpdatePaidInDeadline(uint32 indexed ssn, uint32 paidInDeadline);
 
-    event DecreaseCleanPar(bytes6 ssn, uint64 paidPar);
+    event DecreaseCleanPar(uint32 ssn, uint64 paidPar);
 
-    event IncreaseCleanPar(bytes6 ssn, uint64 paidPar);
+    event IncreaseCleanPar(uint32 ssn, uint64 paidPar);
+
+    event SetPayInAmount(uint32 ssn, uint64 amount, bytes32 hashLock);
 
     // ==== MembersRepo ====
 
@@ -102,14 +104,16 @@ interface IBookOfShares {
         uint32 issuePrice
     ) external;
 
-    function payInCapital(
-        bytes6 ssn,
+    function setPayInAmount(
+        uint32 ssn,
         uint64 amount,
-        uint32 paidInDate
+        bytes32 hashLock
     ) external;
 
+    function requestPaidInCapital(uint32 ssn, string hashKey) external;
+
     function transferShare(
-        bytes6 ssn,
+        uint32 ssn,
         uint64 parValue,
         uint64 paidPar,
         uint40 to,
@@ -117,20 +121,20 @@ interface IBookOfShares {
     ) external;
 
     function decreaseCapital(
-        bytes6 ssn,
+        uint32 ssn,
         uint64 parValue,
         uint64 paidPar
     ) external;
 
     // ==== SharesRepo ====
 
-    function decreaseCleanPar(bytes6 ssn, uint64 paidPar) external;
+    function decreaseCleanPar(uint32 ssn, uint64 paidPar) external;
 
-    function increaseCleanPar(bytes6 ssn, uint64 paidPar) external;
+    function increaseCleanPar(uint32 ssn, uint64 paidPar) external;
 
-    function updateShareState(bytes6 ssn, uint8 state) external;
+    function updateShareState(uint32 ssn, uint8 state) external;
 
-    function updatePaidInDeadline(bytes6 ssn, uint32 paidInDeadline) external;
+    function updatePaidInDeadline(uint32 ssn, uint32 paidInDeadline) external;
 
     // ==== GroupsRepo ====
 
@@ -152,7 +156,7 @@ interface IBookOfShares {
 
     // ==== SharesRepo ====
 
-    function counterOfShares() external view returns (uint16);
+    function counterOfShares() external view returns (uint32);
 
     function counterOfClasses() external view returns (uint8);
 
@@ -172,13 +176,13 @@ interface IBookOfShares {
         view
         returns (uint64 vote);
 
-    function isShare(bytes6 ssn) external view returns (bool);
+    function isShare(uint32 ssn) external view returns (bool);
 
     function snList() external view returns (bytes32[]);
 
-    function cleanPar(bytes6 ssn) external view returns (uint64);
+    function cleanPar(uint32 ssn) external view returns (uint64);
 
-    function getShare(bytes6 ssn)
+    function getShare(uint32 ssn)
         external
         view
         returns (
@@ -189,6 +193,10 @@ interface IBookOfShares {
             uint32 unitPrice,
             uint8 state
         );
+
+    function getLocker(uint32 ssn)
+        external
+        returns (uint64 amount, bytes32 hashLock);
 
     // ========== MembersRepo ==============
 

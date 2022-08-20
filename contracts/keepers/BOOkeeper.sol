@@ -21,31 +21,25 @@ contract BOOKeeper is IBOOKeeper, BOOSetting, BOSSetting {
     // ##################
 
     modifier onlyRightholder(bytes32 sn, uint40 caller) {
-        (, uint40 rightholder, , , , , ) = _boo.getOption(sn.shortOfOpt());
+        (, uint40 rightholder, , , , , ) = _boo.getOption(sn.ssn());
         require(caller == rightholder, "NOT rightholder");
         _;
     }
 
     modifier onlySeller(bytes32 sn, uint40 caller) {
         if (sn.typeOfOpt() > 0) {
-            (, uint40 rightholder, , , , , ) = _boo.getOption(sn.shortOfOpt());
+            (, uint40 rightholder, , , , , ) = _boo.getOption(sn.ssn());
             require(caller == rightholder, "msgSender NOT rightholder");
         } else
-            require(
-                _boo.isObligor(sn.shortOfOpt(), caller),
-                "msgSender NOT seller"
-            );
+            require(_boo.isObligor(sn.ssn(), caller), "msgSender NOT seller");
         _;
     }
 
     modifier onlyBuyer(bytes32 sn, uint40 caller) {
         if (sn.typeOfOpt() > 0)
-            require(
-                _boo.isObligor(sn.shortOfOpt(), caller),
-                "caller NOT obligor"
-            );
+            require(_boo.isObligor(sn.ssn(), caller), "caller NOT obligor");
         else {
-            (, uint40 rightholder, , , , , ) = _boo.getOption(sn.shortOfOpt());
+            (, uint40 rightholder, , , , , ) = _boo.getOption(sn.ssn());
             require(caller == rightholder, "caller NOT rightholder");
         }
 
@@ -84,7 +78,7 @@ contract BOOKeeper is IBOOKeeper, BOOSetting, BOSSetting {
         external
         onlyManager(1)
     {
-        _boo.addObligorIntoOpt(sn.shortOfOpt(), caller);
+        _boo.addObligorIntoOpt(sn.ssn(), caller);
     }
 
     function releaseObligorFromOption(
@@ -92,7 +86,7 @@ contract BOOKeeper is IBOOKeeper, BOOSetting, BOSSetting {
         uint40 obligor,
         uint40 caller
     ) external onlyManager(1) onlyRightholder(sn, caller) {
-        _boo.removeObligorFromOpt(sn.shortOfOpt(), obligor);
+        _boo.removeObligorFromOpt(sn.ssn(), obligor);
     }
 
     function execOption(bytes32 sn, uint40 caller)
@@ -100,7 +94,7 @@ contract BOOKeeper is IBOOKeeper, BOOSetting, BOSSetting {
         onlyManager(1)
         onlyRightholder(sn, caller)
     {
-        _boo.execOption(sn.shortOfOpt());
+        _boo.execOption(sn.ssn());
     }
 
     function addFuture(
@@ -109,8 +103,8 @@ contract BOOKeeper is IBOOKeeper, BOOSetting, BOSSetting {
         uint64 paidPar,
         uint40 caller
     ) external onlyManager(1) onlyRightholder(sn, caller) {
-        _bos.decreaseCleanPar(shareNumber.short(), paidPar);
-        _boo.addFuture(sn.shortOfOpt(), shareNumber, paidPar, paidPar);
+        _bos.decreaseCleanPar(shareNumber.ssn(), paidPar);
+        _boo.addFuture(sn.ssn(), shareNumber, paidPar, paidPar);
     }
 
     function removeFuture(
@@ -118,7 +112,7 @@ contract BOOKeeper is IBOOKeeper, BOOSetting, BOSSetting {
         bytes32 ft,
         uint40 caller
     ) external onlyManager(1) onlyRightholder(sn, caller) {
-        _boo.removeFuture(sn.shortOfOpt(), ft);
+        _boo.removeFuture(sn.ssn(), ft);
         _bos.increaseCleanPar(ft.shortShareNumberOfFt(), ft.paidParOfFt());
     }
 
@@ -128,8 +122,8 @@ contract BOOKeeper is IBOOKeeper, BOOSetting, BOSSetting {
         uint64 paidPar,
         uint40 caller
     ) external onlyManager(1) onlySeller(sn, caller) {
-        _bos.decreaseCleanPar(shareNumber.short(), paidPar);
-        _boo.requestPledge(sn.shortOfOpt(), shareNumber, paidPar);
+        _bos.decreaseCleanPar(shareNumber.ssn(), paidPar);
+        _boo.requestPledge(sn.ssn(), shareNumber, paidPar);
     }
 
     function lockOption(
@@ -137,7 +131,7 @@ contract BOOKeeper is IBOOKeeper, BOOSetting, BOSSetting {
         bytes32 hashLock,
         uint40 caller
     ) external onlyManager(1) onlySeller(sn, caller) {
-        _boo.lockOption(sn.shortOfOpt(), hashLock);
+        _boo.lockOption(sn.ssn(), hashLock);
     }
 
     function _recoverCleanPar(bytes32[] plds) private {
@@ -160,9 +154,9 @@ contract BOOKeeper is IBOOKeeper, BOOSetting, BOSSetting {
     ) external onlyManager(1) onlyBuyer(sn, caller) {
         uint32 price = sn.rateOfOpt();
 
-        _boo.closeOption(sn.shortOfOpt(), hashKey);
+        _boo.closeOption(sn.ssn(), hashKey);
 
-        bytes32[] memory fts = _boo.futures(sn.shortOfOpt());
+        bytes32[] memory fts = _boo.futures(sn.ssn());
 
         _recoverCleanPar(fts);
 
@@ -176,7 +170,7 @@ contract BOOKeeper is IBOOKeeper, BOOSetting, BOSSetting {
             );
         }
 
-        _recoverCleanPar(_boo.pledges(sn.shortOfOpt()));
+        _recoverCleanPar(_boo.pledges(sn.ssn()));
     }
 
     function revokeOption(bytes32 sn, uint40 caller)
@@ -184,10 +178,10 @@ contract BOOKeeper is IBOOKeeper, BOOSetting, BOSSetting {
         onlyManager(1)
         onlyRightholder(sn, caller)
     {
-        _boo.revokeOption(sn.shortOfOpt());
+        _boo.revokeOption(sn.ssn());
 
-        if (sn.typeOfOpt() > 0) _recoverCleanPar(_boo.futures(sn.shortOfOpt()));
-        else _recoverCleanPar(_boo.pledges(sn.shortOfOpt()));
+        if (sn.typeOfOpt() > 0) _recoverCleanPar(_boo.futures(sn.ssn()));
+        else _recoverCleanPar(_boo.pledges(sn.ssn()));
     }
 
     function releasePledges(bytes32 sn, uint40 caller)
@@ -195,11 +189,11 @@ contract BOOKeeper is IBOOKeeper, BOOSetting, BOSSetting {
         onlyManager(1)
         onlyRightholder(sn, caller)
     {
-        (, , , , , , uint8 state) = _boo.getOption(sn.shortOfOpt());
+        (, , , , , , uint8 state) = _boo.getOption(sn.ssn());
 
         require(state == 6, "option NOT revoked");
 
-        if (sn.typeOfOpt() > 0) _recoverCleanPar(_boo.pledges(sn.shortOfOpt()));
-        else _recoverCleanPar(_boo.futures(sn.shortOfOpt()));
+        if (sn.typeOfOpt() > 0) _recoverCleanPar(_boo.pledges(sn.ssn()));
+        else _recoverCleanPar(_boo.futures(sn.ssn()));
     }
 }

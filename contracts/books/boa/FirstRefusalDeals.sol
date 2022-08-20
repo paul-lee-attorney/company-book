@@ -28,7 +28,7 @@ contract FirstRefusalDeals is IFirstRefusalDeals, IASetting, BOSSetting {
     }
 
     // ==== FRDeals ====
-
+    // seq => FRDeals
     mapping(uint16 => FRDeals) private _frDeals;
 
     //##################
@@ -36,76 +36,76 @@ contract FirstRefusalDeals is IFirstRefusalDeals, IASetting, BOSSetting {
     //##################
 
     function execFirstRefusalRight(
-        uint16 ssnOfOD,
-        uint16 ssnOfFR,
+        uint16 seqOfOD,
+        uint16 seqOfFR,
         uint40 acct
-    ) external onlyManager(1) dealExist(ssnOfOD) {
+    ) external onlyManager(1) dealExist(seqOfOD) {
         uint64 weight = _bos.voteInHand(acct);
         require(weight > 0, "first refusal request has ZERO weight");
 
-        if (_frDeals[ssnOfOD].claims[ssnOfFR].weight == 0) {
-            _frDeals[ssnOfOD].sumOfWeight += weight;
-            _frDeals[ssnOfOD].claims[ssnOfFR].weight = weight;
+        if (_frDeals[seqOfOD].claims[seqOfFR].weight == 0) {
+            _frDeals[seqOfOD].sumOfWeight += weight;
+            _frDeals[seqOfOD].claims[seqOfFR].weight = weight;
 
-            emit ExecFirstRefusal(ssnOfOD, ssnOfFR, acct);
+            emit ExecFirstRefusal(seqOfOD, seqOfFR, acct);
         }
     }
 
-    function acceptFirstRefusal(uint16 ssnOfOD, uint16 ssnOfFR)
+    function acceptFirstRefusal(uint16 seqOfOD, uint16 seqOfFR)
         external
         onlyManager(1)
-        dealExist(ssnOfOD)
+        dealExist(seqOfOD)
         returns (uint64 ratio)
     {
-        uint64 sumOfWeight = _frDeals[ssnOfOD].sumOfWeight;
+        uint64 sumOfWeight = _frDeals[seqOfOD].sumOfWeight;
         require(sumOfWeight > 0, "FRDeals not found");
 
-        uint64 weight = _frDeals[ssnOfOD].claims[ssnOfFR].weight;
+        uint64 weight = _frDeals[seqOfOD].claims[seqOfFR].weight;
         require(weight > 0, "FRClaim not found");
 
-        ratio = _frDeals[ssnOfOD].claims[ssnOfFR].ratio;
+        ratio = _frDeals[seqOfOD].claims[seqOfFR].ratio;
 
         if (ratio == 0) {
             ratio = (weight * 10000) / sumOfWeight;
-            _frDeals[ssnOfOD].claims[ssnOfFR].ratio = ratio;
+            _frDeals[seqOfOD].claims[seqOfFR].ratio = ratio;
         }
 
-        emit AcceptFirstRefusal(ssnOfOD, ssnOfFR, ratio);
+        emit AcceptFirstRefusal(seqOfOD, seqOfFR, ratio);
     }
 
     //  #################################
     //  ##       查询接口              ##
     //  #################################
 
-    function sumOfWeight(uint16 ssnOfOD) external view returns (uint64) {
-        return _frDeals[ssnOfOD].sumOfWeight;
+    function sumOfWeight(uint16 seqOfOD) external view returns (uint64) {
+        return _frDeals[seqOfOD].sumOfWeight;
     }
 
-    function isTargetDeal(uint16 ssnOfOD) external view returns (bool) {
-        return _frDeals[ssnOfOD].sumOfWeight > 0;
+    function isTargetDeal(uint16 seqOfOD) external view returns (bool) {
+        return _frDeals[seqOfOD].sumOfWeight > 0;
     }
 
-    function isFRDeal(uint16 ssnOfOD, uint16 ssnOfFR)
+    function isFRDeal(uint16 seqOfOD, uint16 seqOfFR)
         external
         view
         returns (bool)
     {
-        return _frDeals[ssnOfOD].claims[ssnOfFR].weight > 0;
+        return _frDeals[seqOfOD].claims[seqOfFR].weight > 0;
     }
 
-    function weightOfFR(uint16 ssnOfOD, uint16 ssnOfFR)
+    function weightOfFR(uint16 seqOfOD, uint16 seqOfFR)
         external
         view
         returns (uint64)
     {
-        return _frDeals[ssnOfOD].claims[ssnOfFR].weight;
+        return _frDeals[seqOfOD].claims[seqOfFR].weight;
     }
 
-    function ratioOfFR(uint16 ssnOfOD, uint16 ssnOfFR)
+    function ratioOfFR(uint16 seqOfOD, uint16 seqOfFR)
         external
         view
         returns (uint64)
     {
-        return _frDeals[ssnOfOD].claims[ssnOfFR].ratio;
+        return _frDeals[seqOfOD].claims[seqOfFR].ratio;
     }
 }

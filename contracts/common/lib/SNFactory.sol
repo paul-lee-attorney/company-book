@@ -72,16 +72,6 @@ library SNFactory {
         return sn;
     }
 
-    function shortToSN(
-        bytes sn,
-        uint8 pointer,
-        bytes6 input
-    ) internal pure returns (bytes) {
-        for (uint8 i = 0; i < 6; i++) sn[pointer + i] = input[i];
-
-        return sn;
-    }
-
     function boolToSN(
         bytes sn,
         uint8 pointer,

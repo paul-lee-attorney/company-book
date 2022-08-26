@@ -118,7 +118,8 @@ contract SigPage is ISigPage, AccessControl {
             );
         else
             require(
-                _rc.hasRole(KEEPERS, msg.sender),
+                _rc.isKeeper(msg.sender),
+                // _rc.hasRole(KEEPERS, msg.sender),
                 "only DK may add party to an established DOC"
             );
 
@@ -146,7 +147,7 @@ contract SigPage is ISigPage, AccessControl {
     }
 
     function addParty(uint40 acct) external onlyPending onlyAttorney {
-        if (_parties.add(acct)) emit AddParty(acct);
+        addBlank(acct, 0);
     }
 
     function signDeal(
@@ -166,6 +167,7 @@ contract SigPage is ISigPage, AccessControl {
             _sigCounter++;
 
             emit SignDeal(caller, ssn, sigHash);
+
             _checkCompletionOfSig();
         }
     }
@@ -207,6 +209,14 @@ contract SigPage is ISigPage, AccessControl {
 
     function qtyOfParties() external view returns (uint256) {
         return _parties.length();
+    }
+
+    function blanksList() external view returns (bytes32[]) {
+        return _snList.values();
+    }
+
+    function sigCounter() external view returns (uint256) {
+        return _sigCounter;
     }
 
     function sigDateOfDeal(uint40 acct, uint16 ssn)

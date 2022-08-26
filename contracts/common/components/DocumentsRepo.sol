@@ -75,7 +75,10 @@ contract DocumentsRepo is IDocumentsRepo, CloneFactory, SHASetting, BOSSetting {
     }
 
     modifier onlyRegistered(address body) {
-        require(_isRegistered[body], "doc NOT registered");
+        require(
+            _isRegistered[body],
+            "DR.md.onlyRegistered: doc NOT registered"
+        );
         _;
     }
 

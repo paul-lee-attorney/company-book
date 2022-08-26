@@ -86,15 +86,22 @@ contract GeneralKeeper is AccessControl {
         emit SetSHAKeeper(keeper);
     }
 
-    function grantKeepers(address target) external onlyManager(1) {
-        IAccessControl(target).grantRole(KEEPERS, _rc.userNo(_BOAKeeper));
-        IAccessControl(target).grantRole(KEEPERS, _rc.userNo(_BODKeeper));
-        IAccessControl(target).grantRole(KEEPERS, _rc.userNo(_BOHKeeper));
-        IAccessControl(target).grantRole(KEEPERS, _rc.userNo(_BOMKeeper));
-        IAccessControl(target).grantRole(KEEPERS, _rc.userNo(_BOOKeeper));
-        IAccessControl(target).grantRole(KEEPERS, _rc.userNo(_BOPKeeper));
-        IAccessControl(target).grantRole(KEEPERS, _rc.userNo(_SHAKeeper));
-    }
+    // function grantKeepers(address target) external onlyManager(1) {
+    //     IAccessControl(target).grantRole(KEEPERS, _rc.userNo(_BOAKeeper));
+    //     IAccessControl(target).grantRole(KEEPERS, _rc.userNo(_BODKeeper));
+    //     IAccessControl(target).grantRole(KEEPERS, _rc.userNo(_BOHKeeper));
+    //     IAccessControl(target).grantRole(KEEPERS, _rc.userNo(_BOMKeeper));
+    //     IAccessControl(target).grantRole(KEEPERS, _rc.userNo(_BOOKeeper));
+    //     IAccessControl(target).grantRole(KEEPERS, _rc.userNo(_BOPKeeper));
+    //     IAccessControl(target).grantRole(KEEPERS, _rc.userNo(_SHAKeeper));
+    // }
+
+    // function copyKeepersTo(address directKeeper, address book)
+    //     external
+    //     onlyManager(1)
+    // {
+    //     IAccessControl(directKeeper).copyRoleTo(KEEPERS, book);
+    // }
 
     // function setKeepers(address target, address keeper)
     //     external
@@ -117,7 +124,7 @@ contract GeneralKeeper is AccessControl {
     }
 
     function circulateIA(address body) external {
-        _BOAKeeper.circulateIA(body, _msgSender());
+        _BOAKeeper.circulateIA(body, msg.sender);
     }
 
     function signIA(address ia, bytes32 sigHash) external {
@@ -186,7 +193,7 @@ contract GeneralKeeper is AccessControl {
             shareNumber,
             parValue,
             paidPar,
-            _msgSender(),
+            msg.sender,
             sigHash
         );
     }
@@ -216,7 +223,7 @@ contract GeneralKeeper is AccessControl {
             shareNumber,
             parValue,
             paidPar,
-            _msgSender(),
+            msg.sender,
             sigHash
         );
     }
@@ -287,7 +294,7 @@ contract GeneralKeeper is AccessControl {
     }
 
     function circulateSHA(address body) external {
-        _BOHKeeper.circulateSHA(body, _msgSender());
+        _BOHKeeper.circulateSHA(body, msg.sender);
     }
 
     function signSHA(address sha, bytes32 sigHash) external {

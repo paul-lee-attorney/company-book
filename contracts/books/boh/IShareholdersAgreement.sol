@@ -18,7 +18,7 @@ interface IShareholdersAgreement {
 
     // ==== VotingRules ====
 
-    event SetVotingBaseOnPar();
+    event SetVotingBaseOnPar(bool flag);
 
     event SetProposalThreshold(uint64 threshold);
 
@@ -48,7 +48,7 @@ interface IShareholdersAgreement {
 
     // ======== VotingRule ========
 
-    function setVotingBaseOnPar() external;
+    function setVotingBaseOnPar(bool flag) external;
 
     function setProposalThreshold(uint16 threshold) external;
 

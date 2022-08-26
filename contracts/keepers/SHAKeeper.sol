@@ -71,11 +71,13 @@ contract SHAKeeper is ISHAKeeper, BOASetting, BOSSetting, SHASetting {
         bytes32 shareNumber,
         uint64 parValue,
         uint64 paidPar,
-        uint40 caller,
+        address callerAddr,
         bytes32 sigHash
     ) external onlyManager(1) onlyEstablished(ia) withinReviewPeriod(ia) {
         address mock = _boa.mockResultsOfIA(ia);
-        if (mock == address(0)) mock = _boa.createMockResults(ia, caller);
+        if (mock == address(0)) mock = _boa.createMockResults(ia, callerAddr);
+
+        IBookSetting(mock).setBOH(_boh);
 
         _addAlongDeal(
             dragAlong,
@@ -85,8 +87,10 @@ contract SHAKeeper is ISHAKeeper, BOASetting, BOSSetting, SHASetting {
             shareNumber,
             parValue,
             paidPar,
-            caller
+            callerAddr
         );
+
+        // uint40 caller = _rc.userNo(callerAddr);
 
         bytes32 alongSN = _createAlongDeal(ia, sn, dragAlong, shareNumber);
 
@@ -95,7 +99,11 @@ contract SHAKeeper is ISHAKeeper, BOASetting, BOSSetting, SHASetting {
         _lockDealSubject(ia, alongSN, parValue);
 
         if (!dragAlong)
-            ISigPage(ia).signDeal(alongSN.sequence(), caller, sigHash);
+            ISigPage(ia).signDeal(
+                alongSN.sequence(),
+                _rc.userNo(callerAddr),
+                sigHash
+            );
     }
 
     function _addAlongDeal(
@@ -106,7 +114,7 @@ contract SHAKeeper is ISHAKeeper, BOASetting, BOSSetting, SHASetting {
         bytes32 shareNumber,
         uint64 parValue,
         uint64 paidPar,
-        uint40 caller
+        address callerAddr
     ) private {
         uint40 drager = IInvestmentAgreement(ia)
             .shareNumberOfDeal(sn.sequence())
@@ -127,6 +135,8 @@ contract SHAKeeper is ISHAKeeper, BOASetting, BOSSetting, SHASetting {
             !ISigPage(ia).isInitSigner(shareNumber.shareholder()),
             "follower is an InitSigner of IA"
         );
+
+        uint40 caller = _rc.userNo(callerAddr);
 
         if (dragAlong) {
             require(caller == drager, "caller is not drager of DragAlong");

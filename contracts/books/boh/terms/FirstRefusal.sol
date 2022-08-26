@@ -79,7 +79,7 @@ contract FirstRefusal is IFirstRefusal, ITerm, BOSSetting, BOMSetting {
         bool proRata,
         bool basedOnPar
     ) external onlyAttorney {
-        require(typeOfDeal < 4, "type of deal over flow");
+        // require(typeOfDeal < 4, "type of deal over flow");
 
         bytes32 rule = _createRule(
             typeOfDeal,

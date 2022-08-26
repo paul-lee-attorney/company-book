@@ -12,7 +12,7 @@ contract AccessControl is IAccessControl, RegCenterSetting {
     bool internal _finalized;
     bool private _initiated;
 
-    bytes32 constant KEEPERS = keccak256("Keepers");
+    // bytes32 constant KEEPERS = keccak256("Keepers");
     bytes32 constant ATTORNEYS = keccak256("Attorneys");
 
     // ##################
@@ -20,7 +20,10 @@ contract AccessControl is IAccessControl, RegCenterSetting {
     // ##################
 
     modifier onlyManager(uint8 title) {
-        require(_rc.isManager(title, msg.sender), "not the specific manager");
+        require(
+            _rc.isManager(title, msg.sender),
+            "AC.Md.onlyManager: not the specific manager"
+        );
         _;
     }
 
@@ -33,24 +36,34 @@ contract AccessControl is IAccessControl, RegCenterSetting {
     }
 
     modifier onlyRole(bytes32 role) {
-        require(_rc.hasRole(role, msg.sender), "caller not has Role");
+        require(
+            _rc.hasRole(role, msg.sender),
+            "AC.onlyRole: caller not has Role"
+        );
         _;
     }
 
     modifier onlyKeeper() {
-        require(_rc.hasRole(KEEPERS, msg.sender), "not Keeper");
+        require(
+            _rc.isKeeper(msg.sender) || _rc.isManager(1, msg.sender),
+            "AC.onlyKeeper: not Keeper"
+        );
         _;
     }
 
     modifier onlyAttorney() {
-        require(_rc.hasRole(ATTORNEYS, msg.sender), "not Attorney");
+        require(
+            _rc.hasRole(ATTORNEYS, msg.sender),
+            "AC.onlyAttorney: not Attorney"
+        );
         _;
     }
 
     modifier attorneyOrKeeper() {
         require(
             _rc.hasRole(ATTORNEYS, msg.sender) ||
-                _rc.hasRole(KEEPERS, msg.sender),
+                _rc.isKeeper(msg.sender) ||
+                _rc.isManager(1, msg.sender),
             "not Attorney or Bookeeper"
         );
         _;
@@ -98,13 +111,14 @@ contract AccessControl is IAccessControl, RegCenterSetting {
     //     emit RegThisContract(userNo);
     // }
 
-    function setManager(uint8 title, address acct)
-        external
-        onlyOwnerOrBookeeper
-    {
+    function setManager(
+        uint8 title,
+        address caller,
+        address acct
+    ) external onlyOwnerOrBookeeper {
         require(
-            title > 1 || _rc.isManager(title, msg.sender),
-            "msg.sender does not has title"
+            title > 1 || _rc.isManager(title, caller),
+            "AC.setManager: caller does not has title"
         );
         _rc.setManager(title, acct);
     }
@@ -141,9 +155,9 @@ contract AccessControl is IAccessControl, RegCenterSetting {
         _rc.quitEntity(roleOfUser);
     }
 
-    function copyRoleTo(bytes32 role, address to) public onlyManager(0) {
-        _rc.copyRoleTo(role, msg.sender, to);
-    }
+    // function copyRoleTo(bytes32 role, address to) public onlyManager(1) {
+    //     _rc.copyRoleTo(role, msg.sender, to);
+    // }
 
     // ##################
     // ##   查询端口   ##
@@ -159,5 +173,13 @@ contract AccessControl is IAccessControl, RegCenterSetting {
 
     function finalized() external view returns (bool) {
         return _finalized;
+    }
+
+    function hasRole(address acctAddr, bytes32 role)
+        external
+        view
+        returns (bool)
+    {
+        return _rc.hasRole(role, acctAddr);
     }
 }

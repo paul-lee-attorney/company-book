@@ -88,7 +88,7 @@ contract BOHKeeper is
         IBookSetting(sha).setBOSCal(_bosCal);
         IBookSetting(sha).setBOM(_bom);
 
-        copyRoleTo(KEEPERS, sha);
+        // copyRoleTo(KEEPERS, sha);
     }
 
     function removeSHA(address sha, uint40 caller)
@@ -100,18 +100,18 @@ contract BOHKeeper is
         _boh.removeDoc(sha);
     }
 
-    function circulateSHA(address sha, uint40 caller)
+    function circulateSHA(address sha, address callerAddr)
         external
         onlyManager(1)
-        onlyOwnerOf(sha, caller)
+        onlyOwnerOf(sha, _rc.userNo(callerAddr))
     {
         require(IAccessControl(sha).finalized(), "let GC finalize SHA first");
 
-        IAccessControl(sha).setManager(0, 0);
+        IAccessControl(sha).setManager(0, callerAddr, 0);
 
         // IAccessControl(sha).abandonOwnership();
 
-        _boh.circulateDoc(sha, bytes32(0), caller);
+        _boh.circulateDoc(sha, bytes32(0), _rc.userNo(callerAddr));
     }
 
     // ======== Sign SHA ========

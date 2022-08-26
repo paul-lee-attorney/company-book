@@ -14,7 +14,8 @@ contract EntitiesMapping {
     using EnumerableSet for EnumerableSet.UintSet;
 
     struct Entity {
-        // mappingRole => user
+        mapping(uint40 => bool) isKeeper;
+        // RoleOfUser => user
         mapping(uint8 => uint40) members;
     }
 
@@ -110,13 +111,20 @@ contract EntitiesMapping {
         uint8 roleOfUser
     ) internal entityExist(entity) {
         require(_entityNo[user] == 0, "pls quit from other Entity first");
-        require(
-            _entities[entity].members[roleOfUser] == 0,
-            "role already be registered"
-        );
+
+        Entity storage corp = _entities[entity];
+
+        require(corp.members[roleOfUser] == 0, "role already be registered");
 
         _entityNo[user] = entity;
-        _entities[entity].members[roleOfUser] = user;
+        corp.members[roleOfUser] = user;
+
+        if (
+            roleOfUser > uint8(EnumsRepo.RoleOfUser.GeneralKeeper) &&
+            roleOfUser < uint8(EnumsRepo.RoleOfUser.BOSCalculator)
+        ) {
+            corp.isKeeper[user] = true;
+        }
 
         emit JoinEntity(entity, user, roleOfUser);
     }
@@ -133,12 +141,13 @@ contract EntitiesMapping {
 
         uint40 entity = _entityNo[user];
 
-        require(
-            _entities[entity].members[roleOfUser] == user,
-            "wrong roleOfUser"
-        );
+        Entity storage corp = _entities[entity];
 
-        delete _entities[entity].members[roleOfUser];
+        require(corp.members[roleOfUser] == user, "wrong roleOfUser");
+
+        if (corp.isKeeper[user]) corp.isKeeper[user] = false;
+
+        delete corp.members[roleOfUser];
         delete _entityNo[user];
 
         emit QuitEntity(entity, user, roleOfUser);
@@ -162,7 +171,7 @@ contract EntitiesMapping {
             "user is not BOS of the company"
         );
 
-        require(parValue > 0, "zero parValue");
+        require(parValue > 0, "EntitiesMapping/_investIn: zero parValue");
 
         if (
             _graph.addEdge(
@@ -230,7 +239,7 @@ contract EntitiesMapping {
             "user is not BOS of the company"
         );
 
-        require(parValue > 0, "zero parValue");
+        require(parValue > 0, "EntitiesMapping/_updateParValue: zero parValue");
 
         if (
             _graph.updateWeight(
@@ -380,6 +389,14 @@ contract EntitiesMapping {
                 uint8(EnumsRepo.RoleOfUser.BookOfShares)
             ] >
             0);
+    }
+
+    function _isKeeper(uint40 entity, uint40 user)
+        internal
+        view
+        returns (bool)
+    {
+        return _entities[entity].isKeeper[user];
     }
 
     function _memberOfEntity(uint40 entity, uint8 role)

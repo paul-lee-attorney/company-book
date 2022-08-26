@@ -74,6 +74,10 @@ interface ISigPage {
 
     function qtyOfParties() external view returns (uint256);
 
+    function blanksList() external view returns (bytes32[]);
+
+    function sigCounter() external view returns (uint256);
+
     function sigDateOfDeal(uint40 acct, uint16 ssn)
         external
         view

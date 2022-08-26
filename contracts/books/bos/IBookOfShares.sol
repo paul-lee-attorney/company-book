@@ -196,6 +196,7 @@ interface IBookOfShares {
 
     function getLocker(uint32 ssn)
         external
+        view
         returns (uint64 amount, bytes32 hashLock);
 
     // ========== MembersRepo ==============

@@ -69,7 +69,7 @@ contract RegCenter is IRegCenter, EntitiesMapping {
     // ##################
 
     function regUser(uint8 roleOfUser, uint40 entity) public returns (uint40) {
-        require(!_usedKeys[msg.sender], "already registered");
+        require(!_usedKeys[msg.sender], "RC.regUser: already registered");
 
         _counterOfUsers++;
 
@@ -88,10 +88,7 @@ contract RegCenter is IRegCenter, EntitiesMapping {
                 uint8(EnumsRepo.TypeOfEntity.Company),
                 roleOfUser
             );
-        } else if (
-            roleOfUser > uint8(EnumsRepo.RoleOfUser.BookOfShares) &&
-            roleOfUser < uint8(EnumsRepo.RoleOfUser.InvestmentAgreement)
-        ) {
+        } else if (roleOfUser > uint8(EnumsRepo.RoleOfUser.BookOfShares)) {
             require(_isContract(msg.sender), "only CA may join Entity");
 
             _joinEntity(entity, _counterOfUsers, roleOfUser);
@@ -310,30 +307,30 @@ contract RegCenter is IRegCenter, EntitiesMapping {
         emit SetRoleAdmin(doc, role, acct);
     }
 
-    function copyRoleTo(
-        bytes32 role,
-        address addrOfOriginator,
-        address addrOfTo
-    ) external onlyContract {
-        (uint40 doc, uint40 originator) = _getRegUserNo(
-            msg.sender,
-            addrOfOriginator
-        );
-        uint40 to = _userNo[addrOfTo];
-        require(
-            to > 0 && _isContract(addrOfTo),
-            "To is not a registered contract"
-        );
+    // function copyRoleTo(
+    //     bytes32 role,
+    //     address addrOfOriginator,
+    //     address addrOfTo
+    // ) external onlyContract {
+    //     (uint40 doc, uint40 originator) = _getRegUserNo(
+    //         msg.sender,
+    //         addrOfOriginator
+    //     );
+    //     uint40 to = _userNo[addrOfTo];
+    //     require(
+    //         to > 0 && _isContract(addrOfTo),
+    //         "To is not a registered contract"
+    //     );
 
-        require(
-            _roles[to].isManager(1, doc),
-            "srcDoc is not bookeeper of partyTo"
-        );
+    //     require(
+    //         _roles[to].isManager(1, doc),
+    //         "srcDoc is not bookeeper of partyTo"
+    //     );
 
-        _roles[doc].copyRoleTo(role, originator, _roles[to]);
+    //     _roles[doc].copyRoleTo(role, originator, _roles[to]);
 
-        emit CopyRoleTo(msg.sender, role, addrOfTo);
-    }
+    //     emit CopyRoleTo(msg.sender, role, addrOfTo);
+    // }
 
     // ##################
     // ##   查询端口   ##
@@ -377,9 +374,19 @@ contract RegCenter is IRegCenter, EntitiesMapping {
 
     // ==== Entity ====
 
-    function entityNo(address caller) external view returns (uint40) {
-        return _entityNo[_userNo[caller]];
+    function entityNo(address acct) public view returns (uint40) {
+        uint40 user = _userNo[acct];
+        require(user > 0, "RC.entityNo: userNo not exist");
+
+        uint40 entity = _entityNo[user];
+        require(entity > 0, "RC.entityNo: entityNo not exist");
+
+        return entity;
     }
+
+    // function entityNo(address caller) external view returns (uint40) {
+    //     return _entityNo[_userNo[caller]];
+    // }
 
     function memberOfEntity(uint40 entity, uint8 role)
         external
@@ -387,6 +394,10 @@ contract RegCenter is IRegCenter, EntitiesMapping {
         returns (uint40)
     {
         return _memberOfEntity(entity, role);
+    }
+
+    function isKeeper(address caller) external view returns (bool) {
+        return _isKeeper(entityNo(msg.sender), _userNo[caller]);
     }
 
     // ==== Element ====

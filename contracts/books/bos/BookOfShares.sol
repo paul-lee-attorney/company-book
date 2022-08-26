@@ -181,7 +181,7 @@ contract BookOfShares is IBookOfShares, SHASetting {
         _issueShare(shareNumber, parValue, paidPar, paidInDeadline, issuePrice);
 
         // 将股票编号加入《股东名册》记载的股东名下
-        _addShareToMember(shareNumber.sequence(), shareholder);
+        _addShareToMember(shareNumber.ssn(), shareholder);
 
         // 增加“认缴出资”和“实缴出资”金额
         _capIncrease(parValue, paidPar);
@@ -194,8 +194,11 @@ contract BookOfShares is IBookOfShares, SHASetting {
         uint64 amount,
         bytes32 hashLock
     ) external shareExist(ssn) onlyManager(1) {
-        require(amount > 0, "zero payIn amount");
-        require(hashLock > bytes32(0), "zero payIn hashLock");
+        require(amount > 0, "BOS.setPayInAmount: zero payIn amount");
+        require(
+            hashLock > bytes32(0),
+            "BOS.setPayInAmount: zero payIn hashLock"
+        );
 
         Locker storage locker = _lockers[ssn];
         locker.amount = amount;
@@ -343,7 +346,7 @@ contract BookOfShares is IBookOfShares, SHASetting {
         uint32 paidInDeadline,
         uint32 unitPrice
     ) internal {
-        uint32 ssn = shareNumber.sequence();
+        uint32 ssn = shareNumber.ssn();
 
         Share storage share = _shares[ssn];
 
@@ -558,12 +561,12 @@ contract BookOfShares is IBookOfShares, SHASetting {
     ) internal {
         (uint64 oldPar, uint64 oldPaid) = _members[acct].votesInHand.latest();
 
-        uint64 blocknumber = _members[acct].votesInHand.push(
-            oldPar + parValue,
-            oldPaid + paidPar
-        );
+        uint64 curPar = oldPar + parValue;
+        uint64 curPaid = oldPaid + paidPar;
 
-        _rc.updateParValue(acct, uint64(oldPar + parValue));
+        uint64 blocknumber = _members[acct].votesInHand.push(curPar, curPaid);
+
+        _rc.updateParValue(acct, curPar);
 
         emit IncreaseAmountToMember(acct, parValue, paidPar, blocknumber);
     }
@@ -723,6 +726,7 @@ contract BookOfShares is IBookOfShares, SHASetting {
     // ==== PayInCapital ====
     function getLocker(uint32 ssn)
         external
+        view
         shareExist(ssn)
         returns (uint64 amount, bytes32 hashLock)
     {

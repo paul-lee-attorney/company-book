@@ -96,63 +96,43 @@ module.exports = async function (deployer, network, accounts) {
 
     await deployer.deploy(BOAKeeper);
     let boaKeeper = await BOAKeeper.deployed();
-    await boaKeeper.init(accounts[0], gk.address, rc.address, 10, companyNo.toNumber());
+    await boaKeeper.init(accounts[0], accounts[0], rc.address, 10, companyNo.toNumber());
 
     let acct1 = await rc.userNo(accounts[1]);
 
-    await bos.grantRole("0xdea0b28c65859df30ee7d304fe077244fb2f08c9a834ba25ac340474a46a026a", acct1.toNumber());
+    // await bos.grantRole("0xdea0b28c65859df30ee7d304fe077244fb2f08c9a834ba25ac340474a46a026a", acct1.toNumber());
 
-    await bos.setManager(1, boaKeeper.address);
-    await bosCal.setManager(1, boaKeeper.address);
 
     await deployer.deploy(BODKeeper);
     let bodKeeper = await BODKeeper.deployed();
-    await bodKeeper.init(accounts[0], gk.address, rc.address, 11, companyNo.toNumber());
+    await bodKeeper.init(accounts[0], accounts[0], rc.address, 11, companyNo.toNumber());
 
     await deployer.deploy(BOHKeeper);
     let bohKeeper = await BOHKeeper.deployed();
-    await bohKeeper.init(accounts[0], gk.address, rc.address, 12, companyNo.toNumber());
+    await bohKeeper.init(accounts[0], accounts[0], rc.address, 12, companyNo.toNumber());
 
     await deployer.deploy(BOMKeeper);
     let bomKeeper = await BOMKeeper.deployed();
-    await bomKeeper.init(accounts[0], gk.address, rc.address, 13, companyNo.toNumber());
+    await bomKeeper.init(accounts[0], accounts[0], rc.address, 13, companyNo.toNumber());
 
     await deployer.deploy(BOOKeeper);
     let booKeeper = await BOOKeeper.deployed();
-    await booKeeper.init(accounts[0], gk.address, rc.address, 14, companyNo.toNumber());
+    await booKeeper.init(accounts[0], accounts[0], rc.address, 14, companyNo.toNumber());
 
     await deployer.deploy(BOPKeeper);
     let bopKeeper = await BOPKeeper.deployed();
-    await bopKeeper.init(accounts[0], gk.address, rc.address, 15, companyNo.toNumber());
+    await bopKeeper.init(accounts[0], accounts[0], rc.address, 15, companyNo.toNumber());
 
     await deployer.deploy(SHAKeeper);
     let shaKeeper = await SHAKeeper.deployed();
-    await shaKeeper.init(accounts[0], gk.address, rc.address, 16, companyNo.toNumber());
+    await shaKeeper.init(accounts[0], accounts[0], rc.address, 16, companyNo.toNumber());
 
-    await gk.setBOAKeeper(boaKeeper.address);
-    await gk.setBODKeeper(bodKeeper.address);
-    await gk.setBOHKeeper(bohKeeper.address);
-    await gk.setBOMKeeper(bomKeeper.address);
-    await gk.setBOOKeeper(booKeeper.address);
-    await gk.setBOPKeeper(bopKeeper.address);
-    await gk.setSHAKeeper(shaKeeper.address);
-
-    await gk.grantKeepers(boaKeeper.address);
-    await gk.grantKeepers(bodKeeper.address);
-    await gk.grantKeepers(bohKeeper.address);
-    await gk.grantKeepers(bomKeeper.address);
-    await gk.grantKeepers(booKeeper.address);
-    await gk.grantKeepers(bopKeeper.address);
-    await gk.grantKeepers(shaKeeper.address);
 
     // ==== Books ====
 
-    await boaKeeper.copyRoleTo("0xdea0b28c65859df30ee7d304fe077244fb2f08c9a834ba25ac340474a46a026a", bos.address);
-
     await deployer.deploy(BOA);
     let boa = await BOA.deployed();
-    await boa.init(accounts[0], boaKeeper.address, rc.address, 5, companyNo.toNumber());
-    await boaKeeper.copyRoleTo("0xdea0b28c65859df30ee7d304fe077244fb2f08c9a834ba25ac340474a46a026a", boa.address);
+    await boa.init(accounts[0], accounts[0], rc.address, 5, companyNo.toNumber());
 
     await deployer.deploy(IA);
     let ia = await IA.deployed();
@@ -168,8 +148,7 @@ module.exports = async function (deployer, network, accounts) {
 
     await deployer.deploy(BOH);
     let boh = await BOH.deployed();
-    await boh.init(accounts[0], bohKeeper.address, rc.address, 6, companyNo.toNumber());
-    await bohKeeper.copyRoleTo("0xdea0b28c65859df30ee7d304fe077244fb2f08c9a834ba25ac340474a46a026a", boh.address);
+    await boh.init(accounts[0], accounts[0], rc.address, 6, companyNo.toNumber());
 
     await deployer.deploy(SHA);
     let sha = await SHA.deployed();
@@ -178,36 +157,127 @@ module.exports = async function (deployer, network, accounts) {
     await deployer.deploy(BOM);
     let bom = await BOM.deployed();
     await bom.init(accounts[0], accounts[0], rc.address, 3, companyNo.toNumber());
-    await bom.setBOA(boa.address);
-    await bom.setBOH(boh.address);
-    await bom.setBOS(bos.address);
-    await bom.setBOSCal(bosCal.address);
-    await bom.setManager(1, bomKeeper.address);
-    await bomKeeper.copyRoleTo("0xdea0b28c65859df30ee7d304fe077244fb2f08c9a834ba25ac340474a46a026a", bom.address);
 
     await deployer.deploy(BOD);
     let bod = await BOD.deployed();
     await bod.init(accounts[0], accounts[0], rc.address, 4, companyNo.toNumber());
-    await bod.setBOH(boh.address);
-    await bod.setManager(1, bodKeeper.address);
-    await bodKeeper.copyRoleTo("0xdea0b28c65859df30ee7d304fe077244fb2f08c9a834ba25ac340474a46a026a", bod.address);
 
     await deployer.deploy(BOO);
     let boo = await BOO.deployed();
     await boo.init(accounts[0], accounts[0], rc.address, 7, companyNo.toNumber());
-    await boo.setBOS(bos.address);
-    await boo.setBOSCal(bosCal.address);
-    await boo.setManager(1, booKeeper.address);
-    await booKeeper.copyRoleTo("0xdea0b28c65859df30ee7d304fe077244fb2f08c9a834ba25ac340474a46a026a", boo.address);
 
     await deployer.deploy(BOP);
     let bop = await BOP.deployed();
     await bop.init(accounts[0], accounts[0], rc.address, 8, companyNo.toNumber());
+
+
+    // ==== BOSSetting ====
+    await boaKeeper.setBOS(bos.address);
+    await boaKeeper.setBOSCal(bosCal.address);
+    await bodKeeper.setBOS(bos.address);
+    await bodKeeper.setBOSCal(bosCal.address);
+    await bohKeeper.setBOS(bos.address);
+    await bohKeeper.setBOSCal(bosCal.address);
+    await bomKeeper.setBOS(bos.address);
+    await bomKeeper.setBOSCal(bosCal.address);
+    await booKeeper.setBOS(bos.address);
+    await booKeeper.setBOSCal(bosCal.address);
+    await bopKeeper.setBOS(bos.address);
+    await bopKeeper.setBOSCal(bosCal.address);
+
+    await boa.setBOS(bos.address);
+    await boa.setBOSCal(bosCal.address);
+    await boh.setBOS(bos.address);
+    await boh.setBOSCal(bosCal.address);
+    await bom.setBOS(bos.address);
+    await bom.setBOSCal(bosCal.address);
+    await boo.setBOS(bos.address);
+    await boo.setBOSCal(bosCal.address);
     await bop.setBOS(bos.address);
     await bop.setBOSCal(bosCal.address);
-    await bop.setManager(1, bopKeeper.address);
-    await bopKeeper.copyRoleTo("0xdea0b28c65859df30ee7d304fe077244fb2f08c9a834ba25ac340474a46a026a", bop.address);
 
+    // ==== BOASetting ====
+    await boaKeeper.setBOA(boa.address);
+    await bomKeeper.setBOA(boa.address);
+    await bom.setBOA(boa.address);
+
+    // ==== BODSetting ==== 
+    await bodKeeper.setBOD(bod.address);
+    await bohKeeper.setBOD(bod.address);
+    await bomKeeper.setBOD(bod.address);
+
+    // ==== BOHSetting ==== 
+    await boaKeeper.setBOH(boh.address);
+    await bodKeeper.setBOH(boh.address);
+    await bohKeeper.setBOH(boh.address);
+    await bomKeeper.setBOH(boh.address);
+    await shaKeeper.setBOH(boh.address);
+
+    await boa.setBOH(boh.address);
+    await boh.setBOH(boh.address);
+    await bod.setBOH(boh.address);
+    await bom.setBOH(boh.address);
+    await bos.setBOH(boh.address);
+
+    // ==== BOMSetting ==== 
+    await boaKeeper.setBOM(bom.address);
+    await bodKeeper.setBOM(bom.address);
+    await bohKeeper.setBOM(bom.address);
+    await bomKeeper.setBOM(bom.address);
+
+    // ==== BOOSetting ==== 
+    await bohKeeper.setBOO(boo.address);
+    await bomKeeper.setBOO(boo.address);
+    await booKeeper.setBOO(boo.address);
+
+    // ==== BOPSetting ==== 
+    await bopKeeper.setBOP(bop.address);
+
+    // ==== DirectKeeper ====
+    await boa.setManager(1, accounts[0], boaKeeper.address);
+    await bod.setManager(1, accounts[0], bodKeeper.address);
+    await boh.setManager(1, accounts[0], bohKeeper.address);
+    await bom.setManager(1, accounts[0], bomKeeper.address);
+    await boo.setManager(1, accounts[0], booKeeper.address);
+    await bop.setManager(1, accounts[0], bopKeeper.address);
+    // await bos.setManager(1, accounts[0], boaKeeper.address);
+    await bosCal.setManager(1, accounts[0], boaKeeper.address);
+
+
+    // ==== Keepers Setting ====
+    await gk.setBOAKeeper(boaKeeper.address);
+    await gk.setBODKeeper(bodKeeper.address);
+    await gk.setBOHKeeper(bohKeeper.address);
+    await gk.setBOMKeeper(bomKeeper.address);
+    await gk.setBOOKeeper(booKeeper.address);
+    await gk.setBOPKeeper(bopKeeper.address);
+    await gk.setSHAKeeper(shaKeeper.address);
+
+    await boaKeeper.setManager(1, accounts[0], gk.address);
+    await bodKeeper.setManager(1, accounts[0], gk.address);
+    await bohKeeper.setManager(1, accounts[0], gk.address);
+    await bomKeeper.setManager(1, accounts[0], gk.address);
+    await booKeeper.setManager(1, accounts[0], gk.address);
+    await bopKeeper.setManager(1, accounts[0], gk.address);
+    await shaKeeper.setManager(1, accounts[0], gk.address);
+
+    // await gk.grantKeepers(boaKeeper.address);
+    // await gk.grantKeepers(bodKeeper.address);
+    // await gk.grantKeepers(bohKeeper.address);
+    // await gk.grantKeepers(bomKeeper.address);
+    // await gk.grantKeepers(booKeeper.address);
+    // await gk.grantKeepers(bopKeeper.address);
+    // await gk.grantKeepers(shaKeeper.address);
+
+    // await gk.copyKeepersTo(boaKeeper.address, boa.address);
+    // await gk.copyKeepersTo(boaKeeper.address, bos.address);
+    // await gk.copyKeepersTo(bohKeeper.address, boh.address);
+    // await gk.copyKeepersTo(bodKeeper.address, bod.address);
+    // await gk.copyKeepersTo(bomKeeper.address, bom.address);
+    // await gk.copyKeepersTo(booKeeper.address, boo.address);
+    // await gk.copyKeepersTo(bopKeeper.address, bop.address);
+
+    // ==== TermsOfSHA ====
     await deployer.deploy(LU);
     let lu = await LU.deployed();
     await gk.addTermTemplate(1, lu.address);
@@ -235,4 +305,7 @@ module.exports = async function (deployer, network, accounts) {
     await deployer.deploy(OP);
     let op = await OP.deployed();
     await gk.addTermTemplate(7, op.address);
+
+    gk.setManager(1, accounts[0], accounts[1]);
+
 };

@@ -54,26 +54,34 @@ contract BookOfIA is IBookOfIA, DocumentsRepo {
                 _rc.entityNo(this)
             );
             IBookSetting(frd).setIA(ia);
-            copyRoleTo(KEEPERS, frd);
+            // copyRoleTo(KEEPERS, frd);
         }
     }
 
-    function createMockResults(address ia, uint40 creator)
+    function createMockResults(address ia, address creatorAddr)
         external
         onlyKeeper
         returns (address mock)
     {
+        uint40 creator = _rc.userNo(creatorAddr);
+
         if (_mockResults[ia] == address(0)) {
             mock = createDoc(2, creator);
             IAccessControl(mock).init(
-                msg.sender,
+                creator,
                 this,
                 _rc,
                 uint8(EnumsRepo.RoleOfUser.MockResults),
                 _rc.entityNo(this)
             );
             IBookSetting(mock).setIA(ia);
-            copyRoleTo(KEEPERS, mock);
+            IBookSetting(mock).setBOH(_boh);
+            IBookSetting(mock).setBOS(_bos);
+            IBookSetting(mock).setBOSCal(_bosCal);
+
+            // copyRoleTo(KEEPERS, mock);
+
+            IAccessControl(mock).setManager(1, creatorAddr, msg.sender);
         }
     }
 

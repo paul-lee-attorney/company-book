@@ -34,13 +34,13 @@ interface IBookOfIA {
 
     // ======== BookOfIA ========
 
-    function circulateIA(address ia, uint40 submitter) external;
+    function circulateIA(address ia, uint40 caller) external;
 
     function createFRDeals(address ia, uint40 creator)
         external
         returns (address frd);
 
-    function createMockResults(address ia, uint40 creator)
+    function createMockResults(address ia, address creatorAddr)
         external
         returns (address mock);
 

@@ -140,10 +140,10 @@ contract ShareholdersAgreement is
             _rc.entityNo(this)
         );
 
-        IAccessControl(body).setManager(2, this);
+        IAccessControl(body).setManager(2, getManagerKey(0), this);
 
-        copyRoleTo(ATTORNEYS, body);
-        copyRoleTo(KEEPERS, body);
+        // copyRoleTo(ATTORNEYS, body);
+        // copyRoleTo(KEEPERS, body);
 
         IBookSetting(body).setBOS(_bos);
         IBookSetting(body).setBOM(_bom);
@@ -181,9 +181,9 @@ contract ShareholdersAgreement is
 
     // ==== VotingRules ====
 
-    function setVotingBaseOnPar() external onlyAttorney {
-        _ruleOfGovernance.basedOnPar = true;
-        emit SetVotingBaseOnPar();
+    function setVotingBaseOnPar(bool flag) external onlyAttorney {
+        _ruleOfGovernance.basedOnPar = flag;
+        emit SetVotingBaseOnPar(flag);
     }
 
     function setProposalThreshold(uint16 threshold) external onlyAttorney {

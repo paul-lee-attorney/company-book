@@ -6,7 +6,7 @@
 pragma solidity ^0.4.24;
 
 library RolesRepo {
-    bytes32 constant KEEPERS = keccak256("Keepers");
+    // bytes32 constant KEEPERS = keccak256("Keepers");
     bytes32 constant ATTORNEYS = keccak256("Attorneys");
 
     struct Data {
@@ -32,11 +32,14 @@ library RolesRepo {
         self.managers[title] = acct;
 
         // ==== BooKeeper ====
-        if (title == 1) {
-            self.roles[KEEPERS].admin = acct;
-            // ==== GeneralCounsel ====
-        } else if (title == 2) {
+        // if (title == 1) {
+        //     // self.roles[KEEPERS].admin = acct;
+        //     // self.roles[KEEPERS].isMember[acct] = true;
+
+        // ==== GeneralCounsel ====
+        if (title == 2) {
             self.roles[ATTORNEYS].admin = acct;
+            self.roles[ATTORNEYS].isMember[acct] = true;
         }
     }
 
@@ -48,7 +51,10 @@ library RolesRepo {
         uint40 originator,
         uint40 acct
     ) internal {
-        require(originator == roleAdmin(self, role), "originator not admin");
+        require(
+            originator == roleAdmin(self, role),
+            "RR.grantRole: originator not admin"
+        );
         self.roles[role].isMember[acct] = true;
     }
 
@@ -76,12 +82,12 @@ library RolesRepo {
         bytes32 role,
         uint40 originator
     ) internal {
-        require(role == KEEPERS, "KEEPERS cannot be abandoned");
+        // require(role != KEEPERS, "RR.abandonRole: KEEPERS cannot be abandoned");
 
         require(
             originator == self.managers[0] ||
                 originator == roleAdmin(self, role),
-            "originator not owner or roleAdmin"
+            "RR.abandonRole: originator not owner or roleAdmin"
         );
 
         delete self.roles[role];
@@ -94,9 +100,16 @@ library RolesRepo {
         uint40 originator,
         uint40 acct
     ) internal {
-        if (role == KEEPERS)
-            require(originator == self.managers[1], "originator not bookeeper");
-        else require(originator == self.managers[0], "originator not owner");
+        // if (role == KEEPERS)
+        //     require(
+        //         originator == self.managers[1],
+        //         "RR.setRoleAdmin: originator not bookeeper"
+        //     );
+        // else
+        require(
+            originator == self.managers[0],
+            "RR.setRoleAdmin: originator not owner"
+        );
 
         self.roles[role].admin = acct;
     }
@@ -109,21 +122,24 @@ library RolesRepo {
         delete self.roles[role].isMember[acct];
     }
 
-    function copyRoleTo(
-        Roles storage self,
-        bytes32 role,
-        uint40 originator,
-        Roles storage to
-    ) internal returns (bool) {
-        if (role == KEEPERS)
-            require(originator == self.managers[0], "originator not owner");
-        else if (role == ATTORNEYS)
-            require(originator == self.managers[0], "originator not owner");
+    // function copyRoleTo(
+    //     Roles storage self,
+    //     bytes32 role,
+    //     uint40 originator,
+    //     Roles storage to
+    // ) internal returns (bool) {
+    //     if (role == KEEPERS)
+    //         require(
+    //             originator == self.managers[1],
+    //             "RR.copyRoleTo: originator not owner"
+    //         );
+    //     else if (role == ATTORNEYS)
+    //         require(originator == self.managers[0], "originator not owner");
 
-        to.roles[role] = self.roles[role];
+    //     to.roles[role] = self.roles[role];
 
-        return true;
-    }
+    //     return true;
+    // }
 
     // ##################
     // ##   查询端口   ##

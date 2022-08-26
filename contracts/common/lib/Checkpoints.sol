@@ -71,7 +71,10 @@ library Checkpoints {
         view
         returns (uint64 par, uint64 paid)
     {
-        require(blockNumber < block.number, "Checkpoints: block not yet mined");
+        require(
+            blockNumber <= block.number,
+            "Checkpoints: block not yet mined"
+        );
 
         uint256 high = self._checkpoints.length;
         uint256 low = 0;

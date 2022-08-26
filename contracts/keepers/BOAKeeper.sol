@@ -85,7 +85,7 @@ contract BOAKeeper is
         IBookSetting(ia).setBOS(_bos);
         IBookSetting(ia).setBOSCal(_bosCal);
 
-        copyRoleTo(KEEPERS, ia);
+        // copyRoleTo(KEEPERS, ia);
     }
 
     function removeIA(address ia, uint40 caller)
@@ -121,16 +121,16 @@ contract BOAKeeper is
 
     // ======== Circulate IA ========
 
-    function circulateIA(address ia, uint40 submitter)
+    function circulateIA(address ia, address callerAddr)
         external
         onlyManager(1)
-        onlyOwnerOf(ia, submitter)
+        onlyOwnerOf(ia, _rc.userNo(callerAddr))
     {
         require(IAccessControl(ia).finalized(), "let GC finalize IA first");
 
-        IAccessControl(ia).setManager(0, 0);
+        IAccessControl(ia).setManager(0, callerAddr, 0);
 
-        _boa.circulateIA(ia, submitter);
+        _boa.circulateIA(ia, _rc.userNo(callerAddr));
     }
 
     // ======== Sign IA ========

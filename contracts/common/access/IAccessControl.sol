@@ -34,7 +34,11 @@ interface IAccessControl {
 
     // function regThisContract(uint8 roleOfUser, uint40 entity) external;
 
-    function setManager(uint8 title, address acct) external;
+    function setManager(
+        uint8 title,
+        address caller,
+        address acct
+    ) external;
 
     function grantRole(bytes32 role, uint40 acct) external;
 
@@ -50,7 +54,7 @@ interface IAccessControl {
 
     function quitEntity(uint8 roleOfUser) external;
 
-    function copyRoleTo(bytes32 role, address to) external;
+    // function copyRoleTo(bytes32 role, address to) external;
 
     // ##################
     // ##   查询端口   ##
@@ -61,4 +65,9 @@ interface IAccessControl {
     function getManagerKey(uint8 title) external view returns (address);
 
     function finalized() external view returns (bool);
+
+    function hasRole(address acctAddr, bytes32 role)
+        external
+        view
+        returns (bool);
 }

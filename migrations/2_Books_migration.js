@@ -13,6 +13,7 @@ const IA = artifacts.require("InvestmentAgreement");
 const FRD = artifacts.require("FirstRefusalDeals");
 const MR = artifacts.require("MockResults");
 const BOA = artifacts.require("BookOfIA");
+const BOC = artifacts.require("BookOfConcerted");
 const BOD = artifacts.require("BookOfDirectors");
 const SHA = artifacts.require("ShareholdersAgreement");
 const BOH = artifacts.require("BookOfSHA");
@@ -28,6 +29,7 @@ const BOHKeeper = artifacts.require("BOHKeeper");
 const BOMKeeper = artifacts.require("BOMKeeper");
 const BOOKeeper = artifacts.require("BOOKeeper");
 const BOPKeeper = artifacts.require("BOPKeeper");
+const BOSKeeper = artifacts.require("BOSKeeper");
 const SHAKeeper = artifacts.require("SHAKeeper");
 
 const GK = artifacts.require("GeneralKeeper");
@@ -45,7 +47,7 @@ module.exports = async function (deployer, network, accounts) {
     // ==== Libraries ====
 
     await deployer.deploy(LibEnumerableSet);
-    await deployer.link(LibEnumerableSet, [IA, MR, BOA, BOD, SHA, BOH, BOM, BOO, BOP, BOS, BOSCal, RC, BOAKeeper, BODKeeper, BOHKeeper, BOMKeeper, BOOKeeper, BOPKeeper, SHAKeeper, GK, AD, DA, FR, GU, LU, OP, TA, LibCheckpoints, LibEnumerableSet, LibObjsRepo, LibRelationGraph]);
+    await deployer.link(LibEnumerableSet, [IA, MR, BOA, BOC, BOD, SHA, BOH, BOM, BOO, BOP, BOS, BOSCal, RC, BOAKeeper, BODKeeper, BOHKeeper, BOMKeeper, BOOKeeper, BOPKeeper, SHAKeeper, GK, AD, DA, FR, GU, LU, OP, TA, LibCheckpoints, LibEnumerableSet, LibObjsRepo, LibRelationGraph]);
 
     await deployer.deploy(LibArrayUtils);
     await deployer.link(LibArrayUtils, [AD, FR, LU, TA]);
@@ -63,7 +65,7 @@ module.exports = async function (deployer, network, accounts) {
     await deployer.link(LibSNFactory, [IA, BOA, BOD, BOH, BOM, BOO, BOP, BOS, DA, FR, GU, OP]);
 
     await deployer.deploy(LibSNParser);
-    await deployer.link(LibSNParser, [IA, BOA, BOD, BOH, BOM, BOO, BOP, BOS, BOSCal, BOAKeeper, BODKeeper, BOHKeeper, BOMKeeper, BOOKeeper, BOPKeeper, SHAKeeper, AD, DA, FR, GU, LU, OP, LibRelationGraph]);
+    await deployer.link(LibSNParser, [IA, BOA, BOD, BOH, BOM, BOO, BOP, BOS, BOSCal, BOAKeeper, BODKeeper, BOHKeeper, BOMKeeper, BOOKeeper, BOPKeeper, BOSKeeper, SHAKeeper, AD, DA, FR, GU, LU, OP, LibRelationGraph]);
 
     await deployer.deploy(LibRelationGraph);
     await deployer.link(LibRelationGraph, RC);
@@ -86,53 +88,50 @@ module.exports = async function (deployer, network, accounts) {
 
     await deployer.deploy(BOSCal);
     let bosCal = await BOSCal.deployed();
-    await bosCal.init(accounts[0], accounts[0], rc.address, 17, companyNo.toNumber());
+    await bosCal.init(accounts[0], accounts[0], rc.address, 19, companyNo.toNumber());
 
     // ==== Keepers ====
 
     await deployer.deploy(GK);
     let gk = await GK.deployed();
-    await gk.init(accounts[0], accounts[0], rc.address, 9, companyNo.toNumber());
+    await gk.init(accounts[0], accounts[0], rc.address, 10, companyNo.toNumber());
 
     await deployer.deploy(BOAKeeper);
     let boaKeeper = await BOAKeeper.deployed();
-    await boaKeeper.init(accounts[0], accounts[0], rc.address, 10, companyNo.toNumber());
-
-    let acct1 = await rc.userNo(accounts[1]);
-
-    // await bos.grantRole("0xdea0b28c65859df30ee7d304fe077244fb2f08c9a834ba25ac340474a46a026a", acct1.toNumber());
-
+    await boaKeeper.init(accounts[0], accounts[0], rc.address, 11, companyNo.toNumber());
 
     await deployer.deploy(BODKeeper);
     let bodKeeper = await BODKeeper.deployed();
-    await bodKeeper.init(accounts[0], accounts[0], rc.address, 11, companyNo.toNumber());
+    await bodKeeper.init(accounts[0], accounts[0], rc.address, 12, companyNo.toNumber());
 
     await deployer.deploy(BOHKeeper);
     let bohKeeper = await BOHKeeper.deployed();
-    await bohKeeper.init(accounts[0], accounts[0], rc.address, 12, companyNo.toNumber());
+    await bohKeeper.init(accounts[0], accounts[0], rc.address, 13, companyNo.toNumber());
 
     await deployer.deploy(BOMKeeper);
     let bomKeeper = await BOMKeeper.deployed();
-    await bomKeeper.init(accounts[0], accounts[0], rc.address, 13, companyNo.toNumber());
+    await bomKeeper.init(accounts[0], accounts[0], rc.address, 14, companyNo.toNumber());
 
     await deployer.deploy(BOOKeeper);
     let booKeeper = await BOOKeeper.deployed();
-    await booKeeper.init(accounts[0], accounts[0], rc.address, 14, companyNo.toNumber());
+    await booKeeper.init(accounts[0], accounts[0], rc.address, 15, companyNo.toNumber());
 
     await deployer.deploy(BOPKeeper);
     let bopKeeper = await BOPKeeper.deployed();
-    await bopKeeper.init(accounts[0], accounts[0], rc.address, 15, companyNo.toNumber());
+    await bopKeeper.init(accounts[0], accounts[0], rc.address, 16, companyNo.toNumber());
+
+    await deployer.deploy(BOSKeeper);
+    let bosKeeper = await BOSKeeper.deployed();
+    await bosKeeper.init(accounts[0], accounts[0], rc.address, 17, companyNo.toNumber());
 
     await deployer.deploy(SHAKeeper);
     let shaKeeper = await SHAKeeper.deployed();
-    await shaKeeper.init(accounts[0], accounts[0], rc.address, 16, companyNo.toNumber());
-
+    await shaKeeper.init(accounts[0], accounts[0], rc.address, 18, companyNo.toNumber());
 
     // ==== Books ====
-
     await deployer.deploy(BOA);
     let boa = await BOA.deployed();
-    await boa.init(accounts[0], accounts[0], rc.address, 5, companyNo.toNumber());
+    await boa.init(accounts[0], accounts[0], rc.address, 6, companyNo.toNumber());
 
     await deployer.deploy(IA);
     let ia = await IA.deployed();
@@ -146,9 +145,13 @@ module.exports = async function (deployer, network, accounts) {
     let mr = await MR.deployed();
     await boa.setTemplate(mr.address, 2);
 
+    await deployer.deploy(BOC);
+    let boc = await BOC.deployed();
+    await boc.init(accounts[0], accounts[0], rc.address, 5, companyNo.toNumber());
+
     await deployer.deploy(BOH);
     let boh = await BOH.deployed();
-    await boh.init(accounts[0], accounts[0], rc.address, 6, companyNo.toNumber());
+    await boh.init(accounts[0], accounts[0], rc.address, 7, companyNo.toNumber());
 
     await deployer.deploy(SHA);
     let sha = await SHA.deployed();
@@ -164,12 +167,11 @@ module.exports = async function (deployer, network, accounts) {
 
     await deployer.deploy(BOO);
     let boo = await BOO.deployed();
-    await boo.init(accounts[0], accounts[0], rc.address, 7, companyNo.toNumber());
+    await boo.init(accounts[0], accounts[0], rc.address, 8, companyNo.toNumber());
 
     await deployer.deploy(BOP);
     let bop = await BOP.deployed();
-    await bop.init(accounts[0], accounts[0], rc.address, 8, companyNo.toNumber());
-
+    await bop.init(accounts[0], accounts[0], rc.address, 9, companyNo.toNumber());
 
     // ==== BOSSetting ====
     await boaKeeper.setBOS(bos.address);
@@ -184,9 +186,13 @@ module.exports = async function (deployer, network, accounts) {
     await booKeeper.setBOSCal(bosCal.address);
     await bopKeeper.setBOS(bos.address);
     await bopKeeper.setBOSCal(bosCal.address);
+    await bosKeeper.setBOS(bos.address);
+    await bosKeeper.setBOSCal(bosCal.address);
 
     await boa.setBOS(bos.address);
     await boa.setBOSCal(bosCal.address);
+    await boc.setBOS(bos.address);
+    await boc.setBOSCal(bosCal.address);
     await boh.setBOS(bos.address);
     await boh.setBOSCal(bosCal.address);
     await bom.setBOS(bos.address);
@@ -200,6 +206,12 @@ module.exports = async function (deployer, network, accounts) {
     await boaKeeper.setBOA(boa.address);
     await bomKeeper.setBOA(boa.address);
     await bom.setBOA(boa.address);
+
+    // ==== BOCSetting ====
+    await bos.setBOC(boc.address);
+    await boaKeeper.setBOC(boc.address);
+    await bohKeeper.setBOC(boc.address);
+    await shaKeeper.setBOC(boc.address);
 
     // ==== BODSetting ==== 
     await bodKeeper.setBOD(bod.address);
@@ -240,9 +252,8 @@ module.exports = async function (deployer, network, accounts) {
     await bom.setManager(1, accounts[0], bomKeeper.address);
     await boo.setManager(1, accounts[0], booKeeper.address);
     await bop.setManager(1, accounts[0], bopKeeper.address);
-    // await bos.setManager(1, accounts[0], boaKeeper.address);
+    // await bos.setManager(1, accounts[0], bosKeeper.address);
     await bosCal.setManager(1, accounts[0], boaKeeper.address);
-
 
     // ==== Keepers Setting ====
     await gk.setBOAKeeper(boaKeeper.address);
@@ -251,6 +262,7 @@ module.exports = async function (deployer, network, accounts) {
     await gk.setBOMKeeper(bomKeeper.address);
     await gk.setBOOKeeper(booKeeper.address);
     await gk.setBOPKeeper(bopKeeper.address);
+    await gk.setBOSKeeper(bosKeeper.address);
     await gk.setSHAKeeper(shaKeeper.address);
 
     await boaKeeper.setManager(1, accounts[0], gk.address);
@@ -259,23 +271,8 @@ module.exports = async function (deployer, network, accounts) {
     await bomKeeper.setManager(1, accounts[0], gk.address);
     await booKeeper.setManager(1, accounts[0], gk.address);
     await bopKeeper.setManager(1, accounts[0], gk.address);
+    await bosKeeper.setManager(1, accounts[0], gk.address);
     await shaKeeper.setManager(1, accounts[0], gk.address);
-
-    // await gk.grantKeepers(boaKeeper.address);
-    // await gk.grantKeepers(bodKeeper.address);
-    // await gk.grantKeepers(bohKeeper.address);
-    // await gk.grantKeepers(bomKeeper.address);
-    // await gk.grantKeepers(booKeeper.address);
-    // await gk.grantKeepers(bopKeeper.address);
-    // await gk.grantKeepers(shaKeeper.address);
-
-    // await gk.copyKeepersTo(boaKeeper.address, boa.address);
-    // await gk.copyKeepersTo(boaKeeper.address, bos.address);
-    // await gk.copyKeepersTo(bohKeeper.address, boh.address);
-    // await gk.copyKeepersTo(bodKeeper.address, bod.address);
-    // await gk.copyKeepersTo(bomKeeper.address, bom.address);
-    // await gk.copyKeepersTo(booKeeper.address, boo.address);
-    // await gk.copyKeepersTo(bopKeeper.address, bop.address);
 
     // ==== TermsOfSHA ====
     await deployer.deploy(LU);

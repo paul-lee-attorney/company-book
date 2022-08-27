@@ -1,6 +1,6 @@
 const BOS = artifacts.require("BookOfShares");
 const GK = artifacts.require("GeneralKeeper");
-const BOAKeeper = artifacts.require("BOAKeeper");
+const BOSKeeper = artifacts.require("BOSKeeper");
 const RC = artifacts.require("RegCenter");
 
 module.exports = async function (callback) {
@@ -117,8 +117,8 @@ module.exports = async function (callback) {
     const share_3 = await bos.getShare("3");
     console.log("issued share_3: ", share_3.shareNumber);
 
-    const boaKeeper = await BOAKeeper.deployed();
-    await bos.setManager(1, accounts[0], boaKeeper.address);
+    const bosKeeper = await BOSKeeper.deployed();
+    await bos.setManager(1, accounts[0], bosKeeper.address);
 
     // // 获取BOS的股东列表:
     // let members = await bos.members();

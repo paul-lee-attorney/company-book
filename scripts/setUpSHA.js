@@ -62,9 +62,6 @@ module.exports = async function (callback) {
     });
     console.log("set basedOnPar as voting method.");
 
-    // ==== 
-
-
     await sha.finalizeDoc({
         from: accounts[7]
     });

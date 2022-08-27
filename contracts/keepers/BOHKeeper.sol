@@ -86,6 +86,7 @@ contract BOHKeeper is
 
         IShareholdersAgreement(sha).setTermsTemplate(termsTemplate);
 
+        IBookSetting(sha).setBOC(_boc);
         IBookSetting(sha).setBOS(_bos);
         IBookSetting(sha).setBOSCal(_bosCal);
         IBookSetting(sha).setBOM(_bom);

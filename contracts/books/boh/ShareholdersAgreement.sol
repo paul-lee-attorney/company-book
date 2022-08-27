@@ -15,6 +15,7 @@ import "../../common/lib/EnumsRepo.sol";
 import "../../common/lib/EnumerableSet.sol";
 
 import "../../common/ruting/IBookSetting.sol";
+import "../../common/ruting/BOCSetting.sol";
 import "../../common/ruting/BOSSetting.sol";
 import "../../common/ruting/BOMSetting.sol";
 
@@ -23,6 +24,7 @@ import "../../common/utils/CloneFactory.sol";
 contract ShareholdersAgreement is
     IShareholdersAgreement,
     CloneFactory,
+    BOCSetting,
     BOMSetting,
     BOSSetting,
     SigPage
@@ -126,7 +128,7 @@ contract ShareholdersAgreement is
 
     function createTerm(uint8 title)
         external
-        onlyManager(0)
+        onlyManager(2)
         tempReadyFor(title)
         returns (address body)
     {
@@ -136,17 +138,20 @@ contract ShareholdersAgreement is
             getManagerKey(0),
             this,
             _rc,
-            uint8(EnumsRepo.RoleOfUser.ShareholdersAgreement),
+            uint8(EnumsRepo.RoleOfUser.SHATerms),
             _rc.entityNo(this)
         );
 
-        IAccessControl(body).setManager(2, getManagerKey(0), this);
-
-        // copyRoleTo(ATTORNEYS, body);
-        // copyRoleTo(KEEPERS, body);
+        IAccessControl(body).setManager(2, this, msg.sender);
 
         IBookSetting(body).setBOS(_bos);
         IBookSetting(body).setBOM(_bom);
+
+        if (
+            title == uint8(EnumsRepo.TermTitle.DRAG_ALONG) ||
+            title == uint8(EnumsRepo.TermTitle.TAG_ALONG) ||
+            title == uint8(EnumsRepo.TermTitle.GROUPS_UPDATE)
+        ) IBookSetting(body).setBOC(_boc);
 
         _titleToBody[title] = body;
 
@@ -167,17 +172,17 @@ contract ShareholdersAgreement is
         emit RemoveTerm(title);
     }
 
-    function finalizeSHA() external onlyManager(2) {
-        address[] memory clauses = _bodies.values();
-        uint256 len = clauses.length;
+    // function finalizeSHA() external onlyManager(2) {
+    //     address[] memory clauses = _bodies.values();
+    //     uint256 len = clauses.length;
 
-        while (len > 0) {
-            IAccessControl(clauses[len - 1]).lockContents();
-            len--;
-        }
+    //     while (len > 0) {
+    //         IAccessControl(clauses[len - 1]).lockContents();
+    //         len--;
+    //     }
 
-        finalizeDoc();
-    }
+    //     finalizeDoc();
+    // }
 
     // ==== VotingRules ====
 

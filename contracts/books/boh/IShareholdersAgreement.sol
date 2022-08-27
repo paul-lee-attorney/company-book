@@ -44,7 +44,7 @@ interface IShareholdersAgreement {
 
     function removeTerm(uint8 title) external;
 
-    function finalizeSHA() external;
+    // function finalizeSHA() external;
 
     // ======== VotingRule ========
 

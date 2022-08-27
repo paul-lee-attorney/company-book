@@ -84,6 +84,7 @@ contract SHAKeeper is
         address mock = _boa.mockResultsOfIA(ia);
         if (mock == address(0)) mock = _boa.createMockResults(ia, callerAddr);
 
+        IBookSetting(mock).setBOC(_boc);
         IBookSetting(mock).setBOH(_boh);
 
         _addAlongDeal(

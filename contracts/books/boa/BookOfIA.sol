@@ -54,6 +54,7 @@ contract BookOfIA is IBookOfIA, DocumentsRepo {
                 _rc.entityNo(this)
             );
             IBookSetting(frd).setIA(ia);
+            IAccessControl(frd).setManager(1, this, msg.sender);
             // copyRoleTo(KEEPERS, frd);
         }
     }
@@ -63,10 +64,10 @@ contract BookOfIA is IBookOfIA, DocumentsRepo {
         onlyKeeper
         returns (address mock)
     {
-        uint40 creator = _rc.userNo(creatorAddr);
+        address creator = msg.sender;
 
         if (_mockResults[ia] == address(0)) {
-            mock = createDoc(2, creator);
+            mock = createDoc(2, _rc.userNo(creator));
             IAccessControl(mock).init(
                 creator,
                 this,
@@ -75,13 +76,10 @@ contract BookOfIA is IBookOfIA, DocumentsRepo {
                 _rc.entityNo(this)
             );
             IBookSetting(mock).setIA(ia);
-            IBookSetting(mock).setBOH(_boh);
             IBookSetting(mock).setBOS(_bos);
             IBookSetting(mock).setBOSCal(_bosCal);
 
-            // copyRoleTo(KEEPERS, mock);
-
-            IAccessControl(mock).setManager(1, creatorAddr, msg.sender);
+            IAccessControl(mock).setManager(1, this, creator);
         }
     }
 

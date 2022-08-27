@@ -47,25 +47,27 @@ library EnumsRepo {
         BookOfShares, //            2
         BookOfMotions, //           3
         BookOfDirectors, //         4
-        BookOfIA, //                5
-        BookOfSHA, //               6
-        BookOfOptions, //           7
-        BookOfPledges, //           8
-        GeneralKeeper, //           9
-        BOAKeeper, //               10
-        BODKeeper, //               11
-        BOHKeeper, //               12
-        BOMKeeper, //               13
-        BOOKeeper, //               14
-        BOPKeeper, //               15
-        SHAKeeper, //               16
-        BOSCalculator, //           17
-        InvestmentAgreement, //     18
-        FirstRefusalDeals, //       19
-        MockResults, //               20
-        ShareholdersAgreement, //   21
-        SHATerms, //                22
-        EndPoint //                 23
+        BookOfConcerted, //         5
+        BookOfIA, //                6
+        BookOfSHA, //               7
+        BookOfOptions, //           8
+        BookOfPledges, //           9
+        GeneralKeeper, //           10
+        BOAKeeper, //               11
+        BODKeeper, //               12
+        BOHKeeper, //               13
+        BOMKeeper, //               14
+        BOOKeeper, //               15
+        BOPKeeper, //               16
+        BOSKeeper, //               17
+        SHAKeeper, //               18
+        BOSCalculator, //           19
+        InvestmentAgreement, //     20
+        FirstRefusalDeals, //       21
+        MockResults, //             22
+        ShareholdersAgreement, //   23
+        SHATerms, //                24
+        EndPoint //                 25
     }
 
     enum TermTitle {

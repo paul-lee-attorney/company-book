@@ -55,12 +55,12 @@ contract TagAlong is BOMSetting, DragAlong {
         _supportGroups.emptyItems();
 
         while (len > 0) {
-            _supportGroups.add(_bos.groupNo(supporters[len - 1]));
+            _supportGroups.add(_boc.groupNo(supporters[len - 1]));
             len--;
         }
 
         uint16[] memory rightholders = _links[
-            _bos.groupNo(
+            _boc.groupNo(
                 IInvestmentAgreement(ia)
                     .shareNumberOfDeal(sn.sequence())
                     .shareholder()

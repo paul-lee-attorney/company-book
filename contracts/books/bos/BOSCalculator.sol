@@ -83,46 +83,4 @@ contract BOSCalculator is IBOSCalculator, BOSSetting {
 
         return output;
     }
-
-    function parOfGroup(uint16 group) public view returns (uint64 parValue) {
-        require(_bos.isGroup(group), "GROUP not exist");
-
-        uint40[] memory members = _bos.membersOfGroup(group);
-
-        uint256 len = members.length;
-
-        while (len > 0) {
-            parValue += _bos.parInHand(members[len - 1]);
-            len--;
-        }
-    }
-
-    function paidOfGroup(uint16 group) public view returns (uint64 paidPar) {
-        require(_bos.isGroup(group), "GROUP not exist");
-
-        uint40[] memory members = _bos.membersOfGroup(group);
-
-        uint256 len = members.length;
-
-        while (len > 0) {
-            paidPar += _bos.paidInHand(members[len - 1]);
-            len--;
-        }
-    }
-
-    function updateController(bool basedOnPar) external onlyKeeper {
-        uint16[] memory groups = _bos.groupsList();
-
-        uint256 len = groups.length;
-
-        uint16 index;
-
-        for (uint16 i = 0; i < len; i++) {
-            if (basedOnPar) {
-                if (parOfGroup(groups[i]) > parOfGroup(index)) index = i;
-            } else if (paidOfGroup(groups[i]) > paidOfGroup(index)) index = i;
-        }
-
-        _bos.setController(index);
-    }
 }

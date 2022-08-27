@@ -16,9 +16,10 @@ import "../../common/lib/EnumerableSet.sol";
 
 import "../../common/access/AccessControl.sol";
 import "../../common/ruting/IBookSetting.sol";
+import "../../common/ruting/BOCSetting.sol";
 import "../../common/ruting/SHASetting.sol";
 
-contract BookOfShares is IBookOfShares, SHASetting {
+contract BookOfShares is IBookOfShares, SHASetting, BOCSetting {
     using SNFactory for bytes;
     using SNParser for bytes32;
     using ObjsRepo for ObjsRepo.SNList;
@@ -76,7 +77,6 @@ contract BookOfShares is IBookOfShares, SHASetting {
     struct Member {
         EnumerableSet.Bytes32Set sharesInHand;
         Checkpoints.History votesInHand;
-        uint16 groupNo;
     }
 
     mapping(uint40 => Member) private _members;
@@ -85,17 +85,11 @@ contract BookOfShares is IBookOfShares, SHASetting {
 
     Checkpoints.History private _qtyOfMembers;
 
-    // mapping(uint40 => EnumerableSet.Bytes32Set) private _sharesInHand;
-
-    // mapping(uint40 => Checkpoints.History) private _votesInHand;
-
     uint16 private _maxQtyOfMembers;
 
     // ==== Group ====
 
     mapping(uint16 => EnumerableSet.UintSet) private _membersOfGroup;
-
-    // mapping(uint40 => uint16) private _groupNo;
 
     EnumerableSet.UintSet private _groupsList;
 
@@ -124,11 +118,6 @@ contract BookOfShares is IBookOfShares, SHASetting {
 
     modifier memberExist(uint40 acct) {
         require(_membersList.contains(acct), "Acct is NOT Member");
-        _;
-    }
-
-    modifier groupExist(uint16 group) {
-        require(_groupsList.contains(group), "group is NOT exist");
         _;
     }
 
@@ -282,7 +271,7 @@ contract BookOfShares is IBookOfShares, SHASetting {
         uint32 ssn,
         uint64 parValue,
         uint64 paidPar
-    ) external onlyKeeper {
+    ) external onlyManager(1) {
         // 减少特定“股票”项下的认缴和实缴金额
         _decreaseShareAmount(ssn, parValue, paidPar);
 
@@ -494,7 +483,7 @@ contract BookOfShares is IBookOfShares, SHASetting {
 
     // ==== MembersRepo ====
 
-    function setMaxQtyOfMembers(uint16 max) external onlyManager(0) {
+    function setMaxQtyOfMembers(uint16 max) external onlyManager(1) {
         _maxQtyOfMembers = max;
         emit SetMaxQtyOfMembers(max);
     }
@@ -518,7 +507,8 @@ contract BookOfShares is IBookOfShares, SHASetting {
 
             delete member.sharesInHand;
 
-            if (member.groupNo > 0) removeMemberFromGroup(acct, member.groupNo);
+            if (_boc.groupNo(acct) > 0)
+                _boc.removeMemberFromGroup(acct, _boc.groupNo(acct));
             _qtyOfMembers.push(uint64(_membersList.length()), 0);
             _rc.exitOut(acct);
             emit RemoveMember(acct, uint16(_membersList.length()));
@@ -589,50 +579,6 @@ contract BookOfShares is IBookOfShares, SHASetting {
         _rc.updateParValue(acct, uint64(oldPar - parValue));
 
         emit DecreaseAmountFromMember(acct, parValue, paidPar, blocknumber);
-    }
-
-    // ==== Group ====
-
-    function addMemberToGroup(uint40 acct, uint16 group) external onlyKeeper {
-        require(group > 0, "ZERO group");
-        require(group <= _counterOfGroups + 1, "group OVER FLOW");
-        require(_members[acct].groupNo == 0, "belongs to another group");
-
-        _groupsList.add(group);
-
-        if (group > _counterOfGroups) _counterOfGroups = group;
-
-        _members[acct].groupNo = group;
-
-        _membersOfGroup[group].add(acct);
-
-        emit AddMemberToGroup(acct, group);
-    }
-
-    function removeMemberFromGroup(uint40 acct, uint16 group)
-        public
-        groupExist(group)
-        onlyKeeper
-    {
-        Member storage member = _members[acct];
-
-        require(member.groupNo == group, "WRONG group number");
-
-        _membersOfGroup[group].remove(acct);
-
-        if (_membersOfGroup[group].length() == 0) {
-            delete _membersOfGroup[group];
-            _groupsList.remove(group);
-        }
-
-        member.groupNo == 0;
-
-        emit RemoveMemberFromGroup(acct, group);
-    }
-
-    function setController(uint16 group) external onlyKeeper groupExist(group) {
-        _controller = group;
-        emit SetController(group);
     }
 
     // ##################
@@ -805,31 +751,5 @@ contract BookOfShares is IBookOfShares, SHASetting {
         returns (bytes32[])
     {
         return _members[acct].sharesInHand.values();
-    }
-
-    // ==== Group ====
-
-    function counterOfGroups() external view returns (uint16) {
-        return _counterOfGroups;
-    }
-
-    function controller() external view returns (uint16) {
-        return _controller;
-    }
-
-    function groupNo(uint40 acct) external view returns (uint16) {
-        return _members[acct].groupNo;
-    }
-
-    function membersOfGroup(uint16 group) external view returns (uint40[]) {
-        return _membersOfGroup[group].valuesToUint40();
-    }
-
-    function isGroup(uint16 group) external view returns (bool) {
-        return _groupsList.contains(group);
-    }
-
-    function groupsList() external view returns (uint16[]) {
-        return _groupsList.valuesToUint16();
     }
 }

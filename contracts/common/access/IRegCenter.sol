@@ -30,8 +30,6 @@ interface IRegCenter {
 
     event SetRoleAdmin(uint40 cont, bytes32 role, uint40 acct);
 
-    // event CopyRoleTo(address from, bytes32 role, address to);
-
     // ##################
     // ##    写端口    ##
     // ##################
@@ -94,12 +92,6 @@ interface IRegCenter {
         uint40 acct
     ) external;
 
-    // function copyRoleTo(
-    //     bytes32 role,
-    //     address addrOfOriginator,
-    //     address addrOfTo
-    // ) external;
-
     // ##################
     // ##   查询端口   ##
     // ##################
@@ -120,8 +112,6 @@ interface IRegCenter {
 
     // ==== Entity ====
     function entityNo(address acct) external view returns (uint40);
-
-    // function entityNo(address caller) external view returns (uint40);
 
     function memberOfEntity(uint40 entity, uint8 role)
         external

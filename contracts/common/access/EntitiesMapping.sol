@@ -69,12 +69,15 @@ contract EntitiesMapping {
     // ################
 
     modifier entityExist(uint40 entity) {
-        require(isEntity(entity), "entity not exist");
+        require(isEntity(entity), "EM.entityExist: entity not exist");
         _;
     }
 
     modifier connectionExist(uint88 con) {
-        require(_graph.edges[con].weight > 0, "connection not exist");
+        require(
+            _graph.edges[con].weight > 0,
+            "EM.connectionExist: connection not exist"
+        );
         _;
     }
 
@@ -98,7 +101,6 @@ contract EntitiesMapping {
         if (_graph.createVertex(user, typeOfEntity)) {
             _entityNo[user] = user;
 
-            // _entities[user].sn = user;
             _entities[user].members[roleOfUser] = user;
 
             emit CreateEntity(user, typeOfEntity, roleOfUser);

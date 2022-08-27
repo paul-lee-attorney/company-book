@@ -13,6 +13,7 @@ import "../common/components/ISigPage.sol";
 
 import "../common/ruting/IBookSetting.sol";
 import "../common/ruting/BOASetting.sol";
+import "../common/ruting/BOCSetting.sol";
 import "../common/ruting/BOMSetting.sol";
 import "../common/ruting/BOSSetting.sol";
 import "../common/ruting/SHASetting.sol";
@@ -25,6 +26,7 @@ import "./IBOAKeeper.sol";
 contract BOAKeeper is
     IBOAKeeper,
     BOASetting,
+    BOCSetting,
     SHASetting,
     BOMSetting,
     BOSSetting
@@ -237,7 +239,7 @@ contract BOAKeeper is
             );
         else
             require(
-                _bos.controller() == _bos.groupNo(caller),
+                _boc.controller() == _boc.groupNo(caller),
                 "caller is not controller"
             );
 
@@ -345,9 +347,9 @@ contract BOAKeeper is
         }
 
         if (sn.groupOfBuyer() > 0)
-            _bos.addMemberToGroup(sn.buyerOfDeal(), sn.groupOfBuyer());
+            _boc.addMemberToGroup(sn.buyerOfDeal(), sn.groupOfBuyer());
 
-        _bosCal.updateController(true);
+        _boc.updateController(_getSHA().basedOnPar());
     }
 
     function revokeDeal(

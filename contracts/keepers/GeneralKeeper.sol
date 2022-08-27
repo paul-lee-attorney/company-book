@@ -17,6 +17,7 @@ import "./IBOHKeeper.sol";
 import "./IBOMKeeper.sol";
 import "./IBOOKeeper.sol";
 import "./IBOPKeeper.sol";
+import "./IBOSKeeper.sol";
 
 contract GeneralKeeper is AccessControl {
     IBOAKeeper private _BOAKeeper;
@@ -26,6 +27,7 @@ contract GeneralKeeper is AccessControl {
     IBOMKeeper private _BOMKeeper;
     IBOOKeeper private _BOOKeeper;
     IBOPKeeper private _BOPKeeper;
+    IBOSKeeper private _BOSKeeper;
 
     // ###############
     // ##   Event   ##
@@ -44,6 +46,8 @@ contract GeneralKeeper is AccessControl {
     event SetBOOKeeper(address keeper);
 
     event SetBOPKeeper(address keeper);
+
+    event SetBOSKeeper(address keeper);
 
     // event SetKeepers(address target, address keeper);
 
@@ -81,35 +85,15 @@ contract GeneralKeeper is AccessControl {
         emit SetBOPKeeper(keeper);
     }
 
+    function setBOSKeeper(address keeper) external onlyManager(1) {
+        _BOSKeeper = IBOSKeeper(keeper);
+        emit SetBOSKeeper(keeper);
+    }
+
     function setSHAKeeper(address keeper) external onlyManager(1) {
         _SHAKeeper = ISHAKeeper(keeper);
         emit SetSHAKeeper(keeper);
     }
-
-    // function grantKeepers(address target) external onlyManager(1) {
-    //     IAccessControl(target).grantRole(KEEPERS, _rc.userNo(_BOAKeeper));
-    //     IAccessControl(target).grantRole(KEEPERS, _rc.userNo(_BODKeeper));
-    //     IAccessControl(target).grantRole(KEEPERS, _rc.userNo(_BOHKeeper));
-    //     IAccessControl(target).grantRole(KEEPERS, _rc.userNo(_BOMKeeper));
-    //     IAccessControl(target).grantRole(KEEPERS, _rc.userNo(_BOOKeeper));
-    //     IAccessControl(target).grantRole(KEEPERS, _rc.userNo(_BOPKeeper));
-    //     IAccessControl(target).grantRole(KEEPERS, _rc.userNo(_SHAKeeper));
-    // }
-
-    // function copyKeepersTo(address directKeeper, address book)
-    //     external
-    //     onlyManager(1)
-    // {
-    //     IAccessControl(directKeeper).copyRoleTo(KEEPERS, book);
-    // }
-
-    // function setKeepers(address target, address keeper)
-    //     external
-    //     onlyManager(1)
-    // {
-    //     IRoles(target).grantRole(KEEPERS, keeper);
-    //     emit SetKeepers(target, keeper);
-    // }
 
     // ###################
     // ##   BOAKeeper   ##
@@ -129,20 +113,6 @@ contract GeneralKeeper is AccessControl {
 
     function signIA(address ia, bytes32 sigHash) external {
         _BOAKeeper.signIA(ia, _msgSender(), sigHash);
-    }
-
-    // ==== PayInCapital ====
-
-    function setPayInAmount(
-        uint32 ssn,
-        uint64 amount,
-        bytes32 hashLock
-    ) external onlyManager(1) {
-        _BOAKeeper.setPayInAmount(ssn, amount, hashLock);
-    }
-
-    function requestPaidInCapital(uint32 ssn, string hashKey) external {
-        _BOAKeeper.requestPaidInCapital(ssn, hashKey, _msgSender());
     }
 
     // ======== Deal Closing ========
@@ -173,108 +143,27 @@ contract GeneralKeeper is AccessControl {
     }
 
     // ###################
-    // ##   SHAKeeper   ##
+    // ##   BODKeeper   ##
     // ###################
 
-    // ======= TagAlong ========
-
-    function execTagAlong(
-        address ia,
-        bytes32 sn,
-        bytes32 shareNumber,
-        uint64 parValue,
-        uint64 paidPar,
-        bytes32 sigHash
-    ) external {
-        _SHAKeeper.execAlongRight(
-            ia,
-            sn,
-            false,
-            shareNumber,
-            parValue,
-            paidPar,
-            msg.sender,
-            sigHash
-        );
+    function appointDirector(uint40 candidate, uint8 title) external {
+        _BODKeeper.appointDirector(candidate, title, _msgSender());
     }
 
-    function acceptTagAlong(
-        address ia,
-        bytes32 sn,
-        bytes32 sigHash
-    ) external {
-        _SHAKeeper.acceptAlongDeal(ia, sn, _msgSender(), sigHash);
+    function removeDirector(uint40 director) external {
+        _BODKeeper.removeDirector(director, _msgSender());
     }
 
-    // ======= DragAlong ========
-
-    function execDragAlong(
-        address ia,
-        bytes32 sn,
-        bytes32 shareNumber,
-        uint64 parValue,
-        uint64 paidPar,
-        bytes32 sigHash
-    ) external {
-        _SHAKeeper.execAlongRight(
-            ia,
-            sn,
-            true,
-            shareNumber,
-            parValue,
-            paidPar,
-            msg.sender,
-            sigHash
-        );
+    function quitPosition() external {
+        _BODKeeper.quitPosition(_msgSender());
     }
 
-    function acceptDragAlong(
-        address ia,
-        bytes32 sn,
-        bytes32 sigHash
-    ) external {
-        _SHAKeeper.acceptAlongDeal(ia, sn, _msgSender(), sigHash);
+    function nominateDirector(uint40 candidate) external {
+        _BODKeeper.nominateDirector(candidate, _msgSender());
     }
 
-    // ======== AntiDilution ========
-
-    function execAntiDilution(
-        address ia,
-        bytes32 sn,
-        bytes32 shareNumber,
-        bytes32 sigHash
-    ) external {
-        _SHAKeeper.execAntiDilution(ia, sn, shareNumber, _msgSender(), sigHash);
-    }
-
-    function takeGiftShares(address ia, bytes32 sn) external {
-        _SHAKeeper.takeGiftShares(ia, sn, _msgSender());
-        _BOAKeeper.transferTargetShare(ia, sn);
-    }
-
-    // ======== First Refusal ========
-
-    function execFirstRefusal(
-        address ia,
-        bytes32 sn,
-        bytes32 sigHash
-    ) external {
-        _SHAKeeper.execFirstRefusal(ia, sn, _msgSender(), sigHash);
-    }
-
-    function acceptFirstRefusal(
-        address ia,
-        bytes32 snOfOrg,
-        uint16 ssnOfFR,
-        bytes32 sigHash
-    ) external {
-        _SHAKeeper.acceptFirstRefusal(
-            ia,
-            snOfOrg,
-            ssnOfFR,
-            _msgSender(),
-            sigHash
-        );
+    function takePosition(uint256 motionId) external {
+        _BODKeeper.takePosition(_msgSender(), motionId);
     }
 
     // ##################
@@ -464,26 +353,139 @@ contract GeneralKeeper is AccessControl {
     }
 
     // ###################
-    // ##   BODKeeper   ##
+    // ##   BOSKeeper   ##
     // ###################
 
-    function appointDirector(uint40 candidate, uint8 title) external {
-        _BODKeeper.appointDirector(candidate, title, _msgSender());
+    function setPayInAmount(
+        uint32 ssn,
+        uint64 amount,
+        bytes32 hashLock
+    ) external onlyManager(1) {
+        _BOSKeeper.setPayInAmount(ssn, amount, hashLock);
     }
 
-    function removeDirector(uint40 director) external {
-        _BODKeeper.removeDirector(director, _msgSender());
+    function requestPaidInCapital(uint32 ssn, string hashKey) external {
+        _BOSKeeper.requestPaidInCapital(ssn, hashKey, _msgSender());
     }
 
-    function quitPosition() external {
-        _BODKeeper.quitPosition(_msgSender());
+    function decreaseCapital(
+        uint32 ssn,
+        uint64 parValue,
+        uint64 paidPar
+    ) external onlyManager(1) {
+        _BOSKeeper.decreaseCapital(ssn, parValue, paidPar);
     }
 
-    function nominateDirector(uint40 candidate) external {
-        _BODKeeper.nominateDirector(candidate, _msgSender());
+    function updateShareState(uint32 ssn, uint8 state) external onlyManager(1) {
+        _BOSKeeper.updateShareState(ssn, state);
     }
 
-    function takePosition(uint256 motionId) external {
-        _BODKeeper.takePosition(_msgSender(), motionId);
+    function setMaxQtyOfMembers(uint16 max) external onlyManager(1) {
+        _BOSKeeper.setMaxQtyOfMembers(max);
+    }
+
+    // ###################
+    // ##   SHAKeeper   ##
+    // ###################
+
+    // ======= TagAlong ========
+
+    function execTagAlong(
+        address ia,
+        bytes32 sn,
+        bytes32 shareNumber,
+        uint64 parValue,
+        uint64 paidPar,
+        bytes32 sigHash
+    ) external {
+        _SHAKeeper.execAlongRight(
+            ia,
+            sn,
+            false,
+            shareNumber,
+            parValue,
+            paidPar,
+            msg.sender,
+            sigHash
+        );
+    }
+
+    function acceptTagAlong(
+        address ia,
+        bytes32 sn,
+        bytes32 sigHash
+    ) external {
+        _SHAKeeper.acceptAlongDeal(ia, sn, _msgSender(), sigHash);
+    }
+
+    // ======= DragAlong ========
+
+    function execDragAlong(
+        address ia,
+        bytes32 sn,
+        bytes32 shareNumber,
+        uint64 parValue,
+        uint64 paidPar,
+        bytes32 sigHash
+    ) external {
+        _SHAKeeper.execAlongRight(
+            ia,
+            sn,
+            true,
+            shareNumber,
+            parValue,
+            paidPar,
+            msg.sender,
+            sigHash
+        );
+    }
+
+    function acceptDragAlong(
+        address ia,
+        bytes32 sn,
+        bytes32 sigHash
+    ) external {
+        _SHAKeeper.acceptAlongDeal(ia, sn, _msgSender(), sigHash);
+    }
+
+    // ======== AntiDilution ========
+
+    function execAntiDilution(
+        address ia,
+        bytes32 sn,
+        bytes32 shareNumber,
+        bytes32 sigHash
+    ) external {
+        _SHAKeeper.execAntiDilution(ia, sn, shareNumber, _msgSender(), sigHash);
+    }
+
+    function takeGiftShares(address ia, bytes32 sn) external {
+        _SHAKeeper.takeGiftShares(ia, sn, _msgSender());
+        _BOAKeeper.transferTargetShare(ia, sn);
+    }
+
+    // ======== First Refusal ========
+
+    function execFirstRefusal(
+        address ia,
+        bytes32 sn,
+        bytes32 sigHash
+    ) external {
+        _SHAKeeper.execFirstRefusal(ia, sn, _msgSender(), sigHash);
+    }
+
+    function acceptFirstRefusal(
+        address ia,
+        bytes32 snOfOrg,
+        uint16 ssnOfFR,
+        bytes32 sigHash
+    ) external {
+        _SHAKeeper.acceptFirstRefusal(
+            ia,
+            snOfOrg,
+            ssnOfFR,
+            _msgSender(),
+            sigHash
+        );
     }
 }

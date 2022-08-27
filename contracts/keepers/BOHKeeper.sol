@@ -10,6 +10,7 @@ import "../books/boh/terms/IGroupsUpdate.sol";
 
 import "../common/components/ISigPage.sol";
 
+import "../common/ruting/BOCSetting.sol";
 import "../common/ruting/BOMSetting.sol";
 import "../common/ruting/BOOSetting.sol";
 import "../common/ruting/BOSSetting.sol";
@@ -26,6 +27,7 @@ import "./IBOHKeeper.sol";
 
 contract BOHKeeper is
     IBOHKeeper,
+    BOCSetting,
     BODSetting,
     SHASetting,
     BOMSetting,
@@ -181,12 +183,12 @@ contract BOHKeeper is
             len = guo.length;
             while (len > 0) {
                 if (guo[len - 1].addMemberOfGUO())
-                    _bos.addMemberToGroup(
+                    _boc.addMemberToGroup(
                         guo[len - 1].memberOfGUO(),
                         guo[len - 1].groupNoOfGUO()
                     );
                 else
-                    _bos.removeMemberFromGroup(
+                    _boc.removeMemberFromGroup(
                         guo[len - 1].memberOfGUO(),
                         guo[len - 1].groupNoOfGUO()
                     );

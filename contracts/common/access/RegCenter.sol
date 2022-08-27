@@ -307,31 +307,6 @@ contract RegCenter is IRegCenter, EntitiesMapping {
         emit SetRoleAdmin(doc, role, acct);
     }
 
-    // function copyRoleTo(
-    //     bytes32 role,
-    //     address addrOfOriginator,
-    //     address addrOfTo
-    // ) external onlyContract {
-    //     (uint40 doc, uint40 originator) = _getRegUserNo(
-    //         msg.sender,
-    //         addrOfOriginator
-    //     );
-    //     uint40 to = _userNo[addrOfTo];
-    //     require(
-    //         to > 0 && _isContract(addrOfTo),
-    //         "To is not a registered contract"
-    //     );
-
-    //     require(
-    //         _roles[to].isManager(1, doc),
-    //         "srcDoc is not bookeeper of partyTo"
-    //     );
-
-    //     _roles[doc].copyRoleTo(role, originator, _roles[to]);
-
-    //     emit CopyRoleTo(msg.sender, role, addrOfTo);
-    // }
-
     // ##################
     // ##   查询端口   ##
     // ##################

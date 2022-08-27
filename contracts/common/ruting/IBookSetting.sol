@@ -12,6 +12,8 @@ interface IBookSetting {
 
     function setBOA(address boa) external;
 
+    function setBOC(address boc) external;
+
     function setAgrmtCal(address agrmtCal) external;
 
     function setBOH(address boh) external;

@@ -19,6 +19,7 @@ import "../common/components/ISigPage.sol";
 
 import "../common/ruting/IBookSetting.sol";
 import "../common/ruting/BOASetting.sol";
+import "../common/ruting/BOCSetting.sol";
 import "../common/ruting/BOSSetting.sol";
 import "../common/ruting/SHASetting.sol";
 
@@ -27,7 +28,13 @@ import "../common/lib/EnumsRepo.sol";
 
 import "./ISHAKeeper.sol";
 
-contract SHAKeeper is ISHAKeeper, BOASetting, BOSSetting, SHASetting {
+contract SHAKeeper is
+    ISHAKeeper,
+    BOCSetting,
+    BOASetting,
+    BOSSetting,
+    SHASetting
+{
     using SNParser for bytes32;
 
     // ##################
@@ -152,7 +159,7 @@ contract SHAKeeper is ISHAKeeper, BOASetting, BOSSetting, SHASetting {
 
         // test quota of alongDeal and update mock results
         IMockResults(mock).addAlongDeal(
-            IAlongs(term).linkRule(_bos.groupNo(drager)),
+            IAlongs(term).linkRule(_boc.groupNo(drager)),
             shareNumber,
             parValue,
             paidPar
@@ -304,7 +311,7 @@ contract SHAKeeper is ISHAKeeper, BOASetting, BOSSetting, SHASetting {
                 shareNumber,
                 shareNumber.class(),
                 caller,
-                _bos.groupNo(caller),
+                _boc.groupNo(caller),
                 ssn
             );
 
@@ -406,7 +413,7 @@ contract SHAKeeper is ISHAKeeper, BOASetting, BOSSetting, SHASetting {
             shareNumber,
             snOfOD.class(),
             caller,
-            _bos.groupNo(caller),
+            _boc.groupNo(caller),
             snOfOD.sequence()
         );
     }
@@ -422,7 +429,7 @@ contract SHAKeeper is ISHAKeeper, BOASetting, BOSSetting, SHASetting {
 
         if (snOfOD.typeOfDeal() == uint8(EnumsRepo.TypeOfDeal.CapitalIncrease))
             require(
-                _bos.groupNo(caller) == _bos.controller(),
+                _boc.groupNo(caller) == _boc.controller(),
                 "caller not belong to controller group"
             );
         else

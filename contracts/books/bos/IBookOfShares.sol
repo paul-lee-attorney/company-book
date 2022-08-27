@@ -82,13 +82,6 @@ interface IBookOfShares {
         uint64 blocknumber
     );
 
-    // ==== Group ====
-
-    event AddMemberToGroup(uint40 acct, uint16 groupNo);
-
-    event RemoveMemberFromGroup(uint40 acct, uint16 groupNo);
-
-    event SetController(uint16 groupNo);
 
     //##################
     //##    写接口    ##
@@ -135,14 +128,6 @@ interface IBookOfShares {
     function updateShareState(uint32 ssn, uint8 state) external;
 
     function updatePaidInDeadline(uint32 ssn, uint32 paidInDeadline) external;
-
-    // ==== GroupsRepo ====
-
-    function addMemberToGroup(uint40 acct, uint16 group) external;
-
-    function removeMemberFromGroup(uint40 acct, uint16 group) external;
-
-    function setController(uint16 group) external;
 
     // ==== MembersRepo ====
 
@@ -224,18 +209,4 @@ interface IBookOfShares {
         returns (uint64 vote);
 
     function sharesInHand(uint40 acct) external view returns (bytes32[]);
-
-    // ========== GroupsRepo ==============
-
-    function counterOfGroups() external view returns (uint16);
-
-    function controller() external view returns (uint16);
-
-    function groupNo(uint40 acct) external view returns (uint16);
-
-    function membersOfGroup(uint16 group) external view returns (uint40[]);
-
-    function isGroup(uint16 group) external view returns (bool);
-
-    function groupsList() external view returns (uint16[]);
 }

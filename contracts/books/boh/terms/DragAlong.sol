@@ -10,6 +10,7 @@ import "../../boa/IMockResults.sol";
 
 import "../../../common/components/IDocumentsRepo.sol";
 
+import "../../../common/ruting/BOCSetting.sol";
 import "../../../common/ruting/BOSSetting.sol";
 import "../../../common/ruting/BOASetting.sol";
 
@@ -20,7 +21,7 @@ import "../../../common/lib/EnumsRepo.sol";
 
 import "./IAlongs.sol";
 
-contract DragAlong is IAlongs, BOSSetting, BOASetting {
+contract DragAlong is IAlongs, BOCSetting, BOSSetting, BOASetting {
     using SNParser for bytes32;
     using SNFactory for bytes;
     using EnumerableSet for EnumerableSet.UintSet;
@@ -165,8 +166,8 @@ contract DragAlong is IAlongs, BOSSetting, BOASetting {
         view
         returns (bool)
     {
-        uint16 drager = _bos.groupNo(usrDrager);
-        uint16 follower = _bos.groupNo(usrFollower);
+        uint16 drager = _boc.groupNo(usrDrager);
+        uint16 follower = _boc.groupNo(usrFollower);
 
         return isFollower(drager, follower);
     }
@@ -208,7 +209,7 @@ contract DragAlong is IAlongs, BOSSetting, BOASetting {
             sn.sequence()
         );
 
-        bytes32 rule = _links[_bos.groupNo(caller)].rule;
+        bytes32 rule = _links[_boc.groupNo(caller)].rule;
 
         if (
             rule.triggerTypeOfLink() <
@@ -251,7 +252,7 @@ contract DragAlong is IAlongs, BOSSetting, BOASetting {
             .shareNumberOfDeal(sn.sequence())
             .shareholder();
 
-        uint16 sellerGroup = _bos.groupNo(seller);
+        uint16 sellerGroup = _boc.groupNo(seller);
 
         if (!_dragers.contains(sellerGroup)) return false;
 
@@ -262,7 +263,7 @@ contract DragAlong is IAlongs, BOSSetting, BOASetting {
             uint8(EnumsRepo.TriggerTypeOfAlongs.NoConditions)
         ) return true;
 
-        if (_bos.controller() != sellerGroup) return false;
+        if (_boc.controller() != sellerGroup) return false;
 
         (, , bool isOrgController, uint16 shareRatio, ) = IMockResults(
             _boa.mockResultsOfIA(ia)

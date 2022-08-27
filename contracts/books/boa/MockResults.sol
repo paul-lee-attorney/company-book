@@ -9,11 +9,18 @@ import "./IMockResults.sol";
 import "../../common/lib/EnumerableSet.sol";
 import "../../common/lib/SNParser.sol";
 
+import "../../common/ruting/BOCSetting.sol";
 import "../../common/ruting/BOSSetting.sol";
 import "../../common/ruting/SHASetting.sol";
 import "../../common/ruting/IASetting.sol";
 
-contract MockResults is IMockResults, IASetting, SHASetting, BOSSetting {
+contract MockResults is
+    IMockResults,
+    IASetting,
+    BOCSetting,
+    SHASetting,
+    BOSSetting
+{
     using EnumerableSet for EnumerableSet.UintSet;
     using SNParser for bytes32;
 
@@ -73,7 +80,7 @@ contract MockResults is IMockResults, IASetting, SHASetting, BOSSetting {
 
     function _mockDealOfSell(uint32 ssn, uint64 amount) private {
         (bytes32 shareNumber, , , , , ) = _bos.getShare(ssn);
-        uint16 sellerGroup = _bos.groupNo(shareNumber.shareholder());
+        uint16 sellerGroup = _boc.groupNo(shareNumber.shareholder());
 
         _mockResults[sellerGroup].selAmt += amount;
         _groupsConcerned.add(sellerGroup);
@@ -82,7 +89,7 @@ contract MockResults is IMockResults, IASetting, SHASetting, BOSSetting {
     }
 
     function _mockDealOfBuy(bytes32 sn, uint64 amount) private {
-        uint16 buyerGroup = _bos.groupNo(sn.buyerOfDeal());
+        uint16 buyerGroup = _boc.groupNo(sn.buyerOfDeal());
 
         _mockResults[buyerGroup].buyAmt += amount;
         _groupsConcerned.add(buyerGroup);
@@ -102,8 +109,8 @@ contract MockResults is IMockResults, IASetting, SHASetting, BOSSetting {
             Amt storage group = _mockResults[groupNum];
 
             group.orgAmt = basedOnPar
-                ? _bosCal.parOfGroup(groupNum)
-                : _bosCal.paidOfGroup(groupNum);
+                ? _boc.parOfGroup(groupNum)
+                : _boc.paidOfGroup(groupNum);
 
             require(
                 group.orgAmt + group.buyAmt >= group.selAmt,
@@ -140,7 +147,7 @@ contract MockResults is IMockResults, IASetting, SHASetting, BOSSetting {
     }
 
     function _checkController(bool basedOnPar) private {
-        uint16 controller = _bos.controller();
+        uint16 controller = _boc.controller();
         uint64 amtOfCorp = basedOnPar ? _bos.regCap() : _bos.paidCap();
         amtOfCorp += _topGroup.sumOfIA.rstAmt;
 
@@ -149,8 +156,8 @@ contract MockResults is IMockResults, IASetting, SHASetting, BOSSetting {
                 _topGroup.isOrgController = true;
         } else {
             uint64 amtOfController = basedOnPar
-                ? _bosCal.parOfGroup(controller)
-                : _bosCal.paidOfGroup(controller);
+                ? _boc.parOfGroup(controller)
+                : _boc.paidOfGroup(controller);
 
             if (_topGroup.amount < amtOfController) {
                 _topGroup.isOrgController = true;
@@ -168,14 +175,14 @@ contract MockResults is IMockResults, IASetting, SHASetting, BOSSetting {
         uint64 paidPar
     ) external onlyManager(0) {
         uint16 drager = rule.dragerOfLink();
-        uint16 follower = _bos.groupNo(shareNumber.shareholder());
+        uint16 follower = _boc.groupNo(shareNumber.shareholder());
 
         Amt storage fAmt = _mockResults[follower];
 
         if (_groupsConcerned.add(follower))
             fAmt.orgAmt = _getSHA().basedOnPar()
-                ? _bosCal.parOfGroup(follower)
-                : _bosCal.paidOfGroup(follower);
+                ? _boc.parOfGroup(follower)
+                : _boc.paidOfGroup(follower);
 
         if (_getSHA().basedOnPar()) {
             require(
@@ -207,7 +214,7 @@ contract MockResults is IMockResults, IASetting, SHASetting, BOSSetting {
     }
 
     function acceptAlongDeal(bytes32 sn) external onlyKeeper {
-        uint16 buyerGroup = _bos.groupNo(sn.buyerOfDeal());
+        uint16 buyerGroup = _boc.groupNo(sn.buyerOfDeal());
 
         (, uint64 parValue, uint64 paidPar, , ) = _ia.getDeal(sn.sequence());
 

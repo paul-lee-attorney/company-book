@@ -126,7 +126,7 @@ contract BookOfDirectors is IBookOfDirectors, SHASetting, MotionsRepo {
 
         require(
             _directors[caller].inaugurationBN <=
-                motion.sn.weightRegBlockOfMotion(),
+                motion.sn.weightRegBNOfMotion(),
             "not a Director at weight registration BN"
         );
 
@@ -205,8 +205,9 @@ contract BookOfDirectors is IBookOfDirectors, SHASetting, MotionsRepo {
         if (title != uint8(EnumsRepo.TitleOfDirectors.Director))
             _whoIs[title] = candidate;
 
-        if (_directorsList.add(candidate)) _rc.takePosition(candidate, title);
-        else _rc.changeTitle(candidate, title);
+        _directorsList.add(candidate);
+        // _rc.takePosition(candidate, title);
+        // else _rc.changeTitle(candidate, title);
 
         emit AddDirector(
             candidate,
@@ -238,7 +239,7 @@ contract BookOfDirectors is IBookOfDirectors, SHASetting, MotionsRepo {
 
             delete _directors[acct];
 
-            _rc.quitPosition(acct);
+            // _rc.quitPosition(acct);
 
             emit RemoveDirector(acct, title);
         }

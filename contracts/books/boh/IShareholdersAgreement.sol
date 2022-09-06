@@ -26,13 +26,13 @@ interface IShareholdersAgreement {
 
     event SetTenureOfBoard(uint8 numOfYear);
 
-    event SetAppointerOfChairman(uint40 nominator);
+    event SetAppointerOfChairman(uint40 indexed nominator);
 
-    event SetAppointerOfViceChairman(uint40 nominator);
+    event SetAppointerOfViceChairman(uint40 indexed nominator);
 
-    event SetBoardSeatsQuotaOf(uint40 nominator, uint8 quota);
+    event SetBoardSeatsQuotaOf(uint40 indexed nominator, uint8 quota);
 
-    event SetRule(uint8 typeOfVote, bytes32 sn);
+    event SetRule(uint8 indexed typeOfVote, bytes32 sn);
 
     //##################
     //##    写接口    ##

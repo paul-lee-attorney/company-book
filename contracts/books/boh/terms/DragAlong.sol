@@ -245,8 +245,10 @@ contract DragAlong is IAlongs, BOCSetting, BOSSetting, BOASetting {
             uint8(EnumsRepo.BODStates.Circulated)
         ) return false;
 
-        if (sn.typeOfDeal() <= uint8(EnumsRepo.TypeOfDeal.PreEmptive))
-            return false;
+        if (
+            sn.typeOfDeal() == uint8(EnumsRepo.TypeOfDeal.CapitalIncrease) ||
+            sn.typeOfDeal() == uint8(EnumsRepo.TypeOfDeal.PreEmptive)
+        ) return false;
 
         uint40 seller = IInvestmentAgreement(ia)
             .shareNumberOfDeal(sn.sequence())

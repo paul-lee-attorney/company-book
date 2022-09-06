@@ -50,11 +50,11 @@ interface IBookOfShares {
 
     event UpdatePaidInDeadline(uint32 indexed ssn, uint32 paidInDeadline);
 
-    event DecreaseCleanPar(uint32 ssn, uint64 paidPar);
+    event DecreaseCleanPar(uint32 indexed ssn, uint64 paidPar);
 
-    event IncreaseCleanPar(uint32 ssn, uint64 paidPar);
+    event IncreaseCleanPar(uint32 indexed ssn, uint64 paidPar);
 
-    event SetPayInAmount(uint32 ssn, uint64 amount, bytes32 hashLock);
+    event SetPayInAmount(uint32 indexed ssn, uint64 amount, bytes32 hashLock);
 
     // ==== MembersRepo ====
 
@@ -81,7 +81,6 @@ interface IBookOfShares {
         uint64 paidPar,
         uint64 blocknumber
     );
-
 
     //##################
     //##    写接口    ##

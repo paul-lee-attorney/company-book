@@ -108,6 +108,18 @@ contract BOHKeeper is
         onlyManager(1)
         onlyOwnerOf(sha, _rc.userNo(callerAddr))
     {
+        address[] memory bodies = IShareholdersAgreement(sha).bodies();
+
+        uint256 len = bodies.length;
+
+        while (len > 0) {
+            require(
+                IAccessControl(bodies[len - 1]).finalized(),
+                "BOHKeeper.circulateSHA: Term not finalized"
+            );
+            len--;
+        }
+
         require(IAccessControl(sha).finalized(), "let GC finalize SHA first");
 
         IAccessControl(sha).setManager(0, callerAddr, 0);

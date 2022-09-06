@@ -125,8 +125,10 @@ contract AntiDilution is IAntiDilution, ITerm, BOSSetting, BOMSetting {
     function isTriggered(address ia, bytes32 sn) public view returns (bool) {
         uint64 unitPrice = IInvestmentAgreement(ia).unitPrice(sn.sequence());
 
-        if (sn.typeOfDeal() > uint8(EnumsRepo.TypeOfDeal.PreEmptive))
-            return false;
+        if (
+            sn.typeOfDeal() != uint8(EnumsRepo.TypeOfDeal.CapitalIncrease) &&
+            sn.typeOfDeal() != uint8(EnumsRepo.TypeOfDeal.PreEmptive)
+        ) return false;
         if (unitPrice < _benchmarks.topValue()) return true;
         else return false;
     }

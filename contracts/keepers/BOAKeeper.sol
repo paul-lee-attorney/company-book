@@ -106,8 +106,7 @@ contract BOAKeeper is
 
         while (len > 0) {
             bytes32 sn = snList[len - 1];
-            if (sn.typeOfDeal() > uint8(EnumsRepo.TypeOfDeal.PreEmptive))
-                _releaseCleanParOfDeal(ia, sn);
+            if (sn.ssnOfDeal() > 0) _releaseCleanParOfDeal(ia, sn);
             len--;
         }
     }
@@ -128,9 +127,12 @@ contract BOAKeeper is
         onlyManager(1)
         onlyOwnerOf(ia, _rc.userNo(callerAddr))
     {
-        require(IAccessControl(ia).finalized(), "let GC finalize IA first");
+        require(
+            IAccessControl(ia).finalized(),
+            "BOAKeeper.circualteIA: IA not finalized"
+        );
 
-        IAccessControl(ia).setManager(0, callerAddr, 0);
+        IAccessControl(ia).setManager(0, callerAddr, address(0));
 
         _boa.circulateIA(ia, _rc.userNo(callerAddr));
     }
@@ -229,7 +231,7 @@ contract BOAKeeper is
             "wrong state of BOD"
         );
 
-        if (sn.typeOfDeal() > uint8(EnumsRepo.TypeOfDeal.PreEmptive))
+        if (sn.ssnOfDeal() > 0)
             require(
                 caller ==
                     IInvestmentAgreement(ia)
@@ -248,8 +250,7 @@ contract BOAKeeper is
         if (vr.ratioHeadOfVR() > 0 || vr.ratioAmountOfVR() > 0) {
             require(_bom.isPassed(uint256(ia)), "Motion NOT passed");
 
-            if (sn.typeOfDeal() > uint8(EnumsRepo.TypeOfDeal.PreEmptive))
-                _checkSHA(_termsForShareTransfer, ia, sn);
+            if (sn.ssnOfDeal() > 0) _checkSHA(_termsForShareTransfer, ia, sn);
             else _checkSHA(_termsForCapitalIncrease, ia, sn);
         }
 

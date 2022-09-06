@@ -86,7 +86,7 @@ contract BookOfMotions is
         bytes32 sn = _createSN(
             motionType,
             submitter,
-            uint32(block.timestamp),
+            uint32(block.number),
             _boa.votingDeadlineBNOf(ia),
             _boa.reviewDeadlineBNOf(ia),
             0
@@ -187,7 +187,7 @@ contract BookOfMotions is
     {
         Motion storage motion = _motions[motionId];
 
-        uint32 regBlock = motion.sn.weightRegBlockOfMotion();
+        uint32 regBlock = motion.sn.proposeBNOfMotion();
         uint64 voteAmt = uint64(_bos.votesAtBlock(caller, regBlock));
 
         _castVote(motionId, attitude, caller, sigHash, voteAmt);
@@ -197,7 +197,7 @@ contract BookOfMotions is
         external
         onlyManager(1)
         onlyProposed(motionId)
-        afterExpire(motionId)
+    // afterExpire(motionId)
     {
         Motion storage motion = _motions[motionId];
 
@@ -252,7 +252,7 @@ contract BookOfMotions is
     {
         Motion storage motion = _motions[motionId];
 
-        uint32 regBlock = motion.sn.weightRegBlockOfMotion();
+        uint32 regBlock = motion.sn.weightRegBNOfMotion();
 
         if (motion.votingRule.onlyAttendanceOfVR()) {
             totalHead = uint64(motion.box.voters.length);
@@ -328,7 +328,7 @@ contract BookOfMotions is
 
         require(
             block.number <
-                _motions[uint256(ia)].sn.votingDeadlineOfMotion() +
+                _motions[uint256(ia)].sn.votingDeadlineBNOfMotion() +
                     uint32(
                         _motions[uint256(ia)].votingRule.execDaysForPutOptOfVR()
                     ) *

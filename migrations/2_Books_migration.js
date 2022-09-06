@@ -3,7 +3,7 @@ const LibCheckpoints = artifacts.require("Checkpoints");
 const LibEnumerableSet = artifacts.require("EnumerableSet");
 const LibEnumsRepo = artifacts.require("EnumsRepo");
 const LibObjsRepo = artifacts.require("ObjsRepo");
-const LibRelationGraph = artifacts.require("RelationGraph");
+// const LibRelationGraph = artifacts.require("RelationGraph");
 const LibSNFactory = artifacts.require("SNFactory");
 const LibSNParser = artifacts.require("SNParser");
 
@@ -47,7 +47,7 @@ module.exports = async function (deployer, network, accounts) {
     // ==== Libraries ====
 
     await deployer.deploy(LibEnumerableSet);
-    await deployer.link(LibEnumerableSet, [IA, MR, BOA, BOC, BOD, SHA, BOH, BOM, BOO, BOP, BOS, BOSCal, RC, BOAKeeper, BODKeeper, BOHKeeper, BOMKeeper, BOOKeeper, BOPKeeper, SHAKeeper, GK, AD, DA, FR, GU, LU, OP, TA, LibCheckpoints, LibEnumerableSet, LibObjsRepo, LibRelationGraph]);
+    await deployer.link(LibEnumerableSet, [IA, MR, BOA, BOC, BOD, SHA, BOH, BOM, BOO, BOP, BOS, BOSCal, RC, BOAKeeper, BODKeeper, BOHKeeper, BOMKeeper, BOOKeeper, BOPKeeper, SHAKeeper, GK, AD, DA, FR, GU, LU, OP, TA, LibCheckpoints, LibEnumerableSet, LibObjsRepo]);
 
     await deployer.deploy(LibArrayUtils);
     await deployer.link(LibArrayUtils, [AD, FR, LU, TA]);
@@ -56,7 +56,7 @@ module.exports = async function (deployer, network, accounts) {
     await deployer.link(LibCheckpoints, BOS);
 
     await deployer.deploy(LibEnumsRepo);
-    await deployer.link(LibEnumsRepo, [IA, BOA, BOS, BOD, SHA, BOH, AD, DA, BOM, RC, BOAKeeper, BODKeeper, BOHKeeper, BOMKeeper, SHAKeeper, LibObjsRepo, LibRelationGraph]);
+    await deployer.link(LibEnumsRepo, [IA, BOA, BOS, BOD, SHA, BOH, AD, DA, BOM, RC, BOAKeeper, BODKeeper, BOHKeeper, BOMKeeper, SHAKeeper, LibObjsRepo]);
 
     await deployer.deploy(LibObjsRepo);
     await deployer.link(LibObjsRepo, [IA, BOA, BOD, BOH, BOM, BOS, BOO, BOP, SHA, AD, LU, OP]);
@@ -65,14 +65,16 @@ module.exports = async function (deployer, network, accounts) {
     await deployer.link(LibSNFactory, [IA, BOA, BOD, BOH, BOM, BOO, BOP, BOS, DA, FR, GU, OP]);
 
     await deployer.deploy(LibSNParser);
-    await deployer.link(LibSNParser, [IA, BOA, BOD, BOH, BOM, BOO, BOP, BOS, BOSCal, BOAKeeper, BODKeeper, BOHKeeper, BOMKeeper, BOOKeeper, BOPKeeper, BOSKeeper, SHAKeeper, AD, DA, FR, GU, LU, OP, LibRelationGraph]);
+    await deployer.link(LibSNParser, [IA, BOA, BOD, BOH, BOM, BOO, BOP, BOS, BOSCal, BOAKeeper, BODKeeper, BOHKeeper, BOMKeeper, BOOKeeper, BOPKeeper, BOSKeeper, SHAKeeper, AD, DA, FR, GU, LU, OP]);
 
-    await deployer.deploy(LibRelationGraph);
-    await deployer.link(LibRelationGraph, RC);
+    // await deployer.deploy(LibRelationGraph);
+    // await deployer.link(LibRelationGraph, RC);
 
     // ==== RegCenter ====
 
-    await deployer.deploy(RC, 15);
+    // await deployer.deploy(RC, 240);
+
+    await deployer.deploy(RC, 10); // testing purpose set 10 block per hr
     let rc = await RC.deployed();
 
     await rc.regUser(1, 0, {
@@ -226,7 +228,7 @@ module.exports = async function (deployer, network, accounts) {
     await shaKeeper.setBOH(boh.address);
 
     await boa.setBOH(boh.address);
-    await boh.setBOH(boh.address);
+    // await boh.setBOH(boh.address);
     await bod.setBOH(boh.address);
     await bom.setBOH(boh.address);
     await bos.setBOH(boh.address);

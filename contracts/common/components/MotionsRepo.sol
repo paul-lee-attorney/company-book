@@ -80,7 +80,7 @@ contract MotionsRepo is IMotionsRepo, AccessControl {
 
     modifier beforeExpire(uint256 motionId) {
         require(
-            _motions[motionId].sn.votingDeadlineOfMotion() >= block.number,
+            _motions[motionId].sn.votingDeadlineBNOfMotion() >= block.number,
             "missed voting deadline"
         );
         _;
@@ -88,8 +88,8 @@ contract MotionsRepo is IMotionsRepo, AccessControl {
 
     modifier afterExpire(uint256 motionId) {
         require(
-            _motions[motionId].sn.votingDeadlineOfMotion() < block.number,
-            "still on voting"
+            _motions[motionId].sn.votingDeadlineBNOfMotion() < block.number,
+            "MR.Mo.afterExpire: still on voting"
         );
         _;
     }
@@ -125,18 +125,18 @@ contract MotionsRepo is IMotionsRepo, AccessControl {
     function _createSN(
         uint8 typeOfMotion,
         uint40 submitter,
-        uint32 proposeDate,
+        uint32 proposeBN,
         uint32 votingDeadlineBN,
-        uint32 weightRegBlock,
+        uint32 weightRegBN,
         uint40 candidate
     ) internal pure returns (bytes32 sn) {
         bytes memory _sn = new bytes(32);
 
         _sn[0] = bytes1(typeOfMotion);
         _sn = _sn.acctToSN(1, submitter);
-        _sn = _sn.dateToSN(6, proposeDate);
+        _sn = _sn.dateToSN(6, proposeBN);
         _sn = _sn.dateToSN(10, votingDeadlineBN);
-        _sn = _sn.dateToSN(14, weightRegBlock);
+        _sn = _sn.dateToSN(14, weightRegBN);
 
         _sn = _sn.acctToSN(18, candidate);
 
@@ -249,6 +249,15 @@ contract MotionsRepo is IMotionsRepo, AccessControl {
     //##################
     //##    读接口    ##
     //##################
+
+    function serialNumber(uint256 motionId)
+        external
+        view
+        onlyProposed(motionId)
+        returns (bytes32)
+    {
+        return _motions[motionId].sn;
+    }
 
     function votingRule(uint256 motionId)
         external

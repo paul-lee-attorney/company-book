@@ -1,7 +1,7 @@
 const RC = artifacts.require('RegCenter');
-
 const GK = artifacts.require("GeneralKeeper");
-
+const BOH = artifacts.require("BookOfSHA");
+const BOHKeeper = artifacts.require("BOHKeeper");
 const SHA = artifacts.require("ShareholdersAgreement");
 
 const FR = artifacts.require("FirstRefusal");
@@ -9,17 +9,35 @@ const GU = artifacts.require("GroupsUpdate");
 
 module.exports = async function (callback) {
 
+    // ==== 账户准备 ====
+
+    const rc = await RC.deployed();
+
     const accounts = await web3.eth.getAccounts();
     console.log(accounts);
+
+    const acct2 = await rc.userNo(accounts[2]);
+    const acct3 = await rc.userNo(accounts[3]);
+    const acct4 = await rc.userNo(accounts[4]);
+    const acct5 = await rc.userNo(accounts[5]);
 
     const gk = await GK.deployed();
     console.log("GeneralKeeper: ", gk.address);
 
-    // 创建SHA
+    const bohKeeper = await BOHKeeper.deployed();
+    console.log("BOKKeeper: ", bohKeeper.address)
+
+    const boh = await BOH.deployed();
+    console.log("BookOfSHA: ", boh.address)
+
+    // ==== 创建SHA ====
+
     let ret = await gk.createSHA(0, {
         from: accounts[2]
     });
-    console.log("obtianed ret of createSHA.");
+
+    let events = await boh.getPastEvents("UpdateStateOfDoc");
+    console.log("Event 'UpdateStateOfDoc': ", events[0].returnValues);
 
     let addr = ret.logs[0].address;
     console.log("addr of SHA: ", addr);
@@ -27,40 +45,170 @@ module.exports = async function (callback) {
     const sha = await SHA.at(addr);
     console.log("get SHA: ", sha.address);
 
-    // 设定 GeneralCounsel
+    events = await sha.getPastEvents("Init");
+    console.log("Event 'Init': ", events[0].returnValues);
+
+    events = await sha.getPastEvents("SetBOC");
+    console.log("Event 'SetBOC': ", events[0].returnValues);
+
+    events = await sha.getPastEvents("SetBOS");
+    console.log("Event 'SetBOS': ", events[0].returnValues);
+
+    events = await sha.getPastEvents("SetBOSCal");
+    console.log("Event 'SetBOSCal': ", events[0].returnValues);
+
+    events = await sha.getPastEvents("SetBOM");
+    console.log("Event 'SetBOM': ", events[0].returnValues);
+
+    // ==== 设定 GeneralCounsel ====
     await sha.setManager(2, accounts[2], accounts[7], {
         from: accounts[2]
     });
 
-    // ==== setParties ==== 
+    events = await rc.getPastEvents("SetManager");
+    console.log("Event 'SetManager':", events[0].returnValues);
+
     const gc = await sha.getManager(2);
     console.log("GC of SHA: ", gc.toNumber());
 
-    const rc = await RC.deployed();
-    const acct2 = await rc.userNo(accounts[2]);
-    const acct3 = await rc.userNo(accounts[3]);
-    const acct4 = await rc.userNo(accounts[4]);
+    // ==== 增加当事方 ====
 
     await sha.addParty(acct2.toNumber(), {
         from: accounts[7]
     });
-    console.log("Acct2 added as a Party.");
+
+    events = await sha.getPastEvents("AddBlank");
+    console.log("Event 'AddBlank' : ", events[0].returnValues);
 
     await sha.addParty(acct3.toNumber(), {
         from: accounts[7]
     });
-    console.log("Acct3 added as a Party.");
+    events = await sha.getPastEvents("AddBlank");
+    console.log("Event 'AddBlank' : ", events[0].returnValues);
 
     await sha.addParty(acct4.toNumber(), {
         from: accounts[7]
     });
-    console.log("Acct4 added as a Party.");
 
-    // ==== BasedOnPar ====
+    events = await sha.getPastEvents("AddBlank");
+    console.log("Event AddBlank", events[0].returnValues);
+
+    await sha.addParty(acct5.toNumber(), {
+        from: accounts[7]
+    });
+
+    events = await sha.getPastEvents("AddBlank");
+    console.log("Event 'AddBlank' : ", events[0].returnValues);
+
+    await sha.removeBlank(acct5.toNumber(), 0, {
+        from: accounts[7]
+    });
+
+    events = await sha.getPastEvents("RemoveBlank");
+    console.log("Event 'RemoveBlank': ", events[0].returnValues);
+
+    // ==== VotingRules ====
     await sha.setVotingBaseOnPar(1, {
         from: accounts[7]
     });
-    console.log("set basedOnPar as voting method.");
+    events = await sha.getPastEvents("SetVotingBaseOnPar");
+    console.log("Event 'SetVotingBaseOnPar': ", events[0].returnValues);
+
+    await sha.setProposalThreshold(1000, {
+        from: accounts[7]
+    });
+    events = await sha.getPastEvents("SetProposalThreshold");
+    console.log("Event 'SetProposalThreshold': ", events[0].returnValues);
+
+    await sha.setMaxNumOfDirectors(3, {
+        from: accounts[7]
+    });
+    events = await sha.getPastEvents("SetMaxNumOfDirectors");
+    console.log("Event 'SetMaxNumOfDirectors': ", events[0].returnValues);
+
+    await sha.setTenureOfBoard(3, {
+        from: accounts[7]
+    });
+    events = await sha.getPastEvents("SetTenureOfBoard");
+    console.log("Event 'SetTenureOfBoard': ", events[0].returnValues);
+
+    await sha.setAppointerOfChairman(acct2.toNumber(), {
+        from: accounts[7]
+    });
+    events = await sha.getPastEvents("SetAppointerOfChairman");
+    console.log("Event 'SetAppointerOfChairman': ", events[0].returnValues);
+
+    await sha.setAppointerOfViceChairman(acct3.toNumber(), {
+        from: accounts[7]
+    });
+    events = await sha.getPastEvents("SetAppointerOfViceChairman");
+    console.log("Event 'SetAppointerOfViceChairman': ", events[0].returnValues);
+
+    // ==== CI ====
+    await sha.setRule(1, 0, 0, 6666, 0, 0, 1, 0, 1, 1, 0, {
+        from: accounts[7]
+    });
+    events = await sha.getPastEvents("SetRule");
+    console.log("Event 'SetRule': ", events[0].returnValues);
+
+    // ==== ST_Ext ====
+    await sha.setRule(2, 0, 0, 5000, 1, 1, 1, 1, 1, 1, 0, {
+        from: accounts[7]
+    });
+    events = await sha.getPastEvents("SetRule");
+    console.log("Event 'SetRule': ", events[0].returnValues);
+
+    // ==== ST_Int ====
+    await sha.setRule(3, 0, 0, 0, 0, 1, 1, 0, 1, 1, 0, {
+        from: accounts[7]
+    });
+    events = await sha.getPastEvents("SetRule");
+    console.log("Event 'SetRule': ", events[0].returnValues);
+
+    // ==== FR ====
+    ret = await sha.createTerm(3, {
+        from: accounts[7]
+    });
+
+    addr = ret.logs[0].address;
+
+    let fr = await FR.at(addr);
+    console.log("get FR: ", fr.address);
+
+    events = await fr.getPastEvents("Init");
+    console.log("Event 'Init': ", events[0].returnValues);
+
+    events = await rc.getPastEvents("SetManager");
+    console.log("Event 'SetManager': ", events[0].returnValues);
+
+    events = await fr.getPastEvents("SetBOS");
+    console.log("Event 'SetBOS': ", events[0].returnValues);
+
+    events = await fr.getPastEvents("SetBOM");
+    console.log("Event 'SetBOM': ", events[0].returnValues);
+
+    events = await sha.getPastEvents("CreateTerm");
+    console.log("Event 'CreateTerm': ", events[0].returnValues);
+
+    // ==== remove FR ====
+
+
+    await fr.setFirstRefusal(3, 1, 1, 1, {
+        from: accounts[7]
+    });
+    let rule = await fr.ruleOfFR(3)
+    console.log("set FR for external transfer: ", rule);
+
+    await fr.setFirstRefusal(1, 1, 1, 1, {
+        from: accounts[7]
+    });
+    rule = await fr.ruleOfFR(1)
+    console.log("set FR for capital increase: ", rule);
+
+    await fr.lockContents({
+        from: accounts[7]
+    });
+    console.log("FR contents have been locked. ");
 
     await sha.finalizeDoc({
         from: accounts[7]

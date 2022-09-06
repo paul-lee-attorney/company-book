@@ -30,6 +30,16 @@ interface IRegCenter {
 
     event SetRoleAdmin(uint40 cont, bytes32 role, uint40 acct);
 
+    event CreateEntity(
+        uint40 indexed entity,
+        uint8 typeOfEntity,
+        uint8 roleOfUser
+    );
+
+    event JoinEntity(uint40 indexed entity, uint40 user, uint8 roleOfUser);
+
+    event QuitEntity(uint40 indexed entity, uint40 user, uint8 roleOfUser);
+
     // ##################
     // ##    写端口    ##
     // ##################
@@ -44,27 +54,27 @@ interface IRegCenter {
 
     // ==== EquityInvest ====
 
-    function investIn(
-        uint40 usrInvestor,
-        uint64 parValue,
-        bool checkRingStruct
-    ) external returns (bool);
+    // function investIn(
+    //     uint40 usrInvestor,
+    //     uint64 parValue,
+    //     bool checkRingStruct
+    // ) external returns (bool);
 
-    function exitOut(uint40 usrInvestor) external returns (bool);
+    // function exitOut(uint40 usrInvestor) external returns (bool);
 
-    function updateParValue(uint40 usrInvestor, uint64 parValue)
-        external
-        returns (bool);
+    // function updateParValue(uint40 usrInvestor, uint64 parValue)
+    //     external
+    //     returns (bool);
 
     // ==== Director ====
 
-    function takePosition(uint40 usrCandy, uint8 title) external returns (bool);
+    // function takePosition(uint40 usrCandy, uint8 title) external returns (bool);
 
-    function quitPosition(uint40 usrDirector) external returns (bool);
+    // function quitPosition(uint40 usrDirector) external returns (bool);
 
-    function changeTitle(uint40 usrDirector, uint8 title)
-        external
-        returns (bool);
+    // function changeTitle(uint40 usrDirector, uint8 title)
+    //     external
+    //     returns (bool);
 
     // ==== Roles ====
 
@@ -111,6 +121,8 @@ interface IRegCenter {
     function userNo(address key) external returns (uint40);
 
     // ==== Entity ====
+    function isEntity(uint40 entity) external view returns (bool);
+
     function entityNo(address acct) external view returns (uint40);
 
     function memberOfEntity(uint40 entity, uint8 role)
@@ -122,47 +134,47 @@ interface IRegCenter {
 
     // ==== Element ====
 
-    function getEntity(uint40 entity)
-        external
-        view
-        returns (
-            uint8,
-            uint40,
-            uint88,
-            uint16,
-            uint88,
-            uint16
-        );
+    // function getEntity(uint40 entity)
+    //     external
+    //     view
+    //     returns (
+    //         uint8,
+    //         uint40,
+    //         uint88,
+    //         uint16,
+    //         uint88,
+    //         uint16
+    //     );
 
-    function getConnection(uint88 con)
-        external
-        view
-        returns (
-            uint88,
-            uint88,
-            uint64
-        );
+    // function getConnection(uint88 con)
+    //     external
+    //     view
+    //     returns (
+    //         uint88,
+    //         uint88,
+    //         uint64
+    //     );
 
-    function isRoot(uint40 entity) external view returns (bool);
+    // function isRoot(uint40 entity) external view returns (bool);
 
-    function isLeaf(uint40 entity) external view returns (bool);
+    // function isLeaf(uint40 entity) external view returns (bool);
 
     // ==== Graph ====
 
-    function getUpBranches(uint40 origin)
-        external
-        view
-        returns (uint40[] entities, uint88[] connections);
+    // function getUpBranches(uint40 origin)
+    //     external
+    //     view
+    //     returns (uint40[] entities, uint88[] connections);
 
-    function getDownBranches(uint40 origin)
-        external
-        view
-        returns (uint40[] entities, uint88[] connections);
+    // function getDownBranches(uint40 origin)
+    //     external
+    //     view
+    //     returns (uint40[] entities, uint88[] connections);
 
-    function getRoundGraph(uint40 origin)
-        external
-        view
-        returns (uint40[] entities, uint88[] connections);
+    // function getRoundGraph(uint40 origin)
+    //     external
+    //     view
+    //     returns (uint40[] entities, uint88[] connections);
 
     // ==== Role ====
     function hasRole(bytes32 role, address addrOfOriginator)

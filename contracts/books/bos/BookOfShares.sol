@@ -203,12 +203,12 @@ contract BookOfShares is IBookOfShares, SHASetting, BOCSetting {
     {
         require(
             _lockers[ssn].hashLock == keccak256(bytes(hashKey)),
-            "wrong key"
+            "BOS.requestPaidInCapital: wrong key"
         );
 
         uint64 amount = _lockers[ssn].amount;
 
-        require(amount > 0, "zero payIn amount");
+        require(amount > 0, "BOS.requestPaidInCapital: zero payIn amount");
 
         // 增加“股票”项下实缴出资金额
         _payInCapital(ssn, amount);
@@ -368,15 +368,18 @@ contract BookOfShares is IBookOfShares, SHASetting, BOCSetting {
     }
 
     function _payInCapital(uint32 ssn, uint64 amount) internal {
-        // // require(paidInDate > 0, "ZERO paidInDate");
-        // require(paidInDate <= now + 2 hours, "paidInDate NOT a PAST time");
-
         uint32 paidInDate = uint32(block.timestamp);
 
         Share storage share = _shares[ssn];
 
-        require(paidInDate <= share.paidInDeadline);
-        require(share.paidPar + amount <= share.parValue, "amount overflow");
+        require(
+            paidInDate <= share.paidInDeadline,
+            "BOS._payInCapital: missed payInDeadline"
+        );
+        require(
+            share.paidPar + amount <= share.parValue,
+            "BOS._payInCapital: amount overflow"
+        );
 
         share.paidPar += amount; //溢出校验已通过
         share.cleanPar += amount;
@@ -439,7 +442,9 @@ contract BookOfShares is IBookOfShares, SHASetting, BOCSetting {
 
     function increaseCleanPar(uint32 ssn, uint64 paidPar)
         external
+        onlyKeeper
         shareExist(ssn)
+        notFreezed(ssn)
     {
         require(paidPar > 0, "ZERO paidPar");
 
@@ -495,7 +500,7 @@ contract BookOfShares is IBookOfShares, SHASetting, BOCSetting {
         );
 
         if (_membersList.add(acct)) {
-            _rc.investIn(acct, parValue, true);
+            // _rc.investIn(acct, parValue, true);
             _qtyOfMembers.push(uint64(_membersList.length()), 1);
             emit AddMember(acct, uint16(_membersList.length()));
         }
@@ -510,7 +515,7 @@ contract BookOfShares is IBookOfShares, SHASetting, BOCSetting {
             if (_boc.groupNo(acct) > 0)
                 _boc.removeMemberFromGroup(acct, _boc.groupNo(acct));
             _qtyOfMembers.push(uint64(_membersList.length()), 0);
-            _rc.exitOut(acct);
+            // _rc.exitOut(acct);
             emit RemoveMember(acct, uint16(_membersList.length()));
         }
     }
@@ -556,7 +561,7 @@ contract BookOfShares is IBookOfShares, SHASetting, BOCSetting {
 
         uint64 blocknumber = _members[acct].votesInHand.push(curPar, curPaid);
 
-        _rc.updateParValue(acct, curPar);
+        // _rc.updateParValue(acct, curPar);
 
         emit IncreaseAmountToMember(acct, parValue, paidPar, blocknumber);
     }
@@ -576,7 +581,7 @@ contract BookOfShares is IBookOfShares, SHASetting, BOCSetting {
             oldPaid - paidPar
         );
 
-        _rc.updateParValue(acct, uint64(oldPar - parValue));
+        // _rc.updateParValue(acct, uint64(oldPar - parValue));
 
         emit DecreaseAmountFromMember(acct, parValue, paidPar, blocknumber);
     }

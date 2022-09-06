@@ -5,14 +5,14 @@
 
 pragma solidity ^0.4.24;
 
-import "./EntitiesMapping.sol";
+// import "./EntitiesMapping.sol";
 import "./IRegCenter.sol";
 
 import "../lib/EnumsRepo.sol";
 import "../lib/EnumerableSet.sol";
 import "../lib/RolesRepo.sol";
 
-contract RegCenter is IRegCenter, EntitiesMapping {
+contract RegCenter is IRegCenter {
     using EnumerableSet for EnumerableSet.UintSet;
     using RolesRepo for RolesRepo.Roles;
 
@@ -45,6 +45,22 @@ contract RegCenter is IRegCenter, EntitiesMapping {
         _BLOCKS_PER_HOUR = blocks_per_hour;
     }
 
+    // ==== Entity ====
+
+    struct Entity {
+        mapping(uint40 => bool) isKeeper;
+        // RoleOfUser => user
+        mapping(uint8 => uint40) members;
+    }
+
+    // userNo => entityNo
+    mapping(uint40 => uint40) private _entityNo;
+
+    // entityNo => Entity
+    mapping(uint40 => Entity) private _entities;
+
+    EnumerableSet.UintSet private _entitiesList;
+
     // ##################
     // ##    Modifier  ##
     // ##################
@@ -61,6 +77,11 @@ contract RegCenter is IRegCenter, EntitiesMapping {
 
     modifier onlyContract() {
         require(_isContract(msg.sender), "not a contract");
+        _;
+    }
+
+    modifier entityExist(uint40 entity) {
+        require(isEntity(entity), "EM.entityExist: entity not exist");
         _;
     }
 
@@ -147,88 +168,144 @@ contract RegCenter is IRegCenter, EntitiesMapping {
         emit ResetBackupKeyFlag(userNo);
     }
 
-    // ==== EquityInvestment ====
+    // ======== Entity ========
 
-    function investIn(
-        uint40 usrInvestor,
-        uint64 parValue,
-        bool checkRingStruct
-    ) external returns (bool) {
-        if (!isEntity(usrInvestor)) {
-            require(!_isContract(_users[usrInvestor].primeKey), "not an EOA");
+    function _createEntity(
+        uint40 user,
+        uint8 typeOfEntity,
+        uint8 roleOfUser
+    ) private {
+        require(
+            roleOfUser == uint8(EnumsRepo.RoleOfUser.EOA) ||
+                roleOfUser == uint8(EnumsRepo.RoleOfUser.BookOfShares),
+            "only EOA and BOS may create a new Entity"
+        );
 
-            _createEntity(
-                usrInvestor,
-                uint8(EnumsRepo.TypeOfEntity.EOA),
-                uint8(EnumsRepo.RoleOfUser.EOA)
-            );
+        if (_entitiesList.add(user)) {
+            _entityNo[user] = user;
+            _entities[user].members[roleOfUser] = user;
+            emit CreateEntity(user, typeOfEntity, roleOfUser);
+        }
+    }
+
+    function _joinEntity(
+        uint40 entity,
+        uint40 user,
+        uint8 roleOfUser
+    ) private entityExist(entity) {
+        require(_entityNo[user] == 0, "pls quit from other Entity first");
+
+        Entity storage corp = _entities[entity];
+
+        require(corp.members[roleOfUser] == 0, "role already be registered");
+
+        _entityNo[user] = entity;
+        corp.members[roleOfUser] = user;
+
+        if (
+            roleOfUser > uint8(EnumsRepo.RoleOfUser.GeneralKeeper) &&
+            roleOfUser < uint8(EnumsRepo.RoleOfUser.BOSCalculator)
+        ) {
+            corp.isKeeper[user] = true;
         }
 
-        return
-            _investIn(
-                usrInvestor,
-                _userNo[msg.sender],
-                parValue,
-                checkRingStruct
-            );
+        emit JoinEntity(entity, user, roleOfUser);
     }
 
-    function exitOut(uint40 usrInvestor) external returns (bool) {
-        return _exitOut(usrInvestor, _userNo[msg.sender]);
+    function _quitEntity(uint40 user, uint8 roleOfUser) internal {
+        require(
+            roleOfUser > uint8(EnumsRepo.RoleOfUser.BookOfShares),
+            "roleOfUser overflow"
+        );
+        require(
+            roleOfUser < uint8(EnumsRepo.RoleOfUser.EndPoint),
+            "roleOfUser overflow"
+        );
+
+        uint40 entity = _entityNo[user];
+
+        Entity storage corp = _entities[entity];
+
+        require(corp.members[roleOfUser] == user, "wrong roleOfUser");
+
+        if (corp.isKeeper[user]) corp.isKeeper[user] = false;
+
+        delete corp.members[roleOfUser];
+        delete _entityNo[user];
+
+        emit QuitEntity(entity, user, roleOfUser);
     }
 
-    function updateParValue(uint40 usrInvestor, uint64 parValue)
-        external
-        returns (bool)
-    {
-        return _updateParValue(usrInvestor, _userNo[msg.sender], parValue);
-    }
+    // ==== EquityInvestment ====
+
+    // function investIn(
+    //     uint40 usrInvestor,
+    //     uint64 parValue,
+    //     bool checkRingStruct
+    // ) external returns (bool) {
+    //     if (!isEntity(usrInvestor)) {
+    //         require(!_isContract(_users[usrInvestor].primeKey), "not an EOA");
+
+    //         _createEntity(
+    //             usrInvestor,
+    //             uint8(EnumsRepo.TypeOfEntity.EOA),
+    //             uint8(EnumsRepo.RoleOfUser.EOA)
+    //         );
+    //     }
+
+    //     return
+    //         _investIn(
+    //             usrInvestor,
+    //             _userNo[msg.sender],
+    //             parValue,
+    //             checkRingStruct
+    //         );
+    // }
+
+    // function exitOut(uint40 usrInvestor) external returns (bool) {
+    //     return _exitOut(usrInvestor, _userNo[msg.sender]);
+    // }
+
+    // function updateParValue(uint40 usrInvestor, uint64 parValue)
+    //     external
+    //     returns (bool)
+    // {
+    //     return _updateParValue(usrInvestor, _userNo[msg.sender], parValue);
+    // }
 
     // ==== Director ====
 
-    function takePosition(uint40 usrCandy, uint8 title)
-        external
-        returns (bool)
-    {
-        require(isUser(usrCandy), "investor is not a regUser");
+    // function takePosition(uint40 usrCandy, uint8 title)
+    //     external
+    //     returns (bool)
+    // {
+    //     require(isUser(usrCandy), "investor is not a regUser");
 
-        if (!isEntity(usrCandy)) {
-            require(!_isContract(_users[usrCandy].primeKey), "not an EOA");
+    //     if (!isEntity(usrCandy)) {
+    //         require(!_isContract(_users[usrCandy].primeKey), "not an EOA");
 
-            _createEntity(
-                usrCandy,
-                uint8(EnumsRepo.TypeOfEntity.EOA),
-                uint8(EnumsRepo.RoleOfUser.EOA)
-            );
-        }
+    //         _createEntity(
+    //             usrCandy,
+    //             uint8(EnumsRepo.TypeOfEntity.EOA),
+    //             uint8(EnumsRepo.RoleOfUser.EOA)
+    //         );
+    //     }
 
-        return _takePosition(usrCandy, _userNo[msg.sender], title);
-    }
+    //     return _takePosition(usrCandy, _userNo[msg.sender], title);
+    // }
 
-    function quitPosition(uint40 usrDirector) external returns (bool) {
-        return _quitPosition(usrDirector, _userNo[msg.sender]);
-    }
+    // function quitPosition(uint40 usrDirector) external returns (bool) {
+    //     return _quitPosition(usrDirector, _userNo[msg.sender]);
+    // }
 
-    function changeTitle(uint40 usrDirector, uint8 title)
-        external
-        returns (bool)
-    {
-        return _changeTitle(usrDirector, _userNo[msg.sender], title);
-    }
+    // function changeTitle(uint40 usrDirector, uint8 title)
+    //     external
+    //     returns (bool)
+    // {
+    //     return _changeTitle(usrDirector, _userNo[msg.sender], title);
+    // }
 
     // ==== Roles ====
-
-    function _getRegUserNo(address caller, address addrOfOriginator)
-        private
-        view
-        returns (uint40 doc, uint40 originator)
-    {
-        doc = _userNo[caller];
-        require(doc > 0, "contract not registered");
-
-        originator = _userNo[addrOfOriginator];
-        require(originator > 0, "originator not registered");
-    }
 
     function setManager(uint8 title, address addrOfAcct) external onlyContract {
         uint40 doc = _userNo[msg.sender];
@@ -251,6 +328,18 @@ contract RegCenter is IRegCenter, EntitiesMapping {
         _roles[doc].grantRole(role, originator, acct);
 
         emit GrantRole(doc, role, acct);
+    }
+
+    function _getRegUserNo(address caller, address addrOfOriginator)
+        private
+        view
+        returns (uint40 doc, uint40 originator)
+    {
+        doc = _userNo[caller];
+        require(doc > 0, "contract not registered");
+
+        originator = _userNo[addrOfOriginator];
+        require(originator > 0, "originator not registered");
     }
 
     function revokeRole(
@@ -348,6 +437,14 @@ contract RegCenter is IRegCenter, EntitiesMapping {
     }
 
     // ==== Entity ====
+    function isEntity(uint40 entity) public view returns (bool) {
+        return (_entities[entity].members[uint8(EnumsRepo.RoleOfUser.EOA)] >
+            0 ||
+            _entities[entity].members[
+                uint8(EnumsRepo.RoleOfUser.BookOfShares)
+            ] >
+            0);
+    }
 
     function entityNo(address acct) public view returns (uint40) {
         uint40 user = _userNo[acct];
@@ -368,75 +465,78 @@ contract RegCenter is IRegCenter, EntitiesMapping {
         view
         returns (uint40)
     {
-        return _memberOfEntity(entity, role);
+        return _entities[entity].members[role];
     }
 
     function isKeeper(address caller) external view returns (bool) {
-        return _isKeeper(entityNo(msg.sender), _userNo[caller]);
+        uint40 entity = entityNo(msg.sender);
+        uint40 user = _userNo[caller];
+
+        return _entities[entity].isKeeper[user];
     }
 
     // ==== Element ====
 
-    function getEntity(uint40 entity)
-        external
-        view
-        returns (
-            uint8,
-            uint40,
-            uint88,
-            uint16,
-            uint88,
-            uint16
-        )
-    {
-        return _getEntity(entity);
-    }
+    // function getEntity(uint40 entity)
+    //     external
+    //     view
+    //     returns (
+    //         uint8,
+    //         uint40,
+    //         uint88,
+    //         uint16,
+    //         uint88,
+    //         uint16
+    //     )
+    // {
+    //     return _getEntity(entity);
+    // }
 
-    function getConnection(uint88 con)
-        external
-        view
-        returns (
-            uint88,
-            uint88,
-            uint64
-        )
-    {
-        return _getConnection(con);
-    }
+    // function getConnection(uint88 con)
+    //     external
+    //     view
+    //     returns (
+    //         uint88,
+    //         uint88,
+    //         uint64
+    //     )
+    // {
+    //     return _getConnection(con);
+    // }
 
-    function isRoot(uint40 entity) external view returns (bool) {
-        return _isRoot(entity);
-    }
+    // function isRoot(uint40 entity) external view returns (bool) {
+    //     return _isRoot(entity);
+    // }
 
-    function isLeaf(uint40 entity) external view returns (bool) {
-        return _isLeaf(entity);
-    }
+    // function isLeaf(uint40 entity) external view returns (bool) {
+    //     return _isLeaf(entity);
+    // }
 
     // ==== Graph ====
 
-    function getUpBranches(uint40 origin)
-        external
-        view
-        returns (uint40[] entities, uint88[] connections)
-    {
-        return _getUpBranches(origin);
-    }
+    // function getUpBranches(uint40 origin)
+    //     external
+    //     view
+    //     returns (uint40[] entities, uint88[] connections)
+    // {
+    //     return _getUpBranches(origin);
+    // }
 
-    function getDownBranches(uint40 origin)
-        external
-        view
-        returns (uint40[] entities, uint88[] connections)
-    {
-        return _getDownBranches(origin);
-    }
+    // function getDownBranches(uint40 origin)
+    //     external
+    //     view
+    //     returns (uint40[] entities, uint88[] connections)
+    // {
+    //     return _getDownBranches(origin);
+    // }
 
-    function getRoundGraph(uint40 origin)
-        external
-        view
-        returns (uint40[] entities, uint88[] connections)
-    {
-        return _getRoundGraph(origin);
-    }
+    // function getRoundGraph(uint40 origin)
+    //     external
+    //     view
+    //     returns (uint40[] entities, uint88[] connections)
+    // {
+    //     return _getRoundGraph(origin);
+    // }
 
     // ==== Role ====
     function hasRole(bytes32 role, address addrOfOriginator)

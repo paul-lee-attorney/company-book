@@ -48,12 +48,12 @@ library SNParser {
         return uint8(sn[0]);
     }
 
-    function typeOfDeal(bytes32 sn) internal pure returns (uint8) {
-        return uint8(sn[1]);
+    function sequence(bytes32 sn) internal pure returns (uint16) {
+        return uint16(bytes2(sn << 8));
     }
 
-    function sequence(bytes32 sn) internal pure returns (uint16) {
-        return uint16(bytes2(sn << 16));
+    function typeOfDeal(bytes32 sn) internal pure returns (uint8) {
+        return uint8(sn[3]);
     }
 
     function buyerOfDeal(bytes32 sn) internal pure returns (uint40) {
@@ -308,15 +308,19 @@ library SNParser {
         return uint40(bytes5(sn << 8));
     }
 
-    function proposeDateOfMotion(bytes32 sn) internal pure returns (uint32) {
+    function proposeBNOfMotion(bytes32 sn) internal pure returns (uint32) {
         return uint32(bytes4(sn << 48));
     }
 
-    function votingDeadlineOfMotion(bytes32 sn) internal pure returns (uint32) {
+    function votingDeadlineBNOfMotion(bytes32 sn)
+        internal
+        pure
+        returns (uint32)
+    {
         return uint32(bytes4(sn << 80));
     }
 
-    function weightRegBlockOfMotion(bytes32 sn) internal pure returns (uint32) {
+    function weightRegBNOfMotion(bytes32 sn) internal pure returns (uint32) {
         return uint32(bytes4(sn << 112));
     }
 

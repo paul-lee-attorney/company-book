@@ -94,11 +94,13 @@ contract BookOfIA is IBookOfIA, DocumentsRepo {
         uint8[3] memory signal;
 
         while (len > 0) {
-            uint8 typeOfDeal = dealsList[len - 1].typeOfDeal();
+            bytes32 sn = dealsList[len - 1];
             len--;
 
+            uint8 typeOfDeal = sn.typeOfDeal();
+
             (, , , uint8 state, ) = IInvestmentAgreement(ia).getDeal(
-                dealsList[len - 1].sequence()
+                sn.sequence()
             );
 
             if (state == uint8(EnumsRepo.StateOfDeal.Terminated)) continue;
@@ -120,7 +122,9 @@ contract BookOfIA is IBookOfIA, DocumentsRepo {
         }
         // 协议类别计算
         uint8 sumOfSignal = signal[0] + signal[1] + signal[2];
-        output = sumOfSignal == 3 ? signal[2] == 0 ? 7 : 3 : sumOfSignal;
+
+        output = sumOfSignal;
+        if (sumOfSignal == 3 && signal[2] == 0) output = 7;
     }
 
     function frDealsOfIA(address ia) external view returns (address) {

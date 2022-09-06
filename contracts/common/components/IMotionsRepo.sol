@@ -51,6 +51,8 @@ interface IMotionsRepo {
     //##    读接口    ##
     //##################
 
+    function serialNumber(uint256 motionId) external view returns (bytes32);
+
     function votingRule(uint256 motionId) external view returns (bytes32);
 
     function state(uint256 motionId) external view returns (uint8);

@@ -20,6 +20,16 @@ interface IAccessControl {
 
     event LockContents();
 
+    event CreateEntity(
+        uint40 indexed entity,
+        uint8 typeOfEntity,
+        uint8 roleOfUser
+    );
+
+    event JoinEntity(uint40 indexed entity, uint40 user, uint8 roleOfUser);
+
+    event QuitEntity(uint40 indexed entity, uint40 user, uint8 roleOfUser);
+
     // ##################
     // ##    写端口    ##
     // ##################

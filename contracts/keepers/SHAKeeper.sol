@@ -173,7 +173,7 @@ contract SHAKeeper is
         bool dragAlong,
         bytes32 shareNumber
     ) private returns (bytes32 aSN) {
-        uint8 typeOfDeal = dragAlong
+        uint8 typeOfDeal = (dragAlong)
             ? uint8(EnumsRepo.TypeOfDeal.DragAlong)
             : uint8(EnumsRepo.TypeOfDeal.TagAlong);
 

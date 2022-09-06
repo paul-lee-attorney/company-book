@@ -71,24 +71,24 @@ library EnumsRepo {
     }
 
     enum TermTitle {
-        ZeroPoint,
-        LOCK_UP,
-        ANTI_DILUTION,
-        FIRST_REFUSAL,
-        GROUPS_UPDATE,
-        DRAG_ALONG,
-        TAG_ALONG,
-        OPTIONS
+        ZeroPoint, //            0
+        LOCK_UP, //              1
+        ANTI_DILUTION, //        2
+        FIRST_REFUSAL, //        3
+        GROUPS_UPDATE, //        4
+        DRAG_ALONG, //           5
+        TAG_ALONG, //            6
+        OPTIONS //               7
     }
 
     enum TypeOfDeal {
         ZeroPoint,
         CapitalIncrease,
-        PreEmptive,
         ShareTransferExt,
+        ShareTransferInt,
+        PreEmptive,
         TagAlong,
         DragAlong,
-        ShareTransferInt,
         FirstRefusal,
         FreeGift
     }
@@ -99,6 +99,12 @@ library EnumsRepo {
         Cleared,
         Closed,
         Terminated
+    }
+
+    enum StateOfShare {
+        Normal,
+        Freezed,
+        OnTrust
     }
 
     enum BODStates {

@@ -72,10 +72,11 @@ contract BOMKeeper is
             "InvestmentAgreement not on Established"
         );
 
-        require(
-            _boa.reviewDeadlineBNOf(ia) < block.number,
-            "InvestmentAgreement not passed review procesedure"
-        );
+        // if (_subjectToReview(ia))
+        //     require(
+        //         _boa.reviewDeadlineBNOf(ia) < block.number,
+        //         "BOMKeeper.proposeMotion: IA not passed review procesedure"
+        //     );
 
         require(
             _boa.votingDeadlineBNOf(ia) >= block.number,
@@ -88,6 +89,45 @@ contract BOMKeeper is
             _bom.proposeMotion(ia, caller);
 
         _boa.pushToNextState(ia, caller);
+    }
+
+    function _subjectToReview(address ia) private returns (bool) {
+        bytes32[] memory dealsList = IInvestmentAgreement(ia).dealsList();
+        uint256 len = dealsList.length;
+
+        while (len > 0) {
+            bytes32 sn = dealsList[len - 1];
+            len--;
+
+            if (
+                _getSHA().hasTitle(uint8(EnumsRepo.TermTitle.FIRST_REFUSAL)) &&
+                _getSHA().termIsTriggered(
+                    uint8(EnumsRepo.TermTitle.FIRST_REFUSAL),
+                    ia,
+                    sn
+                )
+            ) return true;
+
+            if (
+                _getSHA().hasTitle(uint8(EnumsRepo.TermTitle.TAG_ALONG)) &&
+                _getSHA().termIsTriggered(
+                    uint8(EnumsRepo.TermTitle.TAG_ALONG),
+                    ia,
+                    sn
+                )
+            ) return true;
+
+            if (
+                _getSHA().hasTitle(uint8(EnumsRepo.TermTitle.DRAG_ALONG)) &&
+                _getSHA().termIsTriggered(
+                    uint8(EnumsRepo.TermTitle.DRAG_ALONG),
+                    ia,
+                    sn
+                )
+            ) return true;
+        }
+
+        return false;
     }
 
     // function proposeAction(

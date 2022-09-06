@@ -27,12 +27,12 @@ contract InvestmentAgreement is IInvestmentAgreement, BOSSetting, SigPage {
     enum TypeOfDeal {
         ZeroPoint,
         CapitalIncrease,
-        PreEmptive,
         ShareTransferExt,
+        ShareTransferInt,
+        PreEmptive,
+        FirstRefusal,
         TagAlong,
         DragAlong,
-        ShareTransferInt,
-        FirstRefusal,
         FreeGift
     }
 
@@ -107,7 +107,7 @@ contract InvestmentAgreement is IInvestmentAgreement, BOSSetting, SigPage {
         _sn[3] = bytes1(typeOfDeal);
         _sn = _sn.acctToSN(4, buyer);
         _sn = _sn.sequenceToSN(9, group);
-        _sn = _sn.dateToSN(11, shareNumber.sequence());
+        _sn = _sn.dateToSN(11, shareNumber.ssn());
         _sn = _sn.sequenceToSN(15, preSeq);
 
         return _sn.bytesToBytes32();
@@ -126,8 +126,8 @@ contract InvestmentAgreement is IInvestmentAgreement, BOSSetting, SigPage {
 
         if (shareNumber > bytes32(0)) {
             require(
-                _bos.isShare(shareNumber.sequence()),
-                "shareNumber not exist"
+                _bos.isShare(shareNumber.ssn()),
+                "IA.createDeal: shareNumber not exist"
             );
             require(shareNumber.class() == class, "class NOT correct");
 
@@ -228,7 +228,7 @@ contract InvestmentAgreement is IInvestmentAgreement, BOSSetting, SigPage {
 
         bytes32 sn = deal.sn;
 
-        if (sn.typeOfDeal() > uint8(TypeOfDeal.PreEmptive)) {
+        if (sn.ssnOfDeal() > 0) {
             removeBlank(deal.shareNumber.shareholder(), seq);
         }
 

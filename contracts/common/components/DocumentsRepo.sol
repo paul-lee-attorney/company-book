@@ -108,7 +108,7 @@ contract DocumentsRepo is IDocumentsRepo, CloneFactory, SHASetting, BOSSetting {
         external
         onlyManager(0)
     {
-        require(typeOfDoc < 18, "typeOfDoc over flow");
+        require(typeOfDoc < 18, "DR.setTemplate: typeOfDoc over flow");
         _templates[typeOfDoc] = body;
         emit SetTemplate(body, typeOfDoc);
     }

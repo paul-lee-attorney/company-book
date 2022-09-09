@@ -16,6 +16,10 @@ module.exports = async function (callback) {
     const gk = await GK.deployed();
     console.log("gk: ", gk.address);
 
+    let res = null;
+    let cur = null;
+    let events = null;
+
     // ==== accts register ====
 
     const accounts = await web3.eth.getAccounts();
@@ -26,8 +30,6 @@ module.exports = async function (callback) {
     const acct4 = await rc.userNo(accounts[4]);
 
     // ==== IssueShare ====
-    let cur = null;
-    let events = null;
 
     cur = Date.parse(new Date()) / 1000;
 
@@ -47,8 +49,6 @@ module.exports = async function (callback) {
 
     events = await bos.getPastEvents("CapIncrease");
     console.log("Event 'CapIncrease': ", events[0].returnValues);
-
-    let share1 = events[0].returnValues.shareNumber;
 
     // ---- IssueShare No.2 ----
 
@@ -97,37 +97,49 @@ module.exports = async function (callback) {
     await bos.decreaseCapital(1, 100000000, 100000000);
 
     events = await bos.getPastEvents("SubAmountFromShare");
-    console.log("Event SubAmountFromShare", events[0].returnValues);
+    console.log("Event 'SubAmountFromShare': ", events[0].returnValues);
 
     events = await bos.getPastEvents("DecreaseAmountFromMember");
-    console.log("Event DecreaseAmountFromMember", events[0].returnValues);
+    console.log("Event 'DecreaseAmountFromMember': ", events[0].returnValues);
 
     events = await bos.getPastEvents("CapDecrease");
-    console.log("Event CapDecrease", events[0].returnValues);
+    console.log("Event 'CapDecrease': ", events[0].returnValues);
 
     // ==== CleanPar ====
 
     await bos.decreaseCleanPar(1, 100000000);
 
     events = await bos.getPastEvents("DecreaseCleanPar");
-    console.log("Event DecreaseCleanPar", events[0].returnValues);
+    console.log("Event 'DecreaseCleanPar': ", events[0].returnValues);
+
+    res = await bos.cleanPar(1);
+    console.log("cleanPar of share_1: ", res.toNumber());
 
     await bos.increaseCleanPar(1, 100000000);
 
     events = await bos.getPastEvents("IncreaseCleanPar");
-    console.log("Event IncreaseCleanPar", events[0].returnValues);
+    console.log("Event 'IncreaseCleanPar': ", events[0].returnValues);
+
+    res = await bos.cleanPar(1);
+    console.log("cleanPar of share_1: ", res.toNumber());
 
     // ==== UpdateShareState ====
 
     await bos.updateShareState(1, 4);
 
     events = await bos.getPastEvents("UpdateShareState");
-    console.log("Event UpdateShareState", events[0].returnValues);
+    console.log("Event 'UpdateShareState': ", events[0].returnValues);
+
+    res = await bos.getShare(1);
+    console.log("state of share_1: ", res.state.toNumber());
 
     await bos.updateShareState(1, 0);
 
     events = await bos.getPastEvents("UpdateShareState");
-    console.log("Event UpdateShareState", events[0].returnValues);
+    console.log("Event 'UpdateShareState': ", events[0].returnValues);
+
+    res = await bos.getShare(1);
+    console.log("state of share_1: ", res.state.toNumber());
 
     // ==== UpdatePaidInDeadline ====
 
@@ -136,16 +148,16 @@ module.exports = async function (callback) {
     await bos.updatePaidInDeadline(1, cur + 172800);
 
     events = await bos.getPastEvents("UpdatePaidInDeadline");
-    console.log("Event UpdatePaidInDeadline", events[0].returnValues);
+    console.log("Event 'UpdatePaidInDeadline': ", events[0].returnValues);
 
     await bos.updatePaidInDeadline(1, cur + 86400);
 
     events = await bos.getPastEvents("UpdatePaidInDeadline");
-    console.log("Event UpdatePaidInDeadline", events[0].returnValues);
+    console.log("Event 'UpdatePaidInDeadline': ", events[0].returnValues);
 
     // ==== Query ====
 
-    let res = await bos.counterOfShares();
+    res = await bos.counterOfShares();
     console.log("counterOfShares: ", res.toNumber());
 
     res = await bos.counterOfClasses();
@@ -194,7 +206,6 @@ module.exports = async function (callback) {
     res = await bos.qtyOfMembersAtBlock(bn);
     console.log("qtyOfMembersAtBlock: ", res.toNumber());
 
-
     res = await bos.parInHand(acct2.toNumber());
     console.log("parInHand of acct2: ", res.toNumber());
 
@@ -204,8 +215,6 @@ module.exports = async function (callback) {
     res = await bos.sharesInHand(acct2.toNumber());
     console.log("sharesInHand of acct2: ", res);
 
-
-
     // ==== HandOver keeper rights ====
 
     const bosKeeper = await BOSKeeper.deployed();
@@ -213,7 +222,7 @@ module.exports = async function (callback) {
 
     events = await rc.getPastEvents("SetManager");
 
-    console.log("'SetManager' event: docNo: ", events[0].returnValues.cont, "title: ", events[0].returnValues.title, "acct: ", events[0].returnValues.acct);
+    console.log("Event 'SetManager': ", events[0].returnValues);
 
     callback();
 }

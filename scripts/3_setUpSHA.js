@@ -149,21 +149,42 @@ module.exports = async function (callback) {
         from: accounts[7]
     });
     events = await sha.getPastEvents("SetRule");
-    console.log("Event 'SetRule': ", events[0].returnValues);
+    console.log("Event 'SetRule' for CI: ", events[0].returnValues);
 
     // ==== ST_Ext ====
     await sha.setRule(2, 0, 0, 5000, 1, 1, 1, 1, 1, 1, 0, {
         from: accounts[7]
     });
     events = await sha.getPastEvents("SetRule");
-    console.log("Event 'SetRule': ", events[0].returnValues);
+    console.log("Event 'SetRule' for ST_Ext: ", events[0].returnValues);
 
-    // ==== ST_Int ====
-    await sha.setRule(3, 0, 0, 0, 0, 1, 1, 0, 1, 1, 0, {
+    // ==== CI & ST_Ext ====
+    await sha.setRule(7, 0, 0, 6666, 0, 0, 1, 0, 1, 1, 0, {
         from: accounts[7]
     });
     events = await sha.getPastEvents("SetRule");
-    console.log("Event 'SetRule': ", events[0].returnValues);
+    console.log("Event 'SetRule' for CI & TS_Ext: ", events[0].returnValues);
+
+    // ==== CI & ST_Int ====
+    await sha.setRule(4, 0, 0, 6666, 0, 0, 1, 0, 1, 1, 0, {
+        from: accounts[7]
+    });
+    events = await sha.getPastEvents("SetRule");
+    console.log("Event 'SetRule' for CI & TS_Int: ", events[0].returnValues);
+
+    // ==== ST_Ext & ST_Int ====
+    await sha.setRule(5, 0, 0, 5000, 1, 1, 1, 1, 1, 1, 0, {
+        from: accounts[7]
+    });
+    events = await sha.getPastEvents("SetRule");
+    console.log("Event 'SetRule' for ST_Ext & ST_Int: ", events[0].returnValues);
+
+    // ==== CI & ST_Ext & ST_Int ====
+    await sha.setRule(6, 0, 0, 6666, 0, 0, 1, 0, 1, 1, 0, {
+        from: accounts[7]
+    });
+    events = await sha.getPastEvents("SetRule");
+    console.log("Event 'SetRule' for CI & ST_Ext & ST_Int: ", events[0].returnValues);
 
     // ==== FR ====
     ret = await sha.createTerm(3, {
@@ -191,234 +212,230 @@ module.exports = async function (callback) {
     console.log("Event 'CreateTerm': ", events[0].returnValues);
 
     // ==== remove FR ====
-
-
-    await fr.setFirstRefusal(3, 1, 1, 1, {
+    await sha.removeTerm(3, {
         from: accounts[7]
     });
-    let rule = await fr.ruleOfFR(3)
-    console.log("set FR for external transfer: ", rule);
 
-    await fr.setFirstRefusal(1, 1, 1, 1, {
+    events = await sha.getPastEvents("RemoveTerm");
+    console.log("Event 'RemoveTerm': ", events[0].returnValues);
+
+    // ==== FR ====
+    ret = await sha.createTerm(3, {
         from: accounts[7]
     });
+
+    addr = ret.logs[0].address;
+
+    fr = await FR.at(addr);
+    console.log("get FR: ", fr.address);
+
+    events = await fr.getPastEvents("Init");
+    console.log("Event 'Init': ", events[0].returnValues);
+
+    events = await rc.getPastEvents("SetManager");
+    console.log("Event 'SetManager': ", events[0].returnValues);
+
+    events = await fr.getPastEvents("SetBOS");
+    console.log("Event 'SetBOS': ", events[0].returnValues);
+
+    events = await fr.getPastEvents("SetBOM");
+    console.log("Event 'SetBOM': ", events[0].returnValues);
+
+    events = await sha.getPastEvents("CreateTerm");
+    console.log("Event 'CreateTerm': ", events[0].returnValues);
+
+    // ==== Set FR as per company law of China ====
+
+    await fr.setFirstRefusal(2, 1, 1, 0, {
+        from: accounts[7]
+    });
+
+    events = await fr.getPastEvents("SetFirstRefusal");
+    console.log("Event 'SetFirstRefusal' for ST_Ext: ", events[0].returnValues);
+
+    await fr.delFirstRefusal(2, {
+        from: accounts[7]
+    });
+
+    events = await fr.getPastEvents("DelFirstRefusal");
+    console.log("Event 'DelFirstRefusal' for ST_Ext: ", events[0].returnValues);
+
+    await fr.setFirstRefusal(2, 1, 1, 0, {
+        from: accounts[7]
+    });
+
+    events = await fr.getPastEvents("SetFirstRefusal");
+    console.log("Event 'SetFirstRefusal' for ST_Ext: ", events[0].returnValues);
+
+    await fr.setFirstRefusal(1, 1, 1, 0, {
+        from: accounts[7]
+    });
+
+    events = await fr.getPastEvents("SetFirstRefusal");
+    console.log("Event 'SetFirstRefusal' for CI: ", events[0].returnValues);
+
+
     rule = await fr.ruleOfFR(1)
-    console.log("set FR for capital increase: ", rule);
+    console.log("FR for CI: ", rule);
 
     await fr.lockContents({
         from: accounts[7]
     });
-    console.log("FR contents have been locked. ");
+
+    events = await rc.getPastEvents("AbandonRole");
+    console.log("Event 'AbandonRole': ", events[0].returnValues);
+
+    events = await rc.getPastEvents("SetManager");
+    console.log("Event 'SetManager': ", events[0].returnValues);
+
+    events = await fr.getPastEvents("LockContents");
+    console.log("Event 'LockContents': ", events[0].returnValues);
+
+
+
+    // ==== 设定签署和生效截止期 =====
+    let cur = null;
+
+    cur = Date.parse(new Date()) / 1000;
+
+    await sha.setSigDeadline(cur + 86400, {
+        from: accounts[7]
+    });
+
+    events = await sha.getPastEvents("SetSigDeadline");
+    console.log("Event 'SetSigDeadline': ", events[0].returnValues);
+
+    await sha.setClosingDeadline(cur + 86400, {
+        from: accounts[7]
+    });
+
+    events = await sha.getPastEvents("SetClosingDeadline");
+    console.log("Event 'SetClosingDeadline': ", events[0].returnValues);
+
+    let closingDeadline = await sha.closingDeadline({
+        from: accounts[7]
+    });
+    console.log("closingDeadline of SHA: ", closingDeadline);
+
+    let sigDeadline = await sha.sigDeadline({
+        from: accounts[7]
+    });
+    console.log("sigDeadline :", sigDeadline);
+
+    // ==== SHA finalizeDoc ====
 
     await sha.finalizeDoc({
         from: accounts[7]
     });
-    console.log("SHA finalized.");
+
+    events = await rc.getPastEvents("AbandonRole");
+    console.log("Event 'AbandonRole': ", events[0].returnValues);
+
+    events = await rc.getPastEvents("SetManager");
+    console.log("Event 'SetManager': ", events[0].returnValues);
+
+    events = await sha.getPastEvents("LockContents");
+    console.log("Event 'LockContents': ", events[0].returnValues);
+
+    events = await sha.getPastEvents("DocFinalized");
+    console.log("Event 'DocFinalized': ", events[0].returnValues);
+
+    // ==== CirculateSHA ====
 
     await gk.circulateSHA(sha.address, {
         from: accounts[2]
     });
-    console.log("SHA circulated.");
+
+    events = await rc.getPastEvents("SetManager");
+    console.log("Event 'SetManager': ", events[0].returnValues);
+
+    events = await boh.getPastEvents("UpdateStateOfDoc");
+    console.log("Event 'UpdateStateOfDoc': ", events[0].returnValues);
+
+
+
+    // ==== Signe SHA ====
 
     await gk.signSHA(sha.address, "0x49893d3f1021aa92c3103b3901e47aeb766de80f8c731731424df8f70ecc0d85", {
         from: accounts[2]
     });
-    console.log("acct2 signed SHA.");
+
+    events = await sha.getPastEvents("SignDeal");
+    console.log("Event 'SignDeal': ", events[0].returnValues);
+
+    // events = await sha.getPastEvents("DocEstablished");
+    // console.log("Event 'DocEstablished': ", events[0].returnValues);
 
     await gk.signSHA(sha.address, "0x49893d3f1021aa92c3103b3901e47aeb766de80f8c731731424df8f70ecc0d85", {
         from: accounts[3]
     });
-    console.log("acct3 signed SHA.");
+
+    events = await sha.getPastEvents("SignDeal");
+    console.log("Event 'SignDeal': ", events[0].returnValues);
 
     await gk.signSHA(sha.address, "0x49893d3f1021aa92c3103b3901e47aeb766de80f8c731731424df8f70ecc0d85", {
         from: accounts[4]
     });
-    console.log("acct4 signed SHA.");
+
+    events = await sha.getPastEvents("SignDeal");
+    console.log("Event 'SignDeal': ", events[0].returnValues);
+
+    events = await sha.getPastEvents("DocEstablished");
+    console.log("Event 'DocEstablished': ", events[0].returnValues);
+
 
     await gk.effectiveSHA(sha.address, {
         from: accounts[2]
     });
+
+    events = await boh.getPastEvents("UpdateStateOfDoc");
+    console.log("Event 'UpdateStateOfDoc': ", events[0].returnValues);
+
+    events = await boh.getPastEvents("ChangePointer");
+    console.log("Event 'ChangePointer': ", events[0].returnValues);
+
     console.log("SHA effectivated.");
 
-    // const bohKeeper = BOHKeeper.deployed();
-    // console.log("BOHKeeper: ", bohKeeper.address);
+    // ==== Query ====
 
-    // const boh = BOH.deployed();
-    // console.log("BOH: ", boh.address);
+    let res = null;
 
+    res = await sha.tempOfTitle(3);
+    console.log("FirstRefusal Template: ", res);
 
-    // // 确定SHA签署方
-    // await sha1.addPartyToDoc(accounts[2], {
-    //     from: accounts[7]
-    // });
+    res = await sha.hasTitle(3);
+    console.log("Has FR term? ", res);
 
-    // await sha1.addPartyToDoc(accounts[3], {
-    //     from: accounts[7]
-    // });
-    // await sha1.addPartyToDoc(accounts[4], {
-    //     from: accounts[7]
-    // });
-    // await sha1.addPartyToDoc(accounts[5], {
-    //     from: accounts[7]
-    // });
+    res = await sha.isTitle(4);
+    console.log("isTitle: ", res);
 
-    // let qtyOfParties = await sha1.qtyOfParties({
-    //     from: accounts[7]
-    // });
-    // console.log("Qty of parties of SHA: ", qtyOfParties);
+    res = await sha.isBody(fr.address);
+    console.log("isBody: ", res);
 
-    // // 设定签署和生效截止期
-    // await sha1.setClosingDeadline("1648592606", {
-    //     from: accounts[7]
-    // });
-    // await sha1.setSigDeadline("1647087806", {
-    //     from: accounts[7]
-    // });
+    res = await sha.titles();
+    console.log("titles: ", res.map(v => v.toNumber()));
 
-    // let closingDeadline = await sha1.closingDeadline({
-    //     from: accounts[7]
-    // });
-    // console.log("closingDeadline of SHA: ", closingDeadline);
+    res = await sha.bodies();
+    console.log("bodies: ", res);
 
-    // let sigDeadline = await sha1.sigDeadline({
-    //     from: accounts[7]
-    // });
-    // console.log("sigDeadline :", sigDeadline);
+    res = await sha.getTerm(3);
+    console.log("getTerm FR: ", res);
 
+    res = await sha.votingRules(2);
+    console.log("votingRules: ", res);
 
-    // // 起草SHA条款
+    res = await sha.basedOnPar();
+    console.log("basedOnPar: ", res);
 
-    // // LockUp
+    res = await sha.proposalThreshold();
+    console.log("proposalThreshold: ", res.toNumber());
 
-    // let templates = await sha1.tempOfTitle("0", {
-    //     from: accounts[2]
-    // });
+    res = await sha.maxNumOfDirectors();
+    console.log("maxNumOfDirectors: ", res.toNumber());
 
-    // console.log("Template of LuckUp:", templates);
+    res = await sha.tenureOfBoard();
+    console.log("tenureOfBoard: ", res.toNumber());
 
-    // receipt = await sha1.createTerm("0", {
-    //     from: accounts[7]
-    // });
-
-    // add = receipt.logs[0].address;
-    // console.log("Term of LockUp: ", add);
-
-    // let lu1 = await LockUp.at(add);
-    // // sha1.getTerm("0");
-
-    // // 设定项目律师
-    // await lu1.setAttorney(accounts[7], {
-    //     from: accounts[7]
-    // });
-
-    // attorney = await lu1.getAttorney();
-
-    // console.log("Attorney to LockUp: ", attorney);
-
-    // // 起草条款
-    // receipt = await lu1.setLocker("1", "1647354190", {
-    //     from: accounts[7]
-    // });
-
-    // // console.log(receipt);
-
-    // receipt = await lu1.addKeyholder("1", accounts[3], {
-    //     from: accounts[7]
-    // });
-
-    // // console.log(receipt);
-
-    // receipt = await lu1.addKeyholder("1", accounts[4], {
-    //     from: accounts[7]
-    // });
-
-    // // console.log(receipt);
-
-    // receipt = await lu1.addKeyholder("1", accounts[5], {
-    //     from: accounts[7]
-    // });
-
-    // // console.log(receipt);
-
-    // // VotingRules
-    // receipt = await sha1.createTerm("14", {
-    //     from: accounts[7]
-    // });
-
-    // add = receipt.logs[0].address;
-
-    // let vr1 = await VotingRules.at(add);
-    // await vr1.setAttorney(accounts[7], {
-    //     from: accounts[7]
-    // });
-
-    // console.log("VotingRules :", vr1.address);
-
-    // await vr1.setRule("1", "0", "6667", "false", "false", "false", "5", {
-    //     from: accounts[7]
-    // });
-
-    // await vr1.setRule("2", "5001", "0", "false", "false", "true", "5", {
-    //     from: accounts[7]
-    // });
-
-    // await vr1.setCommonRules("7", "false", {
-    //     from: accounts[7]
-    // });
-
-    // await vr1.getRule("2", {
-    //     from: accounts[7]
-    // });
-    // // console.log("ShareTransfer Rule: ", stRule);
-
-    // // 设定 增资、股转 审查条款
-
-
-
-    // // 定稿SHA
-    // await sha1.finalizeSHA({
-    //     from: accounts[7]
-    // });
-
-    // console.log("SHA finalized");
-
-    // // 分发SHA（创建股东）
-    // await sha1.circulateDoc({
-    //     from: accounts[2]
-    // });
-
-    // console.log("SHA circulated");
-
-
-    // // 签署SHA
-    // await sha1.signDoc({
-    //     from: accounts[2]
-    // });
-    // await sha1.signDoc({
-    //     from: accounts[3]
-    // });
-    // await sha1.signDoc({
-    //     from: accounts[4]
-    // });
-    // await sha1.signDoc({
-    //     from: accounts[5]
-    // });
-
-    // console.log("SHA established");
-
-    // // 提交SHA
-    // await bookeeper.submitSHA(sha1.address, "0x38301fb0b5fcf3aaa4b97c4771bb6c75546e313b4ce7057c51a8cc6a3ace9d7e", {
-    //     from: accounts[2]
-    // });
-
-    // console.log("SHA submitted");
-
-    // // 设定SHA为生效版本
-    // await bookeeper.effectiveSHA(sha1.address, {
-    //     from: accounts[2]
-    // });
-
-    // console.log("the One:", sha1.address);
 
     callback();
 }

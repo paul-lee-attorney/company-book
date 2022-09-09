@@ -197,7 +197,12 @@ contract RegCenter is IRegCenter {
 
         Entity storage corp = _entities[entity];
 
-        require(corp.members[roleOfUser] == 0, "role already be registered");
+        if (roleOfUser < uint8(EnumsRepo.RoleOfUser.InvestmentAgreement)) {
+            require(
+                corp.members[roleOfUser] == 0,
+                "role already be registered"
+            );
+        }
 
         _entityNo[user] = entity;
         corp.members[roleOfUser] = user;

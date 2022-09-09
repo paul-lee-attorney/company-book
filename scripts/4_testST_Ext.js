@@ -18,13 +18,15 @@ module.exports = async function (callback) {
     const accounts = await web3.eth.getAccounts();
     console.log(accounts);
 
-    // 创建IA
-    let receipt = await gk.createIA("0", {
+    let addr = null;
+    let events = null;
+
+    // ==== 创建IA ====
+    await gk.createIA("0", {
         from: accounts[2]
     });
 
-    let addr = receipt.logs[0].address;
-
+    addr = receipt.logs[0].address;
     console.log("IA address: ", addr);
 
     const ia = await IA.at(addr);

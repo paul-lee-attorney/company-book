@@ -77,7 +77,7 @@ contract BookOfMotions is
     {
         require(ISigPage(ia).established(), "doc is not established");
 
-        uint256 motionId = uint256(ia);
+        uint256 motionId = uint256(uint160(ia));
 
         uint8 motionType = _boa.typeOfIA(ia);
 
@@ -197,7 +197,7 @@ contract BookOfMotions is
         external
         onlyManager(1)
         onlyProposed(motionId)
-    // afterExpire(motionId)
+        afterExpire(motionId)
     {
         Motion storage motion = _motions[motionId];
 

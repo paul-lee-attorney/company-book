@@ -136,14 +136,14 @@ contract InvestmentAgreement is IInvestmentAgreement, BOSSetting, SigPage {
                     typeOfDeal == uint8(TypeOfDeal.ShareTransferInt) ||
                         typeOfDeal == uint8(TypeOfDeal.FirstRefusal) ||
                         typeOfDeal == uint8(TypeOfDeal.FreeGift),
-                    "wrong typeOfDeal"
+                    "IA.createDeal: wrong typeOfDeal"
                 );
             else
                 require(
                     typeOfDeal == uint8(TypeOfDeal.ShareTransferExt) ||
                         typeOfDeal == uint8(TypeOfDeal.TagAlong) ||
                         typeOfDeal == uint8(TypeOfDeal.DragAlong),
-                    "wrong typeOfDeal"
+                    "IA.createDeal: wrong typeOfDeal"
                 );
         } else {
             require(class <= _bos.counterOfClasses(), "class overflow");

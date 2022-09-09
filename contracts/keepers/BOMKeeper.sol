@@ -72,11 +72,11 @@ contract BOMKeeper is
             "InvestmentAgreement not on Established"
         );
 
-        // if (_subjectToReview(ia))
-        //     require(
-        //         _boa.reviewDeadlineBNOf(ia) < block.number,
-        //         "BOMKeeper.proposeMotion: IA not passed review procesedure"
-        //     );
+        if (_subjectToReview(ia))
+            require(
+                _boa.reviewDeadlineBNOf(ia) < block.number,
+                "BOMKeeper.proposeMotion: IA not passed review procesedure"
+            );
 
         require(
             _boa.votingDeadlineBNOf(ia) >= block.number,

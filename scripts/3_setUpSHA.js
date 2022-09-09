@@ -296,16 +296,17 @@ module.exports = async function (callback) {
     // ==== 设定签署和生效截止期 =====
     let cur = null;
 
-    cur = Date.parse(new Date()) / 1000;
+    // cur = Date.parse(new Date()) / 1000;
+    cur = await web3.eth.getBlock("latest");
 
-    await sha.setSigDeadline(cur + 86400, {
+    await sha.setSigDeadline(cur.timestamp + 86400, {
         from: accounts[7]
     });
 
     events = await sha.getPastEvents("SetSigDeadline");
     console.log("Event 'SetSigDeadline': ", events[0].returnValues);
 
-    await sha.setClosingDeadline(cur + 86400, {
+    await sha.setClosingDeadline(cur.timestamp + 86400, {
         from: accounts[7]
     });
 
@@ -406,7 +407,7 @@ module.exports = async function (callback) {
     res = await sha.hasTitle(3);
     console.log("Has FR term? ", res);
 
-    res = await sha.isTitle(4);
+    res = await sha.isTitle(3);
     console.log("isTitle: ", res);
 
     res = await sha.isBody(fr.address);
@@ -435,7 +436,6 @@ module.exports = async function (callback) {
 
     res = await sha.tenureOfBoard();
     console.log("tenureOfBoard: ", res.toNumber());
-
 
     callback();
 }

@@ -16,10 +16,10 @@ import "../../common/lib/EnumerableSet.sol";
 
 import "../../common/access/AccessControl.sol";
 import "../../common/ruting/IBookSetting.sol";
-import "../../common/ruting/BOCSetting.sol";
+// import "../../common/ruting/BOCSetting.sol";
 import "../../common/ruting/SHASetting.sol";
 
-contract BookOfShares is IBookOfShares, SHASetting, BOCSetting {
+contract BookOfShares is IBookOfShares, SHASetting {
     using SNFactory for bytes;
     using SNParser for bytes32;
     using ObjsRepo for ObjsRepo.SNList;
@@ -35,8 +35,8 @@ contract BookOfShares is IBookOfShares, SHASetting, BOCSetting {
     //Share 股票
     struct Share {
         bytes32 shareNumber; //出资证明书编号（股票编号）
-        uint64 parValue; //票面金额（注册资本面值）
-        uint64 paidPar; //实缴出资
+        uint64 par; //票面金额（注册资本面值）
+        uint64 paid; //实缴出资
         uint64 cleanPar; //清洁金额（扣除出质、远期票面金额）
         uint32 unitPrice; //发行价格（最小单位为分）
         uint32 paidInDeadline; //出资期限（时间戳）
@@ -57,14 +57,15 @@ contract BookOfShares is IBookOfShares, SHASetting, BOCSetting {
     //ssn => Share
     mapping(uint32 => Share) private _shares;
 
-    //股权序列号计数器（2**32-1, 0-4294967295）
-    uint32 private _counterOfShares;
-
     //类别序列号计数器(2**8-1, 0-255)
     uint8 private _counterOfClasses;
 
-    ObjsRepo.SNList private _snList;
+    //股权序列号计数器（2**32-1, 0-4294967295）
+    uint32 private _counterOfShares;
 
+    ObjsRepo.SNList private _shareNumbersList;
+
+    // ---- PayInCap Locker ----
     struct Locker {
         uint64 amount; //实缴金额
         bytes32 hashLock; //哈希锁
@@ -77,6 +78,7 @@ contract BookOfShares is IBookOfShares, SHASetting, BOCSetting {
     struct Member {
         EnumerableSet.Bytes32Set sharesInHand;
         Checkpoints.History votesInHand;
+        uint16 groupNo;
     }
 
     mapping(uint40 => Member) private _members;
@@ -85,17 +87,19 @@ contract BookOfShares is IBookOfShares, SHASetting, BOCSetting {
 
     Checkpoints.History private _qtyOfMembers;
 
+    uint40 private _controller;
+
     uint16 private _maxQtyOfMembers;
 
     // ==== Group ====
 
-    mapping(uint16 => EnumerableSet.UintSet) private _membersOfGroup;
+    // mapping(uint16 => EnumerableSet.UintSet) private _membersOfGroup;
 
-    EnumerableSet.UintSet private _groupsList;
+    // EnumerableSet.UintSet private _groupsList;
 
-    uint16 private _controller;
+    // uint16 private _controller;
 
-    uint16 private _counterOfGroups;
+    // uint16 private _counterOfGroups;
 
     //##################
     //##   Modifier   ##
@@ -107,7 +111,7 @@ contract BookOfShares is IBookOfShares, SHASetting, BOCSetting {
     }
 
     modifier shareExist(uint32 ssn) {
-        require(_snList.contains(ssn), "ssn NOT exist");
+        require(_shareNumbersList.contains(ssn), "ssn NOT exist");
         _;
     }
 
@@ -135,8 +139,8 @@ contract BookOfShares is IBookOfShares, SHASetting, BOCSetting {
     function issueShare(
         uint40 shareholder,
         uint8 class,
-        uint64 parValue,
-        uint64 paidPar,
+        uint64 par,
+        uint64 paid,
         uint32 paidInDeadline,
         uint32 issueDate,
         uint32 issuePrice
@@ -148,10 +152,10 @@ contract BookOfShares is IBookOfShares, SHASetting, BOCSetting {
             "issueDate LATER than paidInDeadline"
         );
 
-        require(paidPar <= parValue, "paidPar BIGGER than parValue");
+        require(paid <= par, "paid BIGGER than par");
 
         // 判断是否需要添加新股东，若添加是否会超过法定人数上限
-        _addMember(shareholder, parValue);
+        _addMember(shareholder);
 
         _counterOfShares++;
 
@@ -167,13 +171,13 @@ contract BookOfShares is IBookOfShares, SHASetting, BOCSetting {
         );
 
         // 在《股权簿》中添加新股票（签发新的《出资证明书》）
-        _issueShare(shareNumber, parValue, paidPar, paidInDeadline, issuePrice);
+        _issueShare(shareNumber, par, paid, paidInDeadline, issuePrice);
 
         // 将股票编号加入《股东名册》记载的股东名下
         _addShareToMember(shareNumber.ssn(), shareholder);
 
         // 增加“认缴出资”和“实缴出资”金额
-        _capIncrease(parValue, paidPar);
+        _capIncrease(par, paid);
     }
 
     // ==== PayInCapital ====
@@ -230,8 +234,8 @@ contract BookOfShares is IBookOfShares, SHASetting, BOCSetting {
 
     function transferShare(
         uint32 ssn,
-        uint64 parValue,
-        uint64 paidPar,
+        uint64 par,
+        uint64 paid,
         uint40 to,
         uint32 unitPrice
     ) external onlyKeeper {
@@ -241,9 +245,9 @@ contract BookOfShares is IBookOfShares, SHASetting, BOCSetting {
         require(to <= _rc.counterOfUsers(), "shareholder userNo overflow");
 
         // 判断是否需要新增股东，若需要判断是否超过法定人数上限
-        _addMember(to, uint64(parValue));
+        _addMember(to);
 
-        _decreaseShareAmount(ssn, parValue, paidPar);
+        _decreaseShareAmount(ssn, par, paid);
 
         _counterOfShares++;
 
@@ -258,8 +262,8 @@ contract BookOfShares is IBookOfShares, SHASetting, BOCSetting {
 
         _issueShare(
             shareNumber_1,
-            parValue,
-            paidPar,
+            par,
+            paid,
             _shares[ssn].paidInDeadline,
             unitPrice
         );
@@ -269,41 +273,41 @@ contract BookOfShares is IBookOfShares, SHASetting, BOCSetting {
 
     function decreaseCapital(
         uint32 ssn,
-        uint64 parValue,
-        uint64 paidPar
+        uint64 par,
+        uint64 paid
     ) external onlyManager(1) {
         // 减少特定“股票”项下的认缴和实缴金额
-        _decreaseShareAmount(ssn, parValue, paidPar);
+        _decreaseShareAmount(ssn, par, paid);
 
         // 减少公司“注册资本”和“实缴出资”总额
-        _capDecrease(parValue, paidPar);
+        _capDecrease(par, paid);
     }
 
     function _decreaseShareAmount(
         uint32 ssn,
-        uint64 parValue,
-        uint64 paidPar
+        uint64 par,
+        uint64 paid
     ) private {
         Share storage share = _shares[ssn];
 
-        require(parValue > 0, "parValue is ZERO");
-        require(share.parValue >= parValue, "parValue OVERFLOW");
-        require(share.cleanPar >= parValue, "cleanPar OVERFLOW");
+        require(par > 0, "par is ZERO");
+        require(share.par >= par, "par OVERFLOW");
+        require(share.cleanPar >= par, "cleanPar OVERFLOW");
         require(share.state < 4, "FREEZED share");
-        require(paidPar <= parValue, "paidPar BIGGER than parValue");
+        require(paid <= par, "paid BIGGER than par");
 
         // 若拟降低的面值金额等于股票面值，则删除相关股票
-        if (parValue == share.parValue) {
+        if (par == share.par) {
             _removeShareFromMember(ssn, share.shareNumber.shareholder());
             _deregisterShare(ssn);
             // _updateMembersList(share.shareNumber.shareholder());
         } else {
             // 仅调低认缴和实缴金额，保留原股票
-            _subAmountFromShare(ssn, parValue, paidPar);
+            _subAmountFromShare(ssn, par, paid);
             _decreaseAmountFromMember(
                 _shares[ssn].shareNumber.shareholder(),
-                parValue,
-                paidPar
+                par,
+                paid
             );
         }
     }
@@ -330,8 +334,8 @@ contract BookOfShares is IBookOfShares, SHASetting, BOCSetting {
 
     function _issueShare(
         bytes32 shareNumber,
-        uint64 parValue,
-        uint64 paidPar,
+        uint64 par,
+        uint64 paid,
         uint32 paidInDeadline,
         uint32 unitPrice
     ) internal {
@@ -340,21 +344,15 @@ contract BookOfShares is IBookOfShares, SHASetting, BOCSetting {
         Share storage share = _shares[ssn];
 
         share.shareNumber = shareNumber;
-        share.parValue = parValue;
-        share.paidPar = paidPar;
-        share.cleanPar = paidPar;
+        share.par = par;
+        share.paid = paid;
+        share.cleanPar = paid;
         share.paidInDeadline = paidInDeadline;
         share.unitPrice = unitPrice;
 
-        _snList.add(shareNumber);
+        _shareNumbersList.add(shareNumber);
 
-        emit IssueShare(
-            shareNumber,
-            parValue,
-            paidPar,
-            paidInDeadline,
-            unitPrice
-        );
+        emit IssueShare(shareNumber, par, paid, paidInDeadline, unitPrice);
     }
 
     function _deregisterShare(uint32 ssn) internal {
@@ -362,7 +360,7 @@ contract BookOfShares is IBookOfShares, SHASetting, BOCSetting {
 
         delete _shares[ssn];
 
-        _snList.remove(shareNumber);
+        _shareNumbersList.remove(shareNumber);
 
         emit DeregisterShare(shareNumber);
     }
@@ -377,11 +375,11 @@ contract BookOfShares is IBookOfShares, SHASetting, BOCSetting {
             "BOS._payInCapital: missed payInDeadline"
         );
         require(
-            share.paidPar + amount <= share.parValue,
+            share.paid + amount <= share.par,
             "BOS._payInCapital: amount overflow"
         );
 
-        share.paidPar += amount; //溢出校验已通过
+        share.paid += amount; //溢出校验已通过
         share.cleanPar += amount;
 
         emit PayInCapital(ssn, amount, paidInDate);
@@ -389,16 +387,16 @@ contract BookOfShares is IBookOfShares, SHASetting, BOCSetting {
 
     function _subAmountFromShare(
         uint32 ssn,
-        uint64 parValue,
-        uint64 paidPar
+        uint64 par,
+        uint64 paid
     ) internal {
         Share storage share = _shares[ssn];
 
-        share.parValue -= parValue;
-        share.paidPar -= paidPar;
-        share.cleanPar -= paidPar;
+        share.par -= par;
+        share.paid -= paid;
+        share.cleanPar -= paid;
 
-        emit SubAmountFromShare(ssn, parValue, paidPar);
+        emit SubAmountFromShare(ssn, par, paid);
     }
 
     function _capIncrease(uint64 par, uint64 paid) internal {
@@ -423,43 +421,39 @@ contract BookOfShares is IBookOfShares, SHASetting, BOCSetting {
         emit CapDecrease(par, regCap, paid, paidCap, blocknumber);
     }
 
-    function decreaseCleanPar(uint32 ssn, uint64 paidPar)
+    function decreaseCleanPar(uint32 ssn, uint64 paid)
         external
         onlyKeeper
         shareExist(ssn)
         notFreezed(ssn)
     {
-        require(paidPar > 0, "ZERO paidPar");
+        require(paid > 0, "ZERO paid");
 
         Share storage share = _shares[ssn];
 
-        require(paidPar <= share.cleanPar, "INSUFFICIENT cleanPar");
+        require(paid <= share.cleanPar, "INSUFFICIENT cleanPar");
 
-        share.cleanPar -= paidPar;
+        share.cleanPar -= paid;
 
-        emit DecreaseCleanPar(ssn, paidPar);
+        emit DecreaseCleanPar(ssn, paid);
     }
 
-    function increaseCleanPar(uint32 ssn, uint64 paidPar)
+    function increaseCleanPar(uint32 ssn, uint64 paid)
         external
         onlyKeeper
         shareExist(ssn)
         notFreezed(ssn)
     {
-        require(paidPar > 0, "ZERO paidPar");
+        require(paid > 0, "ZERO paid");
 
         Share storage share = _shares[ssn];
-        require(
-            share.paidPar >= (share.cleanPar + paidPar),
-            "paidPar overflow"
-        );
+        require(share.paid >= (share.cleanPar + paid), "paid overflow");
 
-        share.cleanPar += paidPar;
+        share.cleanPar += paid;
 
-        if (share.cleanPar == share.paidPar && share.state != 4)
-            share.state = 0;
+        if (share.cleanPar == share.paid && share.state != 4) share.state = 0;
 
-        emit IncreaseCleanPar(ssn, paidPar);
+        emit IncreaseCleanPar(ssn, paid);
     }
 
     /// @param ssn - 股票短号
@@ -493,14 +487,14 @@ contract BookOfShares is IBookOfShares, SHASetting, BOCSetting {
         emit SetMaxQtyOfMembers(max);
     }
 
-    function _addMember(uint40 acct, uint64 parValue) internal {
+    function _addMember(uint40 acct) internal {
         require(
             _membersList.length() < _maxQtyOfMembers,
             "Qty of Members overflow"
         );
 
         if (_membersList.add(acct)) {
-            // _rc.investIn(acct, parValue, true);
+            // _rc.investIn(acct, par, true);
             _qtyOfMembers.push(uint64(_membersList.length()), 1);
             emit AddMember(acct, uint16(_membersList.length()));
         }
@@ -512,8 +506,8 @@ contract BookOfShares is IBookOfShares, SHASetting, BOCSetting {
 
             delete member.sharesInHand;
 
-            if (_boc.groupNo(acct) > 0)
-                _boc.removeMemberFromGroup(acct, _boc.groupNo(acct));
+            // if (_boc.groupNo(acct) > 0)
+            //     _boc.removeMemberFromGroup(acct, _boc.groupNo(acct));
             _qtyOfMembers.push(uint64(_membersList.length()), 0);
             // _rc.exitOut(acct);
             emit RemoveMember(acct, uint16(_membersList.length()));
@@ -527,7 +521,7 @@ contract BookOfShares is IBookOfShares, SHASetting, BOCSetting {
     {
         Share storage share = _shares[ssn];
 
-        _increaseAmountToMember(acct, share.parValue, share.paidPar);
+        _increaseAmountToMember(acct, share.par, share.paid);
 
         _members[acct].sharesInHand.add(share.shareNumber);
 
@@ -544,46 +538,73 @@ contract BookOfShares is IBookOfShares, SHASetting, BOCSetting {
         _members[acct].sharesInHand.remove(share.shareNumber);
 
         if (_members[acct].sharesInHand.length() == 0) _removeMember(acct);
-        else _decreaseAmountFromMember(acct, share.parValue, share.paidPar);
+        else _decreaseAmountFromMember(acct, share.par, share.paid);
 
         emit RemoveShareFromMember(share.shareNumber, acct);
     }
 
     function _increaseAmountToMember(
         uint40 acct,
-        uint64 parValue,
-        uint64 paidPar
+        uint64 par,
+        uint64 paid
     ) internal {
         (uint64 oldPar, uint64 oldPaid) = _members[acct].votesInHand.latest();
 
-        uint64 curPar = oldPar + parValue;
-        uint64 curPaid = oldPaid + paidPar;
+        uint64 curPar = oldPar + par;
+        uint64 curPaid = oldPaid + paid;
 
         uint64 blocknumber = _members[acct].votesInHand.push(curPar, curPaid);
 
         // _rc.updateParValue(acct, curPar);
 
-        emit IncreaseAmountToMember(acct, parValue, paidPar, blocknumber);
+        emit IncreaseAmountToMember(acct, par, paid, blocknumber);
     }
 
     function _decreaseAmountFromMember(
         uint40 acct,
-        uint64 parValue,
-        uint64 paidPar
+        uint64 par,
+        uint64 paid
     ) internal {
         (uint64 oldPar, uint64 oldPaid) = _members[acct].votesInHand.latest();
 
-        require(oldPar >= parValue, "parValue over flow");
-        require(oldPaid >= paidPar, "paidPar over flow");
+        require(oldPar >= par, "par over flow");
+        require(oldPaid >= paid, "paid over flow");
 
         uint64 blocknumber = _members[acct].votesInHand.push(
-            oldPar - parValue,
-            oldPaid - paidPar
+            oldPar - par,
+            oldPaid - paid
         );
 
-        // _rc.updateParValue(acct, uint64(oldPar - parValue));
+        // _rc.updateParValue(acct, uint64(oldPar - par));
 
-        emit DecreaseAmountFromMember(acct, parValue, paidPar, blocknumber);
+        emit DecreaseAmountFromMember(acct, par, paid, blocknumber);
+    }
+
+    function addMemberToGroup(uint40 acct, uint16 group)
+        external
+        memberExist(acct)
+        onlyKeeper
+    {
+        Member storage member = _members[acct];
+        require(
+            member.groupNo == 0,
+            "BOS.addMemberToGroup: member's groupNo not ZERO"
+        );
+
+        member.groupNo = group;
+        emit AddMemberToGroup(acct, group);
+    }
+
+    function removeMemberFromGroup(uint40 acct, uint16 group)
+        external
+        memberExist(acct)
+        onlyKeeper
+    {
+        Member storage member = _members[acct];
+        require(member.groupNo == group, "BOS.addMemberToGroup: wrong groupNo");
+
+        member.groupNo = 0;
+        emit RemoveMemberFromGroup(acct, group);
     }
 
     // ##################
@@ -640,11 +661,11 @@ contract BookOfShares is IBookOfShares, SHASetting, BOCSetting {
     }
 
     function isShare(uint32 ssn) external view returns (bool) {
-        return _snList.contains(ssn);
+        return _shareNumbersList.contains(ssn);
     }
 
     function snList() external view returns (bytes32[]) {
-        return _snList.values();
+        return _shareNumbersList.values();
     }
 
     function cleanPar(uint32 ssn) external view returns (uint64) {
@@ -657,8 +678,8 @@ contract BookOfShares is IBookOfShares, SHASetting, BOCSetting {
         shareExist(ssn)
         returns (
             bytes32 shareNumber,
-            uint64 parValue,
-            uint64 paidPar,
+            uint64 par,
+            uint64 paid,
             uint32 paidInDeadline,
             uint32 unitPrice,
             uint8 state
@@ -667,8 +688,8 @@ contract BookOfShares is IBookOfShares, SHASetting, BOCSetting {
         Share storage share = _shares[ssn];
 
         shareNumber = share.shareNumber;
-        parValue = share.parValue;
-        paidPar = share.paidPar;
+        par = share.par;
+        paid = share.paid;
         paidInDeadline = share.paidInDeadline;
         unitPrice = share.unitPrice;
         state = share.state;
@@ -728,7 +749,7 @@ contract BookOfShares is IBookOfShares, SHASetting, BOCSetting {
         (, paid) = _members[acct].votesInHand.latest();
     }
 
-    function voteInHand(uint40 acct)
+    function votesInHand(uint40 acct)
         external
         view
         memberExist(acct)
@@ -756,5 +777,14 @@ contract BookOfShares is IBookOfShares, SHASetting, BOCSetting {
         returns (bytes32[])
     {
         return _members[acct].sharesInHand.values();
+    }
+
+    function groupNo(uint40 acct)
+        external
+        view
+        memberExist(acct)
+        returns (uint16)
+    {
+        return _members[acct].groupNo;
     }
 }

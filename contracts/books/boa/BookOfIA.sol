@@ -59,7 +59,7 @@ contract BookOfIA is IBookOfIA, DocumentsRepo {
         }
     }
 
-    function createMockResults(address ia, address creatorAddr)
+    function createMockResults(address ia)
         external
         onlyKeeper
         returns (address mock)

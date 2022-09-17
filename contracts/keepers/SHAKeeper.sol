@@ -82,7 +82,7 @@ contract SHAKeeper is
         bytes32 sigHash
     ) external onlyManager(1) onlyEstablished(ia) withinReviewPeriod(ia) {
         address mock = _boa.mockResultsOfIA(ia);
-        if (mock == address(0)) mock = _boa.createMockResults(ia, callerAddr);
+        if (mock == address(0)) mock = _boa.createMockResults(ia);
 
         IBookSetting(mock).setBOC(_boc);
         IBookSetting(mock).setBOH(_boh);
@@ -182,7 +182,7 @@ contract SHAKeeper is
             shareNumber,
             shareNumber.class(),
             sn.buyerOfDeal(),
-            sn.groupOfBuyer(),
+            // sn.groupOfBuyer(),
             sn.sequence()
         );
     }
@@ -312,7 +312,7 @@ contract SHAKeeper is
                 shareNumber,
                 shareNumber.class(),
                 caller,
-                _boc.groupNo(caller),
+                // _boc.groupNo(caller),
                 ssn
             );
 
@@ -414,7 +414,7 @@ contract SHAKeeper is
             shareNumber,
             snOfOD.class(),
             caller,
-            _boc.groupNo(caller),
+            // _boc.groupNo(caller),
             snOfOD.sequence()
         );
     }

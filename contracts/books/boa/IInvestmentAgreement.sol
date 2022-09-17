@@ -50,7 +50,7 @@ interface IInvestmentAgreement {
         bytes32 shareNumber,
         uint8 class,
         uint40 buyer,
-        uint16 group,
+        // uint16 group,
         uint16 preSSN
     ) external returns (bytes32);
 

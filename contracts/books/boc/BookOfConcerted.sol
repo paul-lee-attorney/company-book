@@ -14,15 +14,16 @@ contract BookOfConcerted is IBookOfConcerted, BOSSetting {
 
     struct Group {
         EnumerableSet.UintSet affiliates;
+        uint64 votesInHand;
     }
 
     mapping(uint16 => Group) private _groups;
 
-    mapping(uint40 => uint16) private _groupNo;
+    // mapping(uint40 => uint16) private _groupNo;
 
-    EnumerableSet.UintSet private _snList;
+    EnumerableSet.UintSet private _groupNumbersList;
 
-    uint16 private _controller;
+    // uint16 private _controller;
 
     uint16 private _counterOfGroups;
 
@@ -31,7 +32,7 @@ contract BookOfConcerted is IBookOfConcerted, BOSSetting {
     //##################
 
     modifier groupExist(uint16 group) {
-        require(_snList.contains(group), "group is NOT exist");
+        require(_groupNumbersList.contains(group), "group is NOT exist");
         _;
     }
 
@@ -46,17 +47,18 @@ contract BookOfConcerted is IBookOfConcerted, BOSSetting {
             "BOC.addMemberToGroup: group OVER FLOW"
         );
         require(
-            _groupNo[acct] == 0,
-            "BOC.addMemberToGroup: acct already in group"
+            _bos.groupNo(acct) == 0,
+            "BOC.addMemberToGroup: acct already in a group"
         );
 
-        _snList.add(group);
+        _groupNumbersList.add(group);
 
         if (group > _counterOfGroups) _counterOfGroups++;
 
-        _groupNo[acct] = group;
+        // _groupNo[acct] = group;
 
         _groups[group].affiliates.add(acct);
+        _groups[group].votesInHand += _bos.votesInHand(acct);
 
         emit AddMemberToGroup(acct, group);
     }
@@ -67,15 +69,17 @@ contract BookOfConcerted is IBookOfConcerted, BOSSetting {
         onlyKeeper
     {
         require(
-            _groupNo[acct] == group,
+            _bos.groupNo(acct) == group,
             "BOC.removeMemberFromGroup: WRONG group number"
         );
 
         _groups[group].affiliates.remove(acct);
-        _groupNo[acct] = 0;
+        _groups[group].votesInHand -= _bos.votesInHand(acct);
+
+        // _groupNo[acct] = 0;
 
         if (_groups[group].affiliates.length() == 0) {
-            _snList.remove(group);
+            _groupNumbersList.remove(group);
         }
 
         emit RemoveMemberFromGroup(acct, group);
@@ -97,7 +101,7 @@ contract BookOfConcerted is IBookOfConcerted, BOSSetting {
         view
         returns (uint16 index)
     {
-        uint16[] memory groups = _snList.valuesToUint16();
+        uint16[] memory groups = _groupNumbersList.valuesToUint16();
 
         uint256 len = groups.length;
 
@@ -160,7 +164,7 @@ contract BookOfConcerted is IBookOfConcerted, BOSSetting {
     }
 
     function isGroup(uint16 group) external view returns (bool) {
-        return _snList.contains(group);
+        return _groupNumbersList.contains(group);
     }
 
     function belongsToGroup(uint40 acct, uint16 group)
@@ -174,7 +178,7 @@ contract BookOfConcerted is IBookOfConcerted, BOSSetting {
     }
 
     function snList() external view returns (uint16[]) {
-        return _snList.valuesToUint16();
+        return _groupNumbersList.valuesToUint16();
     }
 
     function parOfGroup(uint16 group)

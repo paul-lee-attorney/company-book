@@ -60,16 +60,16 @@ library SNParser {
         return uint40(bytes5(sn << 32));
     }
 
-    function groupOfBuyer(bytes32 sn) internal pure returns (uint16) {
-        return uint16(bytes2(sn << 72));
-    }
+    // function groupOfBuyer(bytes32 sn) internal pure returns (uint16) {
+    //     return uint16(bytes2(sn << 72));
+    // }
 
     function ssnOfDeal(bytes32 sn) internal pure returns (uint32) {
-        return uint32(bytes4(sn << 88));
+        return uint32(bytes4(sn << 72));
     }
 
     function preSeqOfDeal(bytes32 sn) internal pure returns (uint16) {
-        return uint16(bytes2(sn << 120));
+        return uint16(bytes2(sn << 104));
     }
 
     // ======== DocSN ========

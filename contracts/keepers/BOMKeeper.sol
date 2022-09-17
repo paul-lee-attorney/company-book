@@ -91,7 +91,7 @@ contract BOMKeeper is
         _boa.pushToNextState(ia, caller);
     }
 
-    function _subjectToReview(address ia) private returns (bool) {
+    function _subjectToReview(address ia) private view returns (bool) {
         bytes32[] memory dealsList = IInvestmentAgreement(ia).dealsList();
         uint256 len = dealsList.length;
 

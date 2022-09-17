@@ -40,7 +40,7 @@ contract FirstRefusalDeals is IFirstRefusalDeals, IASetting, BOSSetting {
         uint16 seqOfFR,
         uint40 acct
     ) external onlyManager(1) dealExist(seqOfOD) {
-        uint64 weight = _bos.voteInHand(acct);
+        uint64 weight = _bos.votesInHand(acct);
         require(weight > 0, "first refusal request has ZERO weight");
 
         if (_frDeals[seqOfOD].claims[seqOfFR].weight == 0) {

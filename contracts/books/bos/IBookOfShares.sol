@@ -82,6 +82,10 @@ interface IBookOfShares {
         uint64 blocknumber
     );
 
+    event AddMemberToGroup(uint40 indexed acct, uint16 indexed group);
+
+    event RemoveMemberFromGroup(uint40 indexed acct, uint16 indexed group);
+
     //##################
     //##    写接口    ##
     //##################
@@ -131,6 +135,10 @@ interface IBookOfShares {
     // ==== MembersRepo ====
 
     function setMaxQtyOfMembers(uint16 max) external;
+
+    function addMemberToGroup(uint40 acct, uint16 group) external;
+
+    function removeMemberFromGroup(uint40 acct, uint16 group) external;
 
     // ##################
     // ##   查询接口   ##
@@ -200,7 +208,7 @@ interface IBookOfShares {
 
     function paidInHand(uint40 acct) external view returns (uint64 paid);
 
-    function voteInHand(uint40 acct) external view returns (uint64 vote);
+    function votesInHand(uint40 acct) external view returns (uint64 vote);
 
     function votesAtBlock(uint40 acct, uint64 blockNumber)
         external
@@ -208,4 +216,6 @@ interface IBookOfShares {
         returns (uint64 vote);
 
     function sharesInHand(uint40 acct) external view returns (bytes32[]);
+
+    function groupNo(uint40 acct) external view returns (uint16);
 }

@@ -167,7 +167,7 @@ contract BookOfMotions is
 
         while (len > 0) {
             uint40 shareholder = uint40(_delegates[actionId][acct].at(len - 1));
-            weight += _bos.voteInHand(shareholder);
+            weight += _bos.votesInHand(shareholder);
             len--;
         }
 

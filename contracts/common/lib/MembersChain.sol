@@ -276,9 +276,8 @@ library MembersChain {
             m.data[basedOnPar].sum += delta;
         }
 
-
         if (m.group > 0) {
-            _vMove(self, m, basedOnPar, decrease);
+           _vMove(self, m, basedOnPar, decrease);
         } else {
             _hMove(self, m, basedOnPar, decrease);
         }

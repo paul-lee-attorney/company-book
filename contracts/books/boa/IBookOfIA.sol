@@ -40,9 +40,7 @@ interface IBookOfIA {
         external
         returns (address frd);
 
-    function createMockResults(address ia, address creatorAddr)
-        external
-        returns (address mock);
+    function createMockResults(address ia) external returns (address mock);
 
     // ==== DocumentsRepo ====
 

@@ -85,7 +85,7 @@ module.exports = async function (callback) {
 
     let share1 = await bos.getShare(1);
 
-    await ia.createDeal(2, share1.shareNumber, 0, acct5.toNumber(), 5, 0, {
+    await ia.createDeal(2, share1.shareNumber, 0, acct5.toNumber(), 0, {
         from: accounts[7]
     });
 

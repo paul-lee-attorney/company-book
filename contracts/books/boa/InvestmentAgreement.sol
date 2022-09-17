@@ -96,7 +96,7 @@ contract InvestmentAgreement is IInvestmentAgreement, BOSSetting, SigPage {
         uint16 seq,
         uint8 typeOfDeal,
         uint40 buyer,
-        uint16 group,
+        // uint16 group,
         bytes32 shareNumber,
         uint16 preSeq
     ) internal pure returns (bytes32) {
@@ -106,9 +106,9 @@ contract InvestmentAgreement is IInvestmentAgreement, BOSSetting, SigPage {
         _sn = _sn.sequenceToSN(1, seq);
         _sn[3] = bytes1(typeOfDeal);
         _sn = _sn.acctToSN(4, buyer);
-        _sn = _sn.sequenceToSN(9, group);
-        _sn = _sn.dateToSN(11, shareNumber.ssn());
-        _sn = _sn.sequenceToSN(15, preSeq);
+        // _sn = _sn.sequenceToSN(9, group);
+        _sn = _sn.dateToSN(9, shareNumber.ssn());
+        _sn = _sn.sequenceToSN(13, preSeq);
 
         return _sn.bytesToBytes32();
     }
@@ -118,11 +118,11 @@ contract InvestmentAgreement is IInvestmentAgreement, BOSSetting, SigPage {
         bytes32 shareNumber,
         uint8 class,
         uint40 buyer,
-        uint16 group,
+        // uint16 group,
         uint16 preSeq
     ) public attorneyOrKeeper returns (bytes32) {
         require(buyer != 0, "buyer is ZERO address");
-        require(group > 0, "ZERO group");
+        // require(group > 0, "ZERO group");
 
         if (shareNumber > bytes32(0)) {
             require(
@@ -161,7 +161,7 @@ contract InvestmentAgreement is IInvestmentAgreement, BOSSetting, SigPage {
             _counterOfDeals,
             typeOfDeal,
             buyer,
-            group,
+            // group,
             shareNumber,
             preSeq
         );

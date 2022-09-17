@@ -149,7 +149,7 @@ contract BOAKeeper is
             "IA not in Circulated State"
         );
 
-        // _mockDealsOfParty(ia, caller);
+        _lockDealsOfParty(ia, caller);
 
         ISigPage(ia).signDoc(caller, sigHash);
 
@@ -159,40 +159,35 @@ contract BOAKeeper is
         }
     }
 
-    // function _mockDealsOfParty(address ia, uint40 caller) private onlyKeeper {
-    //     uint16[] memory seqList = IInvestmentAgreement(ia).dealsConcerned(
-    //         caller
-    //     );
-    //     uint256 len = seqList.length;
-    //     uint64 amount;
-    //     while (len > 0) {
-    //         uint16 seq = seqList[len - 1];
-    //         (
-    //             bytes32 sn,
-    //             uint64 parValue,
-    //             uint64 paidPar,
-    //             ,
+    function _lockDealsOfParty(address ia, uint40 caller) private onlyKeeper {
+        bytes32[] memory snList = IInvestmentAgreement(ia).dealsList();
+        uint256 len = snList.length;
+        // uint64 amount;
+        while (len > 0) {
+            bytes32 sn = snList[len - 1];
+            len--;
 
-    //         ) = IInvestmentAgreement(ia).getDeal(seq);
-    //         amount = _getSHA().basedOnPar() ? parValue : paidPar;
-    //         if (!IInvestmentAgreement(ia).isBuyerOfDeal(caller, seq)) {
-    //             if (IInvestmentAgreement(ia).lockDealSubject(seq)) {
-    //                 _bos.decreaseCleanPar(
-    //                     sn.ssnOfDeal(),
-    //                     parValue
-    //                 );
-    //                 _boa.mockDealOfSell(ia, caller, amount);
-    //             }
-    //         } else {
-    //             if (
-    //                 sn.typeOfDeal() ==
-    //                 uint8(EnumsRepo.TypeOfDeal.CapitalIncrease)
-    //             ) IInvestmentAgreement(ia).lockDealSubject(seq);
-    //             _boa.mockDealOfBuy(ia, seq, caller, amount);
-    //         }
-    //         len--;
-    //     }
-    // }
+            uint16 seq = sn.sequence();
+
+            (, , uint64 paidPar, , ) = IInvestmentAgreement(ia).getDeal(seq);
+            // amount = _getSHA().basedOnPar() ? parValue : paidPar;
+
+            bytes32 shareNumber = IInvestmentAgreement(ia).shareNumberOfDeal(
+                seq
+            );
+
+            if (shareNumber.shareholder() == caller) {
+                if (IInvestmentAgreement(ia).lockDealSubject(seq)) {
+                    _bos.decreaseCleanPar(sn.ssnOfDeal(), paidPar);
+                    // _boa.mockDealOfSell(ia, caller, amount);
+                }
+            } else if (
+                sn.buyerOfDeal() == caller &&
+                sn.typeOfDeal() == uint8(EnumsRepo.TypeOfDeal.CapitalIncrease)
+            ) IInvestmentAgreement(ia).lockDealSubject(seq);
+            // _boa.mockDealOfBuy(ia, seq, caller, amount);
+        }
+    }
 
     // ======== PayInCapital ========
 
@@ -347,8 +342,8 @@ contract BOAKeeper is
             );
         }
 
-        if (sn.groupOfBuyer() > 0)
-            _boc.addMemberToGroup(sn.buyerOfDeal(), sn.groupOfBuyer());
+        // if (sn.groupOfBuyer() > 0)
+        //     _boc.addMemberToGroup(sn.buyerOfDeal(), sn.groupOfBuyer());
 
         _boc.updateController(_getSHA().basedOnPar());
     }

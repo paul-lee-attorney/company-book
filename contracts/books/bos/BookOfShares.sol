@@ -5,32 +5,30 @@
 
 pragma solidity ^0.4.24;
 
+pragma experimental ABIEncoderV2;
+
 import "./IBookOfShares.sol";
 
 import "../../common/lib/SNFactory.sol";
 import "../../common/lib/SNParser.sol";
-import "../../common/lib/ObjsRepo.sol";
-import "../../common/lib/Checkpoints.sol";
-import "../../common/lib/EnumsRepo.sol";
-import "../../common/lib/EnumerableSet.sol";
+// import "../../common/lib/ObjsRepo.sol";
+// import "../../common/lib/Checkpoints.sol";
+// import "../../common/lib/EnumsRepo.sol";
+// import "../../common/lib/EnumerableSet.sol";
+import "../../common/lib/MembersRepo.sol";
+import "../../common/lib/TopChain.sol";
 
-import "../../common/access/AccessControl.sol";
-import "../../common/ruting/IBookSetting.sol";
-// import "../../common/ruting/BOCSetting.sol";
+// import "../../common/access/AccessControl.sol";
+// import "../../common/ruting/IBookSetting.sol";
 import "../../common/ruting/SHASetting.sol";
 
 contract BookOfShares is IBookOfShares, SHASetting {
     using SNFactory for bytes;
     using SNParser for bytes32;
-    using ObjsRepo for ObjsRepo.SNList;
-    using Checkpoints for Checkpoints.History;
-    using EnumerableSet for EnumerableSet.Bytes32Set;
-    using EnumerableSet for EnumerableSet.UintSet;
+    using MembersRepo for MembersRepo.GeneralMeeting;
 
     //公司注册号哈希值（统一社会信用号码的“加盐”哈希值）
     bytes32 private _regNumHash;
-
-    // ==== SharesRepo ====
 
     //Share 股票
     struct Share {
@@ -45,25 +43,14 @@ contract BookOfShares is IBookOfShares, SHASetting {
 
     // SNInfo: 股票编号编码规则
     // struct SNInfo {
-    //     uint8 class; //股份类别（投资轮次）
-    //     uint16 sequence; //顺序编码
+    //     uint16 class; //股份类别（投资轮次）
+    //     uint32 sequence; //顺序编码
     //     uint32 issueDate; //发行日期
     //     uint40 shareholder; //股东编号
-    //     uint32 preSN; //来源股票编号索引（sequence + issueDate)
+    //     uint32 preSN; //来源股票编号索引
     // }
 
-    Checkpoints.History private _ownersEquity;
-
-    //ssn => Share
-    mapping(uint32 => Share) private _shares;
-
-    //类别序列号计数器(2**8-1, 0-255)
-    uint8 private _counterOfClasses;
-
-    //股权序列号计数器（2**32-1, 0-4294967295）
-    uint32 private _counterOfShares;
-
-    ObjsRepo.SNList private _shareNumbersList;
+    mapping(uint256 => Share) private _shares;
 
     // ---- PayInCap Locker ----
     struct Locker {
@@ -71,57 +58,36 @@ contract BookOfShares is IBookOfShares, SHASetting {
         bytes32 hashLock; //哈希锁
     }
     // ssn => Locker
-    mapping(uint32 => Locker) private _lockers;
+    mapping(uint256 => Locker) private _lockers;
 
-    // ==== Member ====
-
-    struct Member {
-        EnumerableSet.Bytes32Set sharesInHand;
-        Checkpoints.History votesInHand;
-        uint16 groupNo;
-    }
-
-    mapping(uint40 => Member) private _members;
-
-    EnumerableSet.UintSet private _membersList;
-
-    Checkpoints.History private _qtyOfMembers;
-
-    uint40 private _controller;
-
-    uint16 private _maxQtyOfMembers;
-
-    // ==== Group ====
-
-    // mapping(uint16 => EnumerableSet.UintSet) private _membersOfGroup;
-
-    // EnumerableSet.UintSet private _groupsList;
-
-    // uint16 private _controller;
-
-    // uint16 private _counterOfGroups;
+    MembersChain.GeneralMeeting private _gm;
 
     //##################
     //##   Modifier   ##
     //##################
 
     modifier notFreezed(uint32 ssn) {
-        require(_shares[ssn].state < 4, "FREEZED share");
+        require(_shares[ssn].state < 4, "BOS.notFreezed: FREEZED share");
         _;
     }
 
     modifier shareExist(uint32 ssn) {
-        require(_shareNumbersList.contains(ssn), "ssn NOT exist");
+        require(isShare(ssn), "BOS.shareExist: ssn NOT exist");
         _;
     }
 
     modifier onlyMember() {
-        require(_membersList.contains(_msgSender()), "NOT Member");
+        require(isMember(_msgSender()), "BOS.onlyMember: NOT Member");
         _;
     }
 
     modifier memberExist(uint40 acct) {
-        require(_membersList.contains(acct), "Acct is NOT Member");
+        require(isMember(acct), "BOS.onlyMember: NOT Member");
+        _;
+    }
+
+    modifier groupExist(uint16 group) {
+        require(isGroup(group), "BOS.onlyMember: NOT Member");
         _;
     }
 
@@ -129,16 +95,16 @@ contract BookOfShares is IBookOfShares, SHASetting {
     //##    写接口    ##
     //##################
 
-    constructor(bytes32 regNumHash, uint16 max) public {
-        _maxQtyOfMembers = max;
+    constructor(bytes32 regNumHash, uint8 max) public {
         _regNumHash = regNumHash;
+        _gm.init(max);
     }
 
     // ==== IssueShare ====
 
     function issueShare(
         uint40 shareholder,
-        uint8 class,
+        uint16 class,
         uint64 par,
         uint64 paid,
         uint32 paidInDeadline,
@@ -157,27 +123,27 @@ contract BookOfShares is IBookOfShares, SHASetting {
         // 判断是否需要添加新股东，若添加是否会超过法定人数上限
         _addMember(shareholder);
 
-        _counterOfShares++;
+        _gm.increaseCounterOfShares();
 
-        require(class <= _counterOfClasses, "class OVER FLOW");
-        if (class == _counterOfClasses) _counterOfClasses++;
+        require(class <= _gm.counterOfClasses(), "class OVER FLOW");
+        if (class == _gm.counterOfClasses()) _gm.increaseCounterOfClasses();
 
         bytes32 shareNumber = _createShareNumber(
             class,
-            _counterOfShares,
+            _gm.counterOfShares(),
             (issueDate == 0) ? uint32(block.timestamp) : issueDate,
             shareholder,
             0
         );
 
         // 在《股权簿》中添加新股票（签发新的《出资证明书》）
-        _issueShare(shareNumber, par, paid, paidInDeadline, issuePrice);
+        _issueShare(shareNumber, paid, par, paidInDeadline, issuePrice);
 
         // 将股票编号加入《股东名册》记载的股东名下
         _addShareToMember(shareNumber.ssn(), shareholder);
 
         // 增加“认缴出资”和“实缴出资”金额
-        _capIncrease(par, paid);
+        _capIncrease(paid, par);
     }
 
     // ==== PayInCapital ====
@@ -217,14 +183,15 @@ contract BookOfShares is IBookOfShares, SHASetting {
         // 增加“股票”项下实缴出资金额
         _payInCapital(ssn, amount);
 
-        _increaseAmountToMember(
+        _changeAmtOfMember(
             _shares[ssn].shareNumber.shareholder(),
+            amount,
             0,
-            amount
+            false
         );
 
         // 增加公司的“实缴出资”总额
-        _capIncrease(0, amount);
+        _capIncrease(amount, 0);
 
         // remove payInAmount;
         _lockers[ssn].amount = 0;
@@ -234,8 +201,8 @@ contract BookOfShares is IBookOfShares, SHASetting {
 
     function transferShare(
         uint32 ssn,
-        uint64 par,
         uint64 paid,
+        uint64 par,
         uint40 to,
         uint32 unitPrice
     ) external onlyKeeper {
@@ -247,14 +214,14 @@ contract BookOfShares is IBookOfShares, SHASetting {
         // 判断是否需要新增股东，若需要判断是否超过法定人数上限
         _addMember(to);
 
-        _decreaseShareAmount(ssn, par, paid);
+        _decreaseShareAmount(ssn, paid, par);
 
-        _counterOfShares++;
+        _gm.increaseCounterOfShares();
 
         // 在“新股东”名下增加新的股票
         bytes32 shareNumber_1 = _createShareNumber(
             shareNumber.class(),
-            _counterOfShares,
+            _gm.counterOfShares(),
             uint32(block.timestamp),
             to,
             shareNumber.ssn()
@@ -262,31 +229,33 @@ contract BookOfShares is IBookOfShares, SHASetting {
 
         _issueShare(
             shareNumber_1,
-            par,
             paid,
+            par,
             _shares[ssn].paidInDeadline,
             unitPrice
         );
 
-        _addShareToMember(ssn, to);
+        _addShareToMember(shareNumber_1.ssn(), to);
     }
+
+    // ==== DecreaseCapital ====
 
     function decreaseCapital(
         uint32 ssn,
-        uint64 par,
-        uint64 paid
+        uint64 paid,
+        uint64 par
     ) external onlyManager(1) {
         // 减少特定“股票”项下的认缴和实缴金额
-        _decreaseShareAmount(ssn, par, paid);
+        _decreaseShareAmount(ssn, paid, par);
 
         // 减少公司“注册资本”和“实缴出资”总额
-        _capDecrease(par, paid);
+        _capDecrease(paid, par);
     }
 
     function _decreaseShareAmount(
         uint32 ssn,
-        uint64 par,
-        uint64 paid
+        uint64 paid,
+        uint64 par
     ) private {
         Share storage share = _shares[ssn];
 
@@ -300,14 +269,14 @@ contract BookOfShares is IBookOfShares, SHASetting {
         if (par == share.par) {
             _removeShareFromMember(ssn, share.shareNumber.shareholder());
             _deregisterShare(ssn);
-            // _updateMembersList(share.shareNumber.shareholder());
         } else {
             // 仅调低认缴和实缴金额，保留原股票
-            _subAmountFromShare(ssn, par, paid);
-            _decreaseAmountFromMember(
+            _subAmountFromShare(ssn, paid, par);
+            _changeAmtOfMember(
                 _shares[ssn].shareNumber.shareholder(),
+                paid,
                 par,
-                paid
+                true
             );
         }
     }
@@ -315,30 +284,30 @@ contract BookOfShares is IBookOfShares, SHASetting {
     // ==== SharesRepo ====
 
     function _createShareNumber(
-        uint8 class,
+        uint16 class,
         uint32 ssn,
         uint32 issueDate,
         uint40 shareholder,
         uint32 preSSN
-    ) internal pure returns (bytes32 sn) {
+    ) private pure returns (bytes32 sn) {
         bytes memory _sn = new bytes(32);
 
-        _sn[0] = bytes1(class);
-        _sn = _sn.dateToSN(1, ssn);
-        _sn = _sn.dateToSN(5, issueDate);
-        _sn = _sn.acctToSN(9, shareholder);
-        _sn = _sn.dateToSN(14, preSSN);
+        _sn = _sn.sequenceToSN(0, class);
+        _sn = _sn.dateToSN(2, ssn);
+        _sn = _sn.dateToSN(6, issueDate);
+        _sn = _sn.acctToSN(10, shareholder);
+        _sn = _sn.dateToSN(15, preSSN);
 
         sn = _sn.bytesToBytes32();
     }
 
     function _issueShare(
         bytes32 shareNumber,
-        uint64 par,
         uint64 paid,
+        uint64 par,
         uint32 paidInDeadline,
         uint32 unitPrice
-    ) internal {
+    ) private {
         uint32 ssn = shareNumber.ssn();
 
         Share storage share = _shares[ssn];
@@ -350,22 +319,22 @@ contract BookOfShares is IBookOfShares, SHASetting {
         share.paidInDeadline = paidInDeadline;
         share.unitPrice = unitPrice;
 
-        _shareNumbersList.add(shareNumber);
+        // _shareNumbersList.add(shareNumber);
 
         emit IssueShare(shareNumber, par, paid, paidInDeadline, unitPrice);
     }
 
-    function _deregisterShare(uint32 ssn) internal {
+    function _deregisterShare(uint32 ssn) private {
         bytes32 shareNumber = _shares[ssn].shareNumber;
 
         delete _shares[ssn];
 
-        _shareNumbersList.remove(shareNumber);
+        // _shareNumbersList.remove(shareNumber);
 
         emit DeregisterShare(shareNumber);
     }
 
-    function _payInCapital(uint32 ssn, uint64 amount) internal {
+    function _payInCapital(uint32 ssn, uint64 amount) private {
         uint32 paidInDate = uint32(block.timestamp);
 
         Share storage share = _shares[ssn];
@@ -387,39 +356,30 @@ contract BookOfShares is IBookOfShares, SHASetting {
 
     function _subAmountFromShare(
         uint32 ssn,
-        uint64 par,
-        uint64 paid
-    ) internal {
+        uint64 paid,
+        uint64 par
+    ) private {
         Share storage share = _shares[ssn];
 
-        share.par -= par;
         share.paid -= paid;
+        share.par -= par;
+
         share.cleanPar -= paid;
 
-        emit SubAmountFromShare(ssn, par, paid);
+        emit SubAmountFromShare(ssn, paid, par);
     }
 
-    function _capIncrease(uint64 par, uint64 paid) internal {
-        (uint64 regCap, uint64 paidCap) = _ownersEquity.latest();
-
-        regCap += par;
-        paidCap += paid;
-
-        uint64 blocknumber = _ownersEquity.push(regCap, paidCap);
-
-        emit CapIncrease(par, regCap, paid, paidCap, blocknumber);
+    function _capIncrease(uint64 paid, uint64 par) private {
+        uint64 blocknumber = _gm.changeAmtOfCap(paid, par, false);
+        emit CapIncrease(paid, par, blocknumber);
     }
 
-    function _capDecrease(uint64 par, uint64 paid) internal {
-        (uint64 regCap, uint64 paidCap) = _ownersEquity.latest();
-
-        regCap -= par;
-        paidCap -= paid;
-
-        uint64 blocknumber = _ownersEquity.push(regCap, paidCap);
-
-        emit CapDecrease(par, regCap, paid, paidCap, blocknumber);
+    function _capDecrease(uint64 paid, uint64 par) private {
+        uint64 blocknumber = _gm.changeAmtOfCap(paid, par, true);
+        emit CapDecrease(paid, par, blocknumber);
     }
+
+    // ==== CleanPar ====
 
     function decreaseCleanPar(uint32 ssn, uint64 paid)
         external
@@ -456,6 +416,8 @@ contract BookOfShares is IBookOfShares, SHASetting {
         emit IncreaseCleanPar(ssn, paid);
     }
 
+    // ==== State & PaidInDeadline ====
+
     /// @param ssn - 股票短号
     /// @param state - 股票状态 （0：正常，1：出质，2：远期占用; 3:1+2; 4:查封; 5:1+4; 6:2+4; 7:1+2+4 ）
     function updateShareState(uint32 ssn, uint8 state)
@@ -483,133 +445,106 @@ contract BookOfShares is IBookOfShares, SHASetting {
     // ==== MembersRepo ====
 
     function setMaxQtyOfMembers(uint16 max) external onlyManager(1) {
-        _maxQtyOfMembers = max;
+        _gm.setMaxQtyOfMembers(max);
         emit SetMaxQtyOfMembers(max);
     }
 
-    function _addMember(uint40 acct) internal {
+    function _addMember(uint40 acct) private {
         require(
-            _membersList.length() < _maxQtyOfMembers,
+            _gm.qtyOfMembers() < _gm.maxQtyOfMembers() ||
+                _gm.maxQtyOfMembers() == 0,
             "Qty of Members overflow"
         );
 
-        if (_membersList.add(acct)) {
-            // _rc.investIn(acct, par, true);
-            _qtyOfMembers.push(uint64(_membersList.length()), 1);
-            emit AddMember(acct, uint16(_membersList.length()));
+        if (_gm.addMember(acct)) emit AddMember(acct, _gm.qtyOfMembers());
+    }
+
+    function _addShareToMember(uint32 ssn, uint40 acct) private {
+        Share storage share = _shares[ssn];
+
+        if (_gm.addShareToMember(share.shareNumber, acct)) {
+            uint64 blockNumber = _gm.changeAmtOfMember(
+                acct,
+                _getSHA().basedOnPar(),
+                share.paid,
+                share.par,
+                false
+            );
+            emit AddShareToMember(share.shareNumber, acct);
         }
     }
 
-    function _removeMember(uint40 acct) internal {
-        if (_membersList.remove(acct)) {
-            Member storage member = _members[acct];
+    function _removeShareFromMember(uint32 ssn, uint40 acct) private {
+        Share storage share = _shares[ssn];
 
-            delete member.sharesInHand;
+        _changeAmtOfMember(acct, share.paid, share.par, true);
 
-            // if (_boc.groupNo(acct) > 0)
-            //     _boc.removeMemberFromGroup(acct, _boc.groupNo(acct));
-            _qtyOfMembers.push(uint64(_membersList.length()), 0);
-            // _rc.exitOut(acct);
-            emit RemoveMember(acct, uint16(_membersList.length()));
+        if (_gm.removeShareFromMember(share.shareNumber, acct)) {
+            if (_gm.qtyOfSharesInHand(acct) == 0) _gm.delMember(acct);
+
+            emit RemoveShareFromMember(share.shareNumber, acct);
         }
     }
 
-    function _addShareToMember(uint32 ssn, uint40 acct)
-        internal
-        shareExist(ssn)
-        memberExist(acct)
-    {
-        Share storage share = _shares[ssn];
-
-        _increaseAmountToMember(acct, share.par, share.paid);
-
-        _members[acct].sharesInHand.add(share.shareNumber);
-
-        emit AddShareToMember(share.shareNumber, acct);
-    }
-
-    function _removeShareFromMember(uint32 ssn, uint40 acct)
-        internal
-        shareExist(ssn)
-        memberExist(acct)
-    {
-        Share storage share = _shares[ssn];
-
-        _members[acct].sharesInHand.remove(share.shareNumber);
-
-        if (_members[acct].sharesInHand.length() == 0) _removeMember(acct);
-        else _decreaseAmountFromMember(acct, share.par, share.paid);
-
-        emit RemoveShareFromMember(share.shareNumber, acct);
-    }
-
-    function _increaseAmountToMember(
+    function _changeAmtOfMember(
         uint40 acct,
-        uint64 par,
-        uint64 paid
-    ) internal {
-        (uint64 oldPar, uint64 oldPaid) = _members[acct].votesInHand.latest();
+        uint64 deltaPaid,
+        uint64 deltaPar,
+        bool decrease
+    ) private {
+        if (decrease) {
+            require(
+                _gm.paidOfMember(acct) > deltaPaid,
+                "BOS._changeAmtOfMember: paid amount not enough"
+            );
+            require(
+                _gm.parOfMember(acct) > deltaPar,
+                "BOS._changeAmtOfMember: par amount not enough"
+            );
+        }
 
-        uint64 curPar = oldPar + par;
-        uint64 curPaid = oldPaid + paid;
-
-        uint64 blocknumber = _members[acct].votesInHand.push(curPar, curPaid);
-
-        // _rc.updateParValue(acct, curPar);
-
-        emit IncreaseAmountToMember(acct, par, paid, blocknumber);
-    }
-
-    function _decreaseAmountFromMember(
-        uint40 acct,
-        uint64 par,
-        uint64 paid
-    ) internal {
-        (uint64 oldPar, uint64 oldPaid) = _members[acct].votesInHand.latest();
-
-        require(oldPar >= par, "par over flow");
-        require(oldPaid >= paid, "paid over flow");
-
-        uint64 blocknumber = _members[acct].votesInHand.push(
-            oldPar - par,
-            oldPaid - paid
+        uint64 blocknumber = _gm.changeAmtOfMember(
+            acct,
+            _getSHA().basedOnPar(),
+            deltaPaid,
+            deltaPar,
+            decrease
         );
 
-        // _rc.updateParValue(acct, uint64(oldPar - par));
-
-        emit DecreaseAmountFromMember(acct, par, paid, blocknumber);
+        emit ChangeAmtOfMember(
+            acct,
+            deltaPaid,
+            deltaPar,
+            decrease,
+            blocknumber
+        );
     }
 
-    function addMemberToGroup(uint40 acct, uint16 group)
-        external
-        memberExist(acct)
-        onlyKeeper
-    {
-        Member storage member = _members[acct];
+    function addMemberToGroup(uint40 acct, uint16 group) external onlyKeeper {
         require(
-            member.groupNo == 0,
-            "BOS.addMemberToGroup: member's groupNo not ZERO"
+            _gm.groupNo(acct) == 0,
+            "BOS.addMemberToGroup: remove acct from group first"
         );
 
-        member.groupNo = group;
+        _gm.removeMemberFromChain(acct);
+        _gm.addMemberToGroup(acct, group);
+
         emit AddMemberToGroup(acct, group);
     }
 
     function removeMemberFromGroup(uint40 acct, uint16 group)
         external
-        memberExist(acct)
         onlyKeeper
     {
-        Member storage member = _members[acct];
-        require(member.groupNo == group, "BOS.addMemberToGroup: wrong groupNo");
-
-        member.groupNo = 0;
+        _gm.removeMemberFromGroup(acct, group);
         emit RemoveMemberFromGroup(acct, group);
     }
 
     // ##################
     // ##   查询接口   ##
     // ##################
+
+    // ==== BookOfShares ====
 
     function verifyRegNum(string regNum)
         external
@@ -620,55 +555,50 @@ contract BookOfShares is IBookOfShares, SHASetting {
         return _regNumHash == keccak256(bytes(regNum));
     }
 
-    // ==== SharesRepo ====
-    function counterOfShares() external view returns (uint32) {
-        return _counterOfShares;
+    function maxQtyOfMembers() external view returns (uint8) {
+        return _gm.maxQtyOfMembers();
     }
 
-    function counterOfClasses() external view returns (uint8) {
-        return _counterOfClasses;
+    function counterOfShares() external view returns (uint40) {
+        return _gm.counterOfShares();
     }
 
-    function regCap() external view returns (uint64 par) {
-        (par, ) = _ownersEquity.latest();
+    function counterOfClasses() external view returns (uint16) {
+        return _gm.counterOfClasses();
     }
 
-    function paidCap() external view returns (uint64 paid) {
-        (, paid) = _ownersEquity.latest();
+    function paidCap() external view returns (uint64) {
+        return _gm.paidCap();
+    }
+
+    function parCap() external view returns (uint64) {
+        return _gm.parCap();
     }
 
     function capAtBlock(uint64 blocknumber)
         external
         view
-        returns (uint64 par, uint64 paid)
+        returns (uint64, uint64)
     {
-        (par, paid) = _ownersEquity.getAtBlock(blocknumber);
+        return _gm.capAtBlock(blocknumber);
     }
 
-    function totalVote() external view returns (uint64 vote) {
-        if (_getSHA().basedOnPar()) (vote, ) = _ownersEquity.latest();
-        else (, vote) = _ownersEquity.latest();
+    function totalVotes() external view returns (uint64) {
+        return _gm.totalVotes();
     }
 
-    function totalVoteAtBlock(uint64 blocknumber)
+    // ==== SharesRepo ====
+
+    function isShare(uint32 ssn) public view returns (bool) {
+        return _shares[ssn].shareNumber > bytes32(0);
+    }
+
+    function cleanPar(uint32 ssn)
         external
         view
-        returns (uint64 vote)
+        shareExist(ssn)
+        returns (uint64)
     {
-        if (_getSHA().basedOnPar())
-            (vote, ) = _ownersEquity.getAtBlock(blocknumber);
-        else (, vote) = _ownersEquity.getAtBlock(blocknumber);
-    }
-
-    function isShare(uint32 ssn) external view returns (bool) {
-        return _shareNumbersList.contains(ssn);
-    }
-
-    function snList() external view returns (bytes32[]) {
-        return _shareNumbersList.values();
-    }
-
-    function cleanPar(uint32 ssn) external view returns (uint64) {
         return _shares[ssn].cleanPar;
     }
 
@@ -678,8 +608,8 @@ contract BookOfShares is IBookOfShares, SHASetting {
         shareExist(ssn)
         returns (
             bytes32 shareNumber,
-            uint64 par,
             uint64 paid,
+            uint64 par,
             uint32 paidInDeadline,
             uint32 unitPrice,
             uint8 state
@@ -688,14 +618,27 @@ contract BookOfShares is IBookOfShares, SHASetting {
         Share storage share = _shares[ssn];
 
         shareNumber = share.shareNumber;
-        par = share.par;
         paid = share.paid;
+        par = share.par;
         paidInDeadline = share.paidInDeadline;
         unitPrice = share.unitPrice;
         state = share.state;
     }
 
+    function sharesList() external view returns (bytes32[]) {
+        return _gm.sharesList();
+    }
+
+    function sharenumberExist(bytes32 sharenumbre)
+        external
+        view
+        returns (bool)
+    {
+        return _gm.sharenumberExist(sharenumber);
+    }
+
     // ==== PayInCapital ====
+
     function getLocker(uint32 ssn)
         external
         view
@@ -710,64 +653,53 @@ contract BookOfShares is IBookOfShares, SHASetting {
 
     // ==== MembersRepo ====
 
-    function maxQtyOfMembers() external view returns (uint16) {
-        return _maxQtyOfMembers;
+    function isMember(uint40 acct) external view returns (bool) {
+        return _gm.isMember(acct);
     }
 
-    function isMember(uint40 acct) public view returns (bool) {
-        return _membersList.contains(acct);
-    }
-
-    function members() external view returns (uint40[]) {
-        return _membersList.valuesToUint40();
-    }
-
-    function qtyOfMembersAtBlock(uint64 blockNumber)
-        external
-        view
-        returns (uint16)
-    {
-        (uint256 qty, ) = _qtyOfMembers.getAtBlock(blockNumber);
-        return (uint16(qty));
-    }
-
-    function parInHand(uint40 acct)
+    function indexOfMember(uint40 acct)
         external
         view
         memberExist(acct)
-        returns (uint64 par)
+        returns (uint16)
     {
-        (par, ) = _members[acct].votesInHand.latest();
+        return _gm.indexOfMember(acct);
     }
 
-    function paidInHand(uint40 acct)
+    function paidOfMember(uint40 acct)
         external
         view
         memberExist(acct)
         returns (uint64 paid)
     {
-        (, paid) = _members[acct].votesInHand.latest();
+        paid = _gm.paidOfMember(acct);
+    }
+
+    function parOfMember(uint40 acct)
+        external
+        view
+        memberExist(acct)
+        returns (uint64 par)
+    {
+        par = _gm.parOfMember(acct);
     }
 
     function votesInHand(uint40 acct)
         external
         view
         memberExist(acct)
-        returns (uint64 vote)
+        returns (uint64)
     {
-        if (_getSHA().basedOnPar())
-            (vote, ) = _members[acct].votesInHand.latest();
-        else (, vote) = _members[acct].votesInHand.latest();
+        return _gm.votesInHand(acct);
     }
 
-    function votesAtBlock(uint40 acct, uint64 blockNumber)
+    function votesAtBlock(uint40 acct, uint64 blocknumber)
         external
         view
-        returns (uint64 vote)
+        memberExist(acct)
+        returns (uint64)
     {
-        if (_getSHA().basedOnPar())
-            (vote, ) = _members[acct].votesInHand.getAtBlock(blockNumber);
-        else (, vote) = _members[acct].votesInHand.getAtBlock(blockNumber);
+        return _gm.votesAtBlock(acct, blocknumber, _getSHA().basedOnPar());
     }
 
     function sharesInHand(uint40 acct)
@@ -776,7 +708,7 @@ contract BookOfShares is IBookOfShares, SHASetting {
         memberExist(acct)
         returns (bytes32[])
     {
-        return _members[acct].sharesInHand.values();
+        return _gm.sharesInHand(acct);
     }
 
     function groupNo(uint40 acct)
@@ -785,6 +717,80 @@ contract BookOfShares is IBookOfShares, SHASetting {
         memberExist(acct)
         returns (uint16)
     {
-        return _members[acct].groupNo;
+        return _gm.groupNo(acct);
+    }
+
+    function qtyOfMembers() external view returns (uint16) {
+        return _gm.qtyOfMembers();
+    }
+
+    function membersList() external view returns (uint40[]) {
+        return _gm.membersList();
+    }
+
+    function affiliated(uint40 acct1, uint40 acct2)
+        external
+        view
+        memberExist(acct1)
+        memberExist(acct2)
+        returns (bool)
+    {
+        return _gm.affiliated(acct1, acct2);
+    }
+
+    // ==== group ====
+
+    function isGroup(uint16 group) external view returns (bool) {
+        return _gm.isGroup(group);
+    }
+
+    function controllor() external view returns (uint40) {
+        return _gm.controllor();
+    }
+
+    function votesOfController() external view returns (uint64) {
+        return _gm.votesOfHead();
+    }
+
+    function votesOfGroup(uint16 group)
+        external
+        view
+        groupExist(group)
+        returns (uint64)
+    {
+        return _gm.votesOfGroup(group);
+    }
+
+    function leaderOfGroup(uint16 group)
+        external
+        view
+        groupExist(group)
+        returns (uint64)
+    {
+        return _gm.leaderOfGroup(group);
+    }
+
+    function membersOfGroup(uint16 group)
+        external
+        view
+        groupExist(group)
+        returns (uint40[] memory)
+    {
+        return _gm.membersOfGroup(group);
+    }
+
+    function deepOfGroup(uint16 group)
+        external
+        view
+        groupExist(group)
+        returns (uint16)
+    {
+        return _gm.deepOfGroup(group);
+    }
+
+    // ==== snapshot ====
+
+    function getSnapshot() external view returns (TopChain.Node[] memory) {
+        return _gm.getSnapshot();
     }
 }

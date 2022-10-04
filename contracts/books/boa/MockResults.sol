@@ -5,56 +5,40 @@
 pragma solidity ^0.4.24;
 
 import "./IMockResults.sol";
+import "./IInvestmentAgreement.sol";
 
-import "../../common/lib/EnumerableSet.sol";
+import "../../common/lib/TopChain.sol";
+import "../../common/lib/MembersRepo.sol";
 import "../../common/lib/SNParser.sol";
 
-import "../../common/ruting/BOCSetting.sol";
 import "../../common/ruting/BOSSetting.sol";
 import "../../common/ruting/SHASetting.sol";
+
 import "../../common/ruting/IASetting.sol";
 
-contract MockResults is
-    IMockResults,
-    IASetting,
-    BOCSetting,
-    SHASetting,
-    BOSSetting
-{
-    using EnumerableSet for EnumerableSet.UintSet;
+contract MockResults is IMockResults, IASetting, SHASetting, BOSSetting {
     using SNParser for bytes32;
+    using TopChain for TopChain.Chain;
+    using MembersRepo for MembersRepo.GeneralMeeting;
 
-    struct Amt {
-        uint64 selAmt;
-        uint64 buyAmt;
-        uint64 orgAmt;
-        uint64 rstAmt;
-    }
-
-    // groupNo => Amt
-    mapping(uint16 => Amt) private _mockResults;
-
-    EnumerableSet.UintSet private _groupsConcerned;
-
-    // // ssnOfDeal => bool
-    // mapping(uint16 => bool) private _isMocked;
-
-    struct TopGroup {
-        uint16 groupNum;
-        uint64 amount;
-        bool isOrgController;
-        uint16 shareRatio;
-        Amt sumOfIA;
-    }
-
-    TopGroup private _topGroup;
+    MembersRepo.GeneralMeeting private _mgm;
 
     //#################
     //##  Write I/O  ##
     //#################
 
-    function mockDealsOfIA() external onlyManager(0) returns (bool) {
+    function createMockGM() external onlyManager(0) {
+        TopChain.Node[] memory snapshot = _bos.getSnapshot();
+        _mgm.init(0);
+        _mgm.restoreChain(snapshot);
+        _mockDealsOfIA();
+
+        emit CreateMockGM(uint64(block.number));
+    }
+
+    function _mockDealsOfIA() private {
         bytes32[] memory dealsList = _ia.dealsList();
+
         uint256 len = dealsList.length;
 
         while (len > 0) {
@@ -66,216 +50,125 @@ contract MockResults is
             else (, , amount, , ) = _ia.getDeal(sn.sequence());
 
             uint32 short = sn.ssnOfDeal();
-            if (short > 0) _mockDealOfSell(short, amount);
+            if (short > 0) mockDealOfSell(short, amount);
 
-            _mockDealOfBuy(sn, amount);
+            mockDealOfBuy(sn, amount);
 
             len--;
         }
-
-        _calculateMockResult();
-
-        return true;
     }
 
-    function _mockDealOfSell(uint32 ssn, uint64 amount) private {
+    function mockDealOfSell(uint32 ssn, uint64 amount) public {
         (bytes32 shareNumber, , , , , ) = _bos.getShare(ssn);
-        uint16 sellerGroup = _boc.groupNo(shareNumber.shareholder());
 
-        _mockResults[sellerGroup].selAmt += amount;
-        _groupsConcerned.add(sellerGroup);
+        uint40 seller = shareNumber.shareholder();
+        uint16 iSeller = _mgm.indexOfMember(seller);
 
-        emit MockDealOfSell(sellerGroup, amount);
-    }
+        _mgm.chain.changeAmt(iSeller, amount, true);
 
-    function _mockDealOfBuy(bytes32 sn, uint64 amount) private {
-        uint16 buyerGroup = _boc.groupNo(sn.buyerOfDeal());
-
-        _mockResults[buyerGroup].buyAmt += amount;
-        _groupsConcerned.add(buyerGroup);
-
-        emit MockDealOfBuy(buyerGroup, amount);
-    }
-
-    function _calculateMockResult() private {
-        uint16[] memory groups = _groupsConcerned.valuesToUint16();
-
-        uint256 len = groups.length;
-        bool basedOnPar = _getSHA().basedOnPar();
-
-        while (len > 0) {
-            uint16 groupNum = groups[len - 1];
-
-            Amt storage group = _mockResults[groupNum];
-
-            group.orgAmt = basedOnPar
-                ? _boc.parOfGroup(groupNum)
-                : _boc.paidOfGroup(groupNum);
-
-            require(
-                group.orgAmt + group.buyAmt >= group.selAmt,
-                "amount OVER FLOW"
-            );
-            group.rstAmt = group.orgAmt + group.buyAmt - group.selAmt;
-
-            if (group.rstAmt > _topGroup.amount) {
-                _topGroup.amount = group.rstAmt;
-                _topGroup.groupNum = groupNum;
-            }
-
-            _topGroup.sumOfIA.buyAmt += group.buyAmt;
-            _topGroup.sumOfIA.selAmt += group.selAmt;
+        if (_mgm.chain.nodes[iSeller].amt == 0) {
+            _mgm.delMember(acct);
         }
 
-        require(
-            _topGroup.sumOfIA.buyAmt >= _topGroup.sumOfIA.selAmt,
-            "sell amount over flow"
-        );
-
-        _topGroup.sumOfIA.rstAmt =
-            _topGroup.sumOfIA.buyAmt -
-            _topGroup.sumOfIA.selAmt;
-
-        _checkController(basedOnPar);
-
-        emit CalculateResult(
-            _topGroup.groupNum,
-            _topGroup.amount,
-            _topGroup.isOrgController,
-            _topGroup.shareRatio
-        );
+        emit MockDealOfSell(seller, amount);
     }
 
-    function _checkController(bool basedOnPar) private {
-        uint16 controller = _boc.controller();
-        uint64 amtOfCorp = basedOnPar ? _bos.regCap() : _bos.paidCap();
-        amtOfCorp += _topGroup.sumOfIA.rstAmt;
+    function mockDealOfBuy(bytes32 sn, uint64 amount) public {
+        uint40 buyer = sn.buyerOfDeal();
 
-        if (_groupsConcerned.contains(controller)) {
-            if (_topGroup.groupNum == controller)
-                _topGroup.isOrgController = true;
-        } else {
-            uint64 amtOfController = basedOnPar
-                ? _boc.parOfGroup(controller)
-                : _boc.paidOfGroup(controller);
+        if (!_mgm.isMember(buyer)) _mgm.addMember(buyer);
 
-            if (_topGroup.amount < amtOfController) {
-                _topGroup.isOrgController = true;
-                _topGroup.groupNum = controller;
-                _topGroup.amount = amtOfController;
-            }
+        uint16 iBuyer = _mgm.indexOfMember(buyer);
+
+        _mgm.chain.changeAmt(iBuyer, amount, false);
+
+        uint16 group = sn.groupOfBuyer();
+        if (group > 0) {
+            _mgm.addMemberToGroup(buyer, group);
         }
-        _topGroup.shareRatio = uint16((_topGroup.amount * 10000) / amtOfCorp);
+
+        emit MockDealOfBuy(buyer, amount);
     }
 
     function addAlongDeal(
         bytes32 rule,
         bytes32 shareNumber,
-        uint64 parValue,
-        uint64 paidPar
+        uint64 amount
     ) external onlyManager(0) {
-        uint16 drager = rule.dragerOfLink();
-        uint16 follower = _boc.groupNo(shareNumber.shareholder());
+        uint16 dGroup = _mgm.groupNo(rule.dragerOfLink());
 
-        Amt storage fAmt = _mockResults[follower];
+        uint40 follower = shareNumber.shareholder();
+        uint16 fGroup = _mgm.groupNo(follower);
 
-        if (_groupsConcerned.add(follower))
-            fAmt.orgAmt = _getSHA().basedOnPar()
-                ? _boc.parOfGroup(follower)
-                : _boc.paidOfGroup(follower);
+        if (rule.proRataOfLink()) _proRataCheck(dGroup, fGroup, amount);
 
-        if (_getSHA().basedOnPar()) {
-            require(
-                fAmt.orgAmt >= (fAmt.selAmt + parValue),
-                "parValue over flow"
-            );
-            fAmt.selAmt += parValue;
-        } else {
-            require(
-                fAmt.orgAmt >= (fAmt.selAmt + paidPar),
-                "paidPar over flow"
-            );
-            fAmt.selAmt += paidPar;
-        }
+        uint16 iFollower = _mgm.indexOfMember(follower);
 
-        if (rule.proRataOfLink()) {
-            Amt storage dAmt = _mockResults[drager];
+        _mgm.chain.changeAmt(iFollower, amount, true);
 
-            require(
-                dAmt.selAmt >=
-                    (fAmt.selAmt * dAmt.orgAmt) / fAmt.orgAmt + dAmt.buyAmt,
-                "sell amount over flow"
-            );
-        }
-
-        fAmt.rstAmt = fAmt.orgAmt - fAmt.selAmt;
-
-        emit AddAlongDeal(follower, shareNumber, parValue, paidPar);
+        emit AddAlongDeal(follower, shareNumber, amount);
     }
 
-    function acceptAlongDeal(bytes32 sn) external onlyKeeper {
-        uint16 buyerGroup = _boc.groupNo(sn.buyerOfDeal());
+    function _proRataCheck(
+        uint16 dGroup,
+        uint16 fGroup,
+        uint64 amount
+    ) private {
+        uint64 orgDGVotes = _bos.votesOfGroup(dGroup);
+        uint64 curDGVotes = _mgm.votesOfGroup(dGroup);
 
-        (, uint64 parValue, uint64 paidPar, , ) = _ia.getDeal(sn.sequence());
+        uint64 orgFGVotes = _bos.votesOfGroup(fGroup);
+        uint64 curFGVotes = _mgm.votesOfGroup(fGroup);
 
-        Amt storage bAmt = _mockResults[buyerGroup];
-
-        if (_getSHA().basedOnPar()) bAmt.buyAmt += parValue;
-        else bAmt.buyAmt += paidPar;
-
-        bAmt.rstAmt = bAmt.orgAmt + bAmt.buyAmt - bAmt.selAmt;
-
-        // _isMocked[sn.sequence()] = true;
-
-        emit AcceptAlongDeal(sn);
+        require(
+            (orgDGVotes - curDGVotes) >=
+                ((orgFGVotes - curFGVotes + amount) * orgDGVotes) / orgFGVotes,
+            "MR.addAlongDeal: sell amount over flow"
+        );
     }
 
     //##################
     //##    读接口    ##
     //##################
 
-    function groupsConcerned() external view returns (uint16[]) {
-        return _groupsConcerned.valuesToUint16();
-    }
-
-    function isConcernedGroup(uint16 group) external view returns (bool) {
-        return _groupsConcerned.contains(group);
-    }
-
     function topGroup()
-        external
+        public
         view
         returns (
-            uint16 groupNum,
-            uint64 amount,
-            bool isOrgController,
-            uint16 shareRatio,
-            uint64 netIncreasedAmt
+            uint40 controllor,
+            uint16 group,
+            uint64 ratio
         )
     {
-        groupNum = _topGroup.groupNum;
-        amount = _topGroup.amount;
-        isOrgController = _topGroup.isOrgController;
-        shareRatio = _topGroup.shareRatio;
-        netIncreasedAmt = _topGroup.sumOfIA.rstAmt;
+        uint16 iControllor = _mgm.controllor();
+
+        controllor = _mgm.chain.nodes[iControllor].acct;
+
+        group = _mgm.chain.nodes[iControllor].group;
+
+        ratio =
+            (_mgm.chain.nodes[iControllor].sum * 10000) /
+            _mgm.chain.totalVotes();
     }
 
-    function mockResults(uint16 group)
+    function mockResults(uint40 acct)
         external
         view
         returns (
-            uint64 selAmt,
-            uint64 buyAmt,
-            uint64 orgAmt,
-            uint64 rstAmt
+            uint16 top,
+            uint16 group,
+            uint64 sum
         )
     {
-        require(_groupsConcerned.contains(group), "NOT a concerned group");
+        uint16 i = _mgm.indexOfMember(acct);
 
-        Amt storage amt = _mockResults[group];
-        selAmt = amt.selAmt;
-        buyAmt = amt.buyAmt;
-        orgAmt = amt.orgAmt;
-        rstAmt = amt.rstAmt;
+        require(i > 0, "MR.mockResults: acct not exist");
+
+        while (i > 0) {
+            top = i;
+            i = _mgm.chain.nodes[top].up;
+        }
+        group = _mgm.chain.nodes[top].group;
+        sum = _mgm.chain.nodes[top].sum;
     }
 }

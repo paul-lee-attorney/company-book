@@ -259,7 +259,7 @@ contract BookOfMotions is
             totalAmt = motion.box.sumOfWeight;
         } else {
             // members hold voting rights at block
-            totalHead = _bos.qtyOfMembersAtBlock(regBlock);
+            totalHead = _bos.numOfMembersAtBlock(regBlock);
             totalAmt = _bos.totalVoteAtBlock(regBlock);
 
             if (motion.sn.typeOfMotion() < 8) {

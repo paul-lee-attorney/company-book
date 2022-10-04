@@ -19,7 +19,6 @@ import "../common/components/ISigPage.sol";
 
 import "../common/ruting/IBookSetting.sol";
 import "../common/ruting/BOASetting.sol";
-import "../common/ruting/BOCSetting.sol";
 import "../common/ruting/BOSSetting.sol";
 import "../common/ruting/SHASetting.sol";
 
@@ -28,13 +27,7 @@ import "../common/lib/EnumsRepo.sol";
 
 import "./ISHAKeeper.sol";
 
-contract SHAKeeper is
-    ISHAKeeper,
-    BOCSetting,
-    BOASetting,
-    BOSSetting,
-    SHASetting
-{
+contract SHAKeeper is ISHAKeeper, BOASetting, BOSSetting, SHASetting {
     using SNParser for bytes32;
 
     // ##################
@@ -84,7 +77,7 @@ contract SHAKeeper is
         address mock = _boa.mockResultsOfIA(ia);
         if (mock == address(0)) mock = _boa.createMockResults(ia);
 
-        IBookSetting(mock).setBOC(_boc);
+        // IBookSetting(mock).setBOC(_boc);
         IBookSetting(mock).setBOH(_boh);
 
         _addAlongDeal(
@@ -182,7 +175,7 @@ contract SHAKeeper is
             shareNumber,
             shareNumber.class(),
             sn.buyerOfDeal(),
-            // sn.groupOfBuyer(),
+            sn.groupOfBuyer(),
             sn.sequence()
         );
     }
@@ -414,7 +407,7 @@ contract SHAKeeper is
             shareNumber,
             snOfOD.class(),
             caller,
-            // _boc.groupNo(caller),
+            _boc.groupNo(caller),
             snOfOD.sequence()
         );
     }

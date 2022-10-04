@@ -13,7 +13,6 @@ import "../common/components/ISigPage.sol";
 
 import "../common/ruting/IBookSetting.sol";
 import "../common/ruting/BOASetting.sol";
-import "../common/ruting/BOCSetting.sol";
 import "../common/ruting/BOMSetting.sol";
 import "../common/ruting/BOSSetting.sol";
 import "../common/ruting/SHASetting.sol";
@@ -26,7 +25,6 @@ import "./IBOAKeeper.sol";
 contract BOAKeeper is
     IBOAKeeper,
     BOASetting,
-    BOCSetting,
     SHASetting,
     BOMSetting,
     BOSSetting

@@ -62,14 +62,6 @@ contract InvestmentAgreement is IInvestmentAgreement, BOSSetting, SigPage {
 
     uint16 private _counterOfDeals;
 
-    // ======== Parties ========
-
-    // // party => seq
-    // mapping(uint40 => EnumerableSet.UintSet) private _dealsConcerned;
-
-    // // party => seq => buyer?
-    // mapping(uint40 => mapping(uint16 => bool)) private _isBuyerOfDeal;
-
     //##################
     //##   Modifier   ##
     //##################
@@ -96,7 +88,7 @@ contract InvestmentAgreement is IInvestmentAgreement, BOSSetting, SigPage {
         uint16 seq,
         uint8 typeOfDeal,
         uint40 buyer,
-        // uint16 group,
+        uint16 group,
         bytes32 shareNumber,
         uint16 preSeq
     ) internal pure returns (bytes32) {
@@ -106,9 +98,9 @@ contract InvestmentAgreement is IInvestmentAgreement, BOSSetting, SigPage {
         _sn = _sn.sequenceToSN(1, seq);
         _sn[3] = bytes1(typeOfDeal);
         _sn = _sn.acctToSN(4, buyer);
-        // _sn = _sn.sequenceToSN(9, group);
-        _sn = _sn.dateToSN(9, shareNumber.ssn());
-        _sn = _sn.sequenceToSN(13, preSeq);
+        _sn = _sn.sequenceToSN(9, group);
+        _sn = _sn.dateToSN(11, shareNumber.ssn());
+        _sn = _sn.sequenceToSN(15, preSeq);
 
         return _sn.bytesToBytes32();
     }
@@ -118,11 +110,11 @@ contract InvestmentAgreement is IInvestmentAgreement, BOSSetting, SigPage {
         bytes32 shareNumber,
         uint8 class,
         uint40 buyer,
-        // uint16 group,
+        uint16 group,
         uint16 preSeq
     ) public attorneyOrKeeper returns (bytes32) {
         require(buyer != 0, "buyer is ZERO address");
-        // require(group > 0, "ZERO group");
+        require(group > 0, "ZERO group");
 
         if (shareNumber > bytes32(0)) {
             require(
@@ -161,7 +153,7 @@ contract InvestmentAgreement is IInvestmentAgreement, BOSSetting, SigPage {
             _counterOfDeals,
             typeOfDeal,
             buyer,
-            // group,
+            group,
             shareNumber,
             preSeq
         );
@@ -185,12 +177,6 @@ contract InvestmentAgreement is IInvestmentAgreement, BOSSetting, SigPage {
                 addBlank(shareNumber.shareholder(), 0);
             addBlank(buyer, 0);
         }
-
-        // if (shareNumber > bytes32(0))
-        //     _dealsConcerned[shareNumber.shareholder()].add(_counterOfDeals);
-
-        // _dealsConcerned[buyer].add(_counterOfDeals);
-        // _isBuyerOfDeal[buyer][_counterOfDeals] = true;
 
         emit CreateDeal(sn, shareNumber);
 
@@ -446,18 +432,4 @@ contract InvestmentAgreement is IInvestmentAgreement, BOSSetting, SigPage {
     function dealsList() external view returns (bytes32[]) {
         return _dealsList.values();
     }
-
-    // function dealsConcerned(uint40 acct) external view returns (uint16[]) {
-    //     require(isParty(acct), "not a party");
-    //     return _dealsConcerned[acct].valuesToUint16();
-    // }
-
-    // function isBuyerOfDeal(uint40 acct, uint16 seq)
-    //     external
-    //     view
-    //     returns (bool)
-    // {
-    //     require(isParty(acct), "not a party");
-    //     return _isBuyerOfDeal[acct][seq];
-    // }
 }

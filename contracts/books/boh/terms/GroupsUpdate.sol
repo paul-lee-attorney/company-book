@@ -9,12 +9,11 @@ import "../../../common/lib/SNFactory.sol";
 import "../../../common/lib/SNParser.sol";
 import "../../../common/lib/EnumerableSet.sol";
 
-import "../../../common/ruting/BOCSetting.sol";
 import "../../../common/ruting/BOSSetting.sol";
 
 import "./IGroupsUpdate.sol";
 
-contract GroupsUpdate is IGroupsUpdate, BOCSetting, BOSSetting {
+contract GroupsUpdate is IGroupsUpdate, BOSSetting {
     using SNFactory for bytes;
     using SNParser for bytes32;
     using EnumerableSet for EnumerableSet.Bytes32Set;

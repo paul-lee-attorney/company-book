@@ -168,7 +168,7 @@ contract FirstRefusal is IFirstRefusal, ITerm, BOSSetting, BOMSetting {
     {
         FR storage fr = _firstRefusals[typeOfDeal];
 
-        if (fr.rule.membersEqualOfFR()) return _bos.members();
+        if (fr.rule.membersEqualOfFR()) return _bos.membersList();
         else return fr.rightholders.valuesToUint40();
     }
 
@@ -196,7 +196,7 @@ contract FirstRefusal is IFirstRefusal, ITerm, BOSSetting, BOMSetting {
         uint40[] memory agreedParties = consentParties.combine(signers);
 
         if (rule.membersEqualOfFR())
-            return _bos.members().fullyCoveredBy(agreedParties);
+            return _bos.membersList().fullyCoveredBy(agreedParties);
         else
             return
                 _firstRefusals[sn.typeOfDeal()]

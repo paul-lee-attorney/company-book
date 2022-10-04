@@ -4,72 +4,71 @@
 
 pragma solidity ^0.4.24;
 
+import "./IMockResults.sol";
+import "./IInvestmentAgreement.sol";
+
+import "../../common/lib/TopChain.sol";
+import "../../common/lib/MembersRepo.sol";
+// import "../../common/lib/EnumerableSet.sol";
+import "../../common/lib/SNParser.sol";
+
+import "../../common/ruting/BOSSetting.sol";
+import "../../common/ruting/SHASetting.sol";
+
+import "../../common/ruting/IASetting.sol";
+
 interface IMockResults {
-    //#############
-    //##  Event  ##
-    //#############
+    //##############
+    //##  Events  ##
+    //##############
 
-    event MockDealOfSell(uint16 sellerGroup, uint64 amount);
+    event CreateMockGM(uint64 blocknumber);
 
-    event MockDealOfBuy(uint16 buyerGroup, uint64 amount);
+    event MockDealOfSell(uint40 indexed seller, uint64 amount);
 
-    event CalculateResult(
-        uint16 topGroup,
-        uint64 topAmt,
-        bool isOrgController,
-        uint16 shareRatio
-    );
+    event MockDealOfBuyer(uint40 indexed buyer, uint64 amount);
 
     event AddAlongDeal(
-        uint16 follower,
-        bytes32 shareNumber,
-        uint64 parValue,
-        uint64 paidPar
+        uint40 indexed follower,
+        bytes32 sharenumber,
+        uint64 amount
     );
-
-    event AcceptAlongDeal(bytes32 sn);
 
     //#################
     //##  Write I/O  ##
     //#################
 
-    function mockDealsOfIA() external returns (bool);
+    function createMockGM() external;
+
+    function mockDealOfSell(uint32 ssn, uint64 amount) external;
+
+    function mockDealOfBuy(bytes32 sn, uint64 amount) external;
 
     function addAlongDeal(
         bytes32 rule,
         bytes32 shareNumber,
-        uint64 parValue,
-        uint64 paidPar
+        uint64 amount
     ) external;
-
-    function acceptAlongDeal(bytes32 sn) external;
 
     //##################
     //##    读接口    ##
     //##################
 
-    function groupsConcerned() external view returns (uint16[]);
-
-    function isConcernedGroup(uint16 group) external view returns (bool);
-
     function topGroup()
-        external
+        public
         view
         returns (
-            uint16 groupNum,
-            uint64 amount,
-            bool isOrgController,
-            uint16 shareRatio,
-            uint64 netIncreasedAmt
+            uint40 controllor,
+            uint16 group,
+            uint64 ratio
         );
 
-    function mockResults(uint16 group)
+    function mockResults(uint40 acct)
         external
         view
         returns (
-            uint64 selAmt,
-            uint64 buyAmt,
-            uint64 orgAmt,
-            uint64 rstAmt
+            uint16 top,
+            uint16 group,
+            uint64 sum
         );
 }

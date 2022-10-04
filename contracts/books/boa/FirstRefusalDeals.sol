@@ -5,18 +5,12 @@
 
 pragma solidity ^0.4.24;
 
-// import "../../common/lib/SNFactory.sol";
-// import "../../common/lib/SNParser.sol";
 import "../../common/ruting/BOSSetting.sol";
 import "../../common/ruting/IASetting.sol";
 
-// import "./IInvestmentAgreement.sol";
 import "./IFirstRefusalDeals.sol";
 
 contract FirstRefusalDeals is IFirstRefusalDeals, IASetting, BOSSetting {
-    // using SNFactory for bytes;
-    // using SNParser for bytes32;
-
     struct Claim {
         uint64 weight; // FR rightholder's voting weight
         uint64 ratio;
@@ -39,7 +33,7 @@ contract FirstRefusalDeals is IFirstRefusalDeals, IASetting, BOSSetting {
         uint16 seqOfOD,
         uint16 seqOfFR,
         uint40 acct
-    ) external onlyManager(1) dealExist(seqOfOD) {
+    ) external onlyManager(1) {
         uint64 weight = _bos.votesInHand(acct);
         require(weight > 0, "first refusal request has ZERO weight");
 
@@ -54,7 +48,6 @@ contract FirstRefusalDeals is IFirstRefusalDeals, IASetting, BOSSetting {
     function acceptFirstRefusal(uint16 seqOfOD, uint16 seqOfFR)
         external
         onlyManager(1)
-        dealExist(seqOfOD)
         returns (uint64 ratio)
     {
         uint64 sumOfWeight = _frDeals[seqOfOD].sumOfWeight;

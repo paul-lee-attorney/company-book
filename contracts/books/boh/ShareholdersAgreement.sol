@@ -15,7 +15,6 @@ import "../../common/lib/EnumsRepo.sol";
 import "../../common/lib/EnumerableSet.sol";
 
 import "../../common/ruting/IBookSetting.sol";
-import "../../common/ruting/BOCSetting.sol";
 import "../../common/ruting/BOSSetting.sol";
 import "../../common/ruting/BOMSetting.sol";
 
@@ -24,7 +23,6 @@ import "../../common/utils/CloneFactory.sol";
 contract ShareholdersAgreement is
     IShareholdersAgreement,
     CloneFactory,
-    BOCSetting,
     BOMSetting,
     BOSSetting,
     SigPage
@@ -146,12 +144,6 @@ contract ShareholdersAgreement is
 
         IBookSetting(body).setBOS(_bos);
         IBookSetting(body).setBOM(_bom);
-
-        if (
-            title == uint8(EnumsRepo.TermTitle.DRAG_ALONG) ||
-            title == uint8(EnumsRepo.TermTitle.TAG_ALONG) ||
-            title == uint8(EnumsRepo.TermTitle.GROUPS_UPDATE)
-        ) IBookSetting(body).setBOC(_boc);
 
         _titleToBody[title] = body;
 

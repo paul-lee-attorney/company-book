@@ -1,4 +1,4 @@
-/*
+/* *
  * Copyright 2021 LI LI of JINGTIAN & GONGCHENG.
  * */
 
@@ -55,7 +55,6 @@ contract BookOfIA is IBookOfIA, DocumentsRepo {
             );
             IBookSetting(frd).setIA(ia);
             IAccessControl(frd).setManager(1, this, msg.sender);
-            // copyRoleTo(KEEPERS, frd);
         }
     }
 

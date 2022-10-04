@@ -12,8 +12,8 @@ library Checkpoints {
 
     struct Checkpoint {
         uint64 blockNumber;
-        uint64 par;
         uint64 paid;
+        uint64 par;
     }
 
     struct History {
@@ -26,22 +26,22 @@ library Checkpoints {
 
     function push(
         History storage self,
-        uint64 par,
-        uint64 paid
+        uint64 paid,
+        uint64 par
     ) internal returns (uint64) {
         uint256 pos = self.checkpoints.length;
         if (
             pos > 0 &&
             self.checkpoints[pos - 1].blockNumber == uint64(block.number)
         ) {
-            self.checkpoints[pos - 1].par = par;
             self.checkpoints[pos - 1].paid = paid;
+            self.checkpoints[pos - 1].par = par;
         } else {
             self.checkpoints.push(
                 Checkpoint({
                     blockNumber: uint64(block.number),
-                    par: par,
-                    paid: paid
+                    paid: paid,
+                    par: par
                 })
             );
         }
@@ -55,11 +55,11 @@ library Checkpoints {
     function latest(History storage self)
         internal
         view
-        returns (uint64 par, uint64 paid)
+        returns (uint64 paid, uint64 par)
     {
         uint256 pos = self.checkpoints.length;
-        par = pos == 0 ? 0 : self.checkpoints[pos - 1].par;
         paid = pos == 0 ? 0 : self.checkpoints[pos - 1].paid;
+        par = pos == 0 ? 0 : self.checkpoints[pos - 1].par;
     }
 
     function _average(uint256 a, uint256 b) private pure returns (uint256) {
@@ -69,7 +69,7 @@ library Checkpoints {
     function getAtBlock(History storage self, uint64 blockNumber)
         internal
         view
-        returns (uint64 par, uint64 paid)
+        returns (uint64 paid, uint64 par)
     {
         require(
             blockNumber <= block.number,
@@ -86,7 +86,7 @@ library Checkpoints {
                 low = mid + 1;
             }
         }
-        par = high == 0 ? 0 : self.checkpoints[high - 1].par;
         paid = high == 0 ? 0 : self.checkpoints[high - 1].paid;
+        par = high == 0 ? 0 : self.checkpoints[high - 1].par;
     }
 }

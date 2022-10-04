@@ -22,54 +22,54 @@ library SNParser {
 
     // ======== ShareNumber ========
 
-    function class(bytes32 shareNumber) internal pure returns (uint8) {
-        return uint8(shareNumber[0]);
+    function class(bytes32 shareNumber) internal pure returns (uint16) {
+        return uint16(bytes2(shareNumber));
     }
 
     function ssn(bytes32 shareNumber) internal pure returns (uint32) {
-        return uint32(bytes4(shareNumber << 8));
+        return uint32(bytes4(shareNumber << 16));
     }
 
     function issueDate(bytes32 shareNumber) internal pure returns (uint32) {
-        return uint32(bytes4(shareNumber << 40));
+        return uint32(bytes4(shareNumber << 48));
     }
 
     function shareholder(bytes32 shareNumber) internal pure returns (uint40) {
-        return uint40(bytes5(shareNumber << 72));
+        return uint40(bytes5(shareNumber << 80));
     }
 
     function preSSN(bytes32 shareNumber) internal pure returns (uint32) {
-        return uint32(bytes4(shareNumber << 112));
+        return uint32(bytes4(shareNumber << 120));
     }
 
     // ======== DealSN ========
 
-    function classOfDeal(bytes32 sn) internal pure returns (uint8) {
-        return uint8(sn[0]);
+    function classOfDeal(bytes32 sn) internal pure returns (uint16) {
+        return uint16(bytes2(sn));
     }
 
     function sequence(bytes32 sn) internal pure returns (uint16) {
-        return uint16(bytes2(sn << 8));
+        return uint16(bytes2(sn << 16));
     }
 
     function typeOfDeal(bytes32 sn) internal pure returns (uint8) {
-        return uint8(sn[3]);
+        return uint8(sn[4]);
     }
 
     function buyerOfDeal(bytes32 sn) internal pure returns (uint40) {
-        return uint40(bytes5(sn << 32));
+        return uint40(bytes5(sn << 40));
     }
 
-    // function groupOfBuyer(bytes32 sn) internal pure returns (uint16) {
-    //     return uint16(bytes2(sn << 72));
-    // }
+    function groupOfBuyer(bytes32 sn) internal pure returns (uint16) {
+        return uint16(bytes2(sn << 80));
+    }
 
     function ssnOfDeal(bytes32 sn) internal pure returns (uint32) {
-        return uint32(bytes4(sn << 72));
+        return uint32(bytes4(sn << 96));
     }
 
     function preSeqOfDeal(bytes32 sn) internal pure returns (uint16) {
-        return uint16(bytes2(sn << 104));
+        return uint16(bytes2(sn << 128));
     }
 
     // ======== DocSN ========
@@ -120,28 +120,32 @@ library SNParser {
 
     // ======== LinkRule ========
 
-    function dragerOfLink(bytes32 sn) internal pure returns (uint16) {
-        return uint16(bytes2(sn));
+    function dragerOfLink(bytes32 sn) internal pure returns (uint40) {
+        return uint40(bytes5(sn));
+    }
+
+    function dragerGroupOfLink(bytes32 sn) internal pure returns (uint16) {
+        return uint16(bytes2(sn << 40));
     }
 
     function triggerTypeOfLink(bytes32 sn) internal pure returns (uint8) {
-        return uint8(bytes1(sn << 16));
+        return uint8(sn[7]);
     }
 
-    function thresholdOfLink(bytes32 sn) internal pure returns (uint64) {
-        return uint64(bytes4(sn << 24));
+    function thresholdOfLink(bytes32 sn) internal pure returns (uint32) {
+        return uint32(bytes4(sn << 64));
     }
 
     function proRataOfLink(bytes32 sn) internal pure returns (bool) {
-        return uint8(sn[4]) == 1;
+        return uint8(sn[12]) == 1;
     }
 
-    function unitPriceOfLink(bytes32 sn) internal pure returns (uint64) {
-        return uint64(bytes4(sn << 64));
+    function unitPriceOfLink(bytes32 sn) internal pure returns (uint32) {
+        return uint32(bytes4(sn << 104));
     }
 
-    function roeOfLink(bytes32 sn) internal pure returns (uint64) {
-        return uint64(bytes4(sn << 96));
+    function roeOfLink(bytes32 sn) internal pure returns (uint32) {
+        return uint32(bytes4(sn << 136));
     }
 
     // ======== OptionSN ========

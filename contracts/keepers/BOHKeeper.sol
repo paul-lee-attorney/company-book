@@ -10,7 +10,6 @@ import "../books/boh/terms/IGroupsUpdate.sol";
 
 import "../common/components/ISigPage.sol";
 
-import "../common/ruting/BOCSetting.sol";
 import "../common/ruting/BOMSetting.sol";
 import "../common/ruting/BOOSetting.sol";
 import "../common/ruting/BOSSetting.sol";
@@ -27,7 +26,6 @@ import "./IBOHKeeper.sol";
 
 contract BOHKeeper is
     IBOHKeeper,
-    BOCSetting,
     BODSetting,
     SHASetting,
     BOMSetting,
@@ -156,7 +154,7 @@ contract BOHKeeper is
             "SHA not executed yet"
         );
 
-        uint40[] memory members = _bos.members();
+        uint40[] memory members = _bos.membersList();
         uint256 len = members.length;
         while (len > 0) {
             require(

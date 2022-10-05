@@ -186,8 +186,8 @@ contract InvestmentAgreement is IInvestmentAgreement, BOSSetting, SigPage {
     function updateDeal(
         uint16 seq,
         uint32 unitPrice,
-        uint64 parValue,
         uint64 paidPar,
+        uint64 parValue,
         uint32 closingDate
     ) public dealExist(seq) attorneyOrKeeper {
         require(parValue > 0, "parValue is ZERO");
@@ -201,7 +201,7 @@ contract InvestmentAgreement is IInvestmentAgreement, BOSSetting, SigPage {
         deal.paidPar = paidPar;
         deal.closingDate = closingDate;
 
-        emit UpdateDeal(deal.sn, unitPrice, parValue, paidPar, closingDate);
+        emit UpdateDeal(deal.sn, unitPrice, paidPar, parValue, closingDate);
     }
 
     function delDeal(uint16 seq)

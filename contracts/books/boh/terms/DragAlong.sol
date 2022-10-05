@@ -88,7 +88,6 @@ contract DragAlong is IAlongs, BOSSetting, BOASetting {
 
     function createLink(
         uint40 drager,
-        uint16 group,
         uint8 triggerType,
         uint32 threshold,
         bool proRata,
@@ -102,6 +101,8 @@ contract DragAlong is IAlongs, BOSSetting, BOASetting {
             _links[_reps[drager]].rule == bytes32(0),
             "DA.createLink: tag rule ALREADY EXIST"
         );
+
+        uint16 group = _bos.groupNo(drager);
 
         if (group == 0) {
             dragers.add(drager);
@@ -188,8 +189,12 @@ contract DragAlong is IAlongs, BOSSetting, BOASetting {
     function isDrager(uint40 drager) external view returns (bool) {
         return _dragers.contains(drager);
     }
+    
+    function repOf(uint40 drager) external dragerExist(drager) view returns(uint40) {
+        return _reps[drager];
+    }
 
-    function isFollower(uint40 drager, uint40 follower)
+    function isLinked(uint40 drager, uint40 follower)
         public
         view
         dragerExist(drager)
@@ -219,16 +224,16 @@ contract DragAlong is IAlongs, BOSSetting, BOASetting {
     ) external view onlyKeeper returns (bool) {
         require(isTriggered(ia, sn), "not triggered");
 
-        // uint40 drager = IInvestmentAgreement(ia)
-        //     .shareNumberOfDeal(sn.sequence())
-        //     .shareholder();
+        uint40 drager = IInvestmentAgreement(ia)
+            .shareNumberOfDeal(sn.sequence())
+            .shareholder();
 
-        // require(caller == drager, "caller is not drager of DragAlong");
+        require(caller == drager, "DA.priceCheck: caller is not drager of DragAlong");
 
-        // require(
-        //     isLinked(caller, shareNumber.shareholder()),
-        //     "caller and target shareholder NOT linked"
-        // );
+        require(
+            isLinked(caller, shareNumber.shareholder()),
+            "DA.PriceCheck: caller and target shareholder NOT linked"
+        );
 
         uint32 dealPrice = IInvestmentAgreement(ia).unitPrice(sn.sequence());
         uint32 closingDate = IInvestmentAgreement(ia).closingDate(
@@ -267,7 +272,7 @@ contract DragAlong is IAlongs, BOSSetting, BOASetting {
 
     function isTriggered(address ia, bytes32 sn) public view returns (bool) {
         if (
-            IDocumentsRepo(_boa).currentState(ia) !=
+            _boa.currentState(ia) !=
             uint8(EnumsRepo.BODStates.Circulated)
         ) return false;
 
@@ -280,8 +285,6 @@ contract DragAlong is IAlongs, BOSSetting, BOASetting {
             .shareNumberOfDeal(sn.sequence())
             .shareholder();
 
-        // uint16 sellerGroup = _boc.groupNo(seller);
-
         if (!_dragers.contains(seller)) return false;
 
         bytes32 rule = _links[_reps[seller]].rule;
@@ -291,13 +294,16 @@ contract DragAlong is IAlongs, BOSSetting, BOASetting {
             uint8(EnumsRepo.TriggerTypeOfAlongs.NoConditions)
         ) return true;
 
-        if (_bos.controller() != sellerGroup) return false;
+        uint40 controllor = _bos.controller();
+        uint16 conGroup = _bos.groupNo(controllor);
 
-        // (, , bool isOrgController, uint16 shareRatio, ) = IMockResults(
-        //     _boa.mockResultsOfIA(ia)
-        // ).topGroup();
+        if ((controllor != seller) && (conGroup == 0 || conGroup != _bos.groupNo(seller))) return false;
 
-        if (!isOrgController) return true;
+        (uint40 newControllor, uint16 newConGroup, uint64 ratio) = IMockResults(
+            _boa.mockResultsOfIA(ia)
+        ).topGroup();
+
+        if ((controllor != newControllor) && (conGroup == 0 || conGroup != newConGroup)) return true;
 
         if (shareRatio <= rule.thresholdOfLink()) return true;
 

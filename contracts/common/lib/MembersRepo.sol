@@ -24,7 +24,7 @@ library MembersRepo {
 
     /*
         members[0] {
-            node: 0;
+            node: (basedOnPar);
             votesInHand: ownersEquity;
             sharesInHand: sharesList;
         }
@@ -79,6 +79,29 @@ library MembersRepo {
 
     function increaseCounterOfClasses(GeneralMeeting storage gm) internal {
         gm.chain.increaseZeroDown();
+    }
+
+    function setAmtBase(GeneralMeeting storage gm, bool basedOnPar) internal {
+        if ((gm.members[0].node == 1) != basedOnPar) {
+
+            gm.members[0].node = basedOnPar ? 1 : 0;
+
+            uint len = gm.chain.nodes.length;
+
+            while (len > 1) {
+
+                (uint64 paid, uint64 par) = gm.members[gm.chain.nodes[len-1].acct].votesInHand.latest();
+
+                if (paid == par) continue;
+                else if (basedOnPar) {
+                    gm.chain.changeAmt((len-1), (par - paid), false);
+                } else {
+                    gm.chain.changeAmt((len-1), (par - paid), true);
+                }
+
+                len--;
+            }
+        }
     }
 
     // ==== Member ====
@@ -187,13 +210,12 @@ library MembersRepo {
     function changeAmtOfMember(
         GeneralMeeting storage gm,
         uint40 acct,
-        bool basedOnPar,
         uint64 deltaPaid,
         uint64 deltaPar,
         bool decrease
     ) internal returns (uint64 blocknumber) {
         uint16 i = indexOfMember(gm, acct);
-        uint64 deltaAmt = (basedOnPar) ? deltaPar : deltaPaid;
+        uint64 deltaAmt = (gm.basedOnPar()) ? deltaPar : deltaPaid;
         gm.chain.changeAmt(i, deltaAmt, decrease);
 
         (uint64 paid, uint64 par) = gm.members[acct].votesInHand.latest();
@@ -310,6 +332,10 @@ library MembersRepo {
         returns (uint64)
     {
         return gm.chain.totalVotes();
+    }
+
+    function basedOnPar(GeneralMeeting storage gm) internal view returns(bool) {
+        return gm.members[0].node == 1;
     }
 
     // ==== shares ====

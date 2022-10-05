@@ -21,7 +21,8 @@ contract TagAlong is BOMSetting, DragAlong {
     using ArrayUtils for uint40[];
 
     // struct linkRule {
-    //     uint16 drager;
+    //     uint40 drager;
+    //     uint16 group;
     //     // 0-no condition; 1- biggest && shareRatio > threshold;
     //     uint8 triggerType;
     //     bool basedOnPar;
@@ -55,17 +56,15 @@ contract TagAlong is BOMSetting, DragAlong {
         _supportGroups.emptyItems();
 
         while (len > 0) {
-            _supportGroups.add(_boc.groupNo(supporters[len - 1]));
+            _supportGroups.add(_bos.groupNo(supporters[len - 1]));
             len--;
         }
 
-        uint16[] memory rightholders = _links[
-            _boc.groupNo(
-                IInvestmentAgreement(ia)
-                    .shareNumberOfDeal(sn.sequence())
-                    .shareholder()
-            )
-        ].followers.valuesToUint16();
+        uint40[] memory rightholders = _links[
+            _reps[IInvestmentAgreement(ia)
+                .shareNumberOfDeal(sn.sequence())
+                .shareholder()]
+        ].followers.valuesToUint40();
 
         len = rightholders.length;
 

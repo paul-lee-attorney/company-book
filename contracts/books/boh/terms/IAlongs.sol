@@ -10,20 +10,20 @@ interface IAlongs {
     // ##   Event    ##
     // ################
 
-    event SetLink(uint16 indexed dragerGroup, bytes32 rule);
+    event SetLink(uint40 indexed drager, bytes32 rule);
 
-    event AddFollower(uint16 indexed dragerGroup, uint16 followerGroup);
+    event AddFollower(uint40 indexed drager, uint40 follower);
 
-    event RemoveFollower(uint16 indexed dragerGroup, uint16 followerGroup);
+    event RemoveFollower(uint40 indexed drager, uint40 follower);
 
-    event DelLink(uint16 indexed dragerGroup);
+    event DelLink(uint40 indexed drager);
 
     // ################
     // ##   Write    ##
     // ################
 
     function createLink(
-        uint16 drager,
+        uint40 drager,
         uint8 triggerType,
         uint32 threshold,
         bool proRata,
@@ -31,33 +31,30 @@ interface IAlongs {
         uint32 roe
     ) external;
 
-    function addFollower(uint16 drager, uint16 follower) external;
+    function addFollower(uint40 drager, uint40 follower) external;
 
-    function removeFollower(uint16 drager, uint16 follower) external;
+    function removeFollower(uint40 drager, uint40 follower) external;
 
-    function delLink(uint16 drager) external;
+    function delLink(uint40 drager) external;
 
-    // ################
+    // ###############
     // ##  查询接口  ##
-    // ################
+    // ###############
 
-    function linkRule(uint16 drager) external view returns (bytes32);
+    function linkRule(uint40 drager) external view returns (bytes32);
 
-    function isDrager(uint16 drager) external view returns (bool);
+    function isDrager(uint40 drager) external view returns (bool);
 
-    function isFollower(uint16 drager, uint16 follower)
+    function repOf(uint40 drager) external view returns(uint40);
+
+    function isLinked(uint40 drager, uint40 follower)
         external
         view
         returns (bool);
 
-    function isLinked(uint40 usrDrager, uint40 usrFollower)
-        external
-        view
-        returns (bool);
+    function dragers() external view returns (uint40[]);
 
-    function dragers() external view returns (uint16[]);
-
-    function followers(uint16 drager) external view returns (uint16[]);
+    function followers(uint40 drager) external view returns (uint40[]);
 
     function priceCheck(
         address ia,

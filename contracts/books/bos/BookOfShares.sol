@@ -748,6 +748,10 @@ contract BookOfShares is IBookOfShares, SHASetting {
         return _gm.isGroup(group);
     }
 
+    function counterOfGroups() external view returns (uint16 ) {
+        return _gm.counterOfGroups();
+    }
+
     function controllor() external view returns (uint40) {
         return _gm.controllor();
     }

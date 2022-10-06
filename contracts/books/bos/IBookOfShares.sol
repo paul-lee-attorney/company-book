@@ -227,6 +227,8 @@ interface IBookOfShares {
 
     function isGroup(uint16 group) external view returns (bool);
 
+    function counterOfGroups() external view returns(uint16);
+
     function controllor() external view returns (uint40);
 
     function votesOfController() external view returns (uint64);

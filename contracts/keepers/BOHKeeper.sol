@@ -166,6 +166,8 @@ contract BOHKeeper is
 
         _boh.changePointer(sha, caller);
 
+        _bos.setAmtBase(IShareholdersAgreement(sha).basedOnPar());
+
         _bod.setMaxNumOfDirectors(
             IShareholdersAgreement(sha).maxNumOfDirectors()
         );
@@ -194,12 +196,12 @@ contract BOHKeeper is
             len = guo.length;
             while (len > 0) {
                 if (guo[len - 1].addMemberOfGUO())
-                    _boc.addMemberToGroup(
+                    _bos.addMemberToGroup(
                         guo[len - 1].memberOfGUO(),
                         guo[len - 1].groupNoOfGUO()
                     );
                 else
-                    _boc.removeMemberFromGroup(
+                    _bos.removeMemberFromGroup(
                         guo[len - 1].memberOfGUO(),
                         guo[len - 1].groupNoOfGUO()
                     );

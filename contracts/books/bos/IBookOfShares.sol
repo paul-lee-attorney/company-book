@@ -48,6 +48,8 @@ interface IBookOfShares {
 
     event SetMaxQtyOfMembers(uint16 max);
 
+    event SetAmtBase(bool basedOnPar);
+
     event AddMember(uint40 indexed acct, uint16 qtyOfMembers);
 
     event RemoveMember(uint40 indexed acct, uint16 qtyOfMembers);
@@ -132,6 +134,8 @@ interface IBookOfShares {
     // ==== MembersRepo ====
 
     function setMaxQtyOfMembers(uint16 max) external;
+
+    function setAmtBase(bool basedOnPar) external;
 
     function removeMemberFromGroup(uint40 acct, uint16 group) external;
 

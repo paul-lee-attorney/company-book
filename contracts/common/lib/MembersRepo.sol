@@ -81,7 +81,7 @@ library MembersRepo {
         gm.chain.increaseZeroDown();
     }
 
-    function setAmtBase(GeneralMeeting storage gm, bool basedOnPar) internal {
+    function setAmtBase(GeneralMeeting storage gm, bool basedOnPar) internal returns (bool flag) {
         if ((gm.members[0].node == 1) != basedOnPar) {
 
             gm.members[0].node = basedOnPar ? 1 : 0;
@@ -101,6 +101,7 @@ library MembersRepo {
 
                 len--;
             }
+            flag = true;
         }
     }
 

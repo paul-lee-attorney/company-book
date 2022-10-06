@@ -449,6 +449,10 @@ contract BookOfShares is IBookOfShares, SHASetting {
         emit SetMaxQtyOfMembers(max);
     }
 
+    function setAmtBase(bool basedOnPar) external onlyKeeper {
+        if (_gm.setAmtBase(basedOnPar)) emit SetAmtBase(basedOnPar);
+    }
+
     function _addMember(uint40 acct) private {
         require(
             _gm.qtyOfMembers() < _gm.maxQtyOfMembers() ||

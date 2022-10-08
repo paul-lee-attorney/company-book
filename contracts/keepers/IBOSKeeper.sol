@@ -30,5 +30,5 @@ interface IBOSKeeper {
 
     function updateShareState(uint32 ssn, uint8 state) external;
 
-    function setMaxQtyOfMembers(uint16 max) external;
+    function setMaxQtyOfMembers(uint8 max) external;
 }

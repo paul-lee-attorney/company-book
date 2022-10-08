@@ -60,7 +60,7 @@ contract BookOfShares is IBookOfShares, SHASetting {
     // ssn => Locker
     mapping(uint256 => Locker) private _lockers;
 
-    MembersChain.GeneralMeeting private _gm;
+    MembersRepo.GeneralMeeting private _gm;
 
     //##################
     //##   Modifier   ##
@@ -105,8 +105,8 @@ contract BookOfShares is IBookOfShares, SHASetting {
     function issueShare(
         uint40 shareholder,
         uint16 class,
-        uint64 par,
         uint64 paid,
+        uint64 par,
         uint32 paidInDeadline,
         uint32 issueDate,
         uint32 issuePrice
@@ -444,7 +444,7 @@ contract BookOfShares is IBookOfShares, SHASetting {
 
     // ==== MembersRepo ====
 
-    function setMaxQtyOfMembers(uint16 max) external onlyManager(1) {
+    function setMaxQtyOfMembers(uint8 max) external onlyManager(1) {
         _gm.setMaxQtyOfMembers(max);
         emit SetMaxQtyOfMembers(max);
     }
@@ -469,7 +469,6 @@ contract BookOfShares is IBookOfShares, SHASetting {
         if (_gm.addShareToMember(share.shareNumber, acct)) {
             uint64 blockNumber = _gm.changeAmtOfMember(
                 acct,
-                _getSHA().basedOnPar(),
                 share.paid,
                 share.par,
                 false
@@ -509,7 +508,6 @@ contract BookOfShares is IBookOfShares, SHASetting {
 
         uint64 blocknumber = _gm.changeAmtOfMember(
             acct,
-            _getSHA().basedOnPar(),
             deltaPaid,
             deltaPar,
             decrease
@@ -540,7 +538,8 @@ contract BookOfShares is IBookOfShares, SHASetting {
         external
         onlyKeeper
     {
-        _gm.removeMemberFromGroup(acct, group);
+        require(group == _gm.groupNo(acct), "BOS.removeMemberFromGroup: Acct is not member of Group");
+        _gm.removeMemberFromGroup(acct);
         emit RemoveMemberFromGroup(acct, group);
     }
 
@@ -633,7 +632,7 @@ contract BookOfShares is IBookOfShares, SHASetting {
         return _gm.sharesList();
     }
 
-    function sharenumberExist(bytes32 sharenumbre)
+    function sharenumberExist(bytes32 sharenumber)
         external
         view
         returns (bool)
@@ -657,7 +656,7 @@ contract BookOfShares is IBookOfShares, SHASetting {
 
     // ==== MembersRepo ====
 
-    function isMember(uint40 acct) external view returns (bool) {
+    function isMember(uint40 acct) public view returns (bool) {
         return _gm.isMember(acct);
     }
 
@@ -744,7 +743,7 @@ contract BookOfShares is IBookOfShares, SHASetting {
 
     // ==== group ====
 
-    function isGroup(uint16 group) external view returns (bool) {
+    function isGroup(uint16 group) public view returns (bool) {
         return _gm.isGroup(group);
     }
 

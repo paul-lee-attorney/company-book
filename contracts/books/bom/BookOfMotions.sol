@@ -171,7 +171,7 @@ contract BookOfMotions is
             len--;
         }
 
-        return (weight * 10000) / _bos.totalVote();
+        return (weight * 10000) / _bos.totalVotes();
     }
 
     function castVote(
@@ -259,8 +259,8 @@ contract BookOfMotions is
             totalAmt = motion.box.sumOfWeight;
         } else {
             // members hold voting rights at block
-            totalHead = _bos.numOfMembersAtBlock(regBlock);
-            totalAmt = _bos.totalVoteAtBlock(regBlock);
+            totalHead = _bos.qtyOfMembers();
+            totalAmt = _bos.totalVotes();
 
             if (motion.sn.typeOfMotion() < 8) {
                 // 1-7 typeOfIA; 8-external deal
@@ -319,7 +319,7 @@ contract BookOfMotions is
         external
         view
         onlyManager(1)
-        returns (uint64 parValue, uint64 paidPar)
+        returns (uint64 par, uint64 paid)
     {
         require(
             block.number < IInvestmentAgreement(ia).closingDate(sn.sequence()),
@@ -337,7 +337,7 @@ contract BookOfMotions is
             "MISSED execute deadline"
         );
 
-        (, parValue, paidPar, , ) = IInvestmentAgreement(ia).getDeal(
+        (, paid, par,  , ) = IInvestmentAgreement(ia).getDeal(
             sn.sequence()
         );
     }

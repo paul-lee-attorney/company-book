@@ -6,27 +6,6 @@
 pragma solidity ^0.4.24;
 
 interface IBookOfIA {
-    //##################
-    //##    event     ##
-    //##################
-
-    event CalculateResult(
-        address indexed ia,
-        uint16 topGroup,
-        uint64 topAmt,
-        bool isOrgController,
-        uint16 shareRatio
-    );
-
-    event AddAlongDeal(
-        address ia,
-        uint16 follower,
-        bytes32 shareNumber,
-        uint64 parValue,
-        uint64 paidPar
-    );
-
-    event AcceptAlongDeal(address ia, bytes32 sn);
 
     //##################
     //##    写接口    ##

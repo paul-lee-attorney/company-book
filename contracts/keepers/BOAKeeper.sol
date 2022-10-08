@@ -110,12 +110,12 @@ contract BOAKeeper is
     }
 
     function _releaseCleanParOfDeal(address ia, bytes32 sn) private {
-        (, uint64 parValue, , , ) = IInvestmentAgreement(ia).getDeal(
+        (, , uint64 par,  , ) = IInvestmentAgreement(ia).getDeal(
             sn.sequence()
         );
 
         if (IInvestmentAgreement(ia).releaseDealSubject(sn.sequence()))
-            _bos.increaseCleanPar(sn.ssnOfDeal(), parValue);
+            _bos.increaseCleanPar(sn.ssnOfDeal(), par);
     }
 
     // ======== Circulate IA ========
@@ -167,7 +167,7 @@ contract BOAKeeper is
 
             uint16 seq = sn.sequence();
 
-            (, , uint64 paidPar, , ) = IInvestmentAgreement(ia).getDeal(seq);
+            (, uint64 paid, , , ) = IInvestmentAgreement(ia).getDeal(seq);
             // amount = _getSHA().basedOnPar() ? parValue : paidPar;
 
             bytes32 shareNumber = IInvestmentAgreement(ia).shareNumberOfDeal(
@@ -176,7 +176,7 @@ contract BOAKeeper is
 
             if (shareNumber.shareholder() == caller) {
                 if (IInvestmentAgreement(ia).lockDealSubject(seq)) {
-                    _bos.decreaseCleanPar(sn.ssnOfDeal(), paidPar);
+                    _bos.decreaseCleanPar(sn.ssnOfDeal(), paid);
                     // _boa.mockDealOfSell(ia, caller, amount);
                 }
             } else if (
@@ -234,7 +234,7 @@ contract BOAKeeper is
             );
         else
             require(
-                _boc.controller() == _boc.groupNo(caller),
+                _bos.controllor() == caller,
                 "caller is not controller"
             );
 
@@ -313,18 +313,18 @@ contract BOAKeeper is
             sn.sequence()
         );
 
-        (, uint64 parValue, uint64 paidPar, , ) = IInvestmentAgreement(ia)
+        (, uint64 paid, uint64 par, , ) = IInvestmentAgreement(ia)
             .getDeal(sn.sequence());
 
         uint32 unitPrice = IInvestmentAgreement(ia).unitPrice(sn.sequence());
 
         //释放Share的质押标记(若需)，执行交易
         if (shareNumber > bytes32(0)) {
-            _bos.increaseCleanPar(sn.ssnOfDeal(), parValue);
+            _bos.increaseCleanPar(sn.ssnOfDeal(), paid);
             _bos.transferShare(
                 shareNumber.ssn(),
-                parValue,
-                paidPar,
+                paid,
+                par,
                 sn.buyerOfDeal(),
                 unitPrice
             );
@@ -332,18 +332,13 @@ contract BOAKeeper is
             _bos.issueShare(
                 sn.buyerOfDeal(),
                 sn.classOfDeal(),
-                parValue,
-                paidPar,
+                paid,
+                par,
                 uint32(block.timestamp), //paidInDeadline
                 uint32(block.timestamp), //issueDate
                 unitPrice //issuePrice
             );
         }
-
-        // if (sn.groupOfBuyer() > 0)
-        //     _boc.addMemberToGroup(sn.buyerOfDeal(), sn.groupOfBuyer());
-
-        _boc.updateController(_getSHA().basedOnPar());
     }
 
     function revokeDeal(

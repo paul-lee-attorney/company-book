@@ -46,8 +46,8 @@ contract MockResults is IMockResults, IASetting, SHASetting, BOSSetting {
             uint64 amount;
 
             if (_getSHA().basedOnPar())
-                (, amount, , , ) = _ia.getDeal(sn.sequence());
-            else (, , amount, , ) = _ia.getDeal(sn.sequence());
+                (, , amount,  , ) = _ia.getDeal(sn.sequence());
+            else (, amount, , , ) = _ia.getDeal(sn.sequence());
 
             uint32 short = sn.ssnOfDeal();
             if (short > 0) mockDealOfSell(short, amount);
@@ -67,7 +67,7 @@ contract MockResults is IMockResults, IASetting, SHASetting, BOSSetting {
         _mgm.chain.changeAmt(iSeller, amount, true);
 
         if (_mgm.chain.nodes[iSeller].amt == 0) {
-            _mgm.delMember(acct);
+            _mgm.delMember(seller);
         }
 
         emit MockDealOfSell(seller, amount);

@@ -196,10 +196,6 @@ library TopChain {
             top = updateSumOfLeader(chain, n.amt, up, false);
             chain.nodes[top].deep++;
 
-            // if (u.group == 0) {
-            //     u.group = chain.nodes[0].group++;
-            //     setZeroDeep(chain, zeroDeep(chain) + 1);
-            // }
             n.group = u.group;
         } else {
             require(down > 0, "MC._vInsert: zero down & up");

@@ -50,7 +50,7 @@ contract BOSKeeper is IBOSKeeper, BOSSetting {
         _bos.updateShareState(ssn, state);
     }
 
-    function setMaxQtyOfMembers(uint16 max) external onlyManager(1) {
+    function setMaxQtyOfMembers(uint8 max) external onlyManager(1) {
         _bos.setMaxQtyOfMembers(max);
     }
 }

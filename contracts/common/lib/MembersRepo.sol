@@ -86,7 +86,7 @@ library MembersRepo {
 
             gm.members[0].node = basedOnPar ? 1 : 0;
 
-            uint len = gm.chain.nodes.length;
+            uint16 len = uint16(gm.chain.nodes.length);
 
             while (len > 1) {
 
@@ -216,7 +216,7 @@ library MembersRepo {
         bool decrease
     ) internal returns (uint64 blocknumber) {
         uint16 i = indexOfMember(gm, acct);
-        uint64 deltaAmt = (gm.basedOnPar()) ? deltaPar : deltaPaid;
+        uint64 deltaAmt = (basedOnPar(gm)) ? deltaPar : deltaPaid;
         gm.chain.changeAmt(i, deltaAmt, decrease);
 
         (uint64 paid, uint64 par) = gm.members[acct].votesInHand.latest();
@@ -254,7 +254,7 @@ library MembersRepo {
     // ==== Zero Node Setting ====
     function init(GeneralMeeting storage gm, uint8 max) internal {
         gm.chain.init();
-        gm.setMaxQtyOfMembers(max);
+        setMaxQtyOfMembers(gm, max);
     }
 
     function addCounterOfShares(GeneralMeeting storage gm) internal {
@@ -372,7 +372,7 @@ library MembersRepo {
         view
         returns (uint16 qty)
     {
-        qty = gm.chain.nodes.length - 1;
+        qty = uint16(gm.chain.nodes.length - 1);
     }
 
     function membersList(GeneralMeeting storage gm)

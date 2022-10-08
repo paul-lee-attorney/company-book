@@ -10,35 +10,35 @@ interface IAntiDilution {
     // ##   Event    ##
     // ################
 
-    event SetBenchmark(uint8 indexed class, uint64 price);
+    event SetBenchmark(uint16 indexed class, uint64 price);
 
-    event DelBenchmark(uint8 indexed class);
+    event DelBenchmark(uint16 indexed class);
 
-    event AddObligor(uint8 indexed class, uint40 obligor);
+    event AddObligor(uint16 indexed class, uint40 obligor);
 
-    event RemoveObligor(uint8 indexed class, uint40 obligor);
+    event RemoveObligor(uint16 indexed class, uint40 obligor);
 
     // ################
     // ##   Write    ##
     // ################
 
-    function setBenchmark(uint8 class, uint32 price) external;
+    function setBenchmark(uint16 class, uint32 price) external;
 
-    function delBenchmark(uint8 class) external;
+    function delBenchmark(uint16 class) external;
 
-    function addObligor(uint8 class, uint40 obligor) external;
+    function addObligor(uint16 class, uint40 obligor) external;
 
-    function removeObligor(uint8 class, uint40 obligor) external;
+    function removeObligor(uint16 class, uint40 obligor) external;
 
     // ############
     // ##  read  ##
     // ############
 
-    function isMarked(uint8 class) external view returns (bool);
+    function isMarked(uint16 class) external view returns (bool);
 
-    function getBenchmark(uint8 class) external view returns (uint64);
+    function getBenchmark(uint16 class) external view returns (uint64);
 
-    function obligors(uint8 class) external view returns (uint40[]);
+    function obligors(uint16 class) external view returns (uint40[]);
 
     function giftPar(
         address ia,

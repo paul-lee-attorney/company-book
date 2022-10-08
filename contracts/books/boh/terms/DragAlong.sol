@@ -79,7 +79,7 @@ contract DragAlong is IAlongs, BOSSetting, BOASetting {
         _sn = _sn.sequenceToSN(5, group);
         _sn[7] = bytes1(triggerType);
         _sn = _sn.dateToSN(8, threshold);
-        _sn[12] = (proRata) ? 1 : 0;
+        _sn[12] = (proRata) ? bytes1(1) : bytes1(0);
         _sn = _sn.dateToSN(13, unitPrice);
         _sn = _sn.dateToSN(17, roe);
 
@@ -105,7 +105,7 @@ contract DragAlong is IAlongs, BOSSetting, BOASetting {
         uint16 group = _bos.groupNo(drager);
 
         if (group == 0) {
-            dragers.add(drager);
+            _dragers.add(drager);
             _reps[drager] = drager;
         } else {
             _addGroupMemberAsDrager(group, drager);
@@ -191,7 +191,7 @@ contract DragAlong is IAlongs, BOSSetting, BOASetting {
     }
     
     function repOf(uint40 drager) external dragerExist(drager) view returns(uint40) {
-        return _reps[drager];
+        return uint40(_reps[drager]);
     }
 
     function isLinked(uint40 drager, uint40 follower)
@@ -294,7 +294,7 @@ contract DragAlong is IAlongs, BOSSetting, BOASetting {
             uint8(EnumsRepo.TriggerTypeOfAlongs.NoConditions)
         ) return true;
 
-        uint40 controllor = _bos.controller();
+        uint40 controllor = _bos.controllor();
         uint16 conGroup = _bos.groupNo(controllor);
 
         if ((controllor != seller) && (conGroup == 0 || conGroup != _bos.groupNo(seller))) return false;
@@ -305,7 +305,7 @@ contract DragAlong is IAlongs, BOSSetting, BOASetting {
 
         if ((controllor != newControllor) && (conGroup == 0 || conGroup != newConGroup)) return true;
 
-        if (shareRatio <= rule.thresholdOfLink()) return true;
+        if (ratio <= rule.thresholdOfLink()) return true;
 
         return false;
     }

@@ -80,6 +80,8 @@ contract SHAKeeper is ISHAKeeper, BOASetting, BOSSetting, SHASetting {
         // IBookSetting(mock).setBOC(_boc);
         IBookSetting(mock).setBOH(_boh);
 
+        
+
         _addAlongDeal(
             dragAlong,
             ia,
@@ -155,8 +157,7 @@ contract SHAKeeper is ISHAKeeper, BOASetting, BOSSetting, SHASetting {
         IMockResults(mock).addAlongDeal(
             IAlongs(term).linkRule(drager),
             shareNumber,
-            paid,
-            par
+            _getSHA().basedOnPar() ? par : paid
         );
     }
 
@@ -224,7 +225,18 @@ contract SHAKeeper is ISHAKeeper, BOASetting, BOSSetting, SHASetting {
         address mock = _boa.mockResultsOfIA(ia);
         require(mock > address(0), "no MockResults are found for IA");
 
-        IMockResults(mock).acceptAlongDeal(sn);
+
+        uint16 seq = sn.sequence();
+        uint64 amount;
+
+        if (_getSHA().basedOnPar()) {
+        (, , amount, , ) = IInvestmentAgreement(ia).getDeal(seq);
+        } else {
+        (, amount, , , ) = IInvestmentAgreement(ia).getDeal(seq);
+        }
+
+
+        IMockResults(mock).mockDealOfBuy(sn, amount);
 
         ISigPage(ia).signDeal(sn.sequence(), caller, sigHash);
     }
@@ -463,7 +475,7 @@ contract SHAKeeper is ISHAKeeper, BOASetting, BOSSetting, SHASetting {
         uint16 ssnOfFR,
         uint64 ratio
     ) private {
-        (, uint64 par, uint64 paid, , ) = IInvestmentAgreement(ia)
+        (, uint64 paid, uint64 par, , ) = IInvestmentAgreement(ia)
             .getDeal(ssnOfOD);
         uint32 unitPrice = IInvestmentAgreement(ia).unitPrice(ssnOfOD);
         uint32 closingDate = IInvestmentAgreement(ia).closingDate(ssnOfOD);

@@ -54,7 +54,7 @@ interface IBookOfMotions {
     function requestToBuy(address ia, bytes32 sn)
         external
         view
-        returns (uint64 parValue, uint64 paidPar);
+        returns (uint64 paid, uint64 par);
 
     //##################
     //##    读接口    ##

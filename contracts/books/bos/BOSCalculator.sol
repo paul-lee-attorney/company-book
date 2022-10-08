@@ -21,12 +21,12 @@ contract BOSCalculator is IBOSCalculator, BOSSetting {
     //##   查询接口   ##
     //##################
 
-    function membersOfClass(uint8 class) external view returns (uint40[]) {
+    function membersOfClass(uint16 class) external view returns (uint40[]) {
         require(class < _bos.counterOfClasses(), "class over flow");
 
         bytes32[] memory list = _bos.sharesList();
 
-        uint256 len = _bos.numOfMembersAtBlock(uint64(block.number));
+        uint256 len = _bos.qtyOfMembers();
         uint40[] memory members = new uint40[](len);
 
         uint256 numOfMembers;
@@ -57,7 +57,7 @@ contract BOSCalculator is IBOSCalculator, BOSSetting {
         return output;
     }
 
-    function sharesOfClass(uint8 class) external view returns (bytes32[]) {
+    function sharesOfClass(uint16 class) external view returns (bytes32[]) {
         require(class < _bos.counterOfClasses(), "class over flow");
 
         bytes32[] memory list = _bos.sharesList();

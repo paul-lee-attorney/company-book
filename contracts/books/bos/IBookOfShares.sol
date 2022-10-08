@@ -46,7 +46,7 @@ interface IBookOfShares {
 
     // ==== MembersRepo ====
 
-    event SetMaxQtyOfMembers(uint16 max);
+    event SetMaxQtyOfMembers(uint8 max);
 
     event SetAmtBase(bool basedOnPar);
 
@@ -84,8 +84,8 @@ interface IBookOfShares {
     function issueShare(
         uint40 shareholder,
         uint16 class,
-        uint64 par,
         uint64 paid,
+        uint64 par,
         uint32 paidInDeadline,
         uint32 issueDate,
         uint32 issuePrice
@@ -133,9 +133,11 @@ interface IBookOfShares {
 
     // ==== MembersRepo ====
 
-    function setMaxQtyOfMembers(uint16 max) external;
+    function setMaxQtyOfMembers(uint8 max) external;
 
     function setAmtBase(bool basedOnPar) external;
+
+    function addMemberToGroup(uint40 acct, uint16 group) external;
 
     function removeMemberFromGroup(uint40 acct, uint16 group) external;
 
@@ -166,7 +168,7 @@ interface IBookOfShares {
 
     // ==== SharesRepo ====
 
-    function isShare(uint32 ssn) public view returns (bool);
+    function isShare(uint32 ssn) external view returns (bool);
 
     function cleanPar(uint32 ssn) external view returns (uint64);
 

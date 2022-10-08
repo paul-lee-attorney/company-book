@@ -380,7 +380,7 @@ contract GeneralKeeper is AccessControl {
         _BOSKeeper.updateShareState(ssn, state);
     }
 
-    function setMaxQtyOfMembers(uint16 max) external onlyManager(1) {
+    function setMaxQtyOfMembers(uint8 max) external onlyManager(1) {
         _BOSKeeper.setMaxQtyOfMembers(max);
     }
 

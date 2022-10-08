@@ -33,10 +33,10 @@ contract BookOfIA is IBookOfIA, DocumentsRepo {
     //##  Write I/O  ##
     //#################
 
-    function circulateIA(address ia, uint40 submitter) external onlyManager(1) {
+    function circulateIA(address ia, uint40 caller) external onlyManager(1) {
         bytes32 rule = _getSHA().votingRules(typeOfIA(ia));
 
-        circulateDoc(ia, rule, submitter);
+        circulateDoc(ia, rule, caller);
     }
 
     function createFRDeals(address ia, uint40 creator)

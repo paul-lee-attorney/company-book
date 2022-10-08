@@ -84,7 +84,7 @@ contract InvestmentAgreement is IInvestmentAgreement, BOSSetting, SigPage {
     //##################
 
     function _createSN(
-        uint8 class,
+        uint16 class,
         uint16 seq,
         uint8 typeOfDeal,
         uint40 buyer,
@@ -94,13 +94,13 @@ contract InvestmentAgreement is IInvestmentAgreement, BOSSetting, SigPage {
     ) internal pure returns (bytes32) {
         bytes memory _sn = new bytes(32);
 
-        _sn[0] = bytes1(class);
-        _sn = _sn.sequenceToSN(1, seq);
-        _sn[3] = bytes1(typeOfDeal);
-        _sn = _sn.acctToSN(4, buyer);
-        _sn = _sn.sequenceToSN(9, group);
-        _sn = _sn.dateToSN(11, shareNumber.ssn());
-        _sn = _sn.sequenceToSN(15, preSeq);
+        _sn = _sn.sequenceToSN(0,class);
+        _sn = _sn.sequenceToSN(2, seq);
+        _sn[4] = bytes1(typeOfDeal);
+        _sn = _sn.acctToSN(5, buyer);
+        _sn = _sn.sequenceToSN(10, group);
+        _sn = _sn.dateToSN(12, shareNumber.ssn());
+        _sn = _sn.sequenceToSN(16, preSeq);
 
         return _sn.bytesToBytes32();
     }
@@ -108,7 +108,7 @@ contract InvestmentAgreement is IInvestmentAgreement, BOSSetting, SigPage {
     function createDeal(
         uint8 typeOfDeal,
         bytes32 shareNumber,
-        uint8 class,
+        uint16 class,
         uint40 buyer,
         uint16 group,
         uint16 preSeq
@@ -387,8 +387,8 @@ contract InvestmentAgreement is IInvestmentAgreement, BOSSetting, SigPage {
         dealExist(seq)
         returns (
             bytes32 sn,
-            uint64 parValue,
-            uint64 paidPar,
+            uint64 paid,
+            uint64 par,
             uint8 state, // 0-pending 1-locked 2-cleared 3-closed 4-terminated
             bytes32 hashLock
         )
@@ -396,8 +396,8 @@ contract InvestmentAgreement is IInvestmentAgreement, BOSSetting, SigPage {
         Deal storage deal = _deals[seq];
 
         sn = deal.sn;
-        parValue = deal.parValue;
-        paidPar = deal.paidPar;
+        paid = deal.paidPar;
+        par = deal.parValue;
         state = deal.states.currentState;
         hashLock = deal.hashLock;
     }

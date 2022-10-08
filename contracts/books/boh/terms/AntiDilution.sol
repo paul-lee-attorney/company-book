@@ -27,7 +27,7 @@ contract AntiDilution is IAntiDilution, ITerm, BOSSetting, BOMSetting {
     using ObjsRepo for ObjsRepo.MarkChain;
     using ArrayUtils for uint40[];
 
-    mapping(uint8 => EnumerableSet.UintSet) private _obligors;
+    mapping(uint => EnumerableSet.UintSet) private _obligors;
 
     ObjsRepo.MarkChain private _benchmarks;
 
@@ -40,7 +40,7 @@ contract AntiDilution is IAntiDilution, ITerm, BOSSetting, BOMSetting {
     // ##   修饰器    ##
     // #################
 
-    modifier onlyMarked(uint8 class) {
+    modifier onlyMarked(uint16 class) {
         require(_benchmarks.contains(class), "no priced maked for the class");
         _;
     }
@@ -49,15 +49,15 @@ contract AntiDilution is IAntiDilution, ITerm, BOSSetting, BOMSetting {
     // ##   写接口   ##
     // ################
 
-    function setBenchmark(uint8 class, uint32 price) external onlyAttorney {
+    function setBenchmark(uint16 class, uint32 price) external onlyAttorney {
         if (_benchmarks.addMark(class, price)) emit SetBenchmark(class, price);
     }
 
-    function delBenchmark(uint8 class) external onlyAttorney onlyMarked(class) {
+    function delBenchmark(uint16 class) external onlyAttorney onlyMarked(class) {
         if (_benchmarks.removeMark(class)) emit DelBenchmark(class);
     }
 
-    function addObligor(uint8 class, uint40 obligor)
+    function addObligor(uint16 class, uint40 obligor)
         external
         onlyAttorney
         onlyMarked(class)
@@ -65,7 +65,7 @@ contract AntiDilution is IAntiDilution, ITerm, BOSSetting, BOMSetting {
         if (_obligors[class].add(obligor)) emit AddObligor(class, obligor);
     }
 
-    function removeObligor(uint8 class, uint40 obligor)
+    function removeObligor(uint16 class, uint40 obligor)
         external
         onlyAttorney
         onlyMarked(class)
@@ -78,11 +78,11 @@ contract AntiDilution is IAntiDilution, ITerm, BOSSetting, BOMSetting {
     // ##  查询接口  ##
     // ################
 
-    function isMarked(uint8 class) external view returns (bool) {
+    function isMarked(uint16 class) external view returns (bool) {
         return _benchmarks.contains(class);
     }
 
-    function getBenchmark(uint8 class)
+    function getBenchmark(uint16 class)
         external
         view
         onlyMarked(class)
@@ -91,7 +91,7 @@ contract AntiDilution is IAntiDilution, ITerm, BOSSetting, BOMSetting {
         return _benchmarks.markedValue(class);
     }
 
-    function obligors(uint8 class)
+    function obligors(uint16 class)
         external
         view
         onlyMarked(class)

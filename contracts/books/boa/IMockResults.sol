@@ -26,7 +26,7 @@ interface IMockResults {
 
     event MockDealOfSell(uint40 indexed seller, uint64 amount);
 
-    event MockDealOfBuyer(uint40 indexed buyer, uint64 amount);
+    event MockDealOfBuy(uint40 indexed buyer, uint64 amount);
 
     event AddAlongDeal(
         uint40 indexed follower,
@@ -55,7 +55,7 @@ interface IMockResults {
     //##################
 
     function topGroup()
-        public
+        external
         view
         returns (
             uint40 controllor,

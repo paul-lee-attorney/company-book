@@ -467,7 +467,7 @@ contract BookOfShares is IBookOfShares, SHASetting {
         Share storage share = _shares[ssn];
 
         if (_gm.addShareToMember(share.shareNumber, acct)) {
-            uint64 blockNumber = _gm.changeAmtOfMember(
+            _gm.changeAmtOfMember(
                 acct,
                 share.paid,
                 share.par,
@@ -552,7 +552,6 @@ contract BookOfShares is IBookOfShares, SHASetting {
     function verifyRegNum(string regNum)
         external
         view
-        onlyMember
         returns (bool)
     {
         return _regNumHash == keccak256(bytes(regNum));

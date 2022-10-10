@@ -1,9 +1,11 @@
+// SPDX-License-Identifier: UNLICENSED
+
 /* *
  * Copyright 2021-2022 LI LI of JINGTIAN & GONGCHENG.
  * All Rights Reserved.
  * */
 
-pragma solidity ^0.4.24;
+pragma solidity ^0.8.8;
 
 import "../lib/SNFactory.sol";
 import "../lib/SNParser.sol";
@@ -59,7 +61,7 @@ contract SigPage is ISigPage, AccessControl {
     }
 
     modifier onlyFutureTime(uint32 date) {
-        require(uint256(date) > now + 15 minutes, "NOT FUTURE time");
+        require(uint256(date) > block.timestamp + 15 minutes, "NOT FUTURE time");
         _;
     }
 
@@ -200,10 +202,10 @@ contract SigPage is ISigPage, AccessControl {
     }
 
     function isInitSigner(uint40 acct) public view returns (bool) {
-        return _snList.contains(bytes32(acct));
+        return _snList.contains(bytes32(uint(acct)));
     }
 
-    function parties() external view returns (uint40[]) {
+    function parties() external view returns (uint40[] memory) {
         return _parties.valuesToUint40();
     }
 
@@ -211,7 +213,7 @@ contract SigPage is ISigPage, AccessControl {
         return _parties.length();
     }
 
-    function blanksList() external view returns (bytes32[]) {
+    function blanksList() external view returns (bytes32[] memory) {
         return _snList.values();
     }
 
@@ -242,25 +244,23 @@ contract SigPage is ISigPage, AccessControl {
     function sigDateOfDoc(uint40 acct)
         external
         view
-        onlyInitSigner
         returns (uint32)
     {
-        return _signatures[bytes32(acct)].sigDate;
+        return _signatures[bytes32(uint(acct))].sigDate;
     }
 
     function sigHashOfDoc(uint40 acct)
         external
         view
-        onlyInitSigner
         returns (bytes32)
     {
-        return _signatures[bytes32(acct)].sigHash;
+        return _signatures[bytes32(uint(acct))].sigHash;
     }
 
     function dealSigVerify(
         uint40 acct,
         uint16 ssn,
-        string src
+        string memory src
     ) external view returns (bool) {
         bytes32 sn = _createSN(acct, ssn);
         return _signatures[sn].sigHash == keccak256(bytes(src));

@@ -2,3 +2,4 @@ node_modules/
 build/
 scripts/doxity/package-lock.json
 *.bin
+*.json

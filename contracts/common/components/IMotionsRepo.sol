@@ -1,9 +1,11 @@
+// SPDX-License-Identifier: UNLICENSED
+
 /* *
  * Copyright 2021-2022 LI LI of JINGTIAN & GONGCHENG.
  * All Rights Reserved.
  * */
 
-pragma solidity ^0.4.24;
+pragma solidity ^0.8.8;
 
 pragma experimental ABIEncoderV2;
 
@@ -67,9 +69,9 @@ interface IMotionsRepo {
         view
         returns (bool);
 
-    function getYea(uint256 motionId) external view returns (uint40[], uint64);
+    function getYea(uint256 motionId) external view returns (uint40[] memory, uint64);
 
-    function getNay(uint256 motionId) external view returns (uint40[], uint64);
+    function getNay(uint256 motionId) external view returns (uint40[] memory, uint64);
 
     function sumOfVoteAmt(uint256 motionId) external view returns (uint64);
 

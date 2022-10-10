@@ -1,9 +1,11 @@
+// SPDX-License-Identifier: UNLICENSED
+
 /* *
  * Copyright 2021-2022 LI LI of JINGTIAN & GONGCHENG.
  * All Rights Reserved.
  * */
 
-pragma solidity ^0.4.24;
+pragma solidity ^0.8.8;
 
 pragma experimental ABIEncoderV2;
 
@@ -99,7 +101,7 @@ interface IBookOfShares {
         bytes32 hashLock
     ) external;
 
-    function requestPaidInCapital(uint32 ssn, string hashKey) external;
+    function requestPaidInCapital(uint32 ssn, string memory hashKey) external;
 
     // ==== TransferShare ====
 
@@ -147,7 +149,7 @@ interface IBookOfShares {
 
     // ==== BookOfShares ====
 
-    function verifyRegNum(string regNum) external view returns (bool);
+    function verifyRegNum(string memory regNum) external view returns (bool);
 
     function maxQtyOfMembers() external view returns (uint8);
 
@@ -184,7 +186,7 @@ interface IBookOfShares {
             uint8 state
         );
 
-    function sharesList() external view returns (bytes32[]);
+    function sharesList() external view returns (bytes32[] memory);
 
     function sharenumberExist(bytes32 sharenumbre) external view returns (bool);
 
@@ -212,13 +214,13 @@ interface IBookOfShares {
         view
         returns (uint64);
 
-    function sharesInHand(uint40 acct) external view returns (bytes32[]);
+    function sharesInHand(uint40 acct) external view returns (bytes32[] memory);
 
     function groupNo(uint40 acct) external view returns (uint16);
 
     function qtyOfMembers() external view returns (uint16);
 
-    function membersList() external view returns (uint40[]);
+    function membersList() external view returns (uint40[] memory);
 
     function affiliated(uint40 acct1, uint40 acct2)
         external

@@ -3,7 +3,7 @@
  * All Rights Reserved.
  * */
 
-pragma solidity ^0.4.24;
+pragma solidity ^0.8.8;
 
 import "../books/boh/terms/IAntiDilution.sol";
 import "../books/boh/terms/ITerm.sol";
@@ -77,7 +77,6 @@ contract SHAKeeper is ISHAKeeper, BOASetting, BOSSetting, SHASetting {
         address mock = _boa.mockResultsOfIA(ia);
         if (mock == address(0)) mock = _boa.createMockResults(ia);
 
-        // IBookSetting(mock).setBOC(_boc);
         IBookSetting(mock).setBOH(_boh);
 
         

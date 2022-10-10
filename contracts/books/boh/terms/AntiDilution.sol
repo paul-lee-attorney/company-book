@@ -1,22 +1,22 @@
-/*
+// SPDX-License-Identifier: UNLICENSED
+
+/* *
  * Copyright 2021-2022 LI LI of JINGTIAN & GONGCHENG.
  * All Rights Reserved.
  * */
 
-pragma solidity ^0.4.24;
+pragma solidity ^0.8.8;
 
 import "../../boa/IInvestmentAgreement.sol";
 
-import "../../../common/ruting/IBookSetting.sol";
 import "../../../common/ruting/BOSSetting.sol";
 import "../../../common/ruting/BOMSetting.sol";
-import "../../../common/access/AccessControl.sol";
 
 import "../../../common/lib/ArrayUtils.sol";
 import "../../../common/lib/SNParser.sol";
 import "../../../common/lib/EnumsRepo.sol";
 import "../../../common/lib/EnumerableSet.sol";
-import "../../../common/lib/ObjsRepo.sol";
+import "../../../common/lib/ArrowChain.sol";
 
 import "./IAntiDilution.sol";
 import "./ITerm.sol";
@@ -24,24 +24,19 @@ import "./ITerm.sol";
 contract AntiDilution is IAntiDilution, ITerm, BOSSetting, BOMSetting {
     using SNParser for bytes32;
     using EnumerableSet for EnumerableSet.UintSet;
-    using ObjsRepo for ObjsRepo.MarkChain;
+    using ArrowChain for ArrowChain.MarkChain;
     using ArrayUtils for uint40[];
 
-    mapping(uint => EnumerableSet.UintSet) private _obligors;
+    mapping(uint256 => EnumerableSet.UintSet) private _obligors;
 
-    ObjsRepo.MarkChain private _benchmarks;
-
-    // // benchmark => _obligors
-    // mapping(bytes32 => EnumerableSet.UintSet) private _obligors;
-
-    // ObjsRepo.SeqList private _benchmarks;
+    ArrowChain.MarkChain private _benchmarks;
 
     // #################
     // ##   修饰器    ##
     // #################
 
     modifier onlyMarked(uint16 class) {
-        require(_benchmarks.contains(class), "no priced maked for the class");
+        require(_benchmarks.contains(class), "AD.onlyMarked: no uint price maked for the class");
         _;
     }
 
@@ -95,7 +90,7 @@ contract AntiDilution is IAntiDilution, ITerm, BOSSetting, BOMSetting {
         external
         view
         onlyMarked(class)
-        returns (uint40[])
+        returns (uint40[] memory)
     {
         return _obligors[class].valuesToUint40();
     }
@@ -104,7 +99,7 @@ contract AntiDilution is IAntiDilution, ITerm, BOSSetting, BOMSetting {
         address ia,
         bytes32 snOfDeal,
         bytes32 shareNumber
-    ) external view onlyMarked(shareNumber.class()) returns (uint64) {
+    ) external view onlyMarked(shareNumber.class()) returns (uint64 gift) {
         uint64 markPrice = _benchmarks.markedValue(shareNumber.class());
 
         uint64 dealPrice = IInvestmentAgreement(ia).unitPrice(
@@ -113,9 +108,9 @@ contract AntiDilution is IAntiDilution, ITerm, BOSSetting, BOMSetting {
 
         require(markPrice > dealPrice, "AntiDilution not triggered");
 
-        (, , uint64 paidPar, , , ) = _bos.getShare(shareNumber.ssn());
+        (, uint64 paid, , , , ) = _bos.getShare(shareNumber.ssn());
 
-        return (paidPar * markPrice) / dealPrice - paidPar;
+        gift = (paid * markPrice) / dealPrice - paid;
     }
 
     // ################
@@ -129,18 +124,20 @@ contract AntiDilution is IAntiDilution, ITerm, BOSSetting, BOMSetting {
             sn.typeOfDeal() != uint8(EnumsRepo.TypeOfDeal.CapitalIncrease) &&
             sn.typeOfDeal() != uint8(EnumsRepo.TypeOfDeal.PreEmptive)
         ) return false;
+
         if (unitPrice < _benchmarks.topValue()) return true;
-        else return false;
+
+        return false;
     }
 
-    function _isExempted(uint32 price, uint40[] consentParties)
+    function _isExempted(uint32 price, uint40[] memory consentParties)
         private
         view
         returns (bool)
     {
-        require(consentParties.length > 0, "zero consentParties");
+        require(consentParties.length > 0, "AD.isExempted: zero consentParties");
 
-        uint8 cur = uint8(_benchmarks.topKey());
+        uint16 cur = uint16(_benchmarks.topKey());
 
         while (cur > 0) {
             if (_benchmarks.markedValue(cur) <= price) break;
@@ -159,7 +156,7 @@ contract AntiDilution is IAntiDilution, ITerm, BOSSetting, BOMSetting {
     function isExempted(address ia, bytes32 sn) public view returns (bool) {
         if (!isTriggered(ia, sn)) return true;
 
-        (uint40[] memory consentParties, ) = _bom.getYea(uint256(ia));
+        (uint40[] memory consentParties, ) = _bom.getYea(uint256(uint160(ia)));
 
         uint32 unitPrice = IInvestmentAgreement(ia).unitPrice(sn.sequence());
 

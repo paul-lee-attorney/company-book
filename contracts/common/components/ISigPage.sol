@@ -1,9 +1,11 @@
-/*
+// SPDX-License-Identifier: UNLICENSED
+
+/* *
  * Copyright 2021-2022 LI LI of JINGTIAN & GONGCHENG.
  * All Rights Reserved.
  * */
 
-pragma solidity ^0.4.24;
+pragma solidity ^0.8.8;
 
 interface ISigPage {
     //####################
@@ -70,11 +72,11 @@ interface ISigPage {
 
     function isInitSigner(uint40 acct) external view returns (bool);
 
-    function parties() external view returns (uint40[]);
+    function parties() external view returns (uint40[] memory);
 
     function qtyOfParties() external view returns (uint256);
 
-    function blanksList() external view returns (bytes32[]);
+    function blanksList() external view returns (bytes32[] memory);
 
     function sigCounter() external view returns (uint256);
 
@@ -95,6 +97,6 @@ interface ISigPage {
     function dealSigVerify(
         uint40 acct,
         uint16 ssn,
-        string src
+        string memory src
     ) external view returns (bool);
 }

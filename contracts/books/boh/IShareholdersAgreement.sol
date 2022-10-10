@@ -1,9 +1,11 @@
-/*
+// SPDX-License-Identifier: UNLICENSED
+
+/* *
  * Copyright 2021-2022 LI LI of JINGTIAN & GONGCHENG.
  * All Rights Reserved.
  * */
 
-pragma solidity ^0.4.24;
+pragma solidity ^0.8.8;
 
 interface IShareholdersAgreement {
     //##############
@@ -38,7 +40,7 @@ interface IShareholdersAgreement {
     //##    写接口    ##
     //##################
 
-    function setTermsTemplate(address[15] templates) external;
+    function setTermsTemplate(address[15] memory templates) external;
 
     function createTerm(uint8 title) external returns (address body);
 
@@ -88,9 +90,9 @@ interface IShareholdersAgreement {
 
     function isBody(address addr) external view returns (bool);
 
-    function titles() external view returns (uint8[]);
+    function titles() external view returns (uint8[] memory);
 
-    function bodies() external view returns (address[]);
+    function bodies() external view returns (address[] memory);
 
     function getTerm(uint8 title) external view returns (address body);
 

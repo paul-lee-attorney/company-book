@@ -1,9 +1,11 @@
+// SPDX-License-Identifier: UNLICENSED
+
 /* *
  * Copyright 2021-2022 LI LI of JINGTIAN & GONGCHENG.
  * All Rights Reserved.
  * */
 
-pragma solidity ^0.4.24;
+pragma solidity ^0.8.8;
 
 interface IRegCenter {
     // ##################
@@ -48,9 +50,9 @@ interface IRegCenter {
 
     function quitEntity(uint8 roleOfUser) external;
 
-    function setBackupKey(uint40 userNo, address backupKey) external;
+    function setBackupKey(uint40 user, address backupKey) external;
 
-    function replacePrimeKey(uint40 userNo) external;
+    function replacePrimeKey(uint40 user) external;
 
     // ==== EquityInvest ====
 
@@ -110,13 +112,13 @@ interface IRegCenter {
 
     function blocksPerHour() external view returns (uint32);
 
-    function primeKey(uint40 userNo) external view returns (address);
+    function primeKey(uint40 user) external view returns (address);
 
-    function isContract(uint40 userNo) external view returns (bool);
+    function isContract(uint40 user) external view returns (bool);
 
     function isUser(address key) external view returns (bool);
 
-    function checkID(uint40 userNo, address key) external returns (bool);
+    function checkID(uint40 user, address key) external returns (bool);
 
     function userNo(address key) external returns (uint40);
 

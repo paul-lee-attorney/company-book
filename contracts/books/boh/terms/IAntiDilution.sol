@@ -1,9 +1,11 @@
-/*
+// SPDX-License-Identifier: UNLICENSED
+
+/* *
  * Copyright 2021-2022 LI LI of JINGTIAN & GONGCHENG.
  * All Rights Reserved.
  * */
 
-pragma solidity ^0.4.24;
+pragma solidity ^0.8.8;
 
 interface IAntiDilution {
     // ################
@@ -38,7 +40,7 @@ interface IAntiDilution {
 
     function getBenchmark(uint16 class) external view returns (uint64);
 
-    function obligors(uint16 class) external view returns (uint40[]);
+    function obligors(uint16 class) external view returns (uint40[] memory);
 
     function giftPar(
         address ia,

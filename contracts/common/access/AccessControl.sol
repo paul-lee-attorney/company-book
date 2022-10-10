@@ -1,9 +1,11 @@
+// SPDX-License-Identifier: UNLICENSED
+
 /* *
  * Copyright 2021-2022 LI LI of JINGTIAN & GONGCHENG.
  * All Rights Reserved.
  * */
 
-pragma solidity ^0.4.24;
+pragma solidity ^0.8.8;
 
 import "./IAccessControl.sol";
 import "./RegCenterSetting.sol";
@@ -103,7 +105,7 @@ contract AccessControl is IAccessControl, RegCenterSetting {
         _rc.setManager(0, owner);
         _rc.setManager(1, directKeeper);
 
-        emit Init(owner, directKeeper, _rc);
+        emit Init(owner, directKeeper, address(_rc));
     }
 
     // function regThisContract(uint8 roleOfUser, uint40 entity) public {

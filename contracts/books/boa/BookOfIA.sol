@@ -1,8 +1,11 @@
+// SPDX-License-Identifier: UNLICENSED
+
 /* *
- * Copyright 2021 LI LI of JINGTIAN & GONGCHENG.
+ * Copyright 2021-2022 LI LI of JINGTIAN & GONGCHENG.
+ * All Rights Reserved.
  * */
 
-pragma solidity ^0.4.24;
+pragma solidity ^0.8.8;
 
 import "./IInvestmentAgreement.sol";
 import "./IBookOfIA.sol";
@@ -47,14 +50,14 @@ contract BookOfIA is IBookOfIA, DocumentsRepo {
         if (_frDeals[ia] == address(0)) {
             frd = createDoc(1, creator);
             IAccessControl(frd).init(
-                this,
-                this,
-                _rc,
+                address(this),
+                address(this),
+                address(_rc),
                 uint8(EnumsRepo.RoleOfUser.FirstRefusalDeals),
-                _rc.entityNo(this)
+                _rc.entityNo(address(this))
             );
             IBookSetting(frd).setIA(ia);
-            IAccessControl(frd).setManager(1, this, msg.sender);
+            IAccessControl(frd).setManager(1, address(this), msg.sender);
         }
     }
 
@@ -69,16 +72,16 @@ contract BookOfIA is IBookOfIA, DocumentsRepo {
             mock = createDoc(2, _rc.userNo(creator));
             IAccessControl(mock).init(
                 creator,
-                this,
-                _rc,
+                address(this),
+                address(_rc),
                 uint8(EnumsRepo.RoleOfUser.MockResults),
-                _rc.entityNo(this)
+                _rc.entityNo(address(this))
             );
             IBookSetting(mock).setIA(ia);
-            IBookSetting(mock).setBOS(_bos);
-            IBookSetting(mock).setBOSCal(_bosCal);
+            IBookSetting(mock).setBOS(address(_bos));
+            IBookSetting(mock).setBOSCal(address(_bosCal));
 
-            IAccessControl(mock).setManager(1, this, creator);
+            IAccessControl(mock).setManager(1, address(this), creator);
         }
     }
 

@@ -1,9 +1,11 @@
+// SPDX-License-Identifier: UNLICENSED
+
 /* *
  * Copyright 2021-2022 LI LI of JINGTIAN & GONGCHENG.
  * All Rights Reserved.
  * */
 
-pragma solidity ^0.4.24;
+pragma solidity ^0.8.8;
 
 import "../../common/ruting/IBookSetting.sol";
 import "../../common/ruting/BOSSetting.sol";
@@ -185,23 +187,23 @@ contract InvestmentAgreement is IInvestmentAgreement, BOSSetting, SigPage {
 
     function updateDeal(
         uint16 seq,
-        uint32 unitPrice,
+        uint32 _unitPrice,
         uint64 paidPar,
         uint64 parValue,
-        uint32 closingDate
+        uint32 _closingDate
     ) public dealExist(seq) attorneyOrKeeper {
         require(parValue > 0, "parValue is ZERO");
         require(parValue >= paidPar, "paidPar overflow");
-        require(closingDate > block.number, "closingDate shall be future");
+        require(_closingDate > block.number, "closingDate shall be future");
 
         Deal storage deal = _deals[seq];
 
-        deal.unitPrice = unitPrice;
+        deal.unitPrice = _unitPrice;
         deal.parValue = parValue;
         deal.paidPar = paidPar;
-        deal.closingDate = closingDate;
+        deal.closingDate = _closingDate;
 
-        emit UpdateDeal(deal.sn, unitPrice, paidPar, parValue, closingDate);
+        emit UpdateDeal(deal.sn, _unitPrice, paidPar, parValue, _closingDate);
     }
 
     function delDeal(uint16 seq)
@@ -257,17 +259,17 @@ contract InvestmentAgreement is IInvestmentAgreement, BOSSetting, SigPage {
     function clearDealCP(
         uint16 seq,
         bytes32 hashLock,
-        uint32 closingDate
+        uint32 _closingDate
     ) external onlyKeeper dealExist(seq) {
         Deal storage deal = _deals[seq];
 
         require(
-            uint32(block.timestamp) < closingDate,
+            uint32(block.timestamp) < _closingDate,
             "closingDate shall be FUTURE time"
         );
 
         require(
-            closingDate <= closingDeadline(),
+            _closingDate <= closingDeadline(),
             "closingDate LATER than deadline"
         );
 
@@ -280,7 +282,7 @@ contract InvestmentAgreement is IInvestmentAgreement, BOSSetting, SigPage {
 
         deal.hashLock = hashLock;
 
-        if (closingDate > 0) deal.closingDate = closingDate;
+        if (_closingDate > 0) deal.closingDate = _closingDate;
 
         emit ClearDealCP(
             deal.sn,
@@ -290,7 +292,7 @@ contract InvestmentAgreement is IInvestmentAgreement, BOSSetting, SigPage {
         );
     }
 
-    function closeDeal(uint16 seq, string hashKey)
+    function closeDeal(uint16 seq, string memory hashKey)
         external
         onlyCleared(seq)
         onlyKeeper
@@ -302,7 +304,7 @@ contract InvestmentAgreement is IInvestmentAgreement, BOSSetting, SigPage {
             "hashKey NOT correct"
         );
 
-        require(now + 15 minutes <= deal.closingDate, "MISSED closing date");
+        require(block.timestamp + 15 minutes <= deal.closingDate, "MISSED closing date");
 
         deal.states.pushToNextState();
 
@@ -312,12 +314,12 @@ contract InvestmentAgreement is IInvestmentAgreement, BOSSetting, SigPage {
     function revokeDeal(
         uint16 seq,
         // uint32 sigDate,
-        string hashKey
+        string memory hashKey
     ) external onlyCleared(seq) onlyManager(1) {
         Deal storage deal = _deals[seq];
 
         require(
-            deal.closingDate < now - 15 minutes,
+            deal.closingDate < block.timestamp - 15 minutes,
             "NOT reached closing date"
         );
 
@@ -429,7 +431,7 @@ contract InvestmentAgreement is IInvestmentAgreement, BOSSetting, SigPage {
         return _deals[seq].shareNumber;
     }
 
-    function dealsList() external view returns (bytes32[]) {
+    function dealsList() external view returns (bytes32[] memory) {
         return _dealsList.values();
     }
 }

@@ -1,9 +1,11 @@
-/*
+// SPDX-License-Identifier: UNLICENSED
+
+/* *
  * Copyright 2021-2022 LI LI of JINGTIAN & GONGCHENG.
  * All Rights Reserved.
  * */
 
-pragma solidity ^0.4.24;
+pragma solidity ^0.8.8;
 
 import "./IDocumentsRepo.sol";
 
@@ -257,7 +259,7 @@ contract DocumentsRepo is IDocumentsRepo, CloneFactory, SHASetting, BOSSetting {
         return _docsList.length();
     }
 
-    function docsList() external view returns (bytes32[]) {
+    function docsList() external view returns (bytes32[] memory) {
         return _docsList.values();
     }
 

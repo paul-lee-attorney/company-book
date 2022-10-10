@@ -1,9 +1,11 @@
+// SPDX-License-Identifier: UNLICENSED
+
 /* *
  * Copyright 2021-2022 LI LI of JINGTIAN & GONGCHENG.
  * All Rights Reserved.
  * */
 
-pragma solidity ^0.4.24;
+pragma solidity ^0.8.8;
 pragma experimental ABIEncoderV2;
 
 interface IBookOfMotions {
@@ -79,12 +81,12 @@ interface IBookOfMotions {
     function getYea(uint256 motionId)
         external
         view
-        returns (uint40[] membersOfYea, uint64 supportPar);
+        returns (uint40[] memory membersOfYea, uint64 supportPar);
 
     function getNay(uint256 motionId)
         external
         view
-        returns (uint40[] membersOfNay, uint64 againstPar);
+        returns (uint40[] memory membersOfNay, uint64 againstPar);
 
     function sumOfVoteAmt(uint256 motionId) external view returns (uint64);
 

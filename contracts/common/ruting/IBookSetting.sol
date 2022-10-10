@@ -1,9 +1,11 @@
+// SPDX-License-Identifier: UNLICENSED
+
 /* *
  * Copyright 2021-2022 LI LI of JINGTIAN & GONGCHENG.
  * All Rights Reserved.
  * */
 
-pragma solidity ^0.4.24;
+pragma solidity ^0.8.8;
 
 interface IBookSetting {
     //##############
@@ -11,8 +13,6 @@ interface IBookSetting {
     //##############
 
     function setBOA(address boa) external;
-
-    function setBOC(address boc) external;
 
     function setAgrmtCal(address agrmtCal) external;
 

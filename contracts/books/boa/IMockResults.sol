@@ -1,21 +1,11 @@
+// SPDX-License-Identifier: UNLICENSED
+
 /* *
- * Copyright 2021 LI LI of JINGTIAN & GONGCHENG.
+ * Copyright 2021-2022 LI LI of JINGTIAN & GONGCHENG.
+ * All Rights Reserved.
  * */
 
-pragma solidity ^0.4.24;
-
-import "./IMockResults.sol";
-import "./IInvestmentAgreement.sol";
-
-import "../../common/lib/TopChain.sol";
-import "../../common/lib/MembersRepo.sol";
-// import "../../common/lib/EnumerableSet.sol";
-import "../../common/lib/SNParser.sol";
-
-import "../../common/ruting/BOSSetting.sol";
-import "../../common/ruting/SHASetting.sol";
-
-import "../../common/ruting/IASetting.sol";
+pragma solidity ^0.8.8;
 
 interface IMockResults {
     //##############

@@ -1,9 +1,11 @@
+// SPDX-License-Identifier: UNLICENSED
+
 /* *
  * Copyright 2021-2022 LI LI of JINGTIAN & GONGCHENG.
  * All Rights Reserved.
  * */
 
-pragma solidity ^0.4.24;
+pragma solidity ^0.8.8;
 pragma experimental ABIEncoderV2;
 
 import "../../common/access/AccessControl.sol";
@@ -40,34 +42,6 @@ contract MotionsRepo is IMotionsRepo, AccessControl {
     mapping(uint256 => Motion) internal _motions;
 
     EnumerableSet.UintSet internal _motionIds;
-
-    //##############
-    //##  Event   ##
-    //##############
-
-    event AuthorizeDelegate(
-        uint40 rightholder,
-        uint40 delegate,
-        uint256 motionId
-    );
-
-    event ProposeMotion(
-        uint256 indexed motionId,
-        uint8 typeOfMotion,
-        address[] targets,
-        bytes[] params,
-        bytes32 desHash,
-        bytes32 sn
-    );
-
-    event CastVote(
-        uint256 indexed motionId,
-        uint40 voter,
-        uint8 atitude,
-        uint64 voteAmt
-    );
-
-    event ExecuteAction(uint256 indexed motionId, bool flag);
 
     //####################
     //##    modifier    ##
@@ -148,8 +122,8 @@ contract MotionsRepo is IMotionsRepo, AccessControl {
         bytes32 rule,
         bytes32 sn,
         uint8 motionType,
-        address[] targets,
-        bytes[] params,
+        address[] memory targets,
+        bytes[] memory params,
         bytes32 desHash
     ) internal {
         require(!_motionIds.contains(motionId), "the motion has been proposed");
@@ -165,15 +139,15 @@ contract MotionsRepo is IMotionsRepo, AccessControl {
         emit ProposeMotion(motionId, motionType, targets, params, desHash, sn);
     }
 
-    // function _hashAction(
-    //     uint8 actionType,
-    //     address[] target,
-    //     bytes[] params,
-    //     bytes32 desHash
-    // ) internal pure returns (uint256) {
-    //     return
-    //         uint256(keccak256(abi.encode(actionType, target, params, desHash)));
-    // }
+    function _hashAction(
+        uint8 actionType,
+        address[] memory target,
+        bytes[] memory params,
+        bytes32 desHash
+    ) internal pure returns (uint256) {
+        return
+            uint256(keccak256(abi.encode(actionType, target, params, desHash)));
+    }
 
     function _castVote(
         uint256 motionId,
@@ -189,22 +163,22 @@ contract MotionsRepo is IMotionsRepo, AccessControl {
         }
     }
 
-    // function _toBytes(bytes32[] input) internal pure returns (bytes[]) {
-    //     uint256 len = input.length;
-    //     bytes[] memory output = new bytes[](len);
+    function _toBytes(bytes32[] memory input) internal pure returns (bytes[] memory) {
+        uint256 len = input.length;
+        bytes[] memory output = new bytes[](len);
 
-    //     while (len > 0) {
-    //         output[len - 1] = abi.encodePacked(input[len - 1]);
-    //         len--;
-    //     }
+        while (len > 0) {
+            output[len - 1] = abi.encodePacked(input[len - 1]);
+            len--;
+        }
 
-    //     return output;
-    // }
+        return output;
+    }
 
     // function execAction(
     //     uint8 actionType,
-    //     address[] targets,
-    //     bytes32[] params,
+    //     address[] memory targets,
+    //     bytes32[] memory params,
     //     bytes32 desHash
     // ) external onlyManager(1) returns (uint256) {
     //     bytes[] memory paramsBytes = _toBytes(params);
@@ -239,7 +213,7 @@ contract MotionsRepo is IMotionsRepo, AccessControl {
     //     bool success;
 
     //     for (uint256 i = 0; i < targets.length; i++) {
-    //         success = targets[i].call(params[i]);
+    //         (success,) = targets[i].call(params[i]);
     //         if (!success) return success;
     //     }
 
@@ -293,11 +267,11 @@ contract MotionsRepo is IMotionsRepo, AccessControl {
         return _motions[motionId].box.votedNay(acct);
     }
 
-    function getYea(uint256 motionId) external view returns (uint40[], uint64) {
+    function getYea(uint256 motionId) external view returns (uint40[] memory, uint64) {
         return _motions[motionId].box.getYea();
     }
 
-    function getNay(uint256 motionId) external view returns (uint40[], uint64) {
+    function getNay(uint256 motionId) external view returns (uint40[] memory, uint64) {
         return _motions[motionId].box.getNay();
     }
 

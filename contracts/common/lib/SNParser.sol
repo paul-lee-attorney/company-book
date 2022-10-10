@@ -1,9 +1,11 @@
-/**
+// SPDX-License-Identifier: UNLICENSED
+
+/* *
  * Copyright 2021-2022 LI LI of JINGTIAN & GONGCHENG.
  * All Rights Reserved.
- ***/
+ * */
 
-pragma solidity ^0.4.24;
+pragma solidity ^0.8.8;
 
 library SNParser {
     // ======== EdgeOfGraph ========
@@ -194,7 +196,7 @@ library SNParser {
         bytes32 sn,
         uint32 data_1,
         uint32 data_2
-    ) internal pure returns (bool) {
+    ) internal pure returns (bool flag) {
         bool flag_1;
         bool flag_2;
 
@@ -208,12 +210,12 @@ library SNParser {
         else if (compOperator_2(sn) == 3) flag_2 = data_2 >= para_2(sn);
         else if (compOperator_2(sn) == 4) flag_2 = data_2 <= para_2(sn);
 
-        if (logOperator(sn) == 1) return flag_1 && flag_2;
-        else if (logOperator(sn) == 2) return flag_1 || flag_2;
-        else if (logOperator(sn) == 3) return flag_1;
-        else if (logOperator(sn) == 4) return flag_2;
-        else if (logOperator(sn) == 5) return flag_1 == flag_2;
-        else if (logOperator(sn) == 6) return flag_1 != flag_2;
+        if (logOperator(sn) == 1) flag = flag_1 && flag_2;
+        else if (logOperator(sn) == 2) flag = flag_1 || flag_2;
+        else if (logOperator(sn) == 3) flag = flag_1;
+        else if (logOperator(sn) == 4) flag = flag_2;
+        else if (logOperator(sn) == 5) flag = flag_1 == flag_2;
+        else if (logOperator(sn) == 6) flag = flag_1 != flag_2;
     }
 
     // ======== Futures ========
@@ -334,10 +336,10 @@ library SNParser {
 
     // ======== AntiDilution ========
     function priceOfMark(bytes32 sn) internal pure returns (uint32) {
-        return uint32(bytes29(sn << 24));
+        return uint32(bytes4(sn << 24));
     }
 
-    function classOfMark(bytes32 sn) internal pure returns (uint8) {
-        return uint8(sn[2]);
+    function classOfMark(bytes32 sn) internal pure returns (uint16) {
+        return uint16(bytes2(sn));
     }
 }

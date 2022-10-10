@@ -1,11 +1,13 @@
+// SPDX-License-Identifier: UNLICENSED
+
 /* *
  * Copyright 2021-2022 LI LI of JINGTIAN & GONGCHENG.
  * All Rights Reserved.
  * */
 
-pragma solidity ^0.4.24;
+pragma solidity ^0.8.8;
 
-pragma experimental ABIEncoderV2;
+// pragma experimental ABIEncoderV2;
 
 import "./TopChain.sol";
 import "./Checkpoints.sol";
@@ -17,14 +19,12 @@ library MembersRepo {
     using TopChain for TopChain.Chain;
 
     struct Member {
-        uint16 node;
         Checkpoints.History votesInHand;
         EnumerableSet.Bytes32Set sharesInHand;
     }
 
     /*
         members[0] {
-            node: (basedOnPar);
             votesInHand: ownersEquity;
             sharesInHand: sharesList;
         }
@@ -36,9 +36,9 @@ library MembersRepo {
         deep: (maxQtyOfMembers);
         prev: tail;
         next: head;
-        up: lenOfChain;
+        up: qtyOfMembers;
         down: (counterOfClasses);
-        amt: (null);
+        amt: lenOfChain;
         sum: totalVotes;
     } */
 
@@ -58,13 +58,6 @@ library MembersRepo {
         TopChain.Node[] memory snapshot
     ) internal {
         gm.chain.restoreChain(snapshot);
-
-        uint16 len = qtyOfMembers(gm);
-
-        while (len > 0) {
-            gm.members[gm.chain.nodes[len].acct].node = len;
-            len--;
-        }
     }
 
     // ==== Zero Node Setting ====
@@ -81,25 +74,27 @@ library MembersRepo {
         gm.chain.increaseZeroDown();
     }
 
-    function setAmtBase(GeneralMeeting storage gm, bool basedOnPar) internal returns (bool flag) {
-        if ((gm.members[0].node == 1) != basedOnPar) {
+    function setAmtBase(GeneralMeeting storage gm, bool _basedOnPar) internal returns (bool flag) {
+        
+        if ((parCap(gm) == gm.chain.totalVotes()) != _basedOnPar) {
 
-            gm.members[0].node = basedOnPar ? 1 : 0;
+            uint40 i = 0;
 
-            uint16 len = uint16(gm.chain.nodes.length);
+            uint40 cur = gm.chain.head();
 
-            while (len > 1) {
+            while (i < qtyOfMembers(gm)) {
 
-                (uint64 paid, uint64 par) = gm.members[gm.chain.nodes[len-1].acct].votesInHand.latest();
+                (uint64 paid, uint64 par) = gm.members[cur].votesInHand.latest();
 
-                if (paid == par) continue;
-                else if (basedOnPar) {
-                    gm.chain.changeAmt((len-1), (par - paid), false);
-                } else {
-                    gm.chain.changeAmt((len-1), (par - paid), true);
+                if (paid != par) {
+                    if (_basedOnPar) gm.chain.changeAmt(cur, (par - paid), false);
+                    else gm.chain.changeAmt(cur, (par - paid), true);
                 }
 
-                len--;
+                cur = gm.chain.nextNode(cur);
+
+                i++;
+
             }
             flag = true;
         }
@@ -111,26 +106,16 @@ library MembersRepo {
         internal
         returns (bool flag)
     {
-        if (!isMember(gm, acct)) {
-            uint16 index = gm.chain.addNode(acct);
-            gm.members[acct].node = index;
-
-            flag = true;
-        }
+        flag = gm.chain.addNode(acct);
     }
 
     function delMember(GeneralMeeting storage gm, uint40 acct)
         internal
         returns (bool flag)
     {
-        if (isMember(gm, acct)) {
-            uint16 index = gm.members[acct].node;
-
-            gm.chain.delNode(index);
+        if (gm.chain.delNode(acct)) {
 
             delete gm.members[acct];
-
-            gm.members[gm.chain.nodes[index].acct].node = index;
 
             flag = true;
         }
@@ -161,51 +146,50 @@ library MembersRepo {
         uint40 acct,
         uint16 group
     ) internal {
-        uint16 counterOfGroups = gm.chain.counterOfGroups();
+        uint40 _counterOfGroups = gm.chain.counterOfGroups();
 
         require(
-            group > 0 && group <= counterOfGroups + 1,
+            group > 0 && group <= _counterOfGroups + 1,
             "MC.addMemberToGroup: group overflow"
         );
 
-        uint16 i = indexOfMember(gm, acct);
-        TopChain.Node storage n = gm.chain.nodes[i];
+        TopChain.Node storage n = gm.chain.nodes[acct];
 
-        uint16 top = gm.chain.topOfBranch(group);
+        uint40 top = gm.chain.leaderOfGroup(group);
 
         if (top > 0) {
-            (uint16 up, uint16 down) = gm.chain.getVPos(n.amt, 0, top, true);
+            (uint40 up, uint40 down) = gm.chain.getVPos(n.amt, 0, top, true);
 
-            gm.chain.vInsert(i, up, down);
+            gm.chain.vInsert(acct, up, down);
         } else {
-            if (group > counterOfGroups) {
+            if (group > _counterOfGroups) {
                 gm.chain.increaseCounterOfGroups();
             } else revert("SHR.addMemberToGroup: groupNo has been revoked");
 
             n.group = group;
 
-            (uint16 prev, uint16 next) = gm.chain.getHPos(
+            (uint40 prev, uint40 next) = gm.chain.getHPos(
                 n.amt,
                 0,
                 gm.chain.head(),
                 true
             );
-            gm.chain.hInsert(i, prev, next);
+            gm.chain.hInsert(acct, prev, next);
         }
     }
 
     function removeMemberFromChain(GeneralMeeting storage gm, uint40 acct)
         internal
+        returns(bool flag)
     {
-        uint256 index = indexOfMember(gm, acct);
-        gm.chain.hCarveOut(index);
+        flag = gm.chain.hCarveOut(acct);
     }
 
     function removeMemberFromGroup(GeneralMeeting storage gm, uint40 acct)
         internal
+        returns (bool flag)
     {
-        uint256 index = indexOfMember(gm, acct);
-        gm.chain.vCarveOut(index);
+        flag = gm.chain.vCarveOut(acct);
     }
 
     function changeAmtOfMember(
@@ -215,9 +199,8 @@ library MembersRepo {
         uint64 deltaPar,
         bool decrease
     ) internal returns (uint64 blocknumber) {
-        uint16 i = indexOfMember(gm, acct);
         uint64 deltaAmt = (basedOnPar(gm)) ? deltaPar : deltaPaid;
-        gm.chain.changeAmt(i, deltaAmt, decrease);
+        gm.chain.changeAmt(acct, deltaAmt, decrease);
 
         (uint64 paid, uint64 par) = gm.members[acct].votesInHand.latest();
 
@@ -336,7 +319,8 @@ library MembersRepo {
     }
 
     function basedOnPar(GeneralMeeting storage gm) internal view returns(bool) {
-        return gm.members[0].node == 1;
+        (, uint64 par) = gm.members[0].votesInHand.latest();
+        return par == gm.chain.totalVotes();
     }
 
     // ==== shares ====
@@ -344,7 +328,7 @@ library MembersRepo {
     function sharesList(GeneralMeeting storage gm)
         internal
         view
-        returns (bytes32[])
+        returns (bytes32[] memory)
     {
         return gm.members[0].sharesInHand.values();
     }
@@ -370,15 +354,15 @@ library MembersRepo {
     function qtyOfMembers(GeneralMeeting storage gm)
         internal
         view
-        returns (uint16 qty)
+        returns (uint40 qty)
     {
-        qty = uint16(gm.chain.nodes.length - 1);
+        qty = gm.chain.qtyOfMembers();
     }
 
     function membersList(GeneralMeeting storage gm)
         internal
         view
-        returns (uint40[])
+        returns (uint40[] memory)
     {
         return gm.chain.membersList();
     }
@@ -422,9 +406,9 @@ library MembersRepo {
         GeneralMeeting storage gm,
         uint40 acct,
         uint64 blocknumber,
-        bool basedOnPar
+        bool voteBasedOnPar
     ) internal view returns (uint64 vote) {
-        if (basedOnPar)
+        if (voteBasedOnPar)
             (, vote) = gm.members[acct].votesInHand.getAtBlock(blocknumber);
         else (vote, ) = gm.members[acct].votesInHand.getAtBlock(blocknumber);
     }
@@ -470,7 +454,7 @@ library MembersRepo {
         view
         returns (bool)
     {
-        return gm.chain.topOfBranch(group) > 0;
+        return gm.chain.leaderIndexOfGroup(group) > 0;
     }
 
     function leaderOfGroup(GeneralMeeting storage gm, uint16 group)
@@ -511,7 +495,7 @@ library MembersRepo {
         view
         returns (uint16)
     {
-        uint16 top = gm.chain.topOfBranch(group);
+        uint16 top = gm.chain.leaderIndexOfGroup(group);
 
         if (top > 0) {
             return gm.chain.deepOfBranch(top);

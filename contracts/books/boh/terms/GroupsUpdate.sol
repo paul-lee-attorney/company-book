@@ -3,7 +3,7 @@
  * All Rights Reserved.
  * */
 
-pragma solidity ^0.4.24;
+pragma solidity ^0.8.8;
 
 import "../../../common/lib/SNFactory.sol";
 import "../../../common/lib/SNParser.sol";

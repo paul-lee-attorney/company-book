@@ -1,9 +1,11 @@
+// SPDX-License-Identifier: UNLICENSED
+
 /* *
  * Copyright 2021-2022 LI LI of JINGTIAN & GONGCHENG.
  * All Rights Reserved.
  * */
 
-pragma solidity ^0.4.24;
+pragma solidity ^0.8.8;
 
 // import "./EntitiesMapping.sol";
 import "./IRegCenter.sol";
@@ -40,7 +42,7 @@ contract RegCenter is IRegCenter {
     // docUserNo =>Roles
     mapping(uint40 => RolesRepo.Roles) private _roles;
 
-    constructor(uint32 blocks_per_hour) public {
+    constructor(uint32 blocks_per_hour) {
         regUser(uint8(EnumsRepo.RoleOfUser.EOA), 0);
         _BLOCKS_PER_HOUR = blocks_per_hour;
     }
@@ -130,42 +132,42 @@ contract RegCenter is IRegCenter {
         return size > 0;
     }
 
-    function setBackupKey(uint40 userNo, address backupKey) external {
+    function setBackupKey(uint40 user, address backupKey) external override {
         require(backupKey != address(0), "zero key");
         require(!_usedKeys[backupKey], "used key");
 
-        User storage user = _users[userNo];
+        User storage u = _users[user];
 
-        require(msg.sender == user.primeKey, "wrong primeKey");
+        require(msg.sender == u.primeKey, "wrong primeKey");
         require(!_isContract(msg.sender), "msgSender shall not be a contract");
 
-        require(!user.flag, "already set backup key");
+        require(!u.flag, "already set backup key");
 
-        user.backupKey = backupKey;
+        u.backupKey = backupKey;
         _usedKeys[backupKey] = true;
 
-        user.flag = true;
+        u.flag = true;
 
-        emit SetBackupKey(userNo, backupKey);
+        emit SetBackupKey(user, backupKey);
     }
 
-    function replacePrimeKey(uint40 userNo) external {
-        User storage user = _users[userNo];
+    function replacePrimeKey(uint40 user) external {
+        User storage u = _users[user];
 
-        require(msg.sender == user.backupKey, "wrong backupKey");
+        require(msg.sender == u.backupKey, "wrong backupKey");
 
-        delete _userNo[user.primeKey];
-        _userNo[user.backupKey] = userNo;
+        delete _userNo[u.primeKey];
+        _userNo[u.backupKey] = user;
 
-        user.primeKey = user.backupKey;
-        user.backupKey = address(0);
+        u.primeKey = u.backupKey;
+        u.backupKey = address(0);
 
-        emit ReplacePrimeKey(userNo, user.primeKey);
+        emit ReplacePrimeKey(user, u.primeKey);
     }
 
-    function resetBackupKeyFlag(uint40 userNo) external onlyOwner {
-        _users[userNo].flag = false;
-        emit ResetBackupKeyFlag(userNo);
+    function resetBackupKeyFlag(uint40 user) external onlyOwner {
+        _users[user].flag = false;
+        emit ResetBackupKeyFlag(user);
     }
 
     // ======== Entity ========
@@ -413,28 +415,28 @@ contract RegCenter is IRegCenter {
         return _BLOCKS_PER_HOUR;
     }
 
-    function primeKey(uint40 userNo) external view returns (address) {
-        return _users[userNo].primeKey;
+    function primeKey(uint40 user) external view returns (address) {
+        return _users[user].primeKey;
     }
 
-    function isContract(uint40 userNo) external view returns (bool) {
-        return _isContract(_users[userNo].primeKey);
+    function isContract(uint40 user) external view returns (bool) {
+        return _isContract(_users[user].primeKey);
     }
 
     function isUser(address key) public view returns (bool) {
         return _userNo[key] > 0;
     }
 
-    function checkID(uint40 userNo, address key)
+    function checkID(uint40 user, address key)
         public
         view
         onlyRegKey(key)
         returns (bool)
     {
-        require(userNo > 0, "zero userNo");
-        require(userNo <= _counterOfUsers, "userNo overflow");
+        require(user > 0, "RC.checkID: zero user");
+        require(user <= _counterOfUsers, "RC.checkID: user overflow");
 
-        return key == _users[userNo].primeKey;
+        return key == _users[user].primeKey;
     }
 
     function userNo(address key) public view onlyRegKey(key) returns (uint40) {
@@ -546,6 +548,7 @@ contract RegCenter is IRegCenter {
     // ==== Role ====
     function hasRole(bytes32 role, address addrOfOriginator)
         external
+        override
         view
         onlyContract
         returns (bool)
@@ -560,6 +563,7 @@ contract RegCenter is IRegCenter {
 
     function isManager(uint8 title, address addrOfOriginator)
         external
+        override
         view
         onlyContract
         returns (bool)
@@ -572,7 +576,7 @@ contract RegCenter is IRegCenter {
         return _roles[doc].isManager(title, originator);
     }
 
-    function getManager(uint8 title) public view onlyContract returns (uint40) {
+    function getManager(uint8 title) public override view onlyContract returns (uint40) {
         uint40 doc = _userNo[msg.sender];
 
         return getManagerOf(title, doc);
@@ -580,6 +584,7 @@ contract RegCenter is IRegCenter {
 
     function getManagerKey(uint8 title)
         external
+        override
         view
         onlyContract
         returns (address)
@@ -590,6 +595,7 @@ contract RegCenter is IRegCenter {
 
     function getManagerOf(uint8 title, uint40 doc)
         public
+        override
         view
         returns (uint40)
     {

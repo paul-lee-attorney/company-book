@@ -1,9 +1,11 @@
-/*
+// SPDX-License-Identifier: UNLICENSED
+
+/* *
  * Copyright 2021-2022 LI LI of JINGTIAN & GONGCHENG.
  * All Rights Reserved.
  * */
 
-pragma solidity ^0.4.24;
+pragma solidity ^0.8.8;
 
 import "./IShareholdersAgreement.sol";
 import "./terms/ITerm.sol";
@@ -102,7 +104,7 @@ contract ShareholdersAgreement is
     //##    写接口    ##
     //##################
 
-    function setTermsTemplate(address[15] templates) external onlyManager(1) {
+    function setTermsTemplate(address[15] memory templates) external onlyManager(1) {
         for (uint8 i = 0; i < 15; i++) {
             _setTemplate(i, templates[i]);
         }
@@ -134,16 +136,16 @@ contract ShareholdersAgreement is
 
         IAccessControl(body).init(
             getManagerKey(0),
-            this,
-            _rc,
+            address(this),
+            address(_rc),
             uint8(EnumsRepo.RoleOfUser.SHATerms),
-            _rc.entityNo(this)
+            _rc.entityNo(address(this))
         );
 
-        IAccessControl(body).setManager(2, this, msg.sender);
+        IAccessControl(body).setManager(2, address(this), msg.sender);
 
-        IBookSetting(body).setBOS(_bos);
-        IBookSetting(body).setBOM(_bom);
+        IBookSetting(body).setBOS(address(_bos));
+        IBookSetting(body).setBOM(address(_bom));
 
         _titleToBody[title] = body;
 
@@ -292,11 +294,11 @@ contract ShareholdersAgreement is
         return _bodies.contains(addr);
     }
 
-    function titles() external view returns (uint8[]) {
+    function titles() external view returns (uint8[] memory) {
         return _titles.valuesToUint8();
     }
 
-    function bodies() external view returns (address[]) {
+    function bodies() external view returns (address[] memory) {
         return _bodies.values();
     }
 

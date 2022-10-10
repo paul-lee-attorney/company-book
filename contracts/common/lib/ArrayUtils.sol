@@ -1,15 +1,17 @@
+// SPDX-License-Identifier: UNLICENSED
+
 /* *
  * Copyright 2021-2022 LI LI of JINGTIAN & GONGCHENG.
  * All Rights Reserved.
  * */
 
-pragma solidity ^0.4.24;
+pragma solidity ^0.8.8;
 
 library ArrayUtils {
-    function combine(uint40[] arrA, uint40[] arrB)
+    function combine(uint40[] memory arrA, uint40[] memory arrB)
         internal
         pure
-        returns (uint40[])
+        returns (uint40[] memory)
     {
         uint256 lenA = arrA.length;
         uint256 lenB = arrB.length;
@@ -23,10 +25,10 @@ library ArrayUtils {
         return arrC;
     }
 
-    function minus(uint40[] arrA, uint40[] arrB)
+    function minus(uint40[] memory arrA, uint40[] memory arrB)
         internal
         pure
-        returns (uint40[])
+        returns (uint40[] memory)
     {
         uint256 lenA = arrA.length;
         uint256 lenB = arrB.length;
@@ -65,7 +67,7 @@ library ArrayUtils {
         return output;
     }
 
-    function fullyCoveredBy(uint40[] arrA, uint40[] arrB)
+    function fullyCoveredBy(uint40[] memory arrA, uint40[] memory arrB)
         internal
         pure
         returns (bool)

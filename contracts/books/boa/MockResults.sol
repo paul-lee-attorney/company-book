@@ -1,19 +1,21 @@
+// SPDX-License-Identifier: UNLICENSED
+
 /* *
- * Copyright 2021 LI LI of JINGTIAN & GONGCHENG.
+ * Copyright 2021-2022 LI LI of JINGTIAN & GONGCHENG.
+ * All Rights Reserved.
  * */
 
-pragma solidity ^0.4.24;
+pragma solidity ^0.8.8;
 
 import "./IMockResults.sol";
-import "./IInvestmentAgreement.sol";
-
 import "../../common/lib/TopChain.sol";
+
+import "./IInvestmentAgreement.sol";
 import "../../common/lib/MembersRepo.sol";
 import "../../common/lib/SNParser.sol";
 
 import "../../common/ruting/BOSSetting.sol";
 import "../../common/ruting/SHASetting.sol";
-
 import "../../common/ruting/IASetting.sol";
 
 contract MockResults is IMockResults, IASetting, SHASetting, BOSSetting {
@@ -29,6 +31,7 @@ contract MockResults is IMockResults, IASetting, SHASetting, BOSSetting {
 
     function createMockGM() external onlyManager(0) {
         TopChain.Node[] memory snapshot = _bos.getSnapshot();
+        
         _mgm.init(0);
         _mgm.restoreChain(snapshot);
         _mockDealsOfIA();
@@ -113,7 +116,7 @@ contract MockResults is IMockResults, IASetting, SHASetting, BOSSetting {
         uint16 dGroup,
         uint16 fGroup,
         uint64 amount
-    ) private {
+    ) private view{
         uint64 orgDGVotes = _bos.votesOfGroup(dGroup);
         uint64 curDGVotes = _mgm.votesOfGroup(dGroup);
 
@@ -142,13 +145,13 @@ contract MockResults is IMockResults, IASetting, SHASetting, BOSSetting {
     {
         uint16 iControllor = _mgm.controllor();
 
-        controllor = _mgm.chain.nodes[iControllor].acct;
+        TopChain.Node storage c = _mgm.chain.nodes[iControllor];
 
-        group = _mgm.chain.nodes[iControllor].group;
+        controllor = c.acct;
 
-        ratio =
-            (_mgm.chain.nodes[iControllor].sum * 10000) /
-            _mgm.chain.totalVotes();
+        group = c.group;
+
+        ratio = (c.sum * 10000) / _mgm.chain.totalVotes();
     }
 
     function mockResults(uint40 acct)
@@ -164,10 +167,7 @@ contract MockResults is IMockResults, IASetting, SHASetting, BOSSetting {
 
         require(i > 0, "MR.mockResults: acct not exist");
 
-        while (i > 0) {
-            top = i;
-            i = _mgm.chain.nodes[top].up;
-        }
+        top = _mgm.chain.topOfBranch(i);
         group = _mgm.chain.nodes[top].group;
         sum = _mgm.chain.nodes[top].sum;
     }

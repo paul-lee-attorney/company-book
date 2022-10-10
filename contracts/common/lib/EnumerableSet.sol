@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // OpenZeppelin Contracts v4.4.1 (utils/structs/EnumerableSet.sol)
 
-pragma solidity ^0.4.24;
+pragma solidity ^0.8.8;
 
 import "./SNParser.sol";
 
@@ -38,7 +38,7 @@ library EnumerableSet {
             }
 
             delete set._values[lastIndex];
-            set._values.length--;
+            set._values.pop();
 
             delete set._indexes[value];
 
@@ -218,7 +218,7 @@ library EnumerableSet {
         return uint256(_at(set._inner, index));
     }
 
-    function values(UintSet storage set) internal view returns (uint256[]) {
+    function values(UintSet storage set) internal view returns (uint256[] memory) {
         bytes32[] memory store = _values(set._inner);
         uint256[] memory result;
 
@@ -240,7 +240,7 @@ library EnumerableSet {
     function valuesToUint8(UintSet storage set)
         internal
         view
-        returns (uint8[])
+        returns (uint8[] memory)
     {
         bytes32[] memory store = _values(set._inner);
         uint8[] memory result;
@@ -256,7 +256,7 @@ library EnumerableSet {
     function valuesToUint16(UintSet storage set)
         internal
         view
-        returns (uint16[])
+        returns (uint16[] memory)
     {
         bytes32[] memory store = _values(set._inner);
         uint16[] memory result;
@@ -272,7 +272,7 @@ library EnumerableSet {
     function valuesToUint40(UintSet storage set)
         internal
         view
-        returns (uint40[])
+        returns (uint40[] memory)
     {
         bytes32[] memory store = _values(set._inner);
         uint40[] memory result;
@@ -284,21 +284,21 @@ library EnumerableSet {
         return result;
     }
 
-    // shall be checked at front-end so as to avoid overflow
-    function valuesToUint88(UintSet storage set)
-        internal
-        view
-        returns (uint88[])
-    {
-        bytes32[] memory store = _values(set._inner);
-        uint88[] memory result;
+    // // shall be checked at front-end so as to avoid overflow
+    // function valuesToUint88(UintSet storage set)
+    //     internal
+    //     view
+    //     returns (uint88[] memory)
+    // {
+    //     bytes32[] memory store = _values(set._inner);
+    //     uint88[] memory result;
 
-        assembly {
-            result := store
-        }
+    //     assembly {
+    //         result := store
+    //     }
 
-        return result;
-    }
+    //     return result;
+    // }
 
     function emptyItems(UintSet storage set) internal {
         uint256 len = set._inner._values.length;

@@ -1,9 +1,11 @@
+// SPDX-License-Identifier: UNLICENSED
+
 /* *
  * Copyright 2021-2022 LI LI of JINGTIAN & GONGCHENG.
  * All Rights Reserved.
  * */
 
-pragma solidity ^0.4.24;
+pragma solidity ^0.8.8;
 
 pragma experimental ABIEncoderV2;
 
@@ -52,63 +54,108 @@ contract BookOfDirectors is IBookOfDirectors, SHASetting, MotionsRepo {
     modifier directorExist(uint40 acct) {
         require(_directorsList.contains(acct), "not a director");
         require(
-            _directors[acct].expirationBN >= uint32(now + 15 minutes),
+            _directors[acct].expirationBN >= uint32(block.timestamp + 15 minutes),
             "tenure expired"
         );
         _;
+    }
+
+    function execAction(
+        uint8 actionType,
+        address[] memory targets,
+        bytes32[] memory params,
+        bytes32 desHash
+    ) external onlyManager(1) returns (uint256) {
+        bytes[] memory paramsBytes = _toBytes(params);
+
+        uint256 motionId = _hashAction(
+            actionType,
+            targets,
+            paramsBytes,
+            desHash
+        );
+
+        require(_motionIds.contains(motionId), "motion not proposed");
+
+        Motion storage motion = _motions[motionId];
+
+        require(
+            motion.state == uint8(EnumsRepo.StateOfMotion.Passed),
+            "voting NOT end"
+        );
+
+        motion.state = uint8(EnumsRepo.StateOfMotion.Executed);
+        if (_execute(targets, paramsBytes)) emit ExecuteAction(motionId, true);
+        else emit ExecuteAction(motionId, false);
+
+        return motionId;
+    }
+
+    function _execute(address[] memory targets, bytes[] memory params)
+        private
+        returns (bool)
+    {
+        bool success;
+
+        for (uint256 i = 0; i < targets.length; i++) {
+            (success,) = targets[i].call(params[i]);
+            if (!success) return success;
+        }
+
+        return success;
     }
 
     //##################
     //##    写接口    ##
     //##################
 
-    // function proposeAction(
-    //     uint8 actionType,
-    //     address[] targets,
-    //     bytes32[] params,
-    //     bytes32 desHash,
-    //     uint40 submitter
-    // ) external onlyManager(1) {
-    //     require(
-    //         _directorsList.contains(submitter),
-    //         "submitter is not Director"
-    //     );
-    //     require(
-    //         _directors[submitter].expirationBN >= uint32(block.number),
-    //         "tenure expired"
-    //     );
+    function proposeAction(
+        uint8 actionType,
+        address[] memory targets,
+        bytes32[] memory params,
+        bytes32 desHash,
+        uint40 submitter
+    ) external onlyManager(1) {
+        require(
+            _directorsList.contains(submitter),
+            "submitter is not Director"
+        );
+        require(
+            _directors[submitter].expirationBN >= uint32(block.number),
+            "tenure expired"
+        );
 
-    //     bytes[] memory paramsBytes = _toBytes(params);
+        bytes[] memory paramsBytes = _toBytes(params);
 
-    //     uint256 actionId = _hashAction(
-    //         actionType,
-    //         targets,
-    //         paramsBytes,
-    //         desHash
-    //     );
+        uint256 actionId = _hashAction(
+            actionType,
+            targets,
+            paramsBytes,
+            desHash
+        );
 
-    //     bytes32 rule = _getSHA().votingRules(actionType);
+        bytes32 rule = _getSHA().votingRules(actionType);
 
-    //     bytes32 sn = _createSN(
-    //         actionType,
-    //         submitter,
-    //         uint32(block.timestamp),
-    //         uint32(block.number) +
-    //             (uint32(rule.votingDaysOfVR()) * 24 * _rc.blocksPerHour()),
-    //         uint32(block.number),
-    //         0
-    //     );
+        bytes32 sn = _createSN(
+            actionType,
+            submitter,
+            uint32(block.timestamp),
+            uint32(block.number) +
+                (uint32(rule.votingDaysOfVR()) * 24 * _rc.blocksPerHour()),
+            uint32(block.number),
+            0
+        );
 
-    //     _proposeMotion(
-    //         actionId,
-    //         rule,
-    //         sn,
-    //         actionType,
-    //         targets,
-    //         paramsBytes,
-    //         desHash
-    //     );
-    // }
+        _proposeMotion(
+            actionId,
+            rule,
+            sn,
+            actionType,
+            targets,
+            paramsBytes,
+            desHash
+        );
+    }
 
     function castVote(
         uint256 motionId,
@@ -327,7 +374,7 @@ contract BookOfDirectors is IBookOfDirectors, SHASetting, MotionsRepo {
         return _directorsList.length();
     }
 
-    function directors() external view returns (uint40[]) {
+    function directors() external view returns (uint40[] memory) {
         return _directorsList.valuesToUint40();
     }
 }

@@ -1,9 +1,11 @@
+// SPDX-License-Identifier: UNLICENSED
+
 /* *
  * Copyright 2021-2022 LI LI of JINGTIAN & GONGCHENG.
  * All Rights Reserved.
  * */
 
-pragma solidity ^0.4.24;
+pragma solidity ^0.8.8;
 
 interface IInvestmentAgreement {
     //##################
@@ -76,12 +78,12 @@ interface IInvestmentAgreement {
         uint32 closingDate
     ) external;
 
-    function closeDeal(uint16 seq, string hashKey) external;
+    function closeDeal(uint16 seq, string memory hashKey) external;
 
     function revokeDeal(
         uint16 seq,
         // uint32 sigDate,
-        string hashKey
+        string memory hashKey
     ) external;
 
     function takeGift(uint16 seq) external;
@@ -113,7 +115,7 @@ interface IInvestmentAgreement {
 
     function shareNumberOfDeal(uint16 seq) external view returns (bytes32);
 
-    function dealsList() external view returns (bytes32[]);
+    function dealsList() external view returns (bytes32[] memory);
 
     // function dealsConcerned(uint40 acct) external view returns (uint16[]);
 

@@ -1,9 +1,11 @@
+// SPDX-License-Identifier: UNLICENSED
+
 /* *
  * Copyright 2021-2022 LI LI of JINGTIAN & GONGCHENG.
  * All Rights Reserved.
  * */
 
-pragma solidity ^0.4.24;
+pragma solidity ^0.8.8;
 
 import "../../common/ruting/BOSSetting.sol";
 import "../../common/ruting/IASetting.sol";
@@ -50,8 +52,8 @@ contract FirstRefusalDeals is IFirstRefusalDeals, IASetting, BOSSetting {
         onlyManager(1)
         returns (uint64 ratio)
     {
-        uint64 sumOfWeight = _frDeals[seqOfOD].sumOfWeight;
-        require(sumOfWeight > 0, "FRDeals not found");
+        uint64 _sumOfWeight = _frDeals[seqOfOD].sumOfWeight;
+        require(_sumOfWeight > 0, "FRDeals not found");
 
         uint64 weight = _frDeals[seqOfOD].claims[seqOfFR].weight;
         require(weight > 0, "FRClaim not found");
@@ -59,7 +61,7 @@ contract FirstRefusalDeals is IFirstRefusalDeals, IASetting, BOSSetting {
         ratio = _frDeals[seqOfOD].claims[seqOfFR].ratio;
 
         if (ratio == 0) {
-            ratio = (weight * 10000) / sumOfWeight;
+            ratio = (weight * 10000) / _sumOfWeight;
             _frDeals[seqOfOD].claims[seqOfFR].ratio = ratio;
         }
 

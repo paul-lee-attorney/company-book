@@ -1,9 +1,11 @@
+// SPDX-License-Identifier: UNLICENSED
+
 /* *
  * Copyright 2021-2022 LI LI of JINGTIAN & GONGCHENG.
  * All Rights Reserved.
  * */
 
-pragma solidity ^0.4.24;
+pragma solidity ^0.8.8;
 
 pragma experimental ABIEncoderV2;
 
@@ -45,12 +47,12 @@ interface IBookOfDirectors {
 
     function voteCounting(uint256 motionId) external;
 
-    // function execAction(
-    //     uint8 actionType,
-    //     address[] targets,
-    //     bytes32[] params,
-    //     bytes32 desHash
-    // ) external returns (uint256);
+    function execAction(
+        uint8 actionType,
+        address[] memory targets,
+        bytes32[] memory params,
+        bytes32 desHash
+    ) external returns (uint256);
 
     // ==== Directors ====
 
@@ -95,49 +97,49 @@ interface IBookOfDirectors {
 
     function qtyOfDirectors() external view returns (uint256);
 
-    function directors() external view returns (uint40[]);
+    function directors() external view returns (uint40[] memory);
 
     // ==== MotionsRepo ====
 
-    function serialNumber(uint256 motionId) external view returns (bytes32);
+    // function serialNumber(uint256 motionId) external view returns (bytes32);
 
-    function votingRule(uint256 motionId) external view returns (bytes32);
+    // function votingRule(uint256 motionId) external view returns (bytes32);
 
-    function state(uint256 motionId) external view returns (uint8);
+    // function state(uint256 motionId) external view returns (uint8);
 
-    function votedYea(uint256 motionId, uint40 acct)
-        external
-        view
-        returns (bool);
+    // function votedYea(uint256 motionId, uint40 acct)
+    //     external
+    //     view
+    //     returns (bool);
 
-    function votedNay(uint256 motionId, uint40 acct)
-        external
-        view
-        returns (bool);
+    // function votedNay(uint256 motionId, uint40 acct)
+    //     external
+    //     view
+    //     returns (bool);
 
-    function getYea(uint256 motionId) external view returns (uint40[], uint64);
+    // function getYea(uint256 motionId) external view returns (uint40[] memory, uint64);
 
-    function getNay(uint256 motionId) external view returns (uint40[], uint64);
+    // function getNay(uint256 motionId) external view returns (uint40[] memory, uint64);
 
-    function sumOfVoteAmt(uint256 motionId) external view returns (uint64);
+    // function sumOfVoteAmt(uint256 motionId) external view returns (uint64);
 
-    function isVoted(uint256 motionId, uint40 acct)
-        external
-        view
-        returns (bool);
+    // function isVoted(uint256 motionId, uint40 acct)
+    //     external
+    //     view
+    //     returns (bool);
 
-    function getVote(uint256 motionId, uint40 acct)
-        external
-        view
-        returns (
-            uint64 weight,
-            uint8 attitude,
-            uint32 blockNumber,
-            uint32 sigDate,
-            bytes32 sigHash
-        );
+    // function getVote(uint256 motionId, uint40 acct)
+    //     external
+    //     view
+    //     returns (
+    //         uint64 weight,
+    //         uint8 attitude,
+    //         uint32 blockNumber,
+    //         uint32 sigDate,
+    //         bytes32 sigHash
+    //     );
 
-    function isPassed(uint256 motionId) external view returns (bool);
+    // function isPassed(uint256 motionId) external view returns (bool);
 
-    function isRejected(uint256 motionId) external view returns (bool);
+    // function isRejected(uint256 motionId) external view returns (bool);
 }

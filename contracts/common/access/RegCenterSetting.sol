@@ -1,9 +1,11 @@
-/*
+// SPDX-License-Identifier: UNLICENSED
+
+/* *
  * Copyright 2021-2022 LI LI of JINGTIAN & GONGCHENG.
  * All Rights Reserved.
  * */
 
-pragma solidity ^0.4.24;
+pragma solidity ^0.8.8;
 
 import "./IRegCenter.sol";
 
@@ -22,7 +24,7 @@ contract RegCenterSetting {
 
     // shall be set up at the creation stage of a contract
     function _setRegCenter(address rc) internal {
-        require(_rc == address(0), "already set regCenter");
+        require(address(_rc) == address(0), "already set regCenter");
 
         _rc = IRegCenter(rc);
         emit SetRegCenter(rc);

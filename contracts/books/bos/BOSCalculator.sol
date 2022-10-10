@@ -1,9 +1,11 @@
-/*
+// SPDX-License-Identifier: UNLICENSED
+
+/* *
  * Copyright 2021-2022 LI LI of JINGTIAN & GONGCHENG.
  * All Rights Reserved.
  * */
 
-pragma solidity ^0.4.24;
+pragma solidity ^0.8.8;
 
 import "../../common/lib/EnumsRepo.sol";
 import "../../common/lib/SNParser.sol";
@@ -21,7 +23,7 @@ contract BOSCalculator is IBOSCalculator, BOSSetting {
     //##   查询接口   ##
     //##################
 
-    function membersOfClass(uint16 class) external view returns (uint40[]) {
+    function membersOfClass(uint16 class) external view returns (uint40[] memory) {
         require(class < _bos.counterOfClasses(), "class over flow");
 
         bytes32[] memory list = _bos.sharesList();
@@ -57,7 +59,7 @@ contract BOSCalculator is IBOSCalculator, BOSSetting {
         return output;
     }
 
-    function sharesOfClass(uint16 class) external view returns (bytes32[]) {
+    function sharesOfClass(uint16 class) external view returns (bytes32[] memory) {
         require(class < _bos.counterOfClasses(), "class over flow");
 
         bytes32[] memory list = _bos.sharesList();

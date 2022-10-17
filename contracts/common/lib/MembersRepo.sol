@@ -31,13 +31,13 @@ library MembersRepo {
     */
 
     /* Node[0] {
-        acct: (counterOfShares);
+        acct: counterOfShares;
         group: counterOfGroups;
-        deep: (maxQtyOfMembers);
+        deep: maxQtyOfMembers;
         prev: tail;
         next: head;
         up: qtyOfMembers;
-        down: (counterOfClasses);
+        down: counterOfClasses;
         amt: lenOfChain;
         sum: totalVotes;
     } */
@@ -63,26 +63,24 @@ library MembersRepo {
     // ==== Zero Node Setting ====
 
     function increaseCounterOfShares(GeneralMeeting storage gm) internal {
-        gm.chain.increaseZeroAcct();
+        gm.chain.increaseCounterOfShares();
     }
 
-    function setMaxQtyOfMembers(GeneralMeeting storage gm, uint8 max) internal {
-        gm.chain.setZeroDeep(max);
+    function setMaxQtyOfMembers(GeneralMeeting storage gm, uint16 max) internal {
+        gm.chain.setMaxQtyOfMembers(max);
     }
 
     function increaseCounterOfClasses(GeneralMeeting storage gm) internal {
-        gm.chain.increaseZeroDown();
+        gm.chain.increaseCounterOfClasses();
     }
 
     function setAmtBase(GeneralMeeting storage gm, bool _basedOnPar) internal returns (bool flag) {
         
-        if ((parCap(gm) == gm.chain.totalVotes()) != _basedOnPar) {
-
-            uint40 i = 0;
+        if (basedOnPar(gm) != _basedOnPar) {
 
             uint40 cur = gm.chain.head();
 
-            while (i < qtyOfMembers(gm)) {
+            while (cur > 0) {
 
                 (uint64 paid, uint64 par) = gm.members[cur].votesInHand.latest();
 
@@ -92,10 +90,8 @@ library MembersRepo {
                 }
 
                 cur = gm.chain.nextNode(cur);
-
-                i++;
-
             }
+
             flag = true;
         }
     }
@@ -114,9 +110,7 @@ library MembersRepo {
         returns (bool flag)
     {
         if (gm.chain.delNode(acct)) {
-
             delete gm.members[acct];
-
             flag = true;
         }
     }
@@ -126,7 +120,7 @@ library MembersRepo {
         bytes32 shareNumber,
         uint40 acct
     ) internal returns (bool flag) {
-        if (gm.members[0].sharesInHand.add(shareNumber)) {
+        if (addShareNumberToList(gm, shareNumber)) {
             flag = gm.members[acct].sharesInHand.add(shareNumber);
         }
     }
@@ -136,7 +130,7 @@ library MembersRepo {
         bytes32 shareNumber,
         uint40 acct
     ) internal returns (bool flag) {
-        if (gm.members[0].sharesInHand.remove(shareNumber)) {
+        if (removeShareNumberFromList(gm, shareNumber)) {
             flag = gm.members[acct].sharesInHand.remove(shareNumber);
         }
     }
@@ -174,7 +168,8 @@ library MembersRepo {
                 gm.chain.head(),
                 true
             );
-            gm.chain.hInsert(acct, prev, next);
+
+            if (prev != n.prev && next != n.next) gm.chain.hInsert(acct, prev, next);
         }
     }
 
@@ -221,7 +216,7 @@ library MembersRepo {
         uint64 deltaPar,
         bool decrease
     ) internal returns (uint64 blocknumber) {
-        (uint64 paid, uint64 par) = gm.members[0].votesInHand.latest();
+        (uint64 paid, uint64 par) = ownersEquity(gm);
 
         if (decrease) {
             paid -= deltaPaid;
@@ -231,22 +226,35 @@ library MembersRepo {
             par += deltaPar;
         }
 
-        blocknumber = gm.members[0].votesInHand.push(paid, par);
+        blocknumber = updateOwnersEquity(gm, paid, par);
     }
 
     // ==== Zero Node Setting ====
-    function init(GeneralMeeting storage gm, uint8 max) internal {
-        gm.chain.init();
-        setMaxQtyOfMembers(gm, max);
+
+    function addShareNumberToList(GeneralMeeting storage gm, bytes32 shareNumber) internal returns (bool flag) {
+        flag = gm.members[0].sharesInHand.add(shareNumber);
+    }
+
+    function removeShareNumberFromList(GeneralMeeting storage gm, bytes32 shareNumber) internal returns (bool flag) {
+        flag = gm.members[0].sharesInHand.remove(shareNumber);
     }
 
     function addCounterOfShares(GeneralMeeting storage gm) internal {
-        gm.chain.increaseZeroAcct();
+        gm.chain.increaseCounterOfShares();
     }
 
-    function addCounterOfClass(GeneralMeeting storage gm) internal {
-        gm.chain.increaseZeroDown();
+    function addCounterOfGroups(GeneralMeeting storage gm) internal {
+        gm.chain.increaseCounterOfGroups();
     }
+
+    function addCounterOfClasses(GeneralMeeting storage gm) internal {
+        gm.chain.increaseCounterOfClasses();
+    }
+
+    function updateOwnersEquity(GeneralMeeting storage gm, uint64 paid, uint64 par) internal returns(uint64 blocknumber) {
+        blocknumber = gm.members[0].votesInHand.push(paid, par);
+    }
+
 
     //##################
     //##    读接口    ##
@@ -257,9 +265,9 @@ library MembersRepo {
     function counterOfShares(GeneralMeeting storage gm)
         internal
         view
-        returns (uint32)
+        returns (uint40)
     {
-        return uint32(gm.chain.zeroAcct());
+        return gm.chain.counterOfShares();
     }
 
     function counterOfGroups(GeneralMeeting storage gm)
@@ -273,15 +281,15 @@ library MembersRepo {
     function maxQtyOfMembers(GeneralMeeting storage gm)
         internal
         view
-        returns (uint8)
+        returns (uint16)
     {
-        return gm.chain.zeroDeep();
+        return gm.chain.maxQtyOfMembers();
     }
 
     function tailOfChain(GeneralMeeting storage gm)
         internal
         view
-        returns (uint16)
+        returns (uint40)
     {
         return gm.chain.tail();
     }
@@ -289,7 +297,7 @@ library MembersRepo {
     function controllor(GeneralMeeting storage gm)
         internal
         view
-        returns (uint16)
+        returns (uint40)
     {
         return gm.chain.head();
     }
@@ -297,7 +305,7 @@ library MembersRepo {
     function qtyOfGroups(GeneralMeeting storage gm)
         internal
         view
-        returns (uint16)
+        returns (uint64)
     {
         return gm.chain.lenOfChain();
     }
@@ -307,7 +315,7 @@ library MembersRepo {
         view
         returns (uint16)
     {
-        return gm.chain.zeroDown();
+        return gm.chain.counterOfClasses();
     }
 
     function totalVotes(GeneralMeeting storage gm)
@@ -319,8 +327,7 @@ library MembersRepo {
     }
 
     function basedOnPar(GeneralMeeting storage gm) internal view returns(bool) {
-        (, uint64 par) = gm.members[0].votesInHand.latest();
-        return par == gm.chain.totalVotes();
+        return parCap(gm) == totalVotes(gm);
     }
 
     // ==== shares ====
@@ -333,7 +340,7 @@ library MembersRepo {
         return gm.members[0].sharesInHand.values();
     }
 
-    function sharenumberExist(GeneralMeeting storage gm, bytes32 sharenumber)
+    function shareNumberExist(GeneralMeeting storage gm, bytes32 sharenumber)
         internal
         view
         returns (bool)
@@ -348,15 +355,15 @@ library MembersRepo {
         view
         returns (bool)
     {
-        return gm.members[acct].node > 0;
+        return gm.chain.isMember(acct);
     }
 
     function qtyOfMembers(GeneralMeeting storage gm)
         internal
         view
-        returns (uint40 qty)
+        returns (uint16 qty)
     {
-        qty = gm.chain.qtyOfMembers();
+        qty = uint16(gm.chain.qtyOfMembers());
     }
 
     function membersList(GeneralMeeting storage gm)
@@ -368,14 +375,6 @@ library MembersRepo {
     }
 
     // ==== member ====
-
-    function indexOfMember(GeneralMeeting storage gm, uint40 acct)
-        internal
-        view
-        returns (uint16)
-    {
-        return gm.members[acct].node;
-    }
 
     function paidOfMember(GeneralMeeting storage gm, uint40 acct)
         internal
@@ -398,8 +397,8 @@ library MembersRepo {
         view
         returns (uint64)
     {
-        uint256 i = indexOfMember(gm, acct);
-        return gm.chain.nodes[i].amt;
+        if(isMember(gm, acct))
+        return gm.chain.nodes[acct].amt;
     }
 
     function votesAtBlock(
@@ -436,8 +435,7 @@ library MembersRepo {
         view
         returns (uint16)
     {
-        uint16 i = indexOfMember(gm, acct);
-        return gm.chain.groupNo(i);
+        return gm.chain.groupNo(acct);
     }
 
     function votesOfHead(GeneralMeeting storage gm)
@@ -445,7 +443,7 @@ library MembersRepo {
         view
         returns (uint64)
     {
-        uint16 head = controllor(gm);
+        uint40 head = controllor(gm);
         return gm.chain.nodes[head].sum;
     }
 
@@ -454,7 +452,7 @@ library MembersRepo {
         view
         returns (bool)
     {
-        return gm.chain.leaderIndexOfGroup(group) > 0;
+        return gm.chain.leaderOfGroup(group) > 0;
     }
 
     function leaderOfGroup(GeneralMeeting storage gm, uint16 group)
@@ -486,8 +484,7 @@ library MembersRepo {
         uint40 acct1,
         uint40 acct2
     ) internal view returns (bool) {
-        return
-            gm.chain.affiliated(gm.members[acct1].node, gm.members[acct2].node);
+        return gm.chain.affiliated(acct1, acct2);
     }
 
     function deepOfGroup(GeneralMeeting storage gm, uint16 group)
@@ -495,13 +492,17 @@ library MembersRepo {
         view
         returns (uint16)
     {
-        uint16 top = gm.chain.leaderIndexOfGroup(group);
+        uint40 top = gm.chain.leaderOfGroup(group);
 
         if (top > 0) {
             return gm.chain.deepOfBranch(top);
         } else {
             return 0;
         }
+    }
+
+    function ownersEquity(GeneralMeeting storage gm) internal view returns(uint64 paid, uint64 par) {
+        (paid, par) = gm.members[0].votesInHand.latest();
     }
 
     function paidCap(GeneralMeeting storage gm)

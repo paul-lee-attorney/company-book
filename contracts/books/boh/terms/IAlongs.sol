@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: UNLICENSED
+
 /* *
  * Copyright 2021-2022 LI LI of JINGTIAN & GONGCHENG.
  * All Rights Reserved.
@@ -52,9 +54,9 @@ interface IAlongs {
         view
         returns (bool);
 
-    function dragers() external view returns (uint40[]);
+    function dragers() external view returns (uint40[] memory);
 
-    function followers(uint40 drager) external view returns (uint40[]);
+    function followers(uint40 drager) external view returns (uint40[] memory);
 
     function priceCheck(
         address ia,

@@ -15,8 +15,7 @@ import "../lib/SNParser.sol";
 import "../lib/ObjsRepo.sol";
 import "../lib/EnumerableSet.sol";
 
-import "../ruting/IBookSetting.sol";
-import "../ruting/BOSSetting.sol";
+import "../ruting/BOSSetting.sol"; 
 import "../ruting/SHASetting.sol";
 
 import "../utils/CloneFactory.sol";

@@ -42,6 +42,23 @@ library TopChain {
     //##    写接口    ##
     //##################
 
+    // ==== restoreChain ====
+
+    function restoreChain(Chain storage chain, Node[] memory snapshot)
+        internal
+    {
+        uint256 len = snapshot.length - 1;
+
+        while (len > 0) {
+            chain.nodes[snapshot[len].acct] = snapshot[len];
+            len--;
+        }
+
+        chain.nodes[0] = snapshot[0];
+    }
+
+    // ==== Node ====
+
     function addNode(Chain storage chain, uint40 acct)
         internal
         returns (bool flag)
@@ -60,7 +77,8 @@ library TopChain {
     }
 
     function delNode(Chain storage chain, uint40 acct) internal returns(bool flag) {
-        if (acct > 0 && chain.nodes[acct].acct == acct) {
+        if (isMember(chain, acct)) {
+
             delete chain.nodes[acct];
 
             _decreaseQtyOfMembers(chain);
@@ -73,9 +91,10 @@ library TopChain {
 
     function vCarveOut(Chain storage chain, uint40 acct) internal returns(bool flag) {
 
-        Node storage n = chain.nodes[acct];
+        if (isMember(chain, acct)) {
+            
+            Node storage n = chain.nodes[acct];
 
-        if (acct > 0 && n.acct == acct) {
             uint40 up = n.up;
             uint40 down = n.down;
             uint40 prev = n.prev;
@@ -130,9 +149,10 @@ library TopChain {
     }
 
     function hCarveOut(Chain storage chain, uint40 acct) internal returns(bool flag) {
-        Node storage n = chain.nodes[acct];
 
-        if (acct > 0 && n.acct == acct) {
+        if (isMember(chain, acct)) {
+    
+            Node storage n = chain.nodes[acct];
 
             chain.nodes[n.prev].next = n.next;
             chain.nodes[n.next].prev = n.prev;
@@ -144,7 +164,6 @@ library TopChain {
 
             flag = true;
         }
-
 
     }
 
@@ -281,12 +300,12 @@ library TopChain {
             n.amt -= deltaAmt;
             n.sum -= deltaAmt;
 
-            chain.nodes[0].sum -= deltaAmt;
+            _decreaseTotalVotes(chain, deltaAmt);
         } else {
             n.amt += deltaAmt;
             n.sum += deltaAmt;
 
-            chain.nodes[0].sum += deltaAmt;
+            _increaseTotalVotes(chain, deltaAmt);
 
             if (n.prev == 0 && n.next == 0) n.prev = chain.nodes[0].prev;
         }
@@ -318,19 +337,6 @@ library TopChain {
         else chain.nodes[top].sum += amt;
     }
 
-    // ==== restoreChain ====
-
-    function restoreChain(Chain storage chain, Node[] memory snapshot)
-        internal
-    {
-        uint256 len = snapshot.length;
-
-        while (len > 0) {
-            chain.nodes[snapshot[len - 1].acct] = snapshot[len - 1];
-            len--;
-        }
-    }
-
     // ==== zero node ====
 
     function increaseCounterOfShares(Chain storage chain) internal {
@@ -341,7 +347,7 @@ library TopChain {
         chain.nodes[0].group++;
     }
 
-    function setMaxQtyOfMembers(Chain storage chain, uint8 amt) internal {
+    function setMaxQtyOfMembers(Chain storage chain, uint16 amt) internal {
         chain.nodes[0].deep = amt;
     }
 
@@ -365,6 +371,14 @@ library TopChain {
         chain.nodes[0].amt--;
     }
 
+    function _increaseTotalVotes(Chain storage chain, uint64 deltaAmt) private {
+        chain.nodes[0].sum += deltaAmt;
+    }
+
+    function _decreaseTotalVotes(Chain storage chain, uint64 deltaAmt) private {
+        chain.nodes[0].sum -= deltaAmt;
+    }
+
     //##################
     //##    读接口    ##
     //##################
@@ -378,7 +392,7 @@ library TopChain {
     function counterOfGroups(Chain storage chain)
         internal
         view
-        returns (uint40)
+        returns (uint16)
     {
         return chain.nodes[0].group;
     }
@@ -399,11 +413,11 @@ library TopChain {
         return chain.nodes[0].up;
     }
 
-    function zeroDown(Chain storage chain) internal view returns (uint40) {
-        return chain.nodes[0].down;
+    function counterOfClasses(Chain storage chain) internal view returns (uint16) {
+        return uint16(chain.nodes[0].down);
     }
 
-    function zeroAmt(Chain storage chain) internal view returns (uint64) {
+    function lenOfChain(Chain storage chain) internal view returns (uint64) {
         return chain.nodes[0].amt;
     }
 
@@ -412,6 +426,7 @@ library TopChain {
     }
 
     // ==== locate position ====
+
     function getNode(Chain storage chain, uint40 acct)
         internal
         view
@@ -426,9 +441,11 @@ library TopChain {
             uint64 sum
         )
     {
-        Node storage n = chain.nodes[acct];
 
-        if (acct > 0 && n.acct == acct) {
+        if (isMember(chain, acct)) {
+
+            Node storage n = chain.nodes[acct];
+
             group = n.group;
             deep = n.deep;
             prev = n.prev;
@@ -487,7 +504,15 @@ library TopChain {
     }
 
     function nextNode(Chain storage chain, uint40 acct) internal view returns(uint40 next) {
-        next = chain.nodes[acct].down > 0 ? chain.nodes[acct].down : chain.nodes[acct].next;
+
+        Node storage n = chain.nodes[acct];
+
+        if (n.down > 0) next = n.down;
+        else if(n.next > 0) next = n.next;
+        else if(n.up > 0) {
+            next = topOfBranch(chain, acct);
+            next = chain.nodes[next].next;
+        }
     }
 
     // ==== group ====
@@ -497,7 +522,8 @@ library TopChain {
         view
         returns (uint16 group)
     {
-        if (acct > 0 && chain.nodes[acct].acct == acct) group = chain.nodes[acct].group;
+        if (isMember(chain, acct)) group = chain.nodes[acct].group;
+        else revert("TC.groupNo: acct is not a member");
     }
 
     function topOfBranch(Chain storage chain, uint40 acct) internal view returns(uint40 top) {
@@ -565,10 +591,14 @@ library TopChain {
     ) internal view returns (bool) {
         if (acct1 > 0 && chain.nodes[acct1].acct == acct1 && acct2 > 0 && chain.nodes[acct2].acct == acct2) 
         return chain.nodes[acct1].group == chain.nodes[acct2].group;
-        else revert("TC.affiliated: not members");
+        else revert("TC.affiliated: not all accts are members");
     }
 
     // ==== members ====
+    function isMember(Chain storage chain, uint40 acct) internal view returns(bool) {
+        return acct > 0 && chain.nodes[acct].acct == acct;
+    }
+
     function membersList(Chain storage chain)
         internal
         view
@@ -600,13 +630,15 @@ library TopChain {
     {
 
         uint256 len = qtyOfMembers(chain);
-        
-        Node[] memory list = new Node[](len);
-        
-        uint40 cur = chain.nodes[0].next;
-        uint256 i = 0;
 
-        while (i < len) {
+        Node[] memory list = new Node[](len + 1);
+        
+        list[0] = chain.nodes[0];
+
+        uint40 cur = chain.nodes[0].next;
+        uint256 i = 1;
+
+        while (i <= len) {
             list[i] = chain.nodes[cur];
 
             cur = nextNode(chain, cur);

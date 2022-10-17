@@ -151,7 +151,7 @@ interface IBookOfShares {
 
     function verifyRegNum(string memory regNum) external view returns (bool);
 
-    function maxQtyOfMembers() external view returns (uint8);
+    function maxQtyOfMembers() external view returns (uint16);
 
     function counterOfShares() external view returns (uint40);
 

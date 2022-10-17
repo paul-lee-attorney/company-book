@@ -1,4 +1,6 @@
-/*
+// SPDX-License-Identifier: UNLICENSED
+
+/* *
  * Copyright 2021-2022 LI LI of JINGTIAN & GONGCHENG.
  * All Rights Reserved.
  * */
@@ -60,7 +62,7 @@ interface IBOOKeeper {
 
     function closeOption(
         bytes32 sn,
-        string hashKey,
+        string memory hashKey,
         uint40 caller
     ) external;
 

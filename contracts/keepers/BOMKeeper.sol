@@ -1,10 +1,11 @@
-/*
+// SPDX-License-Identifier: UNLICENSED
+
+/* *
  * Copyright 2021-2022 LI LI of JINGTIAN & GONGCHENG.
  * All Rights Reserved.
  * */
 
 pragma solidity ^0.8.8;
-pragma experimental ABIEncoderV2;
 
 import "../books/boa/IInvestmentAgreement.sol";
 
@@ -19,6 +20,7 @@ import "../common/ruting/SHASetting.sol";
 import "../common/lib/SNParser.sol";
 
 import "../common/components/ISigPage.sol";
+import "../common/components/IMeetingMinutes.sol";
 
 import "../common/lib/EnumsRepo.sol";
 
@@ -35,38 +37,35 @@ contract BOMKeeper is
 {
     using SNParser for bytes32;
 
-    // ##################
-    // ##   Modifier   ##
-    // ##################
-
-    modifier onlyPartyOf(address body, uint40 caller) {
-        require(ISigPage(body).isParty(caller), "NOT Party of Doc");
-        _;
-    }
-
-    modifier notPartyOf(address body, uint40 caller) {
-        require(!ISigPage(body).isParty(caller), "Party has no voting right");
-        _;
-    }
-
     // ################
     // ##   Motion   ##
     // ################
 
-    function authorizeToPropose(
+    function entrustDelegate(
         uint40 caller,
         uint40 delegate,
         uint256 actionId
-    ) external onlyManager(1) memberExist(caller) {
-        _bom.authorizeToPropose(caller, delegate, actionId);
+    ) external onlyManager(1) memberExist(caller) memberExist(delegate) {
+        _bom.entrustDelegate(caller, delegate, actionId);
     }
 
-    function proposeMotion(address ia, uint40 caller)
+    // ==== propose ====
+
+    function nominateDirector(uint40 candidate, uint40 nominator)
+        external
+        onlyManager(1)
+        memberExist(nominator) 
+    {
+        _bom.nominateDirector(candidate, nominator);
+    }
+
+    function proposeIA(address ia, uint40 caller)
         external
         onlyManager(1)
         memberExist(caller)
-        onlyPartyOf(ia, caller)
     {
+        require(ISigPage(ia).isParty(caller), "BOMKeeper.proposeIA: NOT Party of Doc");
+
         require(
             _boa.currentState(ia) == uint8(EnumsRepo.BODStates.Established),
             "InvestmentAgreement not on Established"
@@ -86,9 +85,11 @@ contract BOMKeeper is
         bytes32 vr = _getSHA().votingRules(_boa.typeOfIA(ia));
 
         if (vr.ratioHeadOfVR() > 0 || vr.ratioAmountOfVR() > 0)
-            _bom.proposeMotion(ia, caller);
+            _bom.proposeIA(ia, caller);
 
         _boa.pushToNextState(ia, caller);
+
+        _bom.proposeIA(ia, caller);
     }
 
     function _subjectToReview(address ia) private view returns (bool) {
@@ -130,46 +131,61 @@ contract BOMKeeper is
         return false;
     }
 
-    // function proposeAction(
-    //     uint8 actionType,
-    //     address[] target,
-    //     bytes32[] params,
-    //     bytes32 desHash,
-    //     uint40 submitter
-    // ) external onlyManager(1) memberExist(submitter) {
-    //     _bom.proposeAction(actionType, target, params, desHash, submitter);
-    // }
+    function proposeAction(
+        uint8 actionType,
+        address[] memory targets,
+        uint256[] memory values,
+        bytes[] memory params,
+        bytes32 desHash,
+        uint40 submitter
+    ) external onlyManager(1) memberExist(submitter) {
+        _bom.proposeAction(actionType, targets, values, params, desHash, submitter);
+    }
+
+    // ==== vote ====
 
     function castVote(
-        address ia,
+        uint256 motionId,
         uint8 attitude,
         uint40 caller,
         bytes32 sigHash
-    ) external onlyManager(1) notPartyOf(ia, caller) {
-        require(_bos.isMember(caller), "not a shareholder");
-        _bom.castVote(uint256(ia), attitude, caller, sigHash);
+    ) external onlyManager(1) memberExist(caller) {
+
+        if (_isIA(motionId))
+            require(!ISigPage(address(uint160(motionId))).isParty(caller), "BOMKeeper.castVote: Party has no voting right");
+        
+        _bom.castVote(motionId, attitude, caller, sigHash);
     }
 
-    function voteCounting(address ia, uint40 caller)
+    function _isIA(uint256 motionId) private pure returns(bool) {
+        return motionId>0 && ((motionId >> 160) == 0);
+    }
+
+    function voteCounting(uint256 motionId, uint40 caller)
         external
         onlyManager(1)
-        onlyPartyOf(ia, caller)
+        memberExist(caller)
     {
-        _bom.voteCounting(uint256(ia));
-        _boa.pushToNextState(ia, caller);
+        _bom.voteCounting(motionId);
+
+        if (_isIA(motionId))
+            _boa.pushToNextState(address(uint160(motionId)), caller);
     }
 
-    // function execAction(
-    //     uint8 actionType,
-    //     address[] targets,
-    //     bytes32[] params,
-    //     bytes32 desHash,
-    //     uint40 caller
-    // ) external returns (uint256) {
-    //     require(_bod.isDirector(caller), "caller is not a Director");
-    //     require(!_rc.isContract(caller), "caller is not an EOA");
-    //     return _bom.execAction(actionType, targets, params, desHash);
-    // }
+    // ==== execute ====
+
+    function execAction(
+        uint8 actionType,
+        address[] memory targets,
+        uint256[] memory values,
+        bytes[] memory params,
+        bytes32 desHash,
+        uint40 caller
+    ) external returns (uint256) {
+        require(_bod.isDirector(caller), "caller is not a Director");
+        require(!_rc.isContract(caller), "caller is not an EOA");
+        return _bom.execAction(actionType, targets, values, params, desHash);
+    }
 
     function requestToBuy(
         address ia,
@@ -178,7 +194,7 @@ contract BOMKeeper is
         uint40 caller
     ) external onlyManager(1) {
         require(
-            _bom.state(uint256(ia)) ==
+            _bom.state(uint256(uint160(ia))) ==
                 uint8(EnumsRepo.StateOfMotion.Rejected_ToBuy),
             "agianst NO need to buy"
         );
@@ -194,7 +210,7 @@ contract BOMKeeper is
             sn.sequence()
         );
 
-        (uint64 parValue, uint64 paidPar) = _bom.requestToBuy(ia, sn);
+        (uint64 paid, uint64 par) = _bom.requestToBuy(ia, sn);
 
         uint8 closingDays = uint8(
             (closingDate - uint32(block.number) + 12 * _rc.blocksPerHour()) /
@@ -209,11 +225,11 @@ contract BOMKeeper is
             1,
             closingDays,
             unitPrice,
-            parValue,
-            paidPar
+            paid,
+            par
         );
 
         _boo.execOption(snOfOpt.ssn());
-        _boo.addFuture(snOfOpt.ssn(), shareNumber, parValue, paidPar);
+        _boo.addFuture(snOfOpt.ssn(), shareNumber, paid, par);
     }
 }

@@ -13,10 +13,6 @@ library SNFactory {
         pure
         returns (bytes32 output)
     {
-        // for (uint256 i = 0; i < 32; i++) {
-        //     output |= bytes32(input[i] & 0xff) >> (i * 8);
-        // }
-
         assembly {
             output := mload(add(input, 0x20))
         }
@@ -72,8 +68,9 @@ library SNFactory {
         uint256 pointer,
         address acct
     ) internal pure returns (bytes memory) {
+        uint160 temp = uint160(acct);
         for (uint256 i = 0; i < 20; i++)
-            sn[i + pointer] = bytes1(uint8(uint160(acct) >> ((19 - i) * 8)));
+            sn[i + pointer] = bytes1(uint8(temp >> ((19 - i) * 8)));
 
         return sn;
     }

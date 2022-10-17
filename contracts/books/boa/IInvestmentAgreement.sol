@@ -78,7 +78,7 @@ interface IInvestmentAgreement {
         uint32 closingDate
     ) external;
 
-    function closeDeal(uint16 seq, string memory hashKey) external;
+    function closeDeal(uint16 seq, string calldata hashKey) external;
 
     function revokeDeal(
         uint16 seq,

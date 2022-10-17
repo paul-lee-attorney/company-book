@@ -47,7 +47,7 @@ library Checkpoints {
                 })
             );
         }
-        return (self.checkpoints[self.checkpoints.length - 1].blockNumber);
+        return (uint64(block.number));
     }
 
     //##################

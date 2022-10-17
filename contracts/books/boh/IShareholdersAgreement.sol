@@ -40,8 +40,6 @@ interface IShareholdersAgreement {
     //##    写接口    ##
     //##################
 
-    function setTermsTemplate(address[15] memory templates) external;
-
     function createTerm(uint8 title) external returns (address body);
 
     function removeTerm(uint8 title) external;
@@ -82,13 +80,9 @@ interface IShareholdersAgreement {
     //##    读接口    ##
     //##################
 
-    function tempOfTitle(uint8 title) external view returns (address);
-
     function hasTitle(uint8 title) external view returns (bool);
 
-    function isTitle(uint8 title) external view returns (bool);
-
-    function isBody(address addr) external view returns (bool);
+    function qtyOfTerms() external view returns (uint8 qty);
 
     function titles() external view returns (uint8[] memory);
 

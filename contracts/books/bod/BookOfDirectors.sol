@@ -7,211 +7,56 @@
 
 pragma solidity ^0.8.8;
 
-pragma experimental ABIEncoderV2;
-
 import "./IBookOfDirectors.sol";
 
-import "../../common/components/MotionsRepo.sol";
+import "../../common/components/MeetingMinutes.sol";
 
-import "../../common/lib/SNFactory.sol";
-import "../../common/lib/SNParser.sol";
-import "../../common/lib/EnumsRepo.sol";
 import "../../common/lib/EnumerableSet.sol";
-import "../../common/lib/ObjsRepo.sol";
 
-import "../../common/ruting/IBookSetting.sol";
-import "../../common/ruting/SHASetting.sol";
-
-contract BookOfDirectors is IBookOfDirectors, SHASetting, MotionsRepo {
-    using SNFactory for bytes;
-    using SNParser for bytes32;
+contract BookOfDirectors is IBookOfDirectors, MeetingMinutes {
     using EnumerableSet for EnumerableSet.UintSet;
 
     struct Director {
         uint8 title; // 1-Chairman; 2-ViceChairman; 3-Director;
+        uint40 acct;
         uint40 appointer;
-        uint32 inaugurationBN;
-        uint32 expirationBN;
+        uint32 startBN;
+        uint32 endBN;
     }
 
+/*
+    _dirctors[0] {
+        title: maxQtyOfDirectors;
+        acct: ViceChair;
+        appointer: Chairman;
+        startBN: (pending);
+        endBN: (pending);
+    }
+*/
+
     // userNo => Director
-    mapping(uint40 => Director) private _directors;
+    mapping(uint256 => Director) private _directors;
 
-    // appointer => numOfDirector nominated;
-    mapping(uint40 => uint8) private _appointmentCounter;
-
-    // title => userNo
-    mapping(uint8 => uint40) private _whoIs;
-
-    EnumerableSet.UintSet private _directorsList;
-
-    uint8 private _maxNumOfDirectors;
+    EnumerableSet.UintSet private _board;
 
     //####################
     //##    modifier    ##
     //####################
 
     modifier directorExist(uint40 acct) {
-        require(_directorsList.contains(acct), "not a director");
-        require(
-            _directors[acct].expirationBN >= uint32(block.timestamp + 15 minutes),
-            "tenure expired"
-        );
+        require(isDirector(acct), "BOD.directorExist: not a director");
         _;
-    }
-
-    function execAction(
-        uint8 actionType,
-        address[] memory targets,
-        bytes32[] memory params,
-        bytes32 desHash
-    ) external onlyManager(1) returns (uint256) {
-        bytes[] memory paramsBytes = _toBytes(params);
-
-        uint256 motionId = _hashAction(
-            actionType,
-            targets,
-            paramsBytes,
-            desHash
-        );
-
-        require(_motionIds.contains(motionId), "motion not proposed");
-
-        Motion storage motion = _motions[motionId];
-
-        require(
-            motion.state == uint8(EnumsRepo.StateOfMotion.Passed),
-            "voting NOT end"
-        );
-
-        motion.state = uint8(EnumsRepo.StateOfMotion.Executed);
-        if (_execute(targets, paramsBytes)) emit ExecuteAction(motionId, true);
-        else emit ExecuteAction(motionId, false);
-
-        return motionId;
-    }
-
-    function _execute(address[] memory targets, bytes[] memory params)
-        private
-        returns (bool)
-    {
-        bool success;
-
-        for (uint256 i = 0; i < targets.length; i++) {
-            (success,) = targets[i].call(params[i]);
-            if (!success) return success;
-        }
-
-        return success;
     }
 
     //##################
     //##    写接口    ##
     //##################
 
-    function proposeAction(
-        uint8 actionType,
-        address[] memory targets,
-        bytes32[] memory params,
-        bytes32 desHash,
-        uint40 submitter
-    ) external onlyManager(1) {
-        require(
-            _directorsList.contains(submitter),
-            "submitter is not Director"
-        );
-        require(
-            _directors[submitter].expirationBN >= uint32(block.number),
-            "tenure expired"
-        );
-
-        bytes[] memory paramsBytes = _toBytes(params);
-
-        uint256 actionId = _hashAction(
-            actionType,
-            targets,
-            paramsBytes,
-            desHash
-        );
-
-        bytes32 rule = _getSHA().votingRules(actionType);
-
-        bytes32 sn = _createSN(
-            actionType,
-            submitter,
-            uint32(block.timestamp),
-            uint32(block.number) +
-                (uint32(rule.votingDaysOfVR()) * 24 * _rc.blocksPerHour()),
-            uint32(block.number),
-            0
-        );
-
-        _proposeMotion(
-            actionId,
-            rule,
-            sn,
-            actionType,
-            targets,
-            paramsBytes,
-            desHash
-        );
-    }
-
-    function castVote(
-        uint256 motionId,
-        uint8 attitude,
-        uint40 caller,
-        bytes32 sigHash
-    ) external onlyManager(1) {
-        require(_directorsList.contains(caller), "not a director");
-        require(
-            _directors[caller].expirationBN >= uint32(block.number),
-            "tenure expired"
-        );
-
-        Motion storage motion = _motions[motionId];
-
-        require(
-            _directors[caller].inaugurationBN <=
-                motion.sn.weightRegBNOfMotion(),
-            "not a Director at weight registration BN"
-        );
-
-        _castVote(motionId, attitude, caller, sigHash, 1);
-    }
-
-    function voteCounting(uint256 motionId)
-        external
-        onlyManager(1)
-        onlyProposed(motionId)
-        afterExpire(motionId)
-    {
-        Motion storage motion = _motions[motionId];
-
-        uint16 threshold = motion.votingRule.ratioHeadOfVR();
-
-        require(threshold > 0, "no threshold defined in voting rule");
-
-        uint40 vetoHolder = motion.votingRule.vetoHolderOfVR();
-
-        if (vetoHolder > 0 && !motion.box.supportVoters.contains(vetoHolder)) {
-            motion.state = uint8(EnumsRepo.StateOfMotion.Rejected);
-        } else {
-            motion.state = (motion.box.supportVoters.length() * 10000) /
-                _directorsList.length() >
-                threshold
-                ? uint8(EnumsRepo.StateOfMotion.Passed)
-                : uint8(EnumsRepo.StateOfMotion.Rejected);
-        }
-
-        emit VoteCounting(motionId, motion.state);
-    }
-
     // ======== Directors ========
 
-    function setMaxNumOfDirectors(uint8 num) external onlyKeeper {
-        _maxNumOfDirectors = num;
-        emit SetMaxNumOfDirectors(num);
+    function setMaxQtyOfDirectors(uint8 max) external onlyKeeper {
+        _directors[0].title = max;
+        emit SetMaxQtyOfDirectors(max);
     }
 
     function appointDirector(
@@ -227,42 +72,43 @@ contract BookOfDirectors is IBookOfDirectors, SHASetting, MotionsRepo {
         uint40 appointer,
         uint8 title
     ) private {
-        if (!_directorsList.contains(candidate))
+        if (!isDirector(candidate))
             require(
-                _directorsList.length() < _maxNumOfDirectors,
-                "number of directors overflow"
+                qtyOfDirectors() < maxQtyOfDirectors(),
+                "BOD.addDirector: number of directors overflow"
             );
 
-        if (appointer > 0) _appointmentCounter[appointer]++;
+        uint32 startBN = uint32(block.number);
 
-        uint32 inaugurationBN = uint32(block.number);
-
-        uint32 expirationBN = inaugurationBN +
+        uint32 endBN = startBN +
             uint32(_getSHA().tenureOfBoard()) *
             8760 *
             _rc.blocksPerHour();
 
-        Director storage director = _directors[candidate];
+        _directors[candidate] = Director({
+            title: title,
+            acct: candidate,
+            appointer: appointer,
+            startBN: startBN,
+            endBN: endBN            
+        });
 
-        director.title = title;
-        director.appointer = appointer;
-        director.inaugurationBN = inaugurationBN;
-        director.expirationBN = expirationBN;
-
-        if (title != uint8(EnumsRepo.TitleOfDirectors.Director))
-            _whoIs[title] = candidate;
-
-        _directorsList.add(candidate);
-        // _rc.takePosition(candidate, title);
-        // else _rc.changeTitle(candidate, title);
-
-        emit AddDirector(
-            candidate,
-            title,
-            appointer,
-            inaugurationBN,
-            expirationBN
-        );
+        if (title == uint8(EnumsRepo.TitleOfDirectors.Chairman)) {
+            if (_directors[0].appointer == 0) _directors[0].appointer = candidate;
+            else revert("BOD.addDirector: Chairman's position is occupied");
+        } else if (title == uint8(EnumsRepo.TitleOfDirectors.ViceChairman)) {
+            if (_directors[0].acct == 0) _directors[0].acct = candidate;
+            else revert("BOD.addDirector: ViceChairman's position is occupied");
+        } 
+        
+        if (_board.add(candidate))
+            emit AddDirector(
+                title,
+                candidate,
+                appointer,
+                startBN,
+                endBN
+            );
     }
 
     function takePosition(uint40 candidate, uint40 nominator)
@@ -277,18 +123,19 @@ contract BookOfDirectors is IBookOfDirectors, SHASetting, MotionsRepo {
     }
 
     function removeDirector(uint40 acct) external onlyManager(1) {
-        if (_directorsList.remove(acct)) {
-            uint8 title = _directors[acct].title;
-            if (uint40(_whoIs[title]) == acct) delete _whoIs[title];
+        if (isDirector(acct)) {
 
-            uint40 appointer = _directors[acct].appointer;
-            if (appointer > 0) _appointmentCounter[appointer]--;
+            if (_directors[acct].title == uint8(EnumsRepo.TitleOfDirectors.Chairman)) {
+                _directors[0].appointer = 0;
+            } else if (_directors[acct].title == uint8(EnumsRepo.TitleOfDirectors.ViceChairman)) {
+                _directors[0].acct = 0;
+            }
 
             delete _directors[acct];
 
-            // _rc.quitPosition(acct);
+            _board.remove(acct);
 
-            emit RemoveDirector(acct, title);
+            emit RemoveDirector(acct);
         }
     }
 
@@ -296,20 +143,30 @@ contract BookOfDirectors is IBookOfDirectors, SHASetting, MotionsRepo {
     //##    读接口    ##
     //##################
 
-    function maxNumOfDirectors() external view returns (uint8) {
-        return _maxNumOfDirectors;
+    function maxQtyOfDirectors() public view returns (uint8) {
+        return _directors[0].title;
+    }
+
+    function qtyOfDirectors() public view returns (uint256) {
+        return _board.length();
     }
 
     function appointmentCounter(uint40 appointer)
         external
         view
-        returns (uint8)
+        returns (uint8 qty)
     {
-        return _appointmentCounter[appointer];
+        uint40[] memory list = _board.valuesToUint40();
+        uint len = list.length;
+
+        while (len > 0) {
+            if (_directors[len-1].appointer == appointer) qty++;
+            len--;
+        }
     }
 
-    function isDirector(uint40 acct) external view returns (bool) {
-        return _directorsList.contains(acct);
+    function isDirector(uint40 acct) public view returns (bool flag) {
+        return _board.contains(acct);
     }
 
     function inTenure(uint40 acct)
@@ -318,20 +175,13 @@ contract BookOfDirectors is IBookOfDirectors, SHASetting, MotionsRepo {
         directorExist(acct)
         returns (bool)
     {
-        return (_directors[acct].expirationBN >= block.number);
+        return (_directors[acct].endBN >= block.number && _directors[acct].startBN <= block.number);
     }
 
     function whoIs(uint8 title) external view returns (uint40) {
-        require(
-            title != uint8(EnumsRepo.TitleOfDirectors.Director),
-            "director is not a special title"
-        );
-
-        uint40 userNo = _whoIs[title];
-
-        if (_directors[userNo].title != title) userNo = 0;
-
-        return userNo;
+        if (title == uint8(EnumsRepo.TitleOfDirectors.Chairman)) return _directors[0].appointer;
+        else if (title == uint8(EnumsRepo.TitleOfDirectors.ViceChairman)) return _directors[0].acct;
+        else revert("BOD.whoIs: value of title overflow");
     }
 
     function titleOfDirector(uint40 acct)
@@ -352,29 +202,25 @@ contract BookOfDirectors is IBookOfDirectors, SHASetting, MotionsRepo {
         return _directors[acct].appointer;
     }
 
-    function inaugurationBNOfDirector(uint40 acct)
+    function startBNOfDirector(uint40 acct)
         external
         view
         directorExist(acct)
         returns (uint32)
     {
-        return _directors[acct].inaugurationBN;
+        return _directors[acct].startBN;
     }
 
-    function expirationBNOfDirector(uint40 acct)
+    function endBNOfDirector(uint40 acct)
         external
         view
         directorExist(acct)
         returns (uint32)
     {
-        return _directors[acct].expirationBN;
-    }
-
-    function qtyOfDirectors() external view returns (uint256) {
-        return _directorsList.length();
+        return _directors[acct].endBN;
     }
 
     function directors() external view returns (uint40[] memory) {
-        return _directorsList.valuesToUint40();
+        return _board.valuesToUint40();
     }
 }

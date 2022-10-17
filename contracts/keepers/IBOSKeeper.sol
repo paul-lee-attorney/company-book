@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: UNLICENSED
+
 /* *
  * Copyright 2021-2022 LI LI of JINGTIAN & GONGCHENG.
  * All Rights Reserved.
@@ -18,7 +20,7 @@ interface IBOSKeeper {
 
     function requestPaidInCapital(
         uint32 ssn,
-        string hashKey,
+        string memory hashKey,
         uint40 caller
     ) external;
 

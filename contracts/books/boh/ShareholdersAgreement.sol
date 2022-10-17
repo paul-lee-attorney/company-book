@@ -9,14 +9,15 @@ pragma solidity ^0.8.8;
 
 import "./IShareholdersAgreement.sol";
 import "./terms/ITerm.sol";
+
 import "../../common/access/IAccessControl.sol";
 import "../../common/components/SigPage.sol";
 
 import "../../common/lib/SNFactory.sol";
 import "../../common/lib/EnumsRepo.sol";
-import "../../common/lib/EnumerableSet.sol";
 
 import "../../common/ruting/IBookSetting.sol";
+import "../../common/ruting/SHASetting.sol";
 import "../../common/ruting/BOSSetting.sol";
 import "../../common/ruting/BOMSetting.sol";
 
@@ -25,25 +26,29 @@ import "../../common/utils/CloneFactory.sol";
 contract ShareholdersAgreement is
     IShareholdersAgreement,
     CloneFactory,
+    SHASetting,
     BOMSetting,
     BOSSetting,
     SigPage
 {
     using SNFactory for bytes;
-    using EnumerableSet for EnumerableSet.AddressSet;
-    using EnumerableSet for EnumerableSet.UintSet;
 
-    // title => template address
-    mapping(uint8 => address) private _tempOfTitle;
+    struct Term {
+        uint8 title;
+        uint8 prev;
+        uint8 next;
+        address body;
+    }
 
-    // title => body
-    mapping(uint8 => address) private _titleToBody;
+/*
+    terms[0] {
+        title: qtyOfTerms;
+        prev: tail;
+        next: head;
+        body: (null);
+*/
 
-    // titles
-    EnumerableSet.UintSet private _titles;
-
-    // bodys
-    EnumerableSet.AddressSet private _bodies;
+    mapping(uint256 => Term) private _terms; 
 
     // ==== VotingRules ========
 
@@ -62,7 +67,7 @@ contract ShareholdersAgreement is
     // }
 
     // typeOfVote => Rule: 1-CI 2-ST(to 3rd Party) 3-ST(to otherMember) 4-(1&3) 5-(2&3) 6-(1&2&3) 7-(1&2)
-    bytes32[12] private _votingRules;
+    mapping(uint256 => bytes32) private _votingRules;
 
     struct Governance {
         bool basedOnPar;
@@ -75,7 +80,7 @@ contract ShareholdersAgreement is
         mapping(uint40 => uint8) boardSeatsQuotaOf;
     }
 
-    Governance private _ruleOfGovernance;
+    Governance private _governanceRules;
 
     //####################
     //##    modifier    ##
@@ -83,48 +88,26 @@ contract ShareholdersAgreement is
 
     modifier titleExist(uint8 title) {
         require(
-            _titleToBody[title] != address(0),
-            "SHA does not have such title"
+            hasTitle(title),
+            "SHA.titleExist: SHA does not have such title"
         );
         _;
     }
 
     modifier tempReadyFor(uint8 title) {
-        require(_tempOfTitle[title] != address(0), "Template NOT ready");
+        require(_boh.hasTemplate(title), "SHA.tempReadyFor: Template NOT ready");
         _;
     }
 
     // ==== VotingRules ====
     modifier typeAllowed(uint8 typeOfVote) {
-        require(typeOfVote < 12, "typeOfVote overflow");
+        require(_votingRules[typeOfVote] > bytes32(0), "SHA.typeAllowed: typeOfVote overflow");
         _;
     }
 
     //##################
-    //##    写接口    ##
+    //##  Write I/O   ##
     //##################
-
-    function setTermsTemplate(address[15] memory templates) external onlyManager(1) {
-        for (uint8 i = 0; i < 15; i++) {
-            _setTemplate(i, templates[i]);
-        }
-    }
-
-    function _setTemplate(uint8 title, address tempAdd) private {
-        if (
-            title == uint8(EnumsRepo.TermTitle.LOCK_UP) ||
-            title == uint8(EnumsRepo.TermTitle.ANTI_DILUTION) ||
-            title == uint8(EnumsRepo.TermTitle.FIRST_REFUSAL) ||
-            title == uint8(EnumsRepo.TermTitle.GROUPS_UPDATE) ||
-            title == uint8(EnumsRepo.TermTitle.TAG_ALONG) ||
-            title == uint8(EnumsRepo.TermTitle.DRAG_ALONG) ||
-            title == uint8(EnumsRepo.TermTitle.OPTIONS)
-        ) {
-            _tempOfTitle[title] = tempAdd;
-
-            emit SetTemplate(title, tempAdd);
-        }
-    }
 
     function createTerm(uint8 title)
         external
@@ -132,7 +115,7 @@ contract ShareholdersAgreement is
         tempReadyFor(title)
         returns (address body)
     {
-        body = createClone(_tempOfTitle[title]);
+        body = createClone(_boh.getTermTemplate(title));
 
         IAccessControl(body).init(
             getManagerKey(0),
@@ -147,24 +130,43 @@ contract ShareholdersAgreement is
         IBookSetting(body).setBOS(address(_bos));
         IBookSetting(body).setBOM(address(_bom));
 
-        _titleToBody[title] = body;
+        Term storage t = _terms[title];
+        t.title = title;
+        t.body = body;
 
-        _titles.add(title);
+        _increaseQtyOfTerms();
 
-        _bodies.add(body);
+        uint8 tail = _terms[0].prev;
+
+        t.prev = tail;
+        _terms[tail].next = title;
+        _terms[0].prev = title;
 
         emit CreateTerm(title, body, _msgSender());
     }
 
+    function _increaseQtyOfTerms() private {
+        _terms[0].title++;
+    }
+
     function removeTerm(uint8 title) external onlyAttorney {
-        _titles.remove(title);
 
-        _bodies.remove(_titleToBody[title]);
+        Term storage t = _terms[title];
 
-        delete _titleToBody[title];
+        _terms[t.prev].next = t.next;
+        _terms[t.next].prev = t.prev;
+
+        delete _terms[title];
+
+        _decreaseQtyOfTerms();
 
         emit RemoveTerm(title);
     }
+
+    function _decreaseQtyOfTerms() private {
+        _terms[0].title--;
+    }
+
 
     // function finalizeSHA() external onlyManager(2) {
     //     address[] memory clauses = _bodies.values();
@@ -181,27 +183,27 @@ contract ShareholdersAgreement is
     // ==== VotingRules ====
 
     function setVotingBaseOnPar(bool flag) external onlyAttorney {
-        _ruleOfGovernance.basedOnPar = flag;
+        _governanceRules.basedOnPar = flag;
         emit SetVotingBaseOnPar(flag);
     }
 
     function setProposalThreshold(uint16 threshold) external onlyAttorney {
-        _ruleOfGovernance.proposalThreshold = threshold;
+        _governanceRules.proposalThreshold = threshold;
         emit SetProposalThreshold(threshold);
     }
 
     function setMaxNumOfDirectors(uint8 num) external onlyAttorney {
-        _ruleOfGovernance.maxNumOfDirectors = num;
+        _governanceRules.maxNumOfDirectors = num;
         emit SetMaxNumOfDirectors(num);
     }
 
     function setTenureOfBoard(uint8 numOfYear) external onlyAttorney {
-        _ruleOfGovernance.tenureOfBoard = numOfYear;
+        _governanceRules.tenureOfBoard = numOfYear;
         emit SetTenureOfBoard(numOfYear);
     }
 
     function setAppointerOfChairman(uint40 nominator) external onlyAttorney {
-        _ruleOfGovernance.appointerOfChairman = nominator;
+        _governanceRules.appointerOfChairman = nominator;
         emit SetAppointerOfChairman(nominator);
     }
 
@@ -209,7 +211,7 @@ contract ShareholdersAgreement is
         external
         onlyAttorney
     {
-        _ruleOfGovernance.appointerOfViceChairman = nominator;
+        _governanceRules.appointerOfViceChairman = nominator;
         emit SetAppointerOfViceChairman(nominator);
     }
 
@@ -217,25 +219,25 @@ contract ShareholdersAgreement is
         external
         onlyAttorney
     {
-        uint8 orgQuota = _ruleOfGovernance.boardSeatsQuotaOf[nominator];
+        uint8 orgQuota = uint8(_governanceRules.boardSeatsQuotaOf[nominator]);
 
         if (orgQuota > 0) {
             require(
-                _ruleOfGovernance.sumOfBoardSeatsQuota - orgQuota + quota <=
-                    _ruleOfGovernance.maxNumOfDirectors,
+                _governanceRules.sumOfBoardSeatsQuota - orgQuota + quota <=
+                    _governanceRules.maxNumOfDirectors,
                 "board seats quota overflow"
             );
-            _ruleOfGovernance.sumOfBoardSeatsQuota -= orgQuota;
+            _governanceRules.sumOfBoardSeatsQuota -= orgQuota;
         } else {
             require(
-                _ruleOfGovernance.sumOfBoardSeatsQuota + quota <=
-                    _ruleOfGovernance.maxNumOfDirectors,
+                _governanceRules.sumOfBoardSeatsQuota + quota <=
+                    _governanceRules.maxNumOfDirectors,
                 "board seats quota overflow"
             );
         }
 
-        _ruleOfGovernance.boardSeatsQuotaOf[nominator] = quota;
-        _ruleOfGovernance.sumOfBoardSeatsQuota += quota;
+        _governanceRules.boardSeatsQuotaOf[nominator] = quota;
+        _governanceRules.sumOfBoardSeatsQuota += quota;
 
         emit SetBoardSeatsQuotaOf(nominator, quota);
     }
@@ -252,7 +254,7 @@ contract ShareholdersAgreement is
         uint8 reviewDays,
         uint8 votingDays,
         uint8 execDaysForPutOpt
-    ) external onlyAttorney typeAllowed(typeOfVote) {
+    ) external onlyAttorney {
         require(votingDays > 0, "ZERO votingDays");
 
         bytes memory _sn = new bytes(32);
@@ -278,28 +280,43 @@ contract ShareholdersAgreement is
     //##    读接口    ##
     //##################
 
-    function tempOfTitle(uint8 title) external view returns (address) {
-        return _tempOfTitle[title];
+    function hasTitle(uint8 title) public view returns (bool) {
+        return _terms[title].body > address(0);
     }
 
-    function hasTitle(uint8 title) external view returns (bool) {
-        return _titleToBody[title] != address(0);
-    }
-
-    function isTitle(uint8 title) external view returns (bool) {
-        return _titles.contains(title);
-    }
-
-    function isBody(address addr) external view returns (bool) {
-        return _bodies.contains(addr);
+    function qtyOfTerms() public view returns (uint8 qty) {
+        qty = _terms[0].title;
     }
 
     function titles() external view returns (uint8[] memory) {
-        return _titles.valuesToUint8();
+        uint8[] memory list = new uint8[](qtyOfTerms());
+
+        uint8 cur = _terms[0].next;
+        uint i=0;
+
+        while(cur > 0) {
+            list[i]=_terms[cur].title;
+            cur = _terms[cur].next;
+            i++;
+        }
+
+        return list;
     }
 
     function bodies() external view returns (address[] memory) {
-        return _bodies.values();
+
+        address[] memory list = new address[](qtyOfTerms());
+
+        uint8 cur = _terms[0].next;
+        uint i=0;
+
+        while(cur > 0) {
+            list[i]=_terms[cur].body;
+            cur = _terms[cur].next;
+            i++;
+        }
+
+        return list;
     }
 
     function getTerm(uint8 title)
@@ -308,7 +325,7 @@ contract ShareholdersAgreement is
         titleExist(title)
         returns (address body)
     {
-        body = _titleToBody[title];
+        body = _terms[title].body;
     }
 
     function termIsTriggered(
@@ -316,7 +333,7 @@ contract ShareholdersAgreement is
         address ia,
         bytes32 snOfDeal
     ) public view titleExist(title) returns (bool) {
-        return ITerm(_titleToBody[title]).isTriggered(ia, snOfDeal);
+        return ITerm(_terms[title].body).isTriggered(ia, snOfDeal);
     }
 
     function termIsExempted(
@@ -326,7 +343,7 @@ contract ShareholdersAgreement is
     ) external view titleExist(title) returns (bool) {
         if (!termIsTriggered(title, ia, snOfDeal)) return true;
 
-        return ITerm(_titleToBody[title]).isExempted(ia, snOfDeal);
+        return ITerm(_terms[title].body).isExempted(ia, snOfDeal);
     }
 
     // ==== VotingRules ====
@@ -336,34 +353,34 @@ contract ShareholdersAgreement is
     }
 
     function basedOnPar() external view returns (bool) {
-        return _ruleOfGovernance.basedOnPar;
+        return _governanceRules.basedOnPar;
     }
 
     function proposalThreshold() external view returns (uint16) {
-        return _ruleOfGovernance.proposalThreshold;
+        return _governanceRules.proposalThreshold;
     }
 
     function maxNumOfDirectors() external view returns (uint8) {
-        return _ruleOfGovernance.maxNumOfDirectors;
+        return _governanceRules.maxNumOfDirectors;
     }
 
     function tenureOfBoard() external view returns (uint8) {
-        return _ruleOfGovernance.tenureOfBoard;
+        return _governanceRules.tenureOfBoard;
     }
 
     function appointerOfChairman() external view returns (uint40) {
-        return _ruleOfGovernance.appointerOfChairman;
+        return _governanceRules.appointerOfChairman;
     }
 
     function appointerOfViceChairman() external view returns (uint40) {
-        return _ruleOfGovernance.appointerOfViceChairman;
+        return _governanceRules.appointerOfViceChairman;
     }
 
     function sumOfBoardSeatsQuota() external view returns (uint8) {
-        return _ruleOfGovernance.sumOfBoardSeatsQuota;
+        return _governanceRules.sumOfBoardSeatsQuota;
     }
 
     function boardSeatsQuotaOf(uint40 acct) external view returns (uint8) {
-        return _ruleOfGovernance.boardSeatsQuotaOf[acct];
+        return _governanceRules.boardSeatsQuotaOf[acct];
     }
 }

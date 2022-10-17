@@ -24,25 +24,6 @@ library EnumsRepo {
         BOSCal
     }
 
-    enum TypeOfVertex {
-        ZeroPoint,
-        EOA,
-        Company,
-        Group
-    }
-
-    enum TypeOfEntity {
-        ZeroPoint,
-        EOA,
-        Company
-    }
-
-    enum TypeOfConnection {
-        EquityInvestment,
-        Director,
-        VirtualGroup
-    }
-
     enum RoleOfUser {
         ZeroPoint, //               0
         EOA, //                     1

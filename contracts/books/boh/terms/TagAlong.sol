@@ -1,4 +1,6 @@
-/*
+// SPDX-License-Identifier: UNLICENSED
+
+/* *
  * Copyright 2021-2022 LI LI of JINGTIAN & GONGCHENG.
  * All Rights Reserved.
  * */
@@ -11,6 +13,7 @@ import "../../../common/ruting/BOMSetting.sol";
 
 import "../../../common/lib/EnumerableSet.sol";
 import "../../../common/lib/ArrayUtils.sol";
+import "../../../common/lib/SNParser.sol";
 
 import "./DragAlong.sol";
 
@@ -19,6 +22,7 @@ import "../../../common/components/ISigPage.sol";
 contract TagAlong is BOMSetting, DragAlong {
     using EnumerableSet for EnumerableSet.UintSet;
     using ArrayUtils for uint40[];
+    using SNParser for bytes32;
 
     // struct linkRule {
     //     uint40 drager;
@@ -34,31 +38,35 @@ contract TagAlong is BOMSetting, DragAlong {
     //     uint32 ROE;
     // }
 
-    EnumerableSet.UintSet private _supportGroups;
+    EnumerableSet.UintSet private _supporters;
 
     // ################
     // ##  Term接口  ##
     // ################
 
+    function _inputArray(uint40[] memory arr) private {
+        uint256 len = arr.length;
+
+        while (len > 0) {
+            _supporters.add(arr[len - 1]);
+            len--;
+        }        
+    }
+
     function isExempted(address ia, bytes32 sn) public returns (bool) {
-        require(_bom.isPassed(uint256(ia)), "motion NOT passed");
+        require(_bom.isPassed(uint256(uint160(ia))), "motion NOT passed");
 
         if (!isTriggered(ia, sn)) return true;
 
-        (uint40[] memory consentParties, ) = _bom.getYea(uint256(ia));
+        (uint40[] memory consentParties, ) = _bom.getYea(uint256(uint160(ia)));
 
         uint40[] memory signers = ISigPage(ia).parties();
 
-        uint40[] memory supporters = consentParties.combine(signers);
+        _supporters.emptyItems();
 
-        uint256 len = supporters.length;
+        _inputArray(consentParties);
 
-        _supportGroups.emptyItems();
-
-        while (len > 0) {
-            _supportGroups.add(_bos.groupNo(supporters[len - 1]));
-            len--;
-        }
+        _inputArray(signers);
 
         uint40[] memory rightholders = _links[
             _reps[IInvestmentAgreement(ia)
@@ -66,10 +74,10 @@ contract TagAlong is BOMSetting, DragAlong {
                 .shareholder()]
         ].followers.valuesToUint40();
 
-        len = rightholders.length;
+        uint256 len = rightholders.length;
 
         while (len > 0) {
-            if (!_supportGroups.contains(rightholders[len - 1])) return false;
+            if (!_supporters.contains(rightholders[len - 1])) return false;
             len--;
         }
 

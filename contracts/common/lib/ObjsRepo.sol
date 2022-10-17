@@ -266,7 +266,7 @@ library ObjsRepo {
         view
         returns (bool flag)
     {
-        return box.supportVoters.contains(acct);
+        flag = box.supportVoters.contains(acct);
     }
 
     function votedNay(BallotsBox storage box, uint40 acct)
@@ -274,7 +274,15 @@ library ObjsRepo {
         view
         returns (bool flag)
     {
-        return box.againstVoters.contains(acct);
+        flag = box.againstVoters.contains(acct);
+    }
+
+    function votedAbs(BallotsBox storage box, uint40 acct)
+        internal
+        view
+        returns (bool flag)
+    {
+        flag = box.abstainVoters.contains(acct);
     }
 
     function getYea(BallotsBox storage box)
@@ -286,6 +294,14 @@ library ObjsRepo {
         supportVotes = box.sumOfYea;
     }
 
+    function numOfYea(BallotsBox storage box)
+        internal
+        view
+        returns (uint num)
+    {
+        num = box.supportVoters.length();
+    }
+
     function getNay(BallotsBox storage box)
         internal
         view
@@ -293,6 +309,47 @@ library ObjsRepo {
     {
         membersOfNay = box.againstVoters.valuesToUint40();
         againstVotes = box.sumOfNay;
+    }
+
+    function numOfNay(BallotsBox storage box)
+        internal
+        view
+        returns (uint num)
+    {
+        num = box.againstVoters.length();
+    }
+
+    function getAbs(BallotsBox storage box)
+        internal
+        view
+        returns (uint40[] memory membersOfAbs, uint64 abstainVotes)
+    {
+        membersOfAbs = box.abstainVoters.valuesToUint40();
+        abstainVotes = box.sumOfAbs;
+    }
+
+    function numOfAbs(BallotsBox storage box)
+        internal
+        view
+        returns (uint num)
+    {
+        num = box.abstainVoters.length();
+    }
+
+    function getAllVoters(BallotsBox storage box)
+        internal
+        view
+        returns (uint40[] memory voters)
+    {
+        voters = box.voters;
+    }
+
+    function numOfAllVoters(BallotsBox storage box)
+        internal
+        view
+        returns (uint num)
+    {
+        num = box.voters.length;
     }
 
     function isVoted(BallotsBox storage box, uint40 acct)
@@ -345,8 +402,5 @@ library ObjsRepo {
         line.startDateOf[line.currentState] = 0;
         line.currentState--;
     }
-
-    // ======== MarkChain ========
-
 
 }

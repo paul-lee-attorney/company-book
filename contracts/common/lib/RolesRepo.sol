@@ -8,7 +8,6 @@
 pragma solidity ^0.8.8;
 
 library RolesRepo {
-    // bytes32 constant KEEPERS = keccak256("Keepers");
     bytes32 constant ATTORNEYS = keccak256("Attorneys");
 
     struct Data {

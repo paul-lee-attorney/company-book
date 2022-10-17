@@ -1,4 +1,6 @@
-/*
+// SPDX-License-Identifier: UNLICENSED
+
+/* *
  * Copyright 2021-2022 LI LI of JINGTIAN & GONGCHENG.
  * All Rights Reserved.
  * */
@@ -92,7 +94,7 @@ interface IBookOfOptions {
 
     function lockOption(uint32 ssn, bytes32 hashLock) external;
 
-    function closeOption(uint32 ssn, string hashKey) external;
+    function closeOption(uint32 ssn, string memory hashKey) external;
 
     function revokeOption(uint32 ssn) external;
 
@@ -119,15 +121,15 @@ interface IBookOfOptions {
 
     function isObligor(uint32 seq, uint40 acct) external view returns (bool);
 
-    function obligors(uint32 seq) external view returns (uint40[]);
+    function obligors(uint32 seq) external view returns (uint40[] memory);
 
     function stateOfOption(uint32 seq) external view returns (uint8);
 
-    function futures(uint32 seq) external view returns (bytes32[]);
+    function futures(uint32 seq) external view returns (bytes32[] memory);
 
-    function pledges(uint32 seq) external view returns (bytes32[]);
+    function pledges(uint32 seq) external view returns (bytes32[] memory);
 
-    function snList() external view returns (bytes32[]);
+    function snList() external view returns (bytes32[] memory);
 
     function oracle(uint32 seq) external view returns (uint32 d1, uint32 d2);
 }

@@ -12,11 +12,19 @@ interface IBookOfSHA {
     //##  Event   ##
     //##############
 
-    event ChangePointer(address indexed pointer, address indexed body);
+    event AddTemplate(uint8 indexed title, address add);
+
+    event ChangePointer(address indexed pointer);
 
     //##################
     //##    写接口    ##
     //##################
+
+    function addTermTemplate(
+        uint8 title,
+        address add,
+        uint40 caller
+    ) external;
 
     function changePointer(address body, uint40 caller) external;
 
@@ -43,6 +51,10 @@ interface IBookOfSHA {
     //##################
 
     function pointer() external view returns (address);
+
+    function hasTemplate(uint8 title) external view returns(bool flag);
+
+    function getTermTemplate(uint8 title) external view returns(address temp);
 
     // ==== DocumentsRepo ====
 

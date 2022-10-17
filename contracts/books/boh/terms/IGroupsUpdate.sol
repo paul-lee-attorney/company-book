@@ -1,4 +1,6 @@
-/*
+// SPDX-License-Identifier: UNLICENSED
+
+/* *
  * Copyright 2021-2022 LI LI of JINGTIAN & GONGCHENG.
  * All Rights Reserved.
  * */
@@ -25,5 +27,5 @@ interface IGroupsUpdate {
 
     function delOrder(bytes32 order) external;
 
-    function orders() external view returns (bytes32[]);
+    function orders() external view returns (bytes32[] memory);
 }

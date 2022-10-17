@@ -156,40 +156,44 @@ library SNParser {
         return uint8(sn[0]);
     }
 
+    function ssnOfOpt(bytes32 sn) internal pure returns (uint40) {
+        return uint40(bytes5(sn<<8));
+    }
+
     function triggerDateOfOpt(bytes32 sn) internal pure returns (uint32) {
-        return uint32(bytes4(sn << 40));
+        return uint32(bytes4(sn << 48));
     }
 
     function exerciseDaysOfOpt(bytes32 sn) internal pure returns (uint8) {
-        return uint8(sn[9]);
-    }
-
-    function closingDaysOfOpt(bytes32 sn) internal pure returns (uint8) {
         return uint8(sn[10]);
     }
 
+    function closingDaysOfOpt(bytes32 sn) internal pure returns (uint8) {
+        return uint8(sn[11]);
+    }
+
     function rateOfOpt(bytes32 sn) internal pure returns (uint32) {
-        return uint32(bytes4(sn << 88));
+        return uint32(bytes4(sn << 96));
     }
 
     function logOperator(bytes32 sn) internal pure returns (uint8) {
-        return uint8(sn[15]);
-    }
-
-    function compOperator_1(bytes32 sn) internal pure returns (uint8) {
         return uint8(sn[16]);
     }
 
+    function compOperator_1(bytes32 sn) internal pure returns (uint8) {
+        return uint8(sn[17]);
+    }
+
     function para_1(bytes32 sn) internal pure returns (uint32) {
-        return uint32(bytes4(sn << 136));
+        return uint32(bytes4(sn << 144));
     }
 
     function compOperator_2(bytes32 sn) internal pure returns (uint8) {
-        return uint8(sn[21]);
+        return uint8(sn[22]);
     }
 
     function para_2(bytes32 sn) internal pure returns (uint32) {
-        return uint32(bytes4(sn << 176));
+        return uint32(bytes4(sn << 184));
     }
 
     function checkConditions(

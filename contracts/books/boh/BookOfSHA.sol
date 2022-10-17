@@ -12,30 +12,38 @@ import "./IBookOfSHA.sol";
 import "../../common/components/DocumentsRepo.sol";
 
 contract BookOfSHA is IBookOfSHA, DocumentsRepo {
-    address private _pointer;
 
-    // constructor(
-    //     string _bookName,
-    //     uint40 _owner,
-    //     uint40 _bookeeper
-    // ) public DocumentsRepo(_bookName, _admin, _bookeeper, _rc) {}
+    mapping(uint256 => address) private _templates;
+
+    // _templates[0]: pointer;
 
     //##################
     //##    写接口    ##
     //##################
+
+    function addTermTemplate(
+        uint8 title,
+        address add,
+        uint40 caller
+    ) external onlyManager(1) {
+        require(title > 0, "BOH.addTermTemplate: zero title");
+        require(caller == getManager(0), "caller is not Owner");
+        _templates[title] = add;
+        emit AddTemplate(title, add);
+    }
 
     function changePointer(address body, uint40 caller)
         external
         onlyManager(1)
         onlyRegistered(body)
     {
-        if (_pointer != address(0)) pushToNextState(_pointer, caller);
+        if (_templates[0] != address(0)) pushToNextState(_templates[0], caller);
 
         pushToNextState(body, caller);
 
-        _pointer = body;
+        _templates[0] = body;
 
-        emit ChangePointer(_pointer, body);
+        emit ChangePointer(body);
     }
 
     //##################
@@ -43,6 +51,15 @@ contract BookOfSHA is IBookOfSHA, DocumentsRepo {
     //##################
 
     function pointer() external view returns (address) {
-        return _pointer;
+        return _templates[0];
+    }
+
+    function hasTemplate(uint8 title) public view returns(bool flag) {
+        flag = title > 0 && _templates[title] > address(0);
+    }
+
+    function getTermTemplate(uint8 title) external view returns(address temp) {
+        require(hasTemplate(title), "BOH.getTermTemplate: template not available");
+        temp = _templates[title];
     }
 }

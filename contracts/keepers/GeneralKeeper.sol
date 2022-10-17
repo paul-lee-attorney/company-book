@@ -1,4 +1,6 @@
-/*
+// SPDX-License-Identifier: UNLICENSED
+
+/* *
  * Copyright 2021-2022 LI LI of JINGTIAN & GONGCHENG.
  * All Rights Reserved.
  * */
@@ -48,8 +50,6 @@ contract GeneralKeeper is AccessControl {
     event SetBOPKeeper(address keeper);
 
     event SetBOSKeeper(address keeper);
-
-    // event SetKeepers(address target, address keeper);
 
     // ######################
     // ##   AccessControl   ##
@@ -129,7 +129,7 @@ contract GeneralKeeper is AccessControl {
     function closeDeal(
         address ia,
         bytes32 sn,
-        string hashKey
+        string memory hashKey
     ) external {
         _BOAKeeper.closeDeal(ia, sn, hashKey, _msgSender());
     }
@@ -137,7 +137,7 @@ contract GeneralKeeper is AccessControl {
     function revokeDeal(
         address ia,
         bytes32 sn,
-        string hashKey
+        string memory hashKey
     ) external {
         _BOAKeeper.revokeDeal(ia, sn, _msgSender(), hashKey);
     }
@@ -158,12 +158,49 @@ contract GeneralKeeper is AccessControl {
         _BODKeeper.quitPosition(_msgSender());
     }
 
-    function nominateDirector(uint40 candidate) external {
-        _BODKeeper.nominateDirector(candidate, _msgSender());
-    }
-
     function takePosition(uint256 motionId) external {
         _BODKeeper.takePosition(_msgSender(), motionId);
+    }
+
+    // ==== resolution ====
+
+    function entrustDirectorDelegate(
+        uint40 delegate,
+        uint256 actionId
+    ) external {
+        _BODKeeper.entrustDelegate(_msgSender(), delegate, actionId);
+    }
+
+    function proposeBoardAction(
+        uint8 actionType,
+        address[] memory targets,
+        uint256[] memory values,
+        bytes[] memory params,
+        bytes32 desHash
+    ) external {
+        _BODKeeper.proposeAction(actionType, targets, values, params, desHash, _msgSender());
+    }
+
+    function castBoardVote(
+        uint256 actionId,
+        uint8 attitude,
+        bytes32 sigHash
+    ) external {
+        _BODKeeper.castVote(actionId, attitude, _msgSender(), sigHash);
+    }
+
+    function boardVoteCounting(uint256 actionId) external {
+        _BODKeeper.voteCounting(actionId, _msgSender());
+    }
+
+    function execBoardAction(
+        uint8 actionType,
+        address[] memory targets,
+        uint256[] memory values,
+        bytes[] memory params,
+        bytes32 desHash
+    ) external {
+        _BODKeeper.execAction(actionType, targets, values, params, desHash, _msgSender());
     }
 
     // ##################
@@ -198,36 +235,61 @@ contract GeneralKeeper is AccessControl {
     // ##   BOMKeeper   ##
     // ###################
 
-    function proposeMotion(address ia) external {
-        _BOMKeeper.proposeMotion(ia, _msgSender());
+    function entrustMemberDelegate(
+        uint40 delegate,
+        uint256 motionId
+    ) external {
+        _BOMKeeper.entrustDelegate(_msgSender(), delegate, motionId);
     }
 
-    function castVote(
-        address ia,
+    function nominateDirector(uint40 candidate)
+        external
+    {
+        _BOMKeeper.nominateDirector(candidate, _msgSender());
+    }
+
+    function proposeIA(address ia) external {
+        _BOMKeeper.proposeIA(ia, _msgSender());
+    }
+
+    function proposeGMAction(
+        uint8 actionType,
+        address[] memory targets,
+        uint256[] memory values,
+        bytes[] memory params,
+        bytes32 desHash
+    ) external { 
+        _BOMKeeper.proposeAction(actionType, targets, values, params, desHash, _msgSender());
+    }
+
+    function castGMVote(
+        uint256 motionId,
         uint8 attitude,
         bytes32 sigHash
     ) external {
-        _BOMKeeper.castVote(ia, attitude, _msgSender(), sigHash);
+        _BOMKeeper.castVote(motionId, attitude, _msgSender(), sigHash);
     }
 
-    function voteCounting(address ia) external {
-        _BOMKeeper.voteCounting(ia, _msgSender());
+    function voteCounting(uint256 motionId) external {
+        _BOMKeeper.voteCounting(motionId, _msgSender());
     }
 
-    // function execAction(
-    //     uint8 actionType,
-    //     address[] targets,
-    //     bytes32[] params,
-    //     bytes32 desHash
-    // ) external returns (uint256) {
-    //     _BOMKeeper.execAction(
-    //         actionType,
-    //         targets,
-    //         params,
-    //         desHash,
-    //         _msgSender()
-    //     );
-    // }
+    function execAction(
+        uint8 actionType,
+        address[] memory targets,
+        uint256[] memory values,
+        bytes[] memory params,
+        bytes32 desHash
+    ) external returns (uint256) {
+        return _BOMKeeper.execAction(
+            actionType,
+            targets,
+            values,
+            params,
+            desHash,
+            _msgSender()
+        );
+    }
 
     function requestToBuy(
         address ia,
@@ -300,7 +362,7 @@ contract GeneralKeeper is AccessControl {
         _BOOKeeper.lockOption(sn, hashLock, _msgSender());
     }
 
-    function closeOption(bytes32 sn, string hashKey) external {
+    function closeOption(bytes32 sn, string memory hashKey) external {
         _BOOKeeper.closeOption(sn, hashKey, _msgSender());
     }
 
@@ -364,7 +426,7 @@ contract GeneralKeeper is AccessControl {
         _BOSKeeper.setPayInAmount(ssn, amount, hashLock);
     }
 
-    function requestPaidInCapital(uint32 ssn, string hashKey) external {
+    function requestPaidInCapital(uint32 ssn, string memory hashKey) external {
         _BOSKeeper.requestPaidInCapital(ssn, hashKey, _msgSender());
     }
 

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: UNLICENSED
+
 /* *
  * Copyright 2021-2022 LI LI of JINGTIAN & GONGCHENG.
  * All Rights Reserved.
@@ -19,4 +21,40 @@ interface IBODKeeper {
     function nominateDirector(uint40 candidate, uint40 nominator) external;
 
     function takePosition(uint40 candidate, uint256 motionId) external;
+
+    // ==== resolution ====
+
+    function entrustDelegate(
+        uint40 caller,
+        uint40 delegate,
+        uint256 actionId
+    ) external;
+
+    function proposeAction(
+        uint8 actionType,
+        address[] memory targets,
+        uint256[] memory values,
+        bytes[] memory params,
+        bytes32 desHash,
+        uint40 submitter
+    ) external;
+
+    function castVote(
+        uint256 actionId,
+        uint8 attitude,
+        uint40 caller,
+        bytes32 sigHash
+    ) external;
+
+    function voteCounting(uint256 actionId, uint40 caller) external;
+
+    function execAction(
+        uint8 actionType,
+        address[] memory targets,
+        uint256[] memory values,
+        bytes[] memory params,
+        bytes32 desHash,
+        uint40 caller
+    ) external;
+
 }

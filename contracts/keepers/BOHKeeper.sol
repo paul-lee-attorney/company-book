@@ -34,8 +34,6 @@ contract BOHKeeper is
 {
     using SNParser for bytes32;
 
-    address[15] public termsTemplate;
-
     // ##################
     // ##   Modifier   ##
     // ##################
@@ -64,10 +62,7 @@ contract BOHKeeper is
         address add,
         uint40 caller
     ) external onlyManager(1) {
-        require(caller == getManager(0), "caller is not Owner");
-
-        termsTemplate[title] = add;
-        emit AddTemplate(title, add);
+        _boh.addTermTemplate(title, add, caller);
     }
 
     function createSHA(uint8 docType, address caller) external onlyManager(1) {
@@ -82,8 +77,7 @@ contract BOHKeeper is
             _rc.entityNo(this)
         );
 
-        IShareholdersAgreement(sha).setTermsTemplate(termsTemplate);
-
+        IBookSetting(sha).setBOH(_boh);
         IBookSetting(sha).setBOS(_bos);
         IBookSetting(sha).setBOSCal(_bosCal);
         IBookSetting(sha).setBOM(_bom);

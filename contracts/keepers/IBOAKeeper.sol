@@ -1,4 +1,6 @@
-/*
+// SPDX-License-Identifier: UNLICENSED
+
+/* *
  * Copyright 2021-2022 LI LI of JINGTIAN & GONGCHENG.
  * All Rights Reserved.
  * */
@@ -30,7 +32,7 @@ interface IBOAKeeper {
 
     function requestPaidInCapital(
         uint32 ssn,
-        string hashKey,
+        string memory hashKey,
         uint40 caller
     ) external;
 
@@ -45,7 +47,7 @@ interface IBOAKeeper {
     function closeDeal(
         address ia,
         bytes32 sn,
-        string hashKey,
+        string memory hashKey,
         uint40 caller
     ) external;
 
@@ -55,6 +57,6 @@ interface IBOAKeeper {
         address ia,
         bytes32 sn,
         uint40 caller,
-        string hashKey
+        string memory hashKey
     ) external;
 }

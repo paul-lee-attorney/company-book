@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: UNLICENSED
+
 /* *
  * Copyright 2021-2022 LI LI of JINGTIAN & GONGCHENG.
  * All Rights Reserved.
@@ -13,6 +15,11 @@ contract BODSetting is AccessControl {
     IBookOfDirectors internal _bod;
 
     event SetBOD(address bod);
+
+    modifier directorExist(uint40 acct) {
+        require(_bod.isDirector(acct), "director NOT exist");
+        _;
+    }
 
     function setBOD(address bod) external onlyManager(1) {
         _bod = IBookOfDirectors(bod);

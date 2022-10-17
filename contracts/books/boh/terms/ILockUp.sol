@@ -1,34 +1,40 @@
-/*
+// SPDX-License-Identifier: UNLICENSED
+
+/* *
  * Copyright 2021-2022 LI LI of JINGTIAN & GONGCHENG.
  * All Rights Reserved.
  * */
 
 pragma solidity ^0.8.8;
 
-contract ILockUp {
+interface ILockUp {
     // ################
     // ##   Event   ##
     // ################
 
-    event SetLocker(bytes32 indexed shareNumber, uint32 dueDate);
+    event SetLocker(uint32 indexed ssn, uint32 dueDate);
 
-    event AddKeyholder(bytes32 indexed shareNumber, uint40 keyholder);
+    event UpdateLocker(uint32 indexed ssn, uint32 dueDate);
 
-    event RemoveKeyholder(bytes32 indexed shareNumber, uint40 keyholder);
+    event AddKeyholder(uint32 indexed ssn, uint40 keyholder);
 
-    event DelLocker(bytes32 indexed shareNumber);
+    event RemoveKeyholder(uint32 indexed ssn, uint40 keyholder);
+
+    event DelLocker(uint32 indexed ssn);
 
     // ################
     // ##   Write    ##
     // ################
 
-    function setLocker(bytes32 shareNumber, uint32 dueDate) external;
+    function setLocker(uint32 ssn, uint32 dueDate) external;
 
-    function delLocker(bytes32 shareNumber) external;
+    function updateLocker(uint32 ssn, uint32 dueDate) external;
 
-    function addKeyholder(bytes32 shareNumber, uint40 keyholder) external;
+    function delLocker(uint32 ssn) external;
 
-    function removeKeyholder(bytes32 shareNumber, uint40 keyholder) external;
+    function addKeyholder(uint32 ssn, uint40 keyholder) external;
+
+    function removeKeyholder(uint32 ssn, uint40 keyholder) external;
 
     // ################
     // ##  查询接口  ##
@@ -37,9 +43,9 @@ contract ILockUp {
     function isLocked(uint32 ssn) external view returns (bool);
 
     function getLocker(uint32 ssn)
-        public
+        external
         view
-        returns (uint32 dueDate, uint40[] keyHolders);
+        returns (uint32 dueDate, uint40[] memory keyHolders);
 
-    function lockedShares() external view returns (bytes32[]);
+    function lockedShares() external view returns (uint32[] memory);
 }

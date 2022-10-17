@@ -1,19 +1,20 @@
-/*
+// SPDX-License-Identifier: UNLICENSED
+
+/* *
  * Copyright 2021-2022 LI LI of JINGTIAN & GONGCHENG.
  * All Rights Reserved.
  * */
 
 pragma solidity ^0.8.8;
-pragma experimental ABIEncoderV2;
 
-import "../common/ruting/IBookSetting.sol";
+import "../common/components/IMeetingMinutes.sol";
+
 import "../common/ruting/BODSetting.sol";
 import "../common/ruting/BOMSetting.sol";
 import "../common/ruting/BOSSetting.sol";
 import "../common/ruting/SHASetting.sol";
 
-import "../common/lib/SNParser.sol";
-import "../common/lib/EnumsRepo.sol";
+import "../common/lib/MotionsRepo.sol";
 
 import "./IBODKeeper.sol";
 
@@ -24,7 +25,6 @@ contract BODKeeper is
     BOMSetting,
     BOSSetting
 {
-    using SNParser for bytes32;
 
     function appointDirector(
         uint40 candidate,
@@ -34,30 +34,30 @@ contract BODKeeper is
         require(
             _getSHA().boardSeatsQuotaOf(appointer) >
                 _bod.appointmentCounter(appointer),
-            "board seats quota used out"
+            "BODKeeper.appointDirector: board seats quota used out"
         );
 
         if (title == uint8(EnumsRepo.TitleOfDirectors.Chairman)) {
             require(
                 _getSHA().appointerOfChairman() == appointer,
-                "has no appointment right"
+                "BODKeeper.appointDirector: has no appointment right"
             );
 
             require(
-                _bod.whoIs(title) == candidate,
-                "current Chairman shall quit first"
+                _bod.whoIs(title) == 0 || _bod.whoIs(title) == candidate,
+                "BODKeeper.appointDirector: current Chairman shall quit first"
             );
         } else if (title == uint8(EnumsRepo.TitleOfDirectors.ViceChairman)) {
             require(
                 _getSHA().appointerOfViceChairman() == appointer,
-                "has no appointment right"
+                "BODKeeper.appointDirector: has no appointment right"
             );
             require(
-                _bod.whoIs(title) == candidate,
-                "current ViceChairman shall quit first"
+                _bod.whoIs(title) == 0 || _bod.whoIs(title) == candidate,
+                "BODKeeper.appointDirector: current ViceChairman shall quit first"
             );
         } else if (title != uint8(EnumsRepo.TitleOfDirectors.Director)) {
-            revert("there is not such title for candidate");
+            revert("BODKeeper.appointDirector: there is not such title for candidate");
         }
 
         _bod.appointDirector(appointer, candidate, title);
@@ -67,17 +67,17 @@ contract BODKeeper is
         external
         onlyManager(1)
     {
-        require(_bod.isDirector(director), "appointer is not a member");
+        require(_bod.isDirector(director), "BODKeeper.removeDirector: appointer is not a member");
         require(
             _bod.appointerOfDirector(director) == appointer,
-            "caller is not appointer"
+            "BODKeeper.reoveDirector: caller is not appointer"
         );
 
         _bod.removeDirector(director);
     }
 
     function quitPosition(uint40 director) external onlyManager(1) {
-        require(_bod.isDirector(director), "appointer is not a member");
+        require(_bod.isDirector(director), "BODKeeper.quitPosition: appointer is not a member");
 
         _bod.removeDirector(director);
     }
@@ -86,7 +86,7 @@ contract BODKeeper is
         external
         onlyManager(1)
     {
-        require(_bos.isMember(nominator), "nominator is not a member");
+        require(_bos.isMember(nominator), "BODKeeper.nominateDirector: nominator is not a member");
         _bom.nominateDirector(candidate, nominator);
     }
 
@@ -94,13 +94,66 @@ contract BODKeeper is
         external
         onlyManager(1)
     {
-        require(_bom.isPassed(motionId), "candidate not be approved");
+        require(IMeetingMinutes(address(_bom)).isPassed(motionId), "BODKeeper.takePosition: candidate not be approved");
+
+        MotionsRepo.Head memory head = IMeetingMinutes(address(_bom)).headOf(motionId);
 
         require(
-            bytes32(motionId).candidateOfMotion() == candidate,
-            "caller is not the candidate"
+            head.executor == candidate,
+            "BODKeeper.takePosition: caller is not the candidate"
         );
 
-        _bod.takePosition(candidate, bytes32(motionId).submitterOfMotion());
+        _bod.takePosition(candidate, head.submitter);
     }
+
+    // ==== resolution ====
+
+    function entrustDelegate(
+        uint40 caller,
+        uint40 delegate,
+        uint256 actionId
+    ) external onlyManager(1) directorExist(caller) directorExist(delegate) {
+        IMeetingMinutes(address(_bod)).entrustDelegate(caller, delegate, actionId);
+    }
+
+    function proposeAction(
+        uint8 actionType,
+        address[] memory targets,
+        uint256[] memory values,
+        bytes[] memory params,
+        bytes32 desHash,
+        uint40 submitter
+    ) external onlyManager(1) directorExist(submitter) {
+        IMeetingMinutes(address(_bod)).proposeAction(actionType, targets, values, params, desHash, submitter);
+    }
+
+    function castVote(
+        uint256 actionId,
+        uint8 attitude,
+        uint40 caller,
+        bytes32 sigHash
+    ) external onlyManager(1) directorExist(caller) {
+        IMeetingMinutes(address(_bod)).castVote(actionId, attitude, caller, sigHash);
+    }
+
+    function voteCounting(uint256 actionId, uint40 caller)
+        external
+        onlyManager(1)
+        directorExist(caller)
+    {
+        IMeetingMinutes(address(_bod)).voteCounting(actionId);
+    }
+
+    function execAction(
+        uint8 actionType,
+        address[] memory targets,
+        uint256[] memory values,
+        bytes[] memory params,
+        bytes32 desHash,
+        uint40 caller
+    ) external directorExist(caller) returns (uint256) {
+        require(!_rc.isContract(caller), "caller is not an EOA");
+        return IMeetingMinutes(address(_bod)).execAction(actionType, targets, values, params, desHash);
+    }
+
 }

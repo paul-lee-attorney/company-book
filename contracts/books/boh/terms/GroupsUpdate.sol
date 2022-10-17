@@ -1,4 +1,6 @@
-/*
+// SPDX-License-Identifier: UNLICENSED
+
+/* *
  * Copyright 2021-2022 LI LI of JINGTIAN & GONGCHENG.
  * All Rights Reserved.
  * */
@@ -45,7 +47,7 @@ contract GroupsUpdate is IGroupsUpdate, BOSSetting {
         bool addMember = true;
 
         bytes32 order = _createOrder(addMember, acct, groupNo);
-        // order.insertToQue(_orders);
+
         if (_orders.add(order)) emit AddMemberOrder(acct, groupNo);
     }
 
@@ -60,13 +62,10 @@ contract GroupsUpdate is IGroupsUpdate, BOSSetting {
         bool addMember = false;
 
         bytes32 order = _createOrder(addMember, acct, groupNo);
-        // order.insertToQue(_orders);
         if (_orders.add(order)) emit RemoveMemberOrder(acct, groupNo);
     }
 
     function delOrder(bytes32 order) external onlyAttorney {
-        // _orders.removeByValue(order);
-
         if (_orders.remove(order)) emit DelOrder(order);
     }
 
@@ -74,7 +73,7 @@ contract GroupsUpdate is IGroupsUpdate, BOSSetting {
     //##    读接口    ##
     //##################
 
-    function orders() external view returns (bytes32[]) {
+    function orders() external view returns (bytes32[] memory) {
         return _orders.values();
     }
 }

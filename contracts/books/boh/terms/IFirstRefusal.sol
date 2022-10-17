@@ -1,11 +1,13 @@
-/*
+// SPDX-License-Identifier: UNLICENSED
+
+/* *
  * Copyright 2021-2022 LI LI of JINGTIAN & GONGCHENG.
  * All Rights Reserved.
  * */
 
 pragma solidity ^0.8.8;
 
-contract IFirstRefusal {
+interface IFirstRefusal {
     // ###############
     // ##   Event   ##
     // ###############
@@ -48,5 +50,5 @@ contract IFirstRefusal {
         view
         returns (bool);
 
-    function rightholders(uint8 typeOfDeal) external view returns (uint40[]);
+    function rightholders(uint8 typeOfDeal) external view returns (uint40[] memory);
 }

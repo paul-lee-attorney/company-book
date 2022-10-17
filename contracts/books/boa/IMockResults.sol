@@ -57,7 +57,7 @@ interface IMockResults {
         external
         view
         returns (
-            uint16 top,
+            uint40 top,
             uint16 group,
             uint64 sum
         );

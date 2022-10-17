@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: UNLICENSED
+
 /* *
  * Copyright 2021-2022 LI LI of JINGTIAN & GONGCHENG.
  * All Rights Reserved.
@@ -32,24 +34,21 @@ contract FirstRefusal is IFirstRefusal, ITerm, BOSSetting, BOMSetting {
     }
 
     // struct ruleInfo {
-    //     uint8 typeOfDeal;
+    //     uint8 typeOfDeal; 1-CI; 2-ST(ext); 3-ST(int); (4-1&3; 5-2&3; 6-1&2&3; 7-1&2) 
     //     bool membersEqual;
     //     bool proRata;
     //     bool basedOnPar;
     // }
 
     // typeOfDeal => FR : right of first refusal
-    mapping(uint8 => FR) private _firstRefusals;
-
-    // typeOfDeal => bool
-    mapping(uint8 => bool) private _isSubject;
+    mapping(uint256 => FR) private _firstRefusals;
 
     // ################
     // ##  Modifier  ##
     // ################
 
     modifier beRestricted(uint8 typeOfDeal) {
-        require(_isSubject[typeOfDeal], "deal NOT restricted");
+        require(isSubject(typeOfDeal), "deal NOT restricted");
         _;
     }
 
@@ -79,7 +78,6 @@ contract FirstRefusal is IFirstRefusal, ITerm, BOSSetting, BOMSetting {
         bool proRata,
         bool basedOnPar
     ) external onlyAttorney {
-        // require(typeOfDeal < 4, "type of deal over flow");
 
         bytes32 rule = _createRule(
             typeOfDeal,
@@ -89,7 +87,6 @@ contract FirstRefusal is IFirstRefusal, ITerm, BOSSetting, BOMSetting {
         );
 
         _firstRefusals[typeOfDeal].rule = rule;
-        _isSubject[typeOfDeal] = true;
 
         emit SetFirstRefusal(typeOfDeal, rule);
     }
@@ -100,7 +97,6 @@ contract FirstRefusal is IFirstRefusal, ITerm, BOSSetting, BOMSetting {
         beRestricted(typeOfDeal)
     {
         delete _firstRefusals[typeOfDeal];
-        delete _isSubject[typeOfDeal];
 
         emit DelFirstRefusal(typeOfDeal);
     }
@@ -135,8 +131,8 @@ contract FirstRefusal is IFirstRefusal, ITerm, BOSSetting, BOMSetting {
     // ##  查询接口  ##
     // ################
 
-    function isSubject(uint8 typeOfDeal) external view returns (bool) {
-        return _isSubject[typeOfDeal];
+    function isSubject(uint8 typeOfDeal) public view returns (bool) {
+        return typeOfDeal > 0 && _firstRefusals[typeOfDeal].rule > bytes32(0);
     }
 
     function ruleOfFR(uint8 typeOfDeal)
@@ -164,7 +160,7 @@ contract FirstRefusal is IFirstRefusal, ITerm, BOSSetting, BOMSetting {
         external
         view
         beRestricted(typeOfDeal)
-        returns (uint40[])
+        returns (uint40[] memory)
     {
         FR storage fr = _firstRefusals[typeOfDeal];
 
@@ -182,14 +178,14 @@ contract FirstRefusal is IFirstRefusal, ITerm, BOSSetting, BOMSetting {
             "deal not exist"
         );
 
-        return _isSubject[sn.typeOfDeal()];
+        return isSubject(sn.typeOfDeal());
     }
 
     function isExempted(address ia, bytes32 sn) external view returns (bool) {
         if (!isTriggered(ia, sn)) return true;
         bytes32 rule = _firstRefusals[sn.typeOfDeal()].rule;
 
-        (uint40[] memory consentParties, ) = _bom.getYea(uint256(ia));
+        (uint40[] memory consentParties, ) = _bom.getYea(uint256(uint160(ia)));
 
         uint40[] memory signers = ISigPage(ia).parties();
 

@@ -32,7 +32,7 @@ contract MockResults is IMockResults, IASetting, SHASetting, BOSSetting {
     function createMockGM() external onlyManager(0) {
         TopChain.Node[] memory snapshot = _bos.getSnapshot();
         
-        _mgm.init(0);
+        _mgm.setMaxQtyOfMembers(0);
         _mgm.restoreChain(snapshot);
         _mockDealsOfIA();
 
@@ -65,11 +65,10 @@ contract MockResults is IMockResults, IASetting, SHASetting, BOSSetting {
         (bytes32 shareNumber, , , , , ) = _bos.getShare(ssn);
 
         uint40 seller = shareNumber.shareholder();
-        uint16 iSeller = _mgm.indexOfMember(seller);
 
-        _mgm.chain.changeAmt(iSeller, amount, true);
+        _mgm.chain.changeAmt(seller, amount, true);
 
-        if (_mgm.chain.nodes[iSeller].amt == 0) {
+        if (_mgm.chain.nodes[seller].amt == 0) {
             _mgm.delMember(seller);
         }
 
@@ -81,9 +80,9 @@ contract MockResults is IMockResults, IASetting, SHASetting, BOSSetting {
 
         if (!_mgm.isMember(buyer)) _mgm.addMember(buyer);
 
-        uint16 iBuyer = _mgm.indexOfMember(buyer);
+        // uint16 iBuyer = _mgm.indexOfMember(buyer);
 
-        _mgm.chain.changeAmt(iBuyer, amount, false);
+        _mgm.chain.changeAmt(buyer, amount, false);
 
         uint16 group = sn.groupOfBuyer();
         if (group > 0) {
@@ -105,9 +104,9 @@ contract MockResults is IMockResults, IASetting, SHASetting, BOSSetting {
 
         if (rule.proRataOfLink()) _proRataCheck(dGroup, fGroup, amount);
 
-        uint16 iFollower = _mgm.indexOfMember(follower);
+        // uint16 iFollower = _mgm.indexOfMember(follower);
 
-        _mgm.chain.changeAmt(iFollower, amount, true);
+        _mgm.chain.changeAmt(follower, amount, true);
 
         emit AddAlongDeal(follower, shareNumber, amount);
     }
@@ -143,11 +142,9 @@ contract MockResults is IMockResults, IASetting, SHASetting, BOSSetting {
             uint64 ratio
         )
     {
-        uint16 iControllor = _mgm.controllor();
+        controllor = _mgm.controllor();
 
-        TopChain.Node storage c = _mgm.chain.nodes[iControllor];
-
-        controllor = c.acct;
+        TopChain.Node storage c = _mgm.chain.nodes[controllor];
 
         group = c.group;
 
@@ -158,16 +155,16 @@ contract MockResults is IMockResults, IASetting, SHASetting, BOSSetting {
         external
         view
         returns (
-            uint16 top,
+            uint40 top,
             uint16 group,
             uint64 sum
         )
     {
-        uint16 i = _mgm.indexOfMember(acct);
+        // uint16 i = _mgm.indexOfMember(acct);
 
-        require(i > 0, "MR.mockResults: acct not exist");
+        // require(i > 0, "MR.mockResults: acct not exist");
 
-        top = _mgm.chain.topOfBranch(i);
+        top = _mgm.chain.topOfBranch(acct);
         group = _mgm.chain.nodes[top].group;
         sum = _mgm.chain.nodes[top].sum;
     }

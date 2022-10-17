@@ -1,4 +1,6 @@
-/*
+// SPDX-License-Identifier: UNLICENSED
+
+/* *
  * Copyright 2021-2022 LI LI of JINGTIAN & GONGCHENG.
  * All Rights Reserved.
  * */
@@ -11,15 +13,9 @@ import "./IBookOfShares.sol";
 
 import "../../common/lib/SNFactory.sol";
 import "../../common/lib/SNParser.sol";
-// import "../../common/lib/ObjsRepo.sol";
-// import "../../common/lib/Checkpoints.sol";
-// import "../../common/lib/EnumsRepo.sol";
-// import "../../common/lib/EnumerableSet.sol";
 import "../../common/lib/MembersRepo.sol";
 import "../../common/lib/TopChain.sol";
 
-// import "../../common/access/AccessControl.sol";
-// import "../../common/ruting/IBookSetting.sol";
 import "../../common/ruting/SHASetting.sol";
 
 contract BookOfShares is IBookOfShares, SHASetting {
@@ -33,8 +29,8 @@ contract BookOfShares is IBookOfShares, SHASetting {
     //Share 股票
     struct Share {
         bytes32 shareNumber; //出资证明书编号（股票编号）
-        uint64 par; //票面金额（注册资本面值）
         uint64 paid; //实缴出资
+        uint64 par; //票面金额（注册资本面值）
         uint64 cleanPar; //清洁金额（扣除出质、远期票面金额）
         uint32 unitPrice; //发行价格（最小单位为分）
         uint32 paidInDeadline; //出资期限（时间戳）
@@ -95,9 +91,9 @@ contract BookOfShares is IBookOfShares, SHASetting {
     //##    写接口    ##
     //##################
 
-    constructor(bytes32 regNumHash, uint8 max) public {
+    constructor(bytes32 regNumHash, uint16 max) {
         _regNumHash = regNumHash;
-        _gm.init(max);
+        _gm.setMaxQtyOfMembers(max);
     }
 
     // ==== IssueShare ====
@@ -166,7 +162,7 @@ contract BookOfShares is IBookOfShares, SHASetting {
         emit SetPayInAmount(ssn, amount, hashLock);
     }
 
-    function requestPaidInCapital(uint32 ssn, string hashKey)
+    function requestPaidInCapital(uint32 ssn, string memory hashKey)
         external
         shareExist(ssn)
         onlyManager(1)
@@ -411,15 +407,13 @@ contract BookOfShares is IBookOfShares, SHASetting {
 
         share.cleanPar += paid;
 
-        if (share.cleanPar == share.paid && share.state != 4) share.state = 0;
-
         emit IncreaseCleanPar(ssn, paid);
     }
 
     // ==== State & PaidInDeadline ====
 
     /// @param ssn - 股票短号
-    /// @param state - 股票状态 （0：正常，1：出质，2：远期占用; 3:1+2; 4:查封; 5:1+4; 6:2+4; 7:1+2+4 ）
+    /// @param state - 股票状态 （0:正常，1:查封 ）
     function updateShareState(uint32 ssn, uint8 state)
         external
         onlyKeeper
@@ -549,7 +543,7 @@ contract BookOfShares is IBookOfShares, SHASetting {
 
     // ==== BookOfShares ====
 
-    function verifyRegNum(string regNum)
+    function verifyRegNum(string memory regNum)
         external
         view
         returns (bool)
@@ -557,7 +551,7 @@ contract BookOfShares is IBookOfShares, SHASetting {
         return _regNumHash == keccak256(bytes(regNum));
     }
 
-    function maxQtyOfMembers() external view returns (uint8) {
+    function maxQtyOfMembers() external view returns (uint16) {
         return _gm.maxQtyOfMembers();
     }
 
@@ -627,7 +621,7 @@ contract BookOfShares is IBookOfShares, SHASetting {
         state = share.state;
     }
 
-    function sharesList() external view returns (bytes32[]) {
+    function sharesList() external view returns (bytes32[] memory) {
         return _gm.sharesList();
     }
 
@@ -698,7 +692,6 @@ contract BookOfShares is IBookOfShares, SHASetting {
     function votesAtBlock(uint40 acct, uint64 blocknumber)
         external
         view
-        memberExist(acct)
         returns (uint64)
     {
         return _gm.votesAtBlock(acct, blocknumber, _getSHA().basedOnPar());
@@ -708,7 +701,7 @@ contract BookOfShares is IBookOfShares, SHASetting {
         external
         view
         memberExist(acct)
-        returns (bytes32[])
+        returns (bytes32[] memory)
     {
         return _gm.sharesInHand(acct);
     }
@@ -726,7 +719,7 @@ contract BookOfShares is IBookOfShares, SHASetting {
         return _gm.qtyOfMembers();
     }
 
-    function membersList() external view returns (uint40[]) {
+    function membersList() external view returns (uint40[] memory) {
         return _gm.membersList();
     }
 

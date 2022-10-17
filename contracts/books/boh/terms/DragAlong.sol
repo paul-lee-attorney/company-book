@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: UNLICENSED
+
 /* *
  * Copyright 2021-2022 LI LI of JINGTIAN & GONGCHENG.
  * All Rights Reserved.
@@ -7,8 +9,6 @@ pragma solidity ^0.8.8;
 
 import "../../boa/IInvestmentAgreement.sol";
 import "../../boa/IMockResults.sol";
-
-import "../../../common/components/IDocumentsRepo.sol";
 
 import "../../../common/ruting/BOSSetting.sol";
 import "../../../common/ruting/BOASetting.sol";
@@ -79,7 +79,7 @@ contract DragAlong is IAlongs, BOSSetting, BOASetting {
         _sn = _sn.sequenceToSN(5, group);
         _sn[7] = bytes1(triggerType);
         _sn = _sn.dateToSN(8, threshold);
-        _sn[12] = (proRata) ? bytes1(1) : bytes1(0);
+        _sn[12] = (proRata) ? bytes1(uint8(1)) : bytes1(0);
         _sn = _sn.dateToSN(13, unitPrice);
         _sn = _sn.dateToSN(17, roe);
 
@@ -203,7 +203,7 @@ contract DragAlong is IAlongs, BOSSetting, BOASetting {
         return _links[_reps[drager]].followers.contains(follower);
     }
 
-    function dragers() external view returns (uint40[]) {
+    function dragers() external view returns (uint40[] memory) {
         return _dragers.valuesToUint40();
     }
 
@@ -211,7 +211,7 @@ contract DragAlong is IAlongs, BOSSetting, BOASetting {
         external
         view
         dragerExist(drager)
-        returns (uint40[])
+        returns (uint40[] memory)
     {
         return _links[_reps[drager]].followers.valuesToUint40();
     }

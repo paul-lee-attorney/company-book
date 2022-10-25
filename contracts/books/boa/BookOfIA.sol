@@ -22,12 +22,8 @@ contract BookOfIA is IBookOfIA, DocumentsRepo {
     using SNParser for bytes32;
     using EnumerableSet for EnumerableSet.UintSet;
 
-    // ==== FRDeals ====
-
     // ia => frd
     mapping(address => address) private _frDeals;
-
-    // ==== MockDeals ====
 
     // ia => mockResults
     mapping(address => address) private _mockResults;

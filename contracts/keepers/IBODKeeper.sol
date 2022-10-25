@@ -14,13 +14,12 @@ interface IBODKeeper {
         uint40 appointer
     ) external;
 
+    function takePosition(uint40 candidate, uint256 motionId) external;
+
     function removeDirector(uint40 director, uint40 appointer) external;
 
     function quitPosition(uint40 director) external;
 
-    function nominateDirector(uint40 candidate, uint40 nominator) external;
-
-    function takePosition(uint40 candidate, uint256 motionId) external;
 
     // ==== resolution ====
 
@@ -55,6 +54,6 @@ interface IBODKeeper {
         bytes[] memory params,
         bytes32 desHash,
         uint40 caller
-    ) external;
+    ) external returns(uint256);
 
 }

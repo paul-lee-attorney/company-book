@@ -7,8 +7,6 @@
 
 pragma solidity ^0.8.8;
 
-import "../common/components/IMeetingMinutes.sol";
-
 import "../common/ruting/BODSetting.sol";
 import "../common/ruting/BOMSetting.sol";
 import "../common/ruting/BOSSetting.sol";
@@ -60,7 +58,29 @@ contract BODKeeper is
             revert("BODKeeper.appointDirector: there is not such title for candidate");
         }
 
-        _bod.appointDirector(appointer, candidate, title);
+        _bod.appointDirector(candidate, title, appointer);
+    }
+
+    function takePosition(uint40 candidate, uint256 motionId)
+        external
+        onlyManager(1)
+    {
+        require(_bom.isPassed(motionId), "BODKeeper.takePosition: candidate not be approved");
+
+        MotionsRepo.Head memory head = _bom.headOf(motionId);
+
+        require(
+            head.executor == candidate,
+            "BODKeeper.takePosition: caller is not the candidate"
+        );
+
+        _bod.takePosition(candidate, head.submitter);
+    }
+
+    function quitPosition(uint40 director) external onlyManager(1) {
+        require(_bod.isDirector(director), "BODKeeper.quitPosition: appointer is not a member");
+
+        _bod.removeDirector(director);
     }
 
     function removeDirector(uint40 director, uint40 appointer)
@@ -76,36 +96,6 @@ contract BODKeeper is
         _bod.removeDirector(director);
     }
 
-    function quitPosition(uint40 director) external onlyManager(1) {
-        require(_bod.isDirector(director), "BODKeeper.quitPosition: appointer is not a member");
-
-        _bod.removeDirector(director);
-    }
-
-    function nominateDirector(uint40 candidate, uint40 nominator)
-        external
-        onlyManager(1)
-    {
-        require(_bos.isMember(nominator), "BODKeeper.nominateDirector: nominator is not a member");
-        _bom.nominateDirector(candidate, nominator);
-    }
-
-    function takePosition(uint40 candidate, uint256 motionId)
-        external
-        onlyManager(1)
-    {
-        require(IMeetingMinutes(address(_bom)).isPassed(motionId), "BODKeeper.takePosition: candidate not be approved");
-
-        MotionsRepo.Head memory head = IMeetingMinutes(address(_bom)).headOf(motionId);
-
-        require(
-            head.executor == candidate,
-            "BODKeeper.takePosition: caller is not the candidate"
-        );
-
-        _bod.takePosition(candidate, head.submitter);
-    }
-
     // ==== resolution ====
 
     function entrustDelegate(
@@ -113,7 +103,7 @@ contract BODKeeper is
         uint40 delegate,
         uint256 actionId
     ) external onlyManager(1) directorExist(caller) directorExist(delegate) {
-        IMeetingMinutes(address(_bod)).entrustDelegate(caller, delegate, actionId);
+        _bod.entrustDelegate(caller, delegate, actionId);
     }
 
     function proposeAction(
@@ -124,7 +114,7 @@ contract BODKeeper is
         bytes32 desHash,
         uint40 submitter
     ) external onlyManager(1) directorExist(submitter) {
-        IMeetingMinutes(address(_bod)).proposeAction(actionType, targets, values, params, desHash, submitter);
+        _bod.proposeAction(actionType, targets, values, params, desHash, submitter);
     }
 
     function castVote(
@@ -133,15 +123,15 @@ contract BODKeeper is
         uint40 caller,
         bytes32 sigHash
     ) external onlyManager(1) directorExist(caller) {
-        IMeetingMinutes(address(_bod)).castVote(actionId, attitude, caller, sigHash);
+        _bod.castVote(actionId, attitude, caller, sigHash);
     }
 
-    function voteCounting(uint256 actionId, uint40 caller)
+    function voteCounting(uint256 motionId, uint40 caller)
         external
         onlyManager(1)
         directorExist(caller)
     {
-        IMeetingMinutes(address(_bod)).voteCounting(actionId);
+        _bod.voteCounting(motionId);
     }
 
     function execAction(
@@ -153,7 +143,7 @@ contract BODKeeper is
         uint40 caller
     ) external directorExist(caller) returns (uint256) {
         require(!_rc.isContract(caller), "caller is not an EOA");
-        return IMeetingMinutes(address(_bod)).execAction(actionType, targets, values, params, desHash);
+        return _bod.execAction(actionType, targets, values, params, desHash);
     }
 
 }

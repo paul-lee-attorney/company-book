@@ -150,16 +150,16 @@ contract GeneralKeeper is AccessControl {
         _BODKeeper.appointDirector(candidate, title, _msgSender());
     }
 
+    function takePosition(uint256 motionId) external {
+        _BODKeeper.takePosition(_msgSender(), motionId);
+    }
+
     function removeDirector(uint40 director) external {
         _BODKeeper.removeDirector(director, _msgSender());
     }
 
     function quitPosition() external {
         _BODKeeper.quitPosition(_msgSender());
-    }
-
-    function takePosition(uint256 motionId) external {
-        _BODKeeper.takePosition(_msgSender(), motionId);
     }
 
     // ==== resolution ====

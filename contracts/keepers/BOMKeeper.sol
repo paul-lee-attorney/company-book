@@ -20,7 +20,6 @@ import "../common/ruting/SHASetting.sol";
 import "../common/lib/SNParser.sol";
 
 import "../common/components/ISigPage.sol";
-import "../common/components/IMeetingMinutes.sol";
 
 import "../common/lib/EnumsRepo.sol";
 

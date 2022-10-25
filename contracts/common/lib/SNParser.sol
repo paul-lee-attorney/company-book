@@ -156,11 +156,11 @@ library SNParser {
         return uint8(sn[0]);
     }
 
-    function ssnOfOpt(bytes32 sn) internal pure returns (uint40) {
+    function sequenceOfOpt(bytes32 sn) internal pure returns (uint40) {
         return uint40(bytes5(sn<<8));
     }
 
-    function triggerDateOfOpt(bytes32 sn) internal pure returns (uint32) {
+    function triggerBNOfOpt(bytes32 sn) internal pure returns (uint32) {
         return uint32(bytes4(sn << 48));
     }
 
@@ -172,28 +172,32 @@ library SNParser {
         return uint8(sn[11]);
     }
 
-    function rateOfOpt(bytes32 sn) internal pure returns (uint32) {
+    function classOfOpt(bytes32 sn) internal pure returns (uint32) {
         return uint32(bytes4(sn << 96));
     }
 
+    function rateOfOpt(bytes32 sn) internal pure returns (uint32) {
+        return uint32(bytes4(sn << 128));
+    }
+
     function logOperator(bytes32 sn) internal pure returns (uint8) {
-        return uint8(sn[16]);
+        return uint8(sn[20]);
     }
 
     function compOperator_1(bytes32 sn) internal pure returns (uint8) {
-        return uint8(sn[17]);
+        return uint8(sn[21]);
     }
 
     function para_1(bytes32 sn) internal pure returns (uint32) {
-        return uint32(bytes4(sn << 144));
+        return uint32(bytes4(sn << 176));
     }
 
     function compOperator_2(bytes32 sn) internal pure returns (uint8) {
-        return uint8(sn[22]);
+        return uint8(sn[26]);
     }
 
     function para_2(bytes32 sn) internal pure returns (uint32) {
-        return uint32(bytes4(sn << 184));
+        return uint32(bytes4(sn << 216));
     }
 
     function checkConditions(
@@ -228,11 +232,11 @@ library SNParser {
         return uint32(bytes4(sn));
     }
 
-    function parValueOfFt(bytes32 sn) internal pure returns (uint64) {
+    function paidOfFt(bytes32 sn) internal pure returns (uint64) {
         return uint64(bytes8(sn << 32));
     }
 
-    function paidParOfFt(bytes32 sn) internal pure returns (uint64) {
+    function parOfFt(bytes32 sn) internal pure returns (uint64) {
         return uint64(bytes8(sn << 96));
     }
 

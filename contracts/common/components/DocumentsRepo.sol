@@ -66,6 +66,16 @@ contract DocumentsRepo is IDocumentsRepo, CloneFactory, SHASetting, BOSSetting {
 
     uint32 private _counterOfDocs;
 
+    //##############
+    //##  Event   ##
+    //##############
+
+    event SetTemplate(address temp, uint8 typeOfDoc);
+
+    event UpdateStateOfDoc(bytes32 indexed sn, uint8 state, uint40 caller);
+
+    event RemoveDoc(bytes32 indexed sn);
+
     //####################
     //##    modifier    ##
     //####################

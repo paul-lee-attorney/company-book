@@ -7,7 +7,9 @@
 
 pragma solidity ^0.8.8;
 
-interface IBookOfDirectors {
+import "../../common/components/IMeetingMinutes.sol";
+
+interface IBookOfDirectors is IMeetingMinutes{
 
     //###################
     //##    events    ##
@@ -34,14 +36,15 @@ interface IBookOfDirectors {
     function setMaxQtyOfDirectors(uint8 max) external;
 
     function appointDirector(
-        uint40 appointer,
         uint40 candidate,
-        uint8 title
+        uint8 title,
+        uint40 appointer
     ) external;
+
+    function removeDirector(uint40 acct) external;
 
     function takePosition(uint40 candidate, uint40 nominator) external;
 
-    function removeDirector(uint40 acct) external;
 
     //##################
     //##    读接口    ##

@@ -8,15 +8,15 @@
 pragma solidity ^0.8.8;
 
 interface IDocumentsRepo {
-    //##############
-    //##  Event   ##
-    //##############
+    // //##############
+    // //##  Event   ##
+    // //##############
 
-    event SetTemplate(address temp, uint8 typeOfDoc);
+    // event SetTemplate(address temp, uint8 typeOfDoc);
 
-    event UpdateStateOfDoc(bytes32 indexed sn, uint8 state, uint40 caller);
+    // event UpdateStateOfDoc(bytes32 indexed sn, uint8 state, uint40 caller);
 
-    event RemoveDoc(bytes32 indexed sn);
+    // event RemoveDoc(bytes32 indexed sn);
 
     //##################
     //##    写接口    ##

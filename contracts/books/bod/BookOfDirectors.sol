@@ -60,17 +60,17 @@ contract BookOfDirectors is IBookOfDirectors, MeetingMinutes {
     }
 
     function appointDirector(
-        uint40 appointer,
         uint40 candidate,
-        uint8 title
+        uint8 title,
+        uint40 appointer
     ) external onlyManager(1) {
-        _addDirector(candidate, appointer, title);
+        _addDirector(candidate, title, appointer);
     }
 
     function _addDirector(
         uint40 candidate,
-        uint40 appointer,
-        uint8 title
+        uint8 title,
+        uint40 appointer
     ) private {
         if (!isDirector(candidate))
             require(
@@ -117,8 +117,8 @@ contract BookOfDirectors is IBookOfDirectors, MeetingMinutes {
     {
         _addDirector(
             candidate,
-            nominator,
-            uint8(EnumsRepo.TitleOfDirectors.Director)
+            uint8(EnumsRepo.TitleOfDirectors.Director),
+            nominator
         );
     }
 

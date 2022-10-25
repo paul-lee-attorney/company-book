@@ -7,17 +7,17 @@
 
 pragma solidity ^0.8.8;
 
-import "../../books/boa/BookOfIA.sol";
+import "../../books/boa/IBookOfIA.sol";
 
 import "../access/AccessControl.sol";
 
 contract BOASetting is AccessControl {
-    BookOfIA internal _boa;
+    IBookOfIA internal _boa;
 
     event SetBOA(address boa);
 
     function setBOA(address boa) external onlyManager(1) {
-        _boa = BookOfIA(boa);
+        _boa = IBookOfIA(boa);
         emit SetBOA(boa);
     }
 }

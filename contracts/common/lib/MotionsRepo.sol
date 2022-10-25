@@ -6,7 +6,6 @@
  * */
 
 pragma solidity ^0.8.8;
-pragma experimental ABIEncoderV2;
 
 import "./SNParser.sol";
 import "./EnumsRepo.sol";

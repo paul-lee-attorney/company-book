@@ -11,20 +11,12 @@ import "./IBookOfOptions.sol";
 
 import "../boh/terms/IOptions.sol";
 
-import "../../common/lib/Checkpoints.sol";
-import "../../common/lib/SNFactory.sol";
 import "../../common/lib/SNParser.sol";
-import "../../common/lib/EnumerableSet.sol";
-
 import "../../common/lib/OptionsRepo.sol";
 
 import "../../common/ruting/BOSSetting.sol";
 
 contract BookOfOptions is IBookOfOptions, BOSSetting {
-    // using EnumerableSet for EnumerableSet.Bytes32Set;
-    // using EnumerableSet for EnumerableSet.UintSet;
-    // using Checkpoints for Checkpoints.History;
-    // using SNFactory for bytes;
     using OptionsRepo for OptionsRepo.Repo;
     using SNParser for bytes32;
 
@@ -94,6 +86,15 @@ contract BookOfOptions is IBookOfOptions, BOSSetting {
             emit AddFuture(sn, shareNumber, paid, par);
         }
     }
+
+    // function removeFuture(
+    //     bytes32 sn,
+    //     bytes32 ft
+    // ) external onlyKeeper {
+    //     if (_options.removeFuture(sn, ft)) {
+    //         emit RemoveFuture(sn, ft);
+    //     }
+    // }
 
     function requestPledge(
         bytes32 sn,

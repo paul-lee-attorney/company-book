@@ -36,6 +36,8 @@ interface IBookOfOptions {
         uint64 par
     );
 
+    // event RemoveFuture(bytes32 indexed sn, bytes32 ft);
+
     event DelFuture(bytes32 indexed sn);
 
     event AddPledge(bytes32 indexed sn, bytes32 shareNumber, uint64 paid);
@@ -70,6 +72,8 @@ interface IBookOfOptions {
         uint64 paid,
         uint64 par
     ) external;
+
+    // function removeFuture( bytes32 sn, bytes32 ft) external;
 
     function requestPledge(
         bytes32 sn,

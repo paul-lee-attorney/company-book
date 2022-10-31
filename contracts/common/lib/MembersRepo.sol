@@ -265,7 +265,7 @@ library MembersRepo {
     function counterOfShares(GeneralMeeting storage gm)
         internal
         view
-        returns (uint40)
+        returns (uint32)
     {
         return gm.chain.counterOfShares();
     }
@@ -395,10 +395,10 @@ library MembersRepo {
     function votesInHand(GeneralMeeting storage gm, uint40 acct)
         internal
         view
-        returns (uint64)
+        returns (uint64 votes)
     {
         if(isMember(gm, acct))
-        return gm.chain.nodes[acct].amt;
+        votes = gm.chain.nodes[acct].amt;
     }
 
     function votesAtBlock(

@@ -385,8 +385,8 @@ library TopChain {
 
     // ==== Zero Node ====
 
-    function counterOfShares(Chain storage chain) internal view returns (uint40) {
-        return chain.nodes[0].acct;
+    function counterOfShares(Chain storage chain) internal view returns (uint32) {
+        return uint32(chain.nodes[0].acct);
     }
 
     function counterOfGroups(Chain storage chain)

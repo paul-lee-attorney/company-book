@@ -34,7 +34,7 @@ contract BookOfShares is IBookOfShares, SHASetting {
         uint64 cleanPar; //清洁金额（扣除出质、远期票面金额）
         uint32 unitPrice; //发行价格（最小单位为分）
         uint32 paidInDeadline; //出资期限（时间戳）
-        uint8 state; //股票状态 （0:正常，1:查封）
+        // uint8 state; //股票状态 （0:正常，1:查封）
     }
 
     // SNInfo: 股票编号编码规则
@@ -46,6 +46,7 @@ contract BookOfShares is IBookOfShares, SHASetting {
     //     uint32 preSN; //来源股票编号索引
     // }
 
+    // ssn => Share
     mapping(uint256 => Share) private _shares;
 
     // ---- PayInCap Locker ----
@@ -62,10 +63,10 @@ contract BookOfShares is IBookOfShares, SHASetting {
     //##   Modifier   ##
     //##################
 
-    modifier notFreezed(uint32 ssn) {
-        require(_shares[ssn].state < 4, "BOS.notFreezed: FREEZED share");
-        _;
-    }
+    // modifier notFreezed(uint32 ssn) {
+    //     require(_shares[ssn].state < 4, "BOS.notFreezed: FREEZED share");
+    //     _;
+    // }
 
     modifier shareExist(uint32 ssn) {
         require(isShare(ssn), "BOS.shareExist: ssn NOT exist");
@@ -107,8 +108,8 @@ contract BookOfShares is IBookOfShares, SHASetting {
         uint32 issueDate,
         uint32 issuePrice
     ) external onlyKeeper {
-        require(shareholder != address(0), "shareholder address is ZERO");
-        require(issueDate <= now + 15 minutes, "issueDate NOT a PAST time");
+        require(shareholder > 0, "shareholder address is ZERO");
+        require(issueDate <= block.timestamp + 15 minutes, "issueDate NOT a PAST time");
         require(
             issueDate <= paidInDeadline,
             "issueDate LATER than paidInDeadline"
@@ -258,7 +259,7 @@ contract BookOfShares is IBookOfShares, SHASetting {
         require(par > 0, "par is ZERO");
         require(share.par >= par, "par OVERFLOW");
         require(share.cleanPar >= par, "cleanPar OVERFLOW");
-        require(share.state < 4, "FREEZED share");
+        // require(share.state < 4, "FREEZED share");
         require(paid <= par, "paid BIGGER than par");
 
         // 若拟降低的面值金额等于股票面值，则删除相关股票
@@ -381,7 +382,7 @@ contract BookOfShares is IBookOfShares, SHASetting {
         external
         onlyKeeper
         shareExist(ssn)
-        notFreezed(ssn)
+        // notFreezed(ssn)
     {
         require(paid > 0, "ZERO paid");
 
@@ -398,7 +399,7 @@ contract BookOfShares is IBookOfShares, SHASetting {
         external
         onlyKeeper
         shareExist(ssn)
-        notFreezed(ssn)
+        // notFreezed(ssn)
     {
         require(paid > 0, "ZERO paid");
 
@@ -413,15 +414,16 @@ contract BookOfShares is IBookOfShares, SHASetting {
     // ==== State & PaidInDeadline ====
 
     /// @param ssn - 股票短号
-    /// @param state - 股票状态 （0:正常，1:查封 ）
-    function updateShareState(uint32 ssn, uint8 state)
+    // / @param state - 股票状态 （0:正常，1:查封 ）
+    function freezeShare(uint32 ssn)
         external
         onlyKeeper
         shareExist(ssn)
     {
-        _shares[ssn].state = state;
+        _shares[ssn].cleanPar = 0;
+        // _shares[ssn].state = state;
 
-        emit UpdateShareState(ssn, state);
+        emit FreezeShare(ssn);
     }
 
     /// @param ssn - 股票短号
@@ -555,7 +557,7 @@ contract BookOfShares is IBookOfShares, SHASetting {
         return _gm.maxQtyOfMembers();
     }
 
-    function counterOfShares() external view returns (uint40) {
+    function counterOfShares() external view returns (uint32) {
         return _gm.counterOfShares();
     }
 
@@ -607,8 +609,8 @@ contract BookOfShares is IBookOfShares, SHASetting {
             uint64 paid,
             uint64 par,
             uint32 paidInDeadline,
-            uint32 unitPrice,
-            uint8 state
+            uint32 unitPrice
+            // uint8 state
         )
     {
         Share storage share = _shares[ssn];
@@ -618,7 +620,7 @@ contract BookOfShares is IBookOfShares, SHASetting {
         par = share.par;
         paidInDeadline = share.paidInDeadline;
         unitPrice = share.unitPrice;
-        state = share.state;
+        // state = share.state;
     }
 
     function sharesList() external view returns (bytes32[] memory) {
@@ -630,7 +632,7 @@ contract BookOfShares is IBookOfShares, SHASetting {
         view
         returns (bool)
     {
-        return _gm.sharenumberExist(sharenumber);
+        return _gm.shareNumberExist(sharenumber);
     }
 
     // ==== PayInCapital ====
@@ -653,14 +655,14 @@ contract BookOfShares is IBookOfShares, SHASetting {
         return _gm.isMember(acct);
     }
 
-    function indexOfMember(uint40 acct)
-        external
-        view
-        memberExist(acct)
-        returns (uint16)
-    {
-        return _gm.indexOfMember(acct);
-    }
+    // function indexOfMember(uint40 acct)
+    //     external
+    //     view
+    //     memberExist(acct)
+    //     returns (uint16)
+    // {
+    //     return _gm.indexOfMember(acct);
+    // }
 
     function paidOfMember(uint40 acct)
         external

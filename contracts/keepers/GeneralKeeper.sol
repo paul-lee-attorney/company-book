@@ -146,7 +146,7 @@ contract GeneralKeeper is AccessControl {
     // ##   BODKeeper   ##
     // ###################
 
-    function appointDirector(uint40 candidate, uint8 title) external {
+    function appointDirector(uint32 candidate, uint8 title) external {
         _BODKeeper.appointDirector(candidate, title, _msgSender());
     }
 
@@ -154,7 +154,7 @@ contract GeneralKeeper is AccessControl {
         _BODKeeper.takePosition(_msgSender(), motionId);
     }
 
-    function removeDirector(uint40 director) external {
+    function removeDirector(uint32 director) external {
         _BODKeeper.removeDirector(director, _msgSender());
     }
 
@@ -165,7 +165,7 @@ contract GeneralKeeper is AccessControl {
     // ==== resolution ====
 
     function entrustDirectorDelegate(
-        uint40 delegate,
+        uint32 delegate,
         uint256 actionId
     ) external {
         _BODKeeper.entrustDelegate(_msgSender(), delegate, actionId);
@@ -236,13 +236,13 @@ contract GeneralKeeper is AccessControl {
     // ###################
 
     function entrustMemberDelegate(
-        uint40 delegate,
+        uint32 delegate,
         uint256 motionId
     ) external {
         _BOMKeeper.entrustDelegate(_msgSender(), delegate, motionId);
     }
 
-    function nominateDirector(uint40 candidate)
+    function nominateDirector(uint32 candidate)
         external
     {
         _BOMKeeper.nominateDirector(candidate, _msgSender());
@@ -294,7 +294,7 @@ contract GeneralKeeper is AccessControl {
     function requestToBuy(
         address ia,
         bytes32 sn,
-        uint40 againstVoter
+        uint32 againstVoter
     ) external {
         _BOMKeeper.requestToBuy(ia, sn, againstVoter, _msgSender());
     }
@@ -304,34 +304,20 @@ contract GeneralKeeper is AccessControl {
     // #################
 
     function createOption(
-        uint8 typeOfOpt,
-        uint40 rightholder,
-        uint32 triggerDate,
-        uint8 exerciseDays,
-        uint8 closingDays,
-        uint32 rate,
-        uint64 parValue,
-        uint64 paidPar
+        bytes32 sn,
+        uint32 rightholder,
+        uint32[] memory obligors,
+        uint64 paid,
+        uint64 par
     ) external {
         _BOOKeeper.createOption(
-            typeOfOpt,
+            sn,
             rightholder,
-            triggerDate,
-            exerciseDays,
-            closingDays,
-            rate,
-            parValue,
-            paidPar,
+            obligors,
+            paid,
+            par,
             _msgSender()
         );
-    }
-
-    function joinOptionAsObligor(bytes32 sn) external {
-        _BOOKeeper.joinOptionAsObligor(sn, _msgSender());
-    }
-
-    function releaseObligorFromOption(bytes32 sn, uint40 obligor) external {
-        _BOOKeeper.releaseObligorFromOption(sn, obligor, _msgSender());
     }
 
     function execOption(bytes32 sn) external {
@@ -381,8 +367,8 @@ contract GeneralKeeper is AccessControl {
     function createPledge(
         bytes32 shareNumber,
         uint64 pledgedPar,
-        uint40 creditor,
-        uint40 debtor,
+        uint32 creditor,
+        uint32 debtor,
         uint64 guaranteedAmt
     ) external {
         _BOPKeeper.createPledge(
@@ -397,7 +383,7 @@ contract GeneralKeeper is AccessControl {
 
     function updatePledge(
         bytes32 sn,
-        uint40 creditor,
+        uint32 creditor,
         uint64 pledgedPar,
         uint64 guaranteedAmt
     ) external {
@@ -408,10 +394,6 @@ contract GeneralKeeper is AccessControl {
             guaranteedAmt,
             _msgSender()
         );
-    }
-
-    function delPledge(bytes32 sn) external {
-        _BOPKeeper.delPledge(sn, _msgSender());
     }
 
     // ###################
@@ -438,8 +420,8 @@ contract GeneralKeeper is AccessControl {
         _BOSKeeper.decreaseCapital(ssn, parValue, paidPar);
     }
 
-    function updateShareState(uint32 ssn, uint8 state) external onlyManager(1) {
-        _BOSKeeper.updateShareState(ssn, state);
+    function freezeShare(uint32 ssn) external onlyManager(1) {
+        _BOSKeeper.freezeShare(ssn);
     }
 
     function setMaxQtyOfMembers(uint8 max) external onlyManager(1) {

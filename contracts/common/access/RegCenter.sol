@@ -25,7 +25,7 @@ contract RegCenter is IRegCenter {
     }
 
     // userNo => User
-    mapping(uint40 => User) private _users;
+    mapping(uint256 => User) private _users;
 
     // key => bool
     mapping(address => bool) private _usedKeys;

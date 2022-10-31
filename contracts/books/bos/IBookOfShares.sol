@@ -26,9 +26,9 @@ interface IBookOfShares {
         uint32 unitPrice
     );
 
-    event PayInCapital(uint40 indexed ssn, uint64 amount, uint32 paidInDate);
+    event PayInCapital(uint32 indexed ssn, uint64 amount, uint32 paidInDate);
 
-    event SubAmountFromShare(uint40 indexed ssn, uint64 paid, uint64 par);
+    event SubAmountFromShare(uint32 indexed ssn, uint64 paid, uint64 par);
 
     event CapIncrease(uint64 paid, uint64 par, uint64 blocknumber);
 
@@ -36,15 +36,15 @@ interface IBookOfShares {
 
     event DeregisterShare(bytes32 indexed shareNumber);
 
-    event UpdateShareState(uint40 indexed ssn, uint8 state);
+    event FreezeShare(uint32 indexed ssn);
 
-    event UpdatePaidInDeadline(uint40 indexed ssn, uint32 paidInDeadline);
+    event UpdatePaidInDeadline(uint32 indexed ssn, uint32 paidInDeadline);
 
-    event DecreaseCleanPar(uint40 indexed ssn, uint64 paid);
+    event DecreaseCleanPar(uint32 indexed ssn, uint64 paid);
 
-    event IncreaseCleanPar(uint40 indexed ssn, uint64 paid);
+    event IncreaseCleanPar(uint32 indexed ssn, uint64 paid);
 
-    event SetPayInAmount(uint40 indexed ssn, uint64 amount, bytes32 hashLock);
+    event SetPayInAmount(uint32 indexed ssn, uint64 amount, bytes32 hashLock);
 
     // ==== MembersRepo ====
 
@@ -129,7 +129,7 @@ interface IBookOfShares {
 
     // ==== State & PaidInDeadline ====
 
-    function updateShareState(uint32 ssn, uint8 state) external;
+    function freezeShare(uint32 ssn) external;
 
     function updatePaidInDeadline(uint32 ssn, uint32 paidInDeadline) external;
 
@@ -153,7 +153,7 @@ interface IBookOfShares {
 
     function maxQtyOfMembers() external view returns (uint16);
 
-    function counterOfShares() external view returns (uint40);
+    function counterOfShares() external view returns (uint32);
 
     function counterOfClasses() external view returns (uint16);
 
@@ -182,8 +182,8 @@ interface IBookOfShares {
             uint64 paid,
             uint64 par,
             uint32 paidInDeadline,
-            uint32 unitPrice,
-            uint8 state
+            uint32 unitPrice
+            // uint8 state
         );
 
     function sharesList() external view returns (bytes32[] memory);
@@ -201,7 +201,7 @@ interface IBookOfShares {
 
     function isMember(uint40 acct) external view returns (bool);
 
-    function indexOfMember(uint40 acct) external view returns (uint16);
+    // function indexOfMember(uint40 acct) external view returns (uint16);
 
     function paidOfMember(uint40 acct) external view returns (uint64 paid);
 

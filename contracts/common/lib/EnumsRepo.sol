@@ -8,6 +8,12 @@
 pragma solidity ^0.8.8;
 
 library EnumsRepo {
+    enum TypeOfEntity{
+        ZeroPoint,
+        EOA,
+        Company
+    }
+
     enum TitleOfManagers {
         Owner,
         Bookeeper,

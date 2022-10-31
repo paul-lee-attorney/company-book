@@ -1,4 +1,6 @@
-/*
+// SPDX-License-Identifier: UNLICENSED
+
+/* *
  * Copyright 2021-2022 LI LI of JINGTIAN & GONGCHENG.
  * All Rights Reserved.
  * */
@@ -12,16 +14,14 @@ interface IBookOfPledges {
 
     event CreatePledge(
         bytes32 indexed sn,
-        bytes32 indexed shareNumber,
-        uint64 pledgedPar,
         uint40 creditor,
+        uint64 pledgedPar,
         uint64 guaranteedAmt
     );
 
-    event DelPledge(bytes32 indexed sn);
-
     event UpdatePledge(
         bytes32 indexed sn,
+        uint40 creditor,
         uint64 pledgedPar,
         uint64 guaranteedAmt
     );
@@ -31,17 +31,14 @@ interface IBookOfPledges {
     //##################
 
     function createPledge(
-        bytes32 shareNumber,
+        bytes32 sn,
         uint40 creditor,
-        uint40 debtor,
         uint64 pledgedPar,
         uint64 guaranteedAmt
     ) external;
 
-    function delPledge(uint32 seq) external;
-
     function updatePledge(
-        uint32 seq,
+        bytes32 sn,
         uint40 creditor,
         uint64 pledgedPar,
         uint64 guaranteedAmt
@@ -51,21 +48,18 @@ interface IBookOfPledges {
     //##    读接口    ##
     //##################
 
-    function pledgesOf(bytes32 shareNumber) external view returns (bytes32[]);
+    function pledgesOf(uint32 ssn) external view returns (bytes32[] memory);
 
-    function counterOfPledges() external view returns (uint32);
+    function counterOfPledges(uint32 ssn) external view returns (uint32);
 
-    function isPledge(uint32 seq) external view returns (bool);
+    function isPledge(bytes32 sn) external view returns (bool);
 
-    function snList() external view returns (bytes32[]);
-
-    function getPledge(uint32 seq)
+    function getPledge(bytes32 sn)
         external
         view
         returns (
-            bytes32 shareNumber,
-            uint64 pledgedPar,
             uint40 creditor,
+            uint64 pledgedPar,
             uint64 guaranteedAmt
         );
 }

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: UNLICENSED
+
 /* *
  * Copyright 2021-2022 LI LI of JINGTIAN & GONGCHENG.
  * All Rights Reserved.
@@ -5,7 +7,9 @@
 
 pragma solidity ^0.8.8;
 
+import "../books/boa/InvestmentAgreement.sol";
 import "../books/boa/IInvestmentAgreement.sol";
+import "../books/boh/BookOfSHA.sol";
 
 import "../common/access/IAccessControl.sol";
 
@@ -18,7 +22,6 @@ import "../common/ruting/BOSSetting.sol";
 import "../common/ruting/SHASetting.sol";
 
 import "../common/lib/SNParser.sol";
-import "../common/lib/EnumsRepo.sol";
 
 import "./IBOAKeeper.sol";
 
@@ -31,16 +34,16 @@ contract BOAKeeper is
 {
     using SNParser for bytes32;
 
-    EnumsRepo.TermTitle[] private _termsForCapitalIncrease = [
-        EnumsRepo.TermTitle.ANTI_DILUTION,
-        EnumsRepo.TermTitle.FIRST_REFUSAL
+    BookOfSHA.TermTitle[] private _termsForCapitalIncrease = [
+        BookOfSHA.TermTitle.ANTI_DILUTION,
+        BookOfSHA.TermTitle.FIRST_REFUSAL
     ];
 
-    EnumsRepo.TermTitle[] private _termsForShareTransfer = [
-        EnumsRepo.TermTitle.LOCK_UP,
-        EnumsRepo.TermTitle.FIRST_REFUSAL,
-        EnumsRepo.TermTitle.TAG_ALONG,
-        EnumsRepo.TermTitle.DRAG_ALONG
+    BookOfSHA.TermTitle[] private _termsForShareTransfer = [
+        BookOfSHA.TermTitle.LOCK_UP,
+        BookOfSHA.TermTitle.FIRST_REFUSAL,
+        BookOfSHA.TermTitle.TAG_ALONG,
+        BookOfSHA.TermTitle.DRAG_ALONG
     ];
 
     // ##################
@@ -76,14 +79,13 @@ contract BOAKeeper is
 
         IAccessControl(ia).init(
             caller,
-            this,
-            _rc,
-            uint8(EnumsRepo.RoleOfUser.InvestmentAgreement),
-            _rc.entityNo(this)
+            address(this),
+            address(_rc),
+            address(_gk)
         );
 
-        IBookSetting(ia).setBOS(_bos);
-        IBookSetting(ia).setBOSCal(_bosCal);
+        IBookSetting(ia).setBOS(address(_bos));
+        IBookSetting(ia).setBOSCal(address(_bosCal));
 
         // copyRoleTo(KEEPERS, ia);
     }
@@ -143,7 +145,7 @@ contract BOAKeeper is
         bytes32 sigHash
     ) external onlyManager(1) onlyPartyOf(ia, caller) {
         require(
-            _boa.currentState(ia) == uint8(EnumsRepo.BODStates.Circulated),
+            _boa.currentState(ia) == uint8(DocumentsRepo.BODStates.Circulated),
             "IA not in Circulated State"
         );
 
@@ -181,7 +183,7 @@ contract BOAKeeper is
                 }
             } else if (
                 sn.buyerOfDeal() == caller &&
-                sn.typeOfDeal() == uint8(EnumsRepo.TypeOfDeal.CapitalIncrease)
+                sn.typeOfDeal() == uint8(InvestmentAgreement.TypeOfDeal.CapitalIncrease)
             ) IInvestmentAgreement(ia).lockDealSubject(seq);
             // _boa.mockDealOfBuy(ia, seq, caller, amount);
         }
@@ -199,10 +201,10 @@ contract BOAKeeper is
 
     function requestPaidInCapital(
         uint32 ssn,
-        string hashKey,
+        string memory hashKey,
         uint40 caller
     ) external onlyManager(1) {
-        (bytes32 shareNumber, , , , , ) = _bos.getShare(ssn);
+        (bytes32 shareNumber, , , , ) = _bos.getShare(ssn);
         require(
             caller == shareNumber.shareholder(),
             "caller is not shareholder"
@@ -220,7 +222,7 @@ contract BOAKeeper is
         uint40 caller
     ) external onlyManager(1) {
         require(
-            _boa.currentState(ia) == uint8(EnumsRepo.BODStates.Voted),
+            _boa.currentState(ia) == uint8(DocumentsRepo.BODStates.Voted),
             "wrong state of BOD"
         );
 
@@ -241,7 +243,7 @@ contract BOAKeeper is
         bytes32 vr = _getSHA().votingRules(_boa.typeOfIA(ia));
 
         if (vr.ratioHeadOfVR() > 0 || vr.ratioAmountOfVR() > 0) {
-            require(_bom.isPassed(uint256(ia)), "Motion NOT passed");
+            require(_bom.isPassed(uint256(uint160(ia))), "Motion NOT passed");
 
             if (sn.ssnOfDeal() > 0) _checkSHA(_termsForShareTransfer, ia, sn);
             else _checkSHA(_termsForCapitalIncrease, ia, sn);
@@ -255,7 +257,7 @@ contract BOAKeeper is
     }
 
     function _checkSHA(
-        EnumsRepo.TermTitle[] terms,
+        BookOfSHA.TermTitle[] memory terms,
         address ia,
         bytes32 sn
     ) private view {
@@ -274,11 +276,11 @@ contract BOAKeeper is
     function closeDeal(
         address ia,
         bytes32 sn,
-        string hashKey,
+        string memory hashKey,
         uint40 caller
     ) external onlyManager(1) {
         require(
-            _boa.currentState(ia) == uint8(EnumsRepo.BODStates.Voted),
+            _boa.currentState(ia) == uint8(DocumentsRepo.BODStates.Voted),
             "InvestmentAgreement NOT in voted state"
         );
 
@@ -301,7 +303,7 @@ contract BOAKeeper is
             (, , , uint8 state, ) = IInvestmentAgreement(ia).getDeal(
                 snList[len - 1].sequence()
             );
-            if (state < uint8(EnumsRepo.StateOfDeal.Closed)) break;
+            if (state < uint8(InvestmentAgreement.StateOfDeal.Closed)) break;
             len--;
         }
 
@@ -316,7 +318,7 @@ contract BOAKeeper is
         (, uint64 paid, uint64 par, , ) = IInvestmentAgreement(ia)
             .getDeal(sn.sequence());
 
-        uint32 unitPrice = IInvestmentAgreement(ia).unitPrice(sn.sequence());
+        uint32 unitPrice = IInvestmentAgreement(ia).unitPriceOfDeal(sn.sequence());
 
         //释放Share的质押标记(若需)，执行交易
         if (shareNumber > bytes32(0)) {
@@ -346,11 +348,11 @@ contract BOAKeeper is
         bytes32 sn,
         uint40 caller,
         // uint32 sigDate,
-        string hashKey
+        string memory hashKey
     ) external onlyManager(1) {
         require(_boa.isRegistered(ia), "IA NOT registered");
         require(
-            _boa.currentState(ia) == uint8(EnumsRepo.BODStates.Voted),
+            _boa.currentState(ia) == uint8(DocumentsRepo.BODStates.Voted),
             "wrong State"
         );
 

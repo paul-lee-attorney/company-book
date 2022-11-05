@@ -19,6 +19,10 @@ interface IBookOfOptions {
         uint64 par
     );
 
+    event AddObligorIntoOpt(bytes32 indexed sn, uint40 obligor);
+
+    event RemoveObligorFromOpt(bytes32 indexed sn, uint40 obligor);
+
     event RegisterOpt(bytes32 indexed sn, uint64 paid, uint64 par);
 
     event CloseOpt(bytes32 indexed sn, string hashKey);
@@ -36,7 +40,7 @@ interface IBookOfOptions {
         uint64 par
     );
 
-    // event RemoveFuture(bytes32 indexed sn, bytes32 ft);
+    event RemoveFuture(bytes32 indexed sn, bytes32 ft);
 
     event DelFuture(bytes32 indexed sn);
 
@@ -58,6 +62,10 @@ interface IBookOfOptions {
 
     function registerOption(address opts) external;
 
+    function addObligorIntoOption(bytes32 sn, uint40 obligor) external;
+
+    function removeObligorFromOption(bytes32 sn, uint40 obligor) external;
+
     function updateOracle(
         bytes32 sn,
         uint32 d1,
@@ -73,7 +81,7 @@ interface IBookOfOptions {
         uint64 par
     ) external;
 
-    // function removeFuture( bytes32 sn, bytes32 ft) external;
+    function removeFuture( bytes32 sn, bytes32 ft) external;
 
     function requestPledge(
         bytes32 sn,

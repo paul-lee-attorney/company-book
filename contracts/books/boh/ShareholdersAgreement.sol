@@ -13,8 +13,7 @@ import "./terms/ITerm.sol";
 import "../../common/access/IAccessControl.sol";
 import "../../common/components/SigPage.sol";
 
-import "../../common/lib/SNFactory.sol";
-import "../../common/lib/EnumsRepo.sol";
+import "../../common/lib/SNParser.sol";
 
 import "../../common/ruting/IBookSetting.sol";
 import "../../common/ruting/SHASetting.sol";
@@ -31,7 +30,7 @@ contract ShareholdersAgreement is
     BOSSetting,
     SigPage
 {
-    using SNFactory for bytes;
+    using SNParser for bytes32;
 
     struct Term {
         uint8 title;
@@ -66,21 +65,23 @@ contract ShareholdersAgreement is
     //     uint40 vetoHolder;
     // }
 
+
+    // _rules[0]: GovernanceRule {
+    //     bool basedOnPar;
+    //     uint16 proposalThreshold;
+    //     uint8 maxNumOfDirectors;
+    //     uint8 tenureOfBoard;
+    //     uint40 appointerOfChairman;
+    //     uint40 appointerOfViceChairman;
+    // }
+
     // typeOfVote => Rule: 1-CI 2-ST(to 3rd Party) 3-ST(to otherMember) 4-(1&3) 5-(2&3) 6-(1&2&3) 7-(1&2)
-    mapping(uint256 => bytes32) private _votingRules;
+    mapping(uint256 => bytes32) private _rules;
 
-    struct Governance {
-        bool basedOnPar;
-        uint16 proposalThreshold;
-        uint8 maxNumOfDirectors;
-        uint8 tenureOfBoard;
-        uint40 appointerOfChairman;
-        uint40 appointerOfViceChairman;
-        uint8 sumOfBoardSeatsQuota;
-        mapping(uint40 => uint8) boardSeatsQuotaOf;
-    }
+    // _boardSeatsOf[0]: sumOfBoardSeats;
 
-    Governance private _governanceRules;
+    // userNo => qty of directors can be appointed/nominated by the member;
+    mapping(uint256 => uint8) private _boardSeatsOf;
 
     //####################
     //##    modifier    ##
@@ -96,12 +97,6 @@ contract ShareholdersAgreement is
 
     modifier tempReadyFor(uint8 title) {
         require(_boh.hasTemplate(title), "SHA.tempReadyFor: Template NOT ready");
-        _;
-    }
-
-    // ==== VotingRules ====
-    modifier typeAllowed(uint8 typeOfVote) {
-        require(_votingRules[typeOfVote] > bytes32(0), "SHA.typeAllowed: typeOfVote overflow");
         _;
     }
 
@@ -121,8 +116,7 @@ contract ShareholdersAgreement is
             getManagerKey(0),
             address(this),
             address(_rc),
-            uint8(EnumsRepo.RoleOfUser.SHATerms),
-            _rc.entityNo(address(this))
+            address(_gk)
         );
 
         IAccessControl(body).setManager(2, address(this), msg.sender);
@@ -167,113 +161,46 @@ contract ShareholdersAgreement is
         _terms[0].title--;
     }
 
-
-    // function finalizeSHA() external onlyManager(2) {
-    //     address[] memory clauses = _bodies.values();
-    //     uint256 len = clauses.length;
-
-    //     while (len > 0) {
-    //         IAccessControl(clauses[len - 1]).lockContents();
-    //         len--;
-    //     }
-
-    //     finalizeDoc();
-    // }
-
-    // ==== VotingRules ====
-
-    function setVotingBaseOnPar(bool flag) external onlyAttorney {
-        _governanceRules.basedOnPar = flag;
-        emit SetVotingBaseOnPar(flag);
+    // ==== Rules ====
+    function setGovernanceRule(bytes32 rule) external onlyAttorney {
+        _rules[0] = rule;
+        emit SetGovernanceRule(rule);
     }
 
-    function setProposalThreshold(uint16 threshold) external onlyAttorney {
-        _governanceRules.proposalThreshold = threshold;
-        emit SetProposalThreshold(threshold);
+    function setVotingRule(bytes32 rule) external onlyAttorney {
+        require(rule.typeOfVoteOfVR() > 0, "SA.setVotingRule: ZERO typeOfVote");
+        require(rule.votingDaysOfVR() > 0, "SA.setVotingRule: ZERO votingDays");
+        _rules[rule.typeOfVoteOfVR()] = rule;
+        emit SetVotingRule(rule.typeOfVoteOfVR(), rule);
     }
 
-    function setMaxNumOfDirectors(uint8 num) external onlyAttorney {
-        _governanceRules.maxNumOfDirectors = num;
-        emit SetMaxNumOfDirectors(num);
-    }
-
-    function setTenureOfBoard(uint8 numOfYear) external onlyAttorney {
-        _governanceRules.tenureOfBoard = numOfYear;
-        emit SetTenureOfBoard(numOfYear);
-    }
-
-    function setAppointerOfChairman(uint40 nominator) external onlyAttorney {
-        _governanceRules.appointerOfChairman = nominator;
-        emit SetAppointerOfChairman(nominator);
-    }
-
-    function setAppointerOfViceChairman(uint40 nominator)
+    function setBoardSeatsOf(uint40 nominator, uint8 quota)
         external
         onlyAttorney
     {
-        _governanceRules.appointerOfViceChairman = nominator;
-        emit SetAppointerOfViceChairman(nominator);
-    }
+        require(nominator > 0, "SA.setBoardSeatsOf: zero nominator");
 
-    function setBoardSeatsQuotaOf(uint40 nominator, uint8 quota)
-        external
-        onlyAttorney
-    {
-        uint8 orgQuota = uint8(_governanceRules.boardSeatsQuotaOf[nominator]);
+        uint8 orgQuota = _boardSeatsOf[nominator];
 
         if (orgQuota > 0) {
             require(
-                _governanceRules.sumOfBoardSeatsQuota - orgQuota + quota <=
-                    _governanceRules.maxNumOfDirectors,
+                _boardSeatsOf[0] - orgQuota + quota <=
+                    maxNumOfDirectors(),
                 "board seats quota overflow"
             );
-            _governanceRules.sumOfBoardSeatsQuota -= orgQuota;
+            _boardSeatsOf[0] -= orgQuota;
         } else {
             require(
-                _governanceRules.sumOfBoardSeatsQuota + quota <=
-                    _governanceRules.maxNumOfDirectors,
+                _boardSeatsOf[0] + quota <=
+                    maxNumOfDirectors(),
                 "board seats quota overflow"
             );
         }
 
-        _governanceRules.boardSeatsQuotaOf[nominator] = quota;
-        _governanceRules.sumOfBoardSeatsQuota += quota;
+        _boardSeatsOf[nominator] = quota;
+        _boardSeatsOf[0] += quota;
 
-        emit SetBoardSeatsQuotaOf(nominator, quota);
-    }
-
-    function setRule(
-        uint8 typeOfVote,
-        uint40 vetoHolder,
-        uint16 ratioHead,
-        uint16 ratioAmount,
-        bool onlyAttendance,
-        bool impliedConsent,
-        bool partyAsConsent,
-        bool againstShallBuy,
-        uint8 reviewDays,
-        uint8 votingDays,
-        uint8 execDaysForPutOpt
-    ) external onlyAttorney {
-        require(votingDays > 0, "ZERO votingDays");
-
-        bytes memory _sn = new bytes(32);
-
-        _sn = _sn.sequenceToSN(0, ratioHead);
-        _sn = _sn.sequenceToSN(2, ratioAmount);
-        _sn = _sn.boolToSN(4, onlyAttendance);
-        _sn = _sn.boolToSN(5, impliedConsent);
-        _sn = _sn.boolToSN(6, partyAsConsent);
-        _sn = _sn.boolToSN(7, againstShallBuy);
-        _sn[8] = bytes1(reviewDays);
-        _sn[9] = bytes1(votingDays);
-        _sn[10] = bytes1(execDaysForPutOpt);
-        _sn[11] = bytes1(typeOfVote);
-        _sn = _sn.acctToSN(12, vetoHolder);
-
-        _votingRules[typeOfVote] = _sn.bytesToBytes32();
-
-        emit SetRule(typeOfVote, _votingRules[typeOfVote]);
+        emit SetBoardSeatsOf(nominator, quota);
     }
 
     //##################
@@ -349,38 +276,40 @@ contract ShareholdersAgreement is
     // ==== VotingRules ====
 
     function votingRules(uint8 typeOfVote) external view returns (bytes32) {
-        return _votingRules[typeOfVote];
+        require(typeOfVote > 0, "SA.votingRules: zero typeOfVote");
+        return _rules[typeOfVote];
     }
 
     function basedOnPar() external view returns (bool) {
-        return _governanceRules.basedOnPar;
+        return uint8(_rules[0][0]) == 1;
     }
 
     function proposalThreshold() external view returns (uint16) {
-        return _governanceRules.proposalThreshold;
+        return uint16(bytes2(_rules[0] << 8));
     }
 
-    function maxNumOfDirectors() external view returns (uint8) {
-        return _governanceRules.maxNumOfDirectors;
+    function maxNumOfDirectors() public view returns (uint8) {
+        return uint8(_rules[0][3]);
     }
 
     function tenureOfBoard() external view returns (uint8) {
-        return _governanceRules.tenureOfBoard;
+        return uint8(_rules[0][4]);
     }
 
     function appointerOfChairman() external view returns (uint40) {
-        return _governanceRules.appointerOfChairman;
+        return uint40(bytes5(_rules[0] << 40));
     }
 
     function appointerOfViceChairman() external view returns (uint40) {
-        return _governanceRules.appointerOfViceChairman;
+        return uint40(bytes5(_rules[0] << 80));
     }
 
-    function sumOfBoardSeatsQuota() external view returns (uint8) {
-        return _governanceRules.sumOfBoardSeatsQuota;
+    function sumOfBoardSeats() external view returns (uint8) {
+        return _boardSeatsOf[0];
     }
 
-    function boardSeatsQuotaOf(uint40 acct) external view returns (uint8) {
-        return _governanceRules.boardSeatsQuotaOf[acct];
+    function boardSeatsOf(uint40 acct) external view returns (uint8) {
+        require(acct > 0, "SA.boardSeatsOf: zero acct");
+        return _boardSeatsOf[acct];
     }
 }

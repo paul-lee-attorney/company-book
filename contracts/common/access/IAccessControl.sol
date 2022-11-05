@@ -15,23 +15,11 @@ interface IAccessControl {
     event Init(
         address indexed owner,
         address indexed directKeeper,
-        address regCenter
+        address regCenter,
+        address generalKeeper
     );
-
-    event RegThisContract(uint40 userNo);
 
     event LockContents();
-
-    event CreateEntity(
-        uint40 indexed entity,
-        uint8 typeOfEntity,
-        uint8 roleOfUser
-    );
-
-    event JoinEntity(uint40 indexed entity, uint40 user, uint8 roleOfUser);
-
-    event QuitEntity(uint40 indexed entity, uint40 user, uint8 roleOfUser);
-
     // ##################
     // ##    写端口    ##
     // ##################
@@ -40,11 +28,8 @@ interface IAccessControl {
         address owner,
         address directKeeper,
         address regCenter,
-        uint8 roleOfUser,
-        uint40 entity
+        address generalKeeper
     ) external;
-
-    // function regThisContract(uint8 roleOfUser, uint40 entity) external;
 
     function setManager(
         uint8 title,
@@ -63,10 +48,6 @@ interface IAccessControl {
     function setRoleAdmin(bytes32 role, uint40 acct) external;
 
     function lockContents() external;
-
-    function quitEntity(uint8 roleOfUser) external;
-
-    // function copyRoleTo(bytes32 role, address to) external;
 
     // ##################
     // ##   查询端口   ##

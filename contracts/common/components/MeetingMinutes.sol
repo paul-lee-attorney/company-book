@@ -12,7 +12,6 @@ import "../../common/ruting/SHASetting.sol";
 import "../../common/ruting/BOSSetting.sol";
 
 import "../../common/lib/SNParser.sol";
-import "../../common/lib/EnumsRepo.sol";
 import "../../common/lib/MotionsRepo.sol";
 import "../../common/lib/DelegateMap.sol";
 import "../../common/lib/BallotsBox.sol";
@@ -170,7 +169,7 @@ contract MeetingMinutes is
         external
         onlyManager(1)
     {
-        if (_mm.state(motionId) == uint8(EnumsRepo.StateOfMotion.Proposed) && 
+        if (_mm.state(motionId) == uint8(MotionsRepo.StateOfMotion.Proposed) && 
             _mm.voteCounting(motionId, _bos))
                 emit VoteCounting(motionId, _mm.state(motionId));
     }
@@ -194,11 +193,11 @@ contract MeetingMinutes is
         );
 
         require(
-            _mm.state(motionId) == uint8(EnumsRepo.StateOfMotion.Passed),
+            _mm.state(motionId) == uint8(MotionsRepo.StateOfMotion.Passed),
             "BOD.execAction: voting NOT end"
         );
 
-        _mm.motions[motionId].head.state = uint8(EnumsRepo.StateOfMotion.Executed);
+        _mm.motions[motionId].head.state = uint8(MotionsRepo.StateOfMotion.Executed);
 
         if (_execute(targets, values, params)) emit ExecuteAction(motionId, true);
         else emit ExecuteAction(motionId, false);

@@ -23,21 +23,11 @@ interface IShareholdersAgreement is ISigPage {
 
     // ==== VotingRules ====
 
-    event SetVotingBaseOnPar(bool flag);
+    event SetGovernanceRule(bytes32 rule);
 
-    event SetProposalThreshold(uint64 threshold);
+    event SetVotingRule(uint8 indexed typeOfVote, bytes32 rule);
 
-    event SetMaxNumOfDirectors(uint8 num);
-
-    event SetTenureOfBoard(uint8 numOfYear);
-
-    event SetAppointerOfChairman(uint40 indexed nominator);
-
-    event SetAppointerOfViceChairman(uint40 indexed nominator);
-
-    event SetBoardSeatsQuotaOf(uint40 indexed nominator, uint8 quota);
-
-    event SetRule(uint8 indexed typeOfVote, bytes32 sn);
+    event SetBoardSeatsOf(uint40 indexed nominator, uint8 quota);
 
     //##################
     //##    写接口    ##
@@ -47,37 +37,12 @@ interface IShareholdersAgreement is ISigPage {
 
     function removeTerm(uint8 title) external;
 
-    // function finalizeSHA() external;
+    // ======== Rules ========
+    function setGovernanceRule(bytes32 sn) external;
 
-    // ======== VotingRule ========
+    function setVotingRule(bytes32 sn) external;
 
-    function setVotingBaseOnPar(bool flag) external;
-
-    function setProposalThreshold(uint16 threshold) external;
-
-    function setMaxNumOfDirectors(uint8 num) external;
-
-    function setTenureOfBoard(uint8 numOfYear) external;
-
-    function setAppointerOfChairman(uint40 nominator) external;
-
-    function setAppointerOfViceChairman(uint40 nominator) external;
-
-    function setBoardSeatsQuotaOf(uint40 nominator, uint8 quota) external;
-
-    function setRule(
-        uint8 typeOfVote,
-        uint40 vetoHolder,
-        uint16 ratioHead,
-        uint16 ratioAmount,
-        bool onlyAttendance,
-        bool impliedConsent,
-        bool partyAsConsent,
-        bool againstShallBuy,
-        uint8 reviewDays,
-        uint8 votingDays,
-        uint8 execDaysForPutOpt
-    ) external;
+    function setBoardSeatsOf(uint40 nominator, uint8 quota) external;
 
     //##################
     //##    读接口    ##
@@ -121,7 +86,7 @@ interface IShareholdersAgreement is ISigPage {
 
     function appointerOfViceChairman() external view returns (uint40);
 
-    function sumOfBoardSeatsQuota() external view returns (uint8);
+    function sumOfBoardSeats() external view returns (uint8);
 
-    function boardSeatsQuotaOf(uint40 acct) external view returns (uint8);
+    function boardSeatsOf(uint40 acct) external view returns (uint8);
 }

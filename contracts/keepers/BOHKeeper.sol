@@ -1,10 +1,13 @@
-/*
+// SPDX-License-Identifier: UNLICENSED
+
+/* *
  * Copyright 2021-2022 LI LI of JINGTIAN & GONGCHENG.
  * All Rights Reserved.
  * */
 
 pragma solidity ^0.8.8;
 
+import "../books/boh/BookOfSHA.sol";
 import "../books/boh/IShareholdersAgreement.sol";
 import "../books/boh/terms/IGroupsUpdate.sol";
 
@@ -20,7 +23,6 @@ import "../common/ruting/IBookSetting.sol";
 import "../common/access/IAccessControl.sol";
 
 import "../common/lib/SNParser.sol";
-import "../common/lib/EnumsRepo.sol";
 
 import "./IBOHKeeper.sol";
 
@@ -71,16 +73,15 @@ contract BOHKeeper is
 
         IAccessControl(sha).init(
             caller,
-            this,
-            _rc,
-            uint8(EnumsRepo.RoleOfUser.ShareholdersAgreement),
-            _rc.entityNo(this)
+            address(this),
+            address(_rc),
+            address(_gk)
         );
 
-        IBookSetting(sha).setBOH(_boh);
-        IBookSetting(sha).setBOS(_bos);
-        IBookSetting(sha).setBOSCal(_bosCal);
-        IBookSetting(sha).setBOM(_bom);
+        IBookSetting(sha).setBOH(address(_boh));
+        IBookSetting(sha).setBOS(address(_bos));
+        IBookSetting(sha).setBOSCal(address(_bosCal));
+        IBookSetting(sha).setBOM(address(_bom));
 
         // copyRoleTo(KEEPERS, sha);
     }
@@ -113,7 +114,7 @@ contract BOHKeeper is
 
         require(IAccessControl(sha).finalized(), "let GC finalize SHA first");
 
-        IAccessControl(sha).setManager(0, callerAddr, 0);
+        IAccessControl(sha).setManager(0, callerAddr, address(0));
 
         // IAccessControl(sha).abandonOwnership();
 
@@ -128,7 +129,7 @@ contract BOHKeeper is
         bytes32 sigHash
     ) external onlyManager(1) onlyPartyOf(sha, caller) {
         require(
-            _boh.currentState(sha) == uint8(EnumsRepo.BODStates.Circulated),
+            _boh.currentState(sha) == uint8(DocumentsRepo.BODStates.Circulated),
             "SHA not in Circulated State"
         );
 
@@ -143,7 +144,7 @@ contract BOHKeeper is
         onlyPartyOf(sha, caller)
     {
         require(
-            _boh.currentState(sha) == uint8(EnumsRepo.BODStates.Established),
+            _boh.currentState(sha) == uint8(DocumentsRepo.BODStates.Established),
             "SHA not executed yet"
         );
 
@@ -161,29 +162,29 @@ contract BOHKeeper is
 
         _bos.setAmtBase(IShareholdersAgreement(sha).basedOnPar());
 
-        _bod.setMaxNumOfDirectors(
+        _bod.setMaxQtyOfDirectors(
             IShareholdersAgreement(sha).maxNumOfDirectors()
         );
 
         if (
             IShareholdersAgreement(sha).hasTitle(
-                uint8(EnumsRepo.TermTitle.OPTIONS)
+                uint8(BookOfSHA.TermTitle.OPTIONS)
             )
         )
             _boo.registerOption(
                 IShareholdersAgreement(sha).getTerm(
-                    uint8(EnumsRepo.TermTitle.OPTIONS)
+                    uint8(BookOfSHA.TermTitle.OPTIONS)
                 )
             );
 
         if (
             IShareholdersAgreement(sha).hasTitle(
-                uint8(EnumsRepo.TermTitle.GROUPS_UPDATE)
+                uint8(BookOfSHA.TermTitle.GROUPS_UPDATE)
             )
         ) {
             bytes32[] memory guo = IGroupsUpdate(
                 IShareholdersAgreement(sha).getTerm(
-                    uint8(EnumsRepo.TermTitle.GROUPS_UPDATE)
+                    uint8(BookOfSHA.TermTitle.GROUPS_UPDATE)
                 )
             ).orders();
             len = guo.length;

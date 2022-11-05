@@ -1,4 +1,6 @@
-/*
+// SPDX-License-Identifier: UNLICENSED
+
+/* *
  * Copyright 2021-2022 LI LI of JINGTIAN & GONGCHENG.
  * All Rights Reserved.
  * */
@@ -21,25 +23,25 @@ contract BOOKeeper is IBOOKeeper, BOOSetting, BOSSetting {
     // ##################
 
     modifier onlyRightholder(bytes32 sn, uint40 caller) {
-        (, uint40 rightholder, , , , , ) = _boo.getOption(sn.ssn());
+        (uint40 rightholder, , , , ) = _boo.getOption(sn);
         require(caller == rightholder, "NOT rightholder");
         _;
     }
 
     modifier onlySeller(bytes32 sn, uint40 caller) {
-        if (sn.typeOfOpt() > 0) {
-            (, uint40 rightholder, , , , , ) = _boo.getOption(sn.ssn());
+        if (sn.typeOfOpt() % 2 == 1) {
+            (uint40 rightholder, , , , ) = _boo.getOption(sn);
             require(caller == rightholder, "msgSender NOT rightholder");
         } else
-            require(_boo.isObligor(sn.ssn(), caller), "msgSender NOT seller");
+            require(_boo.isObligor(sn, caller), "msgSender NOT seller");
         _;
     }
 
     modifier onlyBuyer(bytes32 sn, uint40 caller) {
-        if (sn.typeOfOpt() > 0)
-            require(_boo.isObligor(sn.ssn(), caller), "caller NOT obligor");
+        if (sn.typeOfOpt() % 2 == 1)
+            require(_boo.isObligor(sn, caller), "caller NOT obligor");
         else {
-            (, uint40 rightholder, , , , , ) = _boo.getOption(sn.ssn());
+            (uint40 rightholder, , , , ) = _boo.getOption(sn);
             require(caller == rightholder, "caller NOT rightholder");
         }
 
@@ -51,26 +53,22 @@ contract BOOKeeper is IBOOKeeper, BOOSetting, BOSSetting {
     // ##################
 
     function createOption(
-        uint8 typeOfOpt,
+        bytes32 sn,
         uint40 rightholder,
-        uint32 triggerDate,
-        uint8 exerciseDays,
-        uint8 closingDays,
-        uint32 rate,
-        uint64 parValue,
-        uint64 paidPar,
+        uint64 paid,
+        uint64 par,
         uint40 caller
     ) external onlyManager(1) {
+
+        uint40[] memory obligors = new uint40[](1);
+        obligors[0] = caller;
+
         _boo.createOption(
-            typeOfOpt,
+            sn,
             rightholder,
-            caller,
-            triggerDate,
-            exerciseDays,
-            closingDays,
-            rate,
-            parValue,
-            paidPar
+            obligors,
+            paid,
+            par
         );
     }
 
@@ -78,15 +76,15 @@ contract BOOKeeper is IBOOKeeper, BOOSetting, BOSSetting {
         external
         onlyManager(1)
     {
-        _boo.addObligorIntoOpt(sn.ssn(), caller);
+        _boo.addObligorIntoOption(sn, caller);
     }
 
-    function releaseObligorFromOption(
+    function removeObligorFromOption(
         bytes32 sn,
         uint40 obligor,
         uint40 caller
     ) external onlyManager(1) onlyRightholder(sn, caller) {
-        _boo.removeObligorFromOpt(sn.ssn(), obligor);
+        _boo.removeObligorFromOption(sn, obligor);
     }
 
     function execOption(bytes32 sn, uint40 caller)
@@ -94,17 +92,17 @@ contract BOOKeeper is IBOOKeeper, BOOSetting, BOSSetting {
         onlyManager(1)
         onlyRightholder(sn, caller)
     {
-        _boo.execOption(sn.ssn());
+        _boo.execOption(sn);
     }
 
     function addFuture(
         bytes32 sn,
         bytes32 shareNumber,
-        uint64 paidPar,
+        uint64 paid,
         uint40 caller
     ) external onlyManager(1) onlyRightholder(sn, caller) {
-        _bos.decreaseCleanPar(shareNumber.ssn(), paidPar);
-        _boo.addFuture(sn.ssn(), shareNumber, paidPar, paidPar);
+        _bos.decreaseCleanPar(shareNumber.ssn(), paid);
+        _boo.addFuture(sn, shareNumber, paid, paid);
     }
 
     function removeFuture(
@@ -112,8 +110,8 @@ contract BOOKeeper is IBOOKeeper, BOOSetting, BOSSetting {
         bytes32 ft,
         uint40 caller
     ) external onlyManager(1) onlyRightholder(sn, caller) {
-        _boo.removeFuture(sn.ssn(), ft);
-        _bos.increaseCleanPar(ft.shortShareNumberOfFt(), ft.paidParOfFt());
+        _boo.removeFuture(sn, ft);
+        _bos.increaseCleanPar(ft.shortShareNumberOfFt(), ft.paidOfFt());
     }
 
     function requestPledge(
@@ -123,7 +121,7 @@ contract BOOKeeper is IBOOKeeper, BOOSetting, BOSSetting {
         uint40 caller
     ) external onlyManager(1) onlySeller(sn, caller) {
         _bos.decreaseCleanPar(shareNumber.ssn(), paidPar);
-        _boo.requestPledge(sn.ssn(), shareNumber, paidPar);
+        _boo.requestPledge(sn, shareNumber, paidPar);
     }
 
     function lockOption(
@@ -131,16 +129,16 @@ contract BOOKeeper is IBOOKeeper, BOOSetting, BOSSetting {
         bytes32 hashLock,
         uint40 caller
     ) external onlyManager(1) onlySeller(sn, caller) {
-        _boo.lockOption(sn.ssn(), hashLock);
+        _boo.lockOption(sn, hashLock);
     }
 
-    function _recoverCleanPar(bytes32[] plds) private {
+    function _recoverCleanPar(bytes32[] memory plds) private {
         uint256 len = plds.length;
 
         while (len > 0) {
             _bos.increaseCleanPar(
                 plds[len - 1].shortShareNumberOfFt(),
-                plds[len - 1].paidParOfFt()
+                plds[len - 1].paidOfFt()
             );
             len--;
         }
@@ -148,29 +146,29 @@ contract BOOKeeper is IBOOKeeper, BOOSetting, BOSSetting {
 
     function closeOption(
         bytes32 sn,
-        string hashKey,
+        string memory hashKey,
         // uint32 closingDate,
         uint40 caller
     ) external onlyManager(1) onlyBuyer(sn, caller) {
         uint32 price = sn.rateOfOpt();
 
-        _boo.closeOption(sn.ssn(), hashKey);
+        _boo.closeOption(sn, hashKey);
 
-        bytes32[] memory fts = _boo.futures(sn.ssn());
+        bytes32[] memory fts = _boo.futures(sn);
 
         _recoverCleanPar(fts);
 
         for (uint256 i = 0; i < fts.length; i++) {
             _bos.transferShare(
                 fts[i].shortShareNumberOfFt(),
-                fts[i].parValueOfFt(),
-                fts[i].paidParOfFt(),
+                fts[i].paidOfFt(),
+                fts[i].parOfFt(),
                 caller,
                 price
             );
         }
 
-        _recoverCleanPar(_boo.pledges(sn.ssn()));
+        _recoverCleanPar(_boo.pledges(sn));
     }
 
     function revokeOption(bytes32 sn, uint40 caller)
@@ -178,10 +176,10 @@ contract BOOKeeper is IBOOKeeper, BOOSetting, BOSSetting {
         onlyManager(1)
         onlyRightholder(sn, caller)
     {
-        _boo.revokeOption(sn.ssn());
+        _boo.revokeOption(sn);
 
-        if (sn.typeOfOpt() > 0) _recoverCleanPar(_boo.futures(sn.ssn()));
-        else _recoverCleanPar(_boo.pledges(sn.ssn()));
+        if (sn.typeOfOpt() > 0) _recoverCleanPar(_boo.futures(sn));
+        else _recoverCleanPar(_boo.pledges(sn));
     }
 
     function releasePledges(bytes32 sn, uint40 caller)
@@ -189,11 +187,9 @@ contract BOOKeeper is IBOOKeeper, BOOSetting, BOSSetting {
         onlyManager(1)
         onlyRightholder(sn, caller)
     {
-        (, , , , , , uint8 state) = _boo.getOption(sn.ssn());
+        require(_boo.stateOfOption(sn) == 6, "option NOT revoked");
 
-        require(state == 6, "option NOT revoked");
-
-        if (sn.typeOfOpt() > 0) _recoverCleanPar(_boo.pledges(sn.ssn()));
-        else _recoverCleanPar(_boo.futures(sn.ssn()));
+        if (sn.typeOfOpt() > 0) _recoverCleanPar(_boo.pledges(sn));
+        else _recoverCleanPar(_boo.futures(sn));
     }
 }

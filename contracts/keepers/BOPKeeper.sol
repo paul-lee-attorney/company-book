@@ -1,4 +1,6 @@
-/*
+// SPDX-License-Identifier: UNLICENSED
+
+/* *
  * Copyright 2021-2022 LI LI of JINGTIAN & GONGCHENG.
  * All Rights Reserved.
  * */
@@ -21,23 +23,21 @@ contract BOPKeeper is IBOPKeeper, BOPSetting, BOSSetting {
     // ################
 
     function createPledge(
-        // uint32 createDate,
+        bytes32 sn,
         bytes32 shareNumber,
-        uint64 pledgedPar,
         uint40 creditor,
-        uint40 debtor,
+        uint64 pledgedPar,
         uint64 guaranteedAmt,
         uint40 caller
     ) external onlyManager(1) {
+        require(sn.ssnOfPledge() == shareNumber.ssn(), "BOPKeeper.createPledge: wrong shareNumber");
         require(shareNumber.shareholder() == caller, "NOT shareholder");
 
         _bos.decreaseCleanPar(shareNumber.ssn(), pledgedPar);
 
         _bop.createPledge(
-            shareNumber,
-            // createDate,
+            sn,
             creditor,
-            debtor,
             pledgedPar,
             guaranteedAmt
         );
@@ -50,32 +50,34 @@ contract BOPKeeper is IBOPKeeper, BOPSetting, BOSSetting {
         uint64 guaranteedAmt,
         uint40 caller
     ) external onlyManager(1) {
-        require(pledgedPar > 0, "ZERO pledgedPar");
+        require(pledgedPar > 0, "BOPKeeper.updatePledge: ZERO pledgedPar");
 
-        uint32 shortShareNumber = sn.shortShareNumberOfPledge();
+        uint32 shortShareNumber = sn.ssnOfPledge();
 
-        (, uint64 orgPledgedPar, uint40 orgCreditor, ) = _bop.getPledge(
-            sn.ssn()
-        );
+        (uint40 orgCreditor, uint64 orgPledgedPar, ) = _bop.getPledge(sn);
 
         if (pledgedPar < orgPledgedPar) {
-            require(caller == orgCreditor, "NOT creditor");
+            require(caller == orgCreditor, "BOPKeeper.updatePledge: NOT creditor");
             _bos.increaseCleanPar(shortShareNumber, orgPledgedPar - pledgedPar);
         } else if (pledgedPar > orgPledgedPar) {
-            require(caller == sn.pledgorOfPledge(), "NOT pledgor");
+            require(caller == sn.pledgorOfPledge(), "BOPKeeper.updatePledge: NOT pledgor");
             _bos.decreaseCleanPar(shortShareNumber, pledgedPar - orgPledgedPar);
         }
 
-        _bop.updatePledge(sn.ssn(), creditor, pledgedPar, guaranteedAmt);
+        if (creditor != orgCreditor) {
+            require(caller == orgCreditor, "BOPKeeper.updatePledge: NOT creditor");
+        }
+
+        _bop.updatePledge(sn, creditor, pledgedPar, guaranteedAmt);
     }
 
     function delPledge(bytes32 sn, uint40 caller) external onlyManager(1) {
-        (, uint64 pledgedPar, uint40 creditor, ) = _bop.getPledge(sn.ssn());
+        (uint40 creditor, uint64 pledgedPar, ) = _bop.getPledge(sn);
 
         require(caller == creditor, "NOT creditor");
 
-        _bos.increaseCleanPar(sn.shortShareNumberOfPledge(), pledgedPar);
+        _bos.increaseCleanPar(sn.ssnOfPledge(), pledgedPar);
 
-        _bop.delPledge(sn.ssn());
+        _bop.updatePledge(sn, creditor, 0, 0);
     }
 }

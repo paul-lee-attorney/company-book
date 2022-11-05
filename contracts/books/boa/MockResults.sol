@@ -62,7 +62,7 @@ contract MockResults is IMockResults, IASetting, SHASetting, BOSSetting {
     }
 
     function mockDealOfSell(uint32 ssn, uint64 amount) public {
-        (bytes32 shareNumber, , , , , ) = _bos.getShare(ssn);
+        (bytes32 shareNumber, , , , ) = _bos.getShare(ssn);
 
         uint40 seller = shareNumber.shareholder();
 
@@ -79,8 +79,6 @@ contract MockResults is IMockResults, IASetting, SHASetting, BOSSetting {
         uint40 buyer = sn.buyerOfDeal();
 
         if (!_mgm.isMember(buyer)) _mgm.addMember(buyer);
-
-        // uint16 iBuyer = _mgm.indexOfMember(buyer);
 
         _mgm.chain.changeAmt(buyer, amount, false);
 
@@ -103,8 +101,6 @@ contract MockResults is IMockResults, IASetting, SHASetting, BOSSetting {
         uint16 fGroup = _mgm.groupNo(follower);
 
         if (rule.proRataOfLink()) _proRataCheck(dGroup, fGroup, amount);
-
-        // uint16 iFollower = _mgm.indexOfMember(follower);
 
         _mgm.chain.changeAmt(follower, amount, true);
 
@@ -160,10 +156,6 @@ contract MockResults is IMockResults, IASetting, SHASetting, BOSSetting {
             uint64 sum
         )
     {
-        // uint16 i = _mgm.indexOfMember(acct);
-
-        // require(i > 0, "MR.mockResults: acct not exist");
-
         top = _mgm.chain.topOfBranch(acct);
         group = _mgm.chain.nodes[top].group;
         sum = _mgm.chain.nodes[top].sum;

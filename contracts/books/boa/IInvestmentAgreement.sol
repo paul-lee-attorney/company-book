@@ -50,19 +50,15 @@ interface IInvestmentAgreement is ISigPage{
     // ======== InvestmentAgreement ========
 
     function createDeal(
-        uint8 typeOfDeal,
-        bytes32 shareNumber,
-        uint16 class,
-        uint40 buyer,
-        uint16 group,
-        uint16 preSSN
+        bytes32 sn,
+        bytes32 shareNumber
     ) external returns (bytes32);
 
     function updateDeal(
         uint16 seq,
         uint32 unitPrice,
-        uint64 parValue,
-        uint64 paidPar,
+        uint64 paid,
+        uint64 par,
         uint32 closingDate
     ) external;
 
@@ -72,19 +68,16 @@ interface IInvestmentAgreement is ISigPage{
 
     function releaseDealSubject(uint16 seq) external returns (bool flag);
 
-    // function finalizeIA() external;
-
     function clearDealCP(
         uint16 seq,
         bytes32 hashLock,
         uint32 closingDate
     ) external;
 
-    function closeDeal(uint16 seq, string calldata hashKey) external;
+    function closeDeal(uint16 seq, string memory hashKey) external;
 
     function revokeDeal(
         uint16 seq,
-        // uint32 sigDate,
         string memory hashKey
     ) external;
 
@@ -105,24 +98,17 @@ interface IInvestmentAgreement is ISigPage{
         view
         returns (
             bytes32 sn,
-            uint64 parValue,
-            uint64 paidPar,
+            uint64 paid,
+            uint64 par,
             uint8 state, // 0-pending 1-cleared 2-closed 3-terminated
             bytes32 hashLock
         );
 
-    function unitPrice(uint16 seq) external view returns (uint32);
+    function unitPriceOfDeal(uint16 seq) external view returns (uint32);
 
-    function closingDate(uint16 seq) external view returns (uint32);
+    function closingDateOfDeal(uint16 seq) external view returns (uint32);
 
     function shareNumberOfDeal(uint16 seq) external view returns (bytes32);
 
     function dealsList() external view returns (bytes32[] memory);
-
-    // function dealsConcerned(uint40 acct) external view returns (uint16[]);
-
-    // function isBuyerOfDeal(uint40 acct, uint16 seq)
-    //     external
-    //     view
-    //     returns (bool);
 }

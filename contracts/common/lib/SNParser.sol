@@ -45,20 +45,20 @@ library SNParser {
         return uint8(sn[4]);
     }
 
-    function buyerOfDeal(bytes32 sn) internal pure returns (uint32) {
-        return uint32(bytes4(sn << 40));
+    function buyerOfDeal(bytes32 sn) internal pure returns (uint40) {
+        return uint40(bytes5(sn << 40));
     }
 
     function groupOfBuyer(bytes32 sn) internal pure returns (uint16) {
-        return uint16(bytes2(sn << 72));
+        return uint16(bytes2(sn << 80));
     }
 
     function ssnOfDeal(bytes32 sn) internal pure returns (uint32) {
-        return uint32(bytes4(sn << 88));
+        return uint32(bytes4(sn << 96));
     }
 
     function preSeqOfDeal(bytes32 sn) internal pure returns (uint16) {
-        return uint16(bytes2(sn << 120));
+        return uint16(bytes2(sn << 128));
     }
 
     // ======== DocSN ========
@@ -159,32 +159,32 @@ library SNParser {
         return uint8(sn[10]);
     }
 
-    function classOfOpt(bytes32 sn) internal pure returns (uint32) {
-        return uint32(bytes4(sn << 88));
+    function classOfOpt(bytes32 sn) internal pure returns (uint16) {
+        return uint16(bytes2(sn << 88));
     }
 
     function rateOfOpt(bytes32 sn) internal pure returns (uint32) {
-        return uint32(bytes4(sn << 120));
+        return uint32(bytes4(sn << 104));
     }
 
     function logOperator(bytes32 sn) internal pure returns (uint8) {
-        return uint8(sn[19]);
+        return uint8(sn[17]);
     }
 
     function compOperator_1(bytes32 sn) internal pure returns (uint8) {
-        return uint8(sn[20]);
+        return uint8(sn[18]);
     }
 
     function para_1(bytes32 sn) internal pure returns (uint32) {
-        return uint32(bytes4(sn << 168));
+        return uint32(bytes4(sn << 152));
     }
 
     function compOperator_2(bytes32 sn) internal pure returns (uint8) {
-        return uint8(sn[25]);
+        return uint8(sn[23]);
     }
 
     function para_2(bytes32 sn) internal pure returns (uint32) {
-        return uint32(bytes4(sn << 208));
+        return uint32(bytes4(sn << 192));
     }
 
     function checkConditions(
@@ -240,21 +240,21 @@ library SNParser {
     function sequenceOfPledge(bytes32 sn)
         internal
         pure
-        returns (uint32)
+        returns (uint16)
     {
-        return uint32(bytes4(sn << 32));
+        return uint16(bytes2(sn << 32));
     }
 
     function createDateOfPledge(bytes32 sn) internal pure returns (uint32) {
-        return uint32(bytes4(sn << 64));
+        return uint32(bytes4(sn << 48));
     }
 
     function pledgorOfPledge(bytes32 sn) internal pure returns (uint32) {
-        return uint32(bytes4(sn << 96));
+        return uint32(bytes4(sn << 80));
     }
 
     function debtorOfPledge(bytes32 sn) internal pure returns (uint32) {
-        return uint32(bytes4(sn << 128));
+        return uint32(bytes4(sn << 112));
     }
 
     // ========= VotingRule ========

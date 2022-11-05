@@ -26,11 +26,9 @@ interface IBOSKeeper {
 
     function decreaseCapital(
         uint32 ssn,
-        uint64 parValue,
-        uint64 paidPar
+        uint64 paid,
+        uint64 par
     ) external;
-
-    function updateShareState(uint32 ssn, uint8 state) external;
 
     function setMaxQtyOfMembers(uint8 max) external;
 }

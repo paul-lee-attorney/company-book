@@ -8,15 +8,15 @@
 pragma solidity ^0.8.8;
 
 interface IDocumentsRepo {
-    // //##############
-    // //##  Event   ##
-    // //##############
+    //##############
+    //##  Event   ##
+    //##############
 
-    // event SetTemplate(address temp, uint8 typeOfDoc);
+    event SetTemplate(address temp, uint8 typeOfDoc);
 
-    // event UpdateStateOfDoc(bytes32 indexed sn, uint8 state, uint40 caller);
+    event UpdateStateOfDoc(bytes32 indexed sn, uint8 state, uint40 caller);
 
-    // event RemoveDoc(bytes32 indexed sn);
+    event RemoveDoc(bytes32 indexed sn);
 
     //##################
     //##    写接口    ##
@@ -62,11 +62,6 @@ interface IDocumentsRepo {
         returns (bytes32 sn, bytes32 docHash);
 
     function currentState(address body) external view returns (uint8);
-
-    function startDateOf(address body, uint8 state)
-        external
-        view
-        returns (uint32);
 
     function reviewDeadlineBNOf(address body) external view returns (uint32);
 

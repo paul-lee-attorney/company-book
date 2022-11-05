@@ -72,23 +72,19 @@ interface ISigPage {
 
     function isInitSigner(uint40 acct) external view returns (bool);
 
-    function parties() external view returns (uint40[] memory);
+    function partiesOfDoc() external view returns (uint40[] memory);
 
     function qtyOfParties() external view returns (uint256);
 
-    function blanksList() external view returns (bytes32[] memory);
+    function sigCounter() external view returns (uint16);
 
-    function sigCounter() external view returns (uint256);
-
-    function sigDateOfDeal(uint40 acct, uint16 ssn)
-        external
-        view
-        returns (uint32);
-
-    function sigHashOfDeal(uint40 acct, uint16 ssn)
-        external
-        view
-        returns (bytes32);
+    function sigOfDeal(uint40 acct, uint16 ssn)
+        external view
+        returns (
+            uint32 blockNumber,
+            uint32 sigDate,
+            bytes32 sigHash
+        );
 
     function sigDateOfDoc(uint40 acct) external view returns (uint32);
 

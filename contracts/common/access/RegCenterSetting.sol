@@ -8,15 +8,19 @@
 pragma solidity ^0.8.8;
 
 import "./IRegCenter.sol";
+import "../../keepers/IGeneralKeeper.sol";
 
 contract RegCenterSetting {
     IRegCenter internal _rc;
+    IGeneralKeeper internal _gk;
 
     // ##################
     // ##   Event      ##
     // ##################
 
     event SetRegCenter(address rc);
+
+    event SetGeneralKeeper(address gk);
 
     // ##################
     // ##    写端口    ##
@@ -30,7 +34,12 @@ contract RegCenterSetting {
         emit SetRegCenter(rc);
     }
 
-    function _msgSender() internal returns (uint40) {
+    function _setGeneralKeeper(address gk) internal {
+        _gk = IGeneralKeeper(gk);
+        emit SetGeneralKeeper(gk);
+    }
+
+    function _msgSender() internal view returns (uint40) {
         return _rc.userNo(msg.sender);
     }
 }

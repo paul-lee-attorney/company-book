@@ -13,6 +13,17 @@ import "../../common/components/DocumentsRepo.sol";
 
 contract BookOfSHA is IBookOfSHA, DocumentsRepo {
 
+    enum TermTitle {
+        ZeroPoint, //            0
+        LOCK_UP, //              1
+        ANTI_DILUTION, //        2
+        FIRST_REFUSAL, //        3
+        GROUPS_UPDATE, //        4
+        DRAG_ALONG, //           5
+        TAG_ALONG, //            6
+        OPTIONS //               7
+    }
+
     mapping(uint256 => address) private _templates;
 
     // _templates[0]: pointer;

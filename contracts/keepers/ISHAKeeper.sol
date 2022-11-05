@@ -15,9 +15,9 @@ interface ISHAKeeper {
         bytes32 sn,
         bool dragAlong,
         bytes32 shareNumber,
-        uint64 paidPar,
-        uint64 parValue,
-        address callerAddr,
+        uint64 paid,
+        uint64 par,
+        uint40 caller,
         bytes32 sigHash
     ) external;
 

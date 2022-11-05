@@ -7,7 +7,6 @@
 
 pragma solidity ^0.8.8;
 
-import "../../common/lib/EnumsRepo.sol";
 import "../../common/lib/SNParser.sol";
 
 import "../../common/ruting/IBookSetting.sol";

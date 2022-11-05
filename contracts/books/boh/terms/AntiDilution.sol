@@ -14,7 +14,6 @@ import "../../../common/ruting/BOMSetting.sol";
 
 import "../../../common/lib/ArrayUtils.sol";
 import "../../../common/lib/SNParser.sol";
-import "../../../common/lib/EnumsRepo.sol";
 import "../../../common/lib/EnumerableSet.sol";
 import "../../../common/lib/ArrowChain.sol";
 
@@ -121,8 +120,8 @@ contract AntiDilution is IAntiDilution, ITerm, BOSSetting, BOMSetting {
         uint64 unitPrice = IInvestmentAgreement(ia).unitPrice(sn.sequence());
 
         if (
-            sn.typeOfDeal() != uint8(EnumsRepo.TypeOfDeal.CapitalIncrease) &&
-            sn.typeOfDeal() != uint8(EnumsRepo.TypeOfDeal.PreEmptive)
+            sn.typeOfDeal() != uint8(InvestmentAgreement.TypeOfDeal.CapitalIncrease) &&
+            sn.typeOfDeal() != uint8(InvestmentAgreement.TypeOfDeal.PreEmptive)
         ) return false;
 
         if (unitPrice < _benchmarks.topValue()) return true;

@@ -8,6 +8,8 @@
 pragma solidity ^0.8.8;
 
 import "../books/boa/IInvestmentAgreement.sol";
+import "../books/boh/BookOfSHA.sol";
+import "../books/boo/BookOfOptions.sol";
 
 import "../common/ruting/IBookSetting.sol";
 import "../common/ruting/BOSSetting.sol";
@@ -17,11 +19,12 @@ import "../common/ruting/BOMSetting.sol";
 import "../common/ruting/BOOSetting.sol";
 import "../common/ruting/SHASetting.sol";
 
+import "../common/lib/SNFactory.sol";
 import "../common/lib/SNParser.sol";
 
 import "../common/components/ISigPage.sol";
 
-import "../common/lib/EnumsRepo.sol";
+import "../common/lib/MotionsRepo.sol";
 
 import "./IBOMKeeper.sol";
 
@@ -34,6 +37,7 @@ contract BOMKeeper is
     BOOSetting,
     BOSSetting
 {
+    using SNFactory for bytes;
     using SNParser for bytes32;
 
     // ################
@@ -66,7 +70,7 @@ contract BOMKeeper is
         require(ISigPage(ia).isParty(caller), "BOMKeeper.proposeIA: NOT Party of Doc");
 
         require(
-            _boa.currentState(ia) == uint8(EnumsRepo.BODStates.Established),
+            _boa.currentState(ia) == uint8(DocumentsRepo.BODStates.Established),
             "InvestmentAgreement not on Established"
         );
 
@@ -100,27 +104,27 @@ contract BOMKeeper is
             len--;
 
             if (
-                _getSHA().hasTitle(uint8(EnumsRepo.TermTitle.FIRST_REFUSAL)) &&
+                _getSHA().hasTitle(uint8(BookOfSHA.TermTitle.FIRST_REFUSAL)) &&
                 _getSHA().termIsTriggered(
-                    uint8(EnumsRepo.TermTitle.FIRST_REFUSAL),
+                    uint8(BookOfSHA.TermTitle.FIRST_REFUSAL),
                     ia,
                     sn
                 )
             ) return true;
 
             if (
-                _getSHA().hasTitle(uint8(EnumsRepo.TermTitle.TAG_ALONG)) &&
+                _getSHA().hasTitle(uint8(BookOfSHA.TermTitle.TAG_ALONG)) &&
                 _getSHA().termIsTriggered(
-                    uint8(EnumsRepo.TermTitle.TAG_ALONG),
+                    uint8(BookOfSHA.TermTitle.TAG_ALONG),
                     ia,
                     sn
                 )
             ) return true;
 
             if (
-                _getSHA().hasTitle(uint8(EnumsRepo.TermTitle.DRAG_ALONG)) &&
+                _getSHA().hasTitle(uint8(BookOfSHA.TermTitle.DRAG_ALONG)) &&
                 _getSHA().termIsTriggered(
-                    uint8(EnumsRepo.TermTitle.DRAG_ALONG),
+                    uint8(BookOfSHA.TermTitle.DRAG_ALONG),
                     ia,
                     sn
                 )
@@ -194,7 +198,7 @@ contract BOMKeeper is
     ) external onlyManager(1) {
         require(
             _bom.state(uint256(uint160(ia))) ==
-                uint8(EnumsRepo.StateOfMotion.Rejected_ToBuy),
+                uint8(MotionsRepo.StateOfMotion.Rejected_ToBuy),
             "agianst NO need to buy"
         );
 
@@ -204,8 +208,8 @@ contract BOMKeeper is
 
         require(caller == shareNumber.shareholder(), "NOT Seller of the Deal");
 
-        uint32 unitPrice = IInvestmentAgreement(ia).unitPrice(sn.sequence());
-        uint32 closingDate = IInvestmentAgreement(ia).closingDate(
+        uint32 unitPrice = IInvestmentAgreement(ia).unitPriceOfDeal(sn.sequence());
+        uint32 closingDate = IInvestmentAgreement(ia).closingDateOfDeal(
             sn.sequence()
         );
 
@@ -216,19 +220,41 @@ contract BOMKeeper is
                 (24 * _rc.blocksPerHour())
         );
 
-        bytes32 snOfOpt = _boo.createOption(
-            uint8(EnumsRepo.TypeOfOption.Put_Price),
-            caller,
-            againstVoter,
+        bytes32 snOfOpt = _createOptSN(
+            uint8(BookOfOptions.TypeOfOption.Put_Price),
             uint32(block.number),
             1,
             closingDays,
-            unitPrice,
-            paid,
-            par
+            shareNumber.class(),
+            unitPrice
         );
 
-        _boo.execOption(snOfOpt.ssn());
-        _boo.addFuture(snOfOpt.ssn(), shareNumber, paid, par);
+        uint40[] memory obligors = new uint40[](1);
+        obligors[0] = againstVoter;
+
+        snOfOpt = _boo.createOption(snOfOpt, caller, obligors, paid, par);
+
+        _boo.execOption(snOfOpt);
+        _boo.addFuture(snOfOpt, shareNumber, paid, par);
+    }
+
+    function _createOptSN(
+        uint8 typeOfOpt,
+        uint32 triggerBN,
+        uint8 execDays,
+        uint8 closingDays,
+        uint16 classOfOpt,
+        uint32 rateOfOpt
+    ) private pure returns(bytes32 sn) {
+        bytes memory _sn = new bytes(32);
+        
+        _sn[0] = bytes1(typeOfOpt);
+        _sn = _sn.dateToSN(5, triggerBN);
+        _sn[9] = bytes1(execDays);
+        _sn[10] = bytes1(closingDays);
+        _sn = _sn.sequenceToSN(11, classOfOpt);
+        _sn = _sn.dateToSN(13, rateOfOpt);
+
+        sn = _sn.bytesToBytes32();
     }
 }

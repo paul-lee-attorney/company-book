@@ -7,20 +7,19 @@
 
 pragma solidity ^0.8.8;
 
+import "./InvestmentAgreement.sol";
 import "./IInvestmentAgreement.sol";
 import "./IBookOfIA.sol";
 
 import "../../common/components/DocumentsRepo.sol";
 
 import "../../common/lib/SNParser.sol";
-import "../../common/lib/EnumsRepo.sol";
 import "../../common/lib/EnumerableSet.sol";
 
 import "../../common/ruting/IBookSetting.sol";
 
 contract BookOfIA is IBookOfIA, DocumentsRepo {
     using SNParser for bytes32;
-    using EnumerableSet for EnumerableSet.UintSet;
 
     // ia => frd
     mapping(address => address) private _frDeals;
@@ -49,8 +48,7 @@ contract BookOfIA is IBookOfIA, DocumentsRepo {
                 address(this),
                 address(this),
                 address(_rc),
-                uint8(EnumsRepo.RoleOfUser.FirstRefusalDeals),
-                _rc.entityNo(address(this))
+                address(_gk)
             );
             IBookSetting(frd).setIA(ia);
             IAccessControl(frd).setManager(1, address(this), msg.sender);
@@ -70,8 +68,7 @@ contract BookOfIA is IBookOfIA, DocumentsRepo {
                 creator,
                 address(this),
                 address(_rc),
-                uint8(EnumsRepo.RoleOfUser.MockResults),
-                _rc.entityNo(address(this))
+                address(_gk)
             );
             IBookSetting(mock).setIA(ia);
             IBookSetting(mock).setBOS(address(_bos));
@@ -101,21 +98,21 @@ contract BookOfIA is IBookOfIA, DocumentsRepo {
                 sn.sequence()
             );
 
-            if (state == uint8(EnumsRepo.StateOfDeal.Terminated)) continue;
+            if (state == uint8(InvestmentAgreement.StateOfDeal.Terminated)) continue;
 
             if (
-                typeOfDeal == uint8(EnumsRepo.TypeOfDeal.CapitalIncrease) ||
-                typeOfDeal == uint8(EnumsRepo.TypeOfDeal.PreEmptive)
+                typeOfDeal == uint8(InvestmentAgreement.TypeOfDeal.CapitalIncrease) ||
+                typeOfDeal == uint8(InvestmentAgreement.TypeOfDeal.PreEmptive)
             ) signal[0] = 1;
             else if (
-                typeOfDeal == uint8(EnumsRepo.TypeOfDeal.ShareTransferExt) ||
-                typeOfDeal == uint8(EnumsRepo.TypeOfDeal.TagAlong) ||
-                typeOfDeal == uint8(EnumsRepo.TypeOfDeal.DragAlong)
+                typeOfDeal == uint8(InvestmentAgreement.TypeOfDeal.ShareTransferExt) ||
+                typeOfDeal == uint8(InvestmentAgreement.TypeOfDeal.TagAlong) ||
+                typeOfDeal == uint8(InvestmentAgreement.TypeOfDeal.DragAlong)
             ) signal[1] = 2;
             else if (
-                typeOfDeal == uint8(EnumsRepo.TypeOfDeal.ShareTransferInt) ||
-                typeOfDeal == uint8(EnumsRepo.TypeOfDeal.FirstRefusal) ||
-                typeOfDeal == uint8(EnumsRepo.TypeOfDeal.FreeGift)
+                typeOfDeal == uint8(InvestmentAgreement.TypeOfDeal.ShareTransferInt) ||
+                typeOfDeal == uint8(InvestmentAgreement.TypeOfDeal.FirstRefusal) ||
+                typeOfDeal == uint8(InvestmentAgreement.TypeOfDeal.FreeGift)
             ) signal[2] = 3;
         }
         // 协议类别计算

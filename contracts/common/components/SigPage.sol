@@ -7,39 +7,16 @@
 
 pragma solidity ^0.8.8;
 
-import "../lib/SNFactory.sol";
-import "../lib/SNParser.sol";
-import "../lib/EnumerableSet.sol";
+import "../lib/SigsRepo.sol";
 
 import "../access/AccessControl.sol";
 
 import "./ISigPage.sol";
 
 contract SigPage is ISigPage, AccessControl {
-    using SNFactory for bytes;
-    using SNParser for bytes32;
-    using EnumerableSet for EnumerableSet.UintSet;
-    using EnumerableSet for EnumerableSet.Bytes32Set;
+    using SigsRepo for SigsRepo.Page;
 
-    bool private _established;
-
-    uint32 private _sigDeadline;
-
-    uint32 private _closingDeadline;
-
-    struct Signature {
-        uint32 blockNumber;
-        uint32 sigDate;
-        bytes32 sigHash;
-    }
-
-    mapping(bytes32 => Signature) private _signatures;
-
-    EnumerableSet.Bytes32Set private _snList;
-
-    uint256 private _sigCounter;
-
-    EnumerableSet.UintSet private _parties;
+    SigsRepo.Page private _sigPage;
 
     //####################
     //##    modifier    ##
@@ -75,7 +52,7 @@ contract SigPage is ISigPage, AccessControl {
         onlyFutureTime(deadline)
         onlyPending
     {
-        _sigDeadline = deadline;
+        _sigPage.setSigDeadline(deadline);
         emit SetSigDeadline(deadline);
     }
 
@@ -85,13 +62,13 @@ contract SigPage is ISigPage, AccessControl {
         onlyFutureTime(deadline)
         onlyPending
     {
-        _closingDeadline = deadline;
+        _sigPage.setClosingDeadline(deadline);
         emit SetClosingDeadline(deadline);
     }
 
     function finalizeDoc() public onlyManager(2) onlyPending {
         lockContents();
-        _finalized = true;
+        _sigPage.finalizeDoc();
         emit DocFinalized();
     }
 
@@ -100,16 +77,8 @@ contract SigPage is ISigPage, AccessControl {
     }
 
     function acceptDoc(bytes32 sigHash) external onlyParty {
-        require(_established, "Doc not established");
+        require(_sigPage.established(), "SP.acceptDoc: Doc not established");
         signDeal(0, _msgSender(), sigHash);
-    }
-
-    function _createSN(uint40 acct, uint16 ssn) private pure returns (bytes32) {
-        bytes memory _sn = new bytes(32);
-        _sn = _sn.acctToSN(0, acct);
-        _sn = _sn.sequenceToSN(5, ssn);
-
-        return _sn.bytesToBytes32();
     }
 
     function addBlank(uint40 acct, uint16 ssn) public {
@@ -120,19 +89,12 @@ contract SigPage is ISigPage, AccessControl {
             );
         else
             require(
-                _rc.isKeeper(msg.sender),
-                // _rc.hasRole(KEEPERS, msg.sender),
+                _gk.isKeeper(msg.sender),
                 "only DK may add party to an established DOC"
             );
 
-        _established = false;
-
-        bytes32 sn = _createSN(acct, ssn);
-
-        if (_snList.add(sn)) {
-            _parties.add(acct);
+        if (_sigPage.addBlank(acct, ssn))
             emit AddBlank(acct, ssn);
-        }
     }
 
     function removeBlank(uint40 acct, uint16 ssn)
@@ -140,12 +102,8 @@ contract SigPage is ISigPage, AccessControl {
         onlyPending
         onlyAttorney
     {
-        bytes32 sn = _createSN(acct, ssn);
-
-        if (_snList.remove(sn)) {
-            _parties.remove(acct);
-            emit RemoveBlank(acct, ssn);
-        }
+        if (_sigPage.removeBlank(acct, ssn))
+            emit RemoveBlank(acct, ssn);  
     }
 
     function addParty(uint40 acct) external onlyPending onlyAttorney {
@@ -157,28 +115,8 @@ contract SigPage is ISigPage, AccessControl {
         uint40 caller,
         bytes32 sigHash
     ) public onlyKeeper {
-        bytes32 sn = _createSN(caller, ssn);
-
-        if (_snList.contains(sn) && _signatures[sn].sigDate == 0) {
-            Signature storage sig = _signatures[sn];
-
-            sig.blockNumber = uint32(block.number);
-            sig.sigDate = uint32(block.timestamp);
-            sig.sigHash = sigHash;
-
-            _sigCounter++;
-
-            emit SignDeal(caller, ssn, sigHash);
-
-            _checkCompletionOfSig();
-        }
-    }
-
-    function _checkCompletionOfSig() private {
-        if (_sigCounter == _snList.length()) {
-            _established = true;
-            emit DocEstablished();
-        }
+        _sigPage.signDeal(caller, ssn, sigHash);
+        emit SignDeal(caller, ssn, sigHash);
     }
 
     //####################
@@ -186,75 +124,66 @@ contract SigPage is ISigPage, AccessControl {
     //####################
 
     function established() external view returns (bool) {
-        return _established;
+        return _sigPage.established();
     }
 
     function sigDeadline() external view returns (uint32) {
-        return _sigDeadline;
+        return _sigPage.sigDeadline();
     }
 
     function closingDeadline() public view returns (uint32) {
-        return _closingDeadline;
+        return _sigPage.closingDeadline();
     }
 
     function isParty(uint40 acct) public view returns (bool) {
-        return _parties.contains(acct);
+        return _sigPage.isParty(acct);
     }
 
     function isInitSigner(uint40 acct) public view returns (bool) {
-        return _snList.contains(bytes32(uint(acct)));
+        return _sigPage.isInitSigner(acct);
     }
 
-    function parties() external view returns (uint40[] memory) {
-        return _parties.valuesToUint40();
+    function partiesOfDoc() external view returns (uint40[] memory) {
+        return _sigPage.partiesOfDoc();
     }
 
     function qtyOfParties() external view returns (uint256) {
-        return _parties.length();
+        return _sigPage.qtyOfParties();
     }
 
-    function blanksList() external view returns (bytes32[] memory) {
-        return _snList.values();
+    function blankCounter() external view returns (uint16) {
+        return _sigPage.blankCounterOfDoc();
     }
 
-    function sigCounter() external view returns (uint256) {
-        return _sigCounter;
+    function sigCounter() external view returns (uint16) {
+        return _sigPage.sigCounter();
     }
 
-    function sigDateOfDeal(uint40 acct, uint16 ssn)
-        external
-        view
-        returns (uint32)
+    function sigOfDeal(uint40 acct, uint16 ssn)
+        external view
+        returns (
+            uint32 blockNumber,
+            uint32 sigDate,
+            bytes32 sigHash
+        ) 
     {
-        bytes32 sn = _createSN(acct, ssn);
-        if (_snList.contains(sn)) return _signatures[sn].sigDate;
-        else revert("the acct is not a party to the deal");
-    }
-
-    function sigHashOfDeal(uint40 acct, uint16 ssn)
-        external
-        view
-        returns (bytes32)
-    {
-        bytes32 sn = _createSN(acct, ssn);
-        if (_snList.contains(sn)) return _signatures[sn].sigHash;
-        else revert("the acct is not a party to the deal");
+        return _sigPage.sigOfDeal(acct, ssn);        
     }
 
     function sigDateOfDoc(uint40 acct)
         external
         view
-        returns (uint32)
+        returns (uint32 sigDate)
     {
-        return _signatures[bytes32(uint(acct))].sigDate;
+        ( , sigDate, ) = _sigPage.sigOfDeal(acct, 0);
     }
 
     function sigHashOfDoc(uint40 acct)
         external
         view
-        returns (bytes32)
+        returns (bytes32 sigHash)
     {
-        return _signatures[bytes32(uint(acct))].sigHash;
+        ( , , sigHash) = _sigPage.sigOfDeal(acct, 0);
     }
 
     function dealSigVerify(
@@ -262,7 +191,6 @@ contract SigPage is ISigPage, AccessControl {
         uint16 ssn,
         string memory src
     ) external view returns (bool) {
-        bytes32 sn = _createSN(acct, ssn);
-        return _signatures[sn].sigHash == keccak256(bytes(src));
+        return _sigPage.dealSigVerify(acct, ssn, src);
     }
 }

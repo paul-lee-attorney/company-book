@@ -16,7 +16,7 @@ import "../../../common/ruting/BOASetting.sol";
 import "../../../common/lib/SNParser.sol";
 import "../../../common/lib/SNFactory.sol";
 import "../../../common/lib/EnumerableSet.sol";
-import "../../../common/lib/EnumsRepo.sol";
+import "../../../common/lib/sol";
 
 import "./IAlongs.sol";
 
@@ -24,6 +24,13 @@ contract DragAlong is IAlongs, BOSSetting, BOASetting {
     using SNParser for bytes32;
     using SNFactory for bytes;
     using EnumerableSet for EnumerableSet.UintSet;
+
+    enum TriggerTypeOfAlongs {
+        NoConditions,
+        ControlChanged,
+        ControlChangedWithHigherPrice,
+        ControlChangedWithHigherROE
+    }
 
     struct Link {
         EnumerableSet.UintSet followers;
@@ -244,12 +251,12 @@ contract DragAlong is IAlongs, BOSSetting, BOASetting {
 
         if (
             rule.triggerTypeOfLink() <
-            uint8(EnumsRepo.TriggerTypeOfAlongs.ControlChangedWithHigherPrice)
+            uint8(TriggerTypeOfAlongs.ControlChangedWithHigherPrice)
         ) return true;
 
         if (
             rule.triggerTypeOfLink() ==
-            uint8(EnumsRepo.TriggerTypeOfAlongs.ControlChangedWithHigherPrice)
+            uint8(TriggerTypeOfAlongs.ControlChangedWithHigherPrice)
         ) {
             if (dealPrice >= rule.unitPriceOfLink()) return true;
             else return false;
@@ -273,12 +280,12 @@ contract DragAlong is IAlongs, BOSSetting, BOASetting {
     function isTriggered(address ia, bytes32 sn) public view returns (bool) {
         if (
             _boa.currentState(ia) !=
-            uint8(EnumsRepo.BODStates.Circulated)
+            uint8(DocumentsRepo.BODStates.Circulated)
         ) return false;
 
         if (
-            sn.typeOfDeal() == uint8(EnumsRepo.TypeOfDeal.CapitalIncrease) ||
-            sn.typeOfDeal() == uint8(EnumsRepo.TypeOfDeal.PreEmptive)
+            sn.typeOfDeal() == uint8(InvestmentAgreement.TypeOfDeal.CapitalIncrease) ||
+            sn.typeOfDeal() == uint8(InvestmentAgreement.TypeOfDeal.PreEmptive)
         ) return false;
 
         uint40 seller = IInvestmentAgreement(ia)
@@ -291,7 +298,7 @@ contract DragAlong is IAlongs, BOSSetting, BOASetting {
 
         if (
             rule.triggerTypeOfLink() ==
-            uint8(EnumsRepo.TriggerTypeOfAlongs.NoConditions)
+            uint8(TriggerTypeOfAlongs.NoConditions)
         ) return true;
 
         uint40 controllor = _bos.controllor();

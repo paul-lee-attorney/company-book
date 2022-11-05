@@ -8,7 +8,6 @@
 pragma solidity ^0.8.8;
 
 import "./SNParser.sol";
-import "./EnumsRepo.sol";
 import "./EnumerableSet.sol";
 import "./BallotsBox.sol";
 import "./DelegateMap.sol";
@@ -23,6 +22,16 @@ library MotionsRepo {
     using EnumerableSet for EnumerableSet.UintSet;
     using BallotsBox for BallotsBox.Box;
     using DelegateMap for DelegateMap.Map;
+
+    enum StateOfMotion {
+        Pending,
+        Proposed,
+        Passed,
+        Rejected,
+        Rejected_NotToBuy,
+        Rejected_ToBuy,
+        Executed
+    }
 
     struct Head {
         uint8 typeOfMotion;
@@ -77,7 +86,7 @@ library MotionsRepo {
 
             m.votingRule = rule;
             m.head = head;
-            m.head.state = uint8(EnumsRepo.StateOfMotion.Proposed);
+            m.head.state = uint8(StateOfMotion.Proposed);
 
             repo.motionIds.add(motionId);
             
@@ -142,10 +151,10 @@ library MotionsRepo {
             }
 
             motion.head.state = flag1 && flag2
-                ? uint8(EnumsRepo.StateOfMotion.Passed)
+                ? uint8(StateOfMotion.Passed)
                 : motion.votingRule.againstShallBuyOfVR()
-                    ? uint8(EnumsRepo.StateOfMotion.Rejected_ToBuy)
-                    : uint8(EnumsRepo.StateOfMotion.Rejected_NotToBuy);
+                    ? uint8(StateOfMotion.Rejected_ToBuy)
+                    : uint8(StateOfMotion.Rejected_NotToBuy);
 
             flag = true;
         }
@@ -175,7 +184,7 @@ library MotionsRepo {
                 // 1-7 typeOfIA; 8-external deal
 
                 // minus parties of IA;
-                uint40[] memory parties = ISigPage(address(uint160(motionId))).parties();
+                uint40[] memory parties = ISigPage(address(uint160(motionId))).partiesOfDoc();
                 uint256 len = parties.length;
 
                 while (len > 0) {
@@ -258,7 +267,7 @@ library MotionsRepo {
         returns (bool)
     {
         return
-            repo.motions[motionId].head.state == uint8(EnumsRepo.StateOfMotion.Passed);
+            repo.motions[motionId].head.state == uint8(StateOfMotion.Passed);
     }
 
     function isExecuted(Repo storage repo, uint256 motionId)
@@ -267,7 +276,7 @@ library MotionsRepo {
         returns (bool)
     {
         return
-            repo.motions[motionId].head.state == uint8(EnumsRepo.StateOfMotion.Executed);
+            repo.motions[motionId].head.state == uint8(StateOfMotion.Executed);
     }
 
     function isRejected(Repo storage repo, uint256 motionId)
@@ -275,7 +284,7 @@ library MotionsRepo {
         view
         returns (bool)
     {
-        return (repo.motions[motionId].head.state == uint8(EnumsRepo.StateOfMotion.Rejected_NotToBuy) ||
-            repo.motions[motionId].head.state == uint8(EnumsRepo.StateOfMotion.Rejected_ToBuy));
+        return (repo.motions[motionId].head.state == uint8(StateOfMotion.Rejected_NotToBuy) ||
+            repo.motions[motionId].head.state == uint8(StateOfMotion.Rejected_ToBuy));
     }
 }

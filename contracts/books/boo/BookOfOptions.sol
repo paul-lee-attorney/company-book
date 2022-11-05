@@ -20,6 +20,28 @@ contract BookOfOptions is IBookOfOptions, BOSSetting {
     using OptionsRepo for OptionsRepo.Repo;
     using SNParser for bytes32;
 
+    enum TypeOfOption {
+        Call_Price,
+        Put_Price,
+        Call_ROE,
+        Put_ROE,
+        Call_PriceAndConditions,
+        Put_PriceAndConditions,
+        Call_ROEAndConditions,
+        Put_ROEAndConditions
+    }
+
+    enum StateOfOption {
+        Pending,
+        Issued,
+        Executed,
+        Futured,
+        Pledged,
+        Closed,
+        Revoked,
+        Expired
+    }
+
     OptionsRepo.Repo private _options;
 
     // ################
@@ -62,6 +84,16 @@ contract BookOfOptions is IBookOfOptions, BOSSetting {
         }
     }
 
+    function addObligorIntoOption(bytes32 sn, uint40 obligor) external {
+        if (_options.addObligorIntoOption(sn, obligor))
+            emit AddObligorIntoOpt(sn, obligor);
+    }
+
+    function removeObligorFromOption(bytes32 sn, uint40 obligor) external {
+        if (_options.removeObligorFromOption(sn, obligor))
+            emit RemoveObligorFromOpt(sn, obligor);
+    }
+
     function updateOracle(
         bytes32 sn,
         uint32 d1,
@@ -87,14 +119,14 @@ contract BookOfOptions is IBookOfOptions, BOSSetting {
         }
     }
 
-    // function removeFuture(
-    //     bytes32 sn,
-    //     bytes32 ft
-    // ) external onlyKeeper {
-    //     if (_options.removeFuture(sn, ft)) {
-    //         emit RemoveFuture(sn, ft);
-    //     }
-    // }
+    function removeFuture(
+        bytes32 sn,
+        bytes32 ft
+    ) external onlyKeeper {
+        if (_options.removeFuture(sn, ft)) {
+            emit RemoveFuture(sn, ft);
+        }
+    }
 
     function requestPledge(
         bytes32 sn,

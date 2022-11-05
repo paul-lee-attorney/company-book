@@ -16,6 +16,13 @@ import "../../common/lib/EnumerableSet.sol";
 contract BookOfDirectors is IBookOfDirectors, MeetingMinutes {
     using EnumerableSet for EnumerableSet.UintSet;
 
+    enum TitleOfDirectors {
+        ZeroPoint,
+        Chairman,
+        ViceChairman,
+        Director
+    }
+
     struct Director {
         uint8 title; // 1-Chairman; 2-ViceChairman; 3-Director;
         uint40 acct;
@@ -93,10 +100,10 @@ contract BookOfDirectors is IBookOfDirectors, MeetingMinutes {
             endBN: endBN            
         });
 
-        if (title == uint8(EnumsRepo.TitleOfDirectors.Chairman)) {
+        if (title == uint8(TitleOfDirectors.Chairman)) {
             if (_directors[0].appointer == 0) _directors[0].appointer = candidate;
             else revert("BOD.addDirector: Chairman's position is occupied");
-        } else if (title == uint8(EnumsRepo.TitleOfDirectors.ViceChairman)) {
+        } else if (title == uint8(TitleOfDirectors.ViceChairman)) {
             if (_directors[0].acct == 0) _directors[0].acct = candidate;
             else revert("BOD.addDirector: ViceChairman's position is occupied");
         } 
@@ -117,7 +124,7 @@ contract BookOfDirectors is IBookOfDirectors, MeetingMinutes {
     {
         _addDirector(
             candidate,
-            uint8(EnumsRepo.TitleOfDirectors.Director),
+            uint8(TitleOfDirectors.Director),
             nominator
         );
     }
@@ -125,9 +132,9 @@ contract BookOfDirectors is IBookOfDirectors, MeetingMinutes {
     function removeDirector(uint40 acct) external onlyManager(1) {
         if (isDirector(acct)) {
 
-            if (_directors[acct].title == uint8(EnumsRepo.TitleOfDirectors.Chairman)) {
+            if (_directors[acct].title == uint8(TitleOfDirectors.Chairman)) {
                 _directors[0].appointer = 0;
-            } else if (_directors[acct].title == uint8(EnumsRepo.TitleOfDirectors.ViceChairman)) {
+            } else if (_directors[acct].title == uint8(TitleOfDirectors.ViceChairman)) {
                 _directors[0].acct = 0;
             }
 
@@ -179,8 +186,8 @@ contract BookOfDirectors is IBookOfDirectors, MeetingMinutes {
     }
 
     function whoIs(uint8 title) external view returns (uint40) {
-        if (title == uint8(EnumsRepo.TitleOfDirectors.Chairman)) return _directors[0].appointer;
-        else if (title == uint8(EnumsRepo.TitleOfDirectors.ViceChairman)) return _directors[0].acct;
+        if (title == uint8(TitleOfDirectors.Chairman)) return _directors[0].appointer;
+        else if (title == uint8(TitleOfDirectors.ViceChairman)) return _directors[0].acct;
         else revert("BOD.whoIs: value of title overflow");
     }
 

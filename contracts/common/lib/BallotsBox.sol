@@ -7,11 +7,17 @@
 
 pragma solidity ^0.8.8;
 
-import "./EnumsRepo.sol";
 import "./EnumerableSet.sol";
 
 library BallotsBox {
     using EnumerableSet for EnumerableSet.UintSet;
+
+    enum AttitudeOfVote {
+        ZeroPoint,
+        Support,
+        Against,
+        Abstain
+    }
 
     struct Ballot {
         uint40 voter;
@@ -61,13 +67,13 @@ library BallotsBox {
 
             box.voters.push(acct);
 
-            if (attitude == uint8(EnumsRepo.AttitudeOfVote.Support)) {
+            if (attitude == uint8(AttitudeOfVote.Support)) {
                 box.supportVoters.add(acct);
                 box.sumOfYea += weight;
-            } else if (attitude == uint8(EnumsRepo.AttitudeOfVote.Against)) {
+            } else if (attitude == uint8(AttitudeOfVote.Against)) {
                 box.againstVoters.add(acct);
                 box.sumOfNay += weight;
-            } else if (attitude == uint8(EnumsRepo.AttitudeOfVote.Abstain)) {
+            } else if (attitude == uint8(AttitudeOfVote.Abstain)) {
                 box.abstainVoters.add(acct);
                 box.sumOfAbs += weight;
             } else revert("BB.add: attitude overflow");

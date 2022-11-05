@@ -9,10 +9,8 @@ pragma solidity ^0.8.8;
 
 import "./IDocumentsRepo.sol";
 
-import "../lib/EnumsRepo.sol";
 import "../lib/SNFactory.sol";
 import "../lib/SNParser.sol";
-import "../lib/ObjsRepo.sol";
 import "../lib/EnumerableSet.sol";
 
 import "../ruting/BOSSetting.sol"; 
@@ -23,12 +21,10 @@ import "../utils/CloneFactory.sol";
 contract DocumentsRepo is IDocumentsRepo, CloneFactory, SHASetting, BOSSetting {
     using SNFactory for bytes;
     using SNParser for bytes32;
-    using ObjsRepo for ObjsRepo.TimeLine;
     using EnumerableSet for EnumerableSet.Bytes32Set;
 
     address[18] private _templates;
 
-    /*
     enum BODStates {
         ZeroPoint,
         Created,
@@ -36,17 +32,16 @@ contract DocumentsRepo is IDocumentsRepo, CloneFactory, SHASetting, BOSSetting {
         Established,
         Proposed,
         Voted,
-        Exercised,
+        Executed,
         Revoked
     }
-*/
 
     struct Doc {
         bytes32 sn;
         bytes32 docHash;
         uint32 reviewDeadlineBN;
         uint32 votingDeadlineBN;
-        ObjsRepo.TimeLine states;
+        uint8 state;
     }
 
     // struct snInfo {
@@ -59,22 +54,7 @@ contract DocumentsRepo is IDocumentsRepo, CloneFactory, SHASetting, BOSSetting {
     // addrOfBody => Doc
     mapping(address => Doc) internal _docs;
 
-    // addrOfBody => bool
-    mapping(address => bool) private _isRegistered;
-
     EnumerableSet.Bytes32Set private _docsList;
-
-    uint32 private _counterOfDocs;
-
-    //##############
-    //##  Event   ##
-    //##############
-
-    event SetTemplate(address temp, uint8 typeOfDoc);
-
-    event UpdateStateOfDoc(bytes32 indexed sn, uint8 state, uint40 caller);
-
-    event RemoveDoc(bytes32 indexed sn);
 
     //####################
     //##    modifier    ##
@@ -87,7 +67,7 @@ contract DocumentsRepo is IDocumentsRepo, CloneFactory, SHASetting, BOSSetting {
 
     modifier onlyRegistered(address body) {
         require(
-            _isRegistered[body],
+            _docs[body].sn != bytes32(0),
             "DR.md.onlyRegistered: doc NOT registered"
         );
         _;
@@ -95,8 +75,7 @@ contract DocumentsRepo is IDocumentsRepo, CloneFactory, SHASetting, BOSSetting {
 
     modifier onlyForPending(address body) {
         require(
-            _docs[body].states.currentState ==
-                uint8(EnumsRepo.BODStates.Created),
+            _docs[body].state == uint8(BODStates.Created),
             "state of doc is not Created"
         );
         _;
@@ -104,8 +83,7 @@ contract DocumentsRepo is IDocumentsRepo, CloneFactory, SHASetting, BOSSetting {
 
     modifier onlyForCirculated(address body) {
         require(
-            _docs[body].states.currentState ==
-                uint8(EnumsRepo.BODStates.Circulated),
+            _docs[body].state == uint8(BODStates.Circulated),
             "state of doc is not Circulated"
         );
         _;
@@ -148,11 +126,11 @@ contract DocumentsRepo is IDocumentsRepo, CloneFactory, SHASetting, BOSSetting {
     {
         body = createClone(_templates[docType]);
 
-        _counterOfDocs++;
+        uint32 seq = _docs[address(0)].reviewDeadlineBN++;
 
         bytes32 sn = _createSN(
             docType,
-            _counterOfDocs,
+            seq,
             uint32(block.timestamp),
             creator
         );
@@ -160,12 +138,11 @@ contract DocumentsRepo is IDocumentsRepo, CloneFactory, SHASetting, BOSSetting {
         Doc storage doc = _docs[body];
 
         doc.sn = sn;
-        doc.states.pushToNextState();
+        doc.state++;
 
-        _isRegistered[body] = true;
         _docsList.add(sn);
 
-        emit UpdateStateOfDoc(sn, doc.states.currentState, creator);
+        emit UpdateStateOfDoc(sn, doc.state, creator);
     }
 
     function removeDoc(address body)
@@ -179,7 +156,6 @@ contract DocumentsRepo is IDocumentsRepo, CloneFactory, SHASetting, BOSSetting {
         _docsList.remove(sn);
 
         delete _docs[body];
-        delete _isRegistered[body];
 
         emit RemoveDoc(sn);
     }
@@ -203,9 +179,9 @@ contract DocumentsRepo is IDocumentsRepo, CloneFactory, SHASetting, BOSSetting {
             24 *
             _rc.blocksPerHour();
 
-        doc.states.pushToNextState();
+        doc.state++;
 
-        emit UpdateStateOfDoc(doc.sn, doc.states.currentState, submitter);
+        emit UpdateStateOfDoc(doc.sn, doc.state, submitter);
     }
 
     function pushToNextState(address body, uint40 caller)
@@ -215,9 +191,9 @@ contract DocumentsRepo is IDocumentsRepo, CloneFactory, SHASetting, BOSSetting {
     {
         Doc storage doc = _docs[body];
 
-        doc.states.pushToNextState();
+        doc.state++;
 
-        emit UpdateStateOfDoc(doc.sn, doc.states.currentState, caller);
+        emit UpdateStateOfDoc(doc.sn, doc.state, caller);
     }
 
     //##################
@@ -229,11 +205,11 @@ contract DocumentsRepo is IDocumentsRepo, CloneFactory, SHASetting, BOSSetting {
     }
 
     function isRegistered(address body) external view returns (bool) {
-        return _isRegistered[body];
+        return _docs[body].sn != bytes32(0);
     }
 
     function counterOfDocs() external view returns (uint32) {
-        return _counterOfDocs;
+        return _docs[address(0)].reviewDeadlineBN;
     }
 
     function passedReview(address body)
@@ -244,12 +220,12 @@ contract DocumentsRepo is IDocumentsRepo, CloneFactory, SHASetting, BOSSetting {
     {
         Doc storage doc = _docs[body];
 
-        if (doc.states.currentState < uint8(EnumsRepo.BODStates.Established))
+        if (doc.state < uint8(BODStates.Established))
             return false;
         else if (
-            doc.states.currentState > uint8(EnumsRepo.BODStates.Established)
+            doc.state > uint8(BODStates.Established)
         ) return true;
-        else if (doc.reviewDeadlineBN > block.number) return false;
+        else if (doc.reviewDeadlineBN > uint32(block.number)) return false;
         else return true;
     }
 
@@ -260,8 +236,7 @@ contract DocumentsRepo is IDocumentsRepo, CloneFactory, SHASetting, BOSSetting {
         returns (bool)
     {
         return
-            _docs[body].states.currentState >=
-            uint8(EnumsRepo.BODStates.Circulated);
+            _docs[body].state >= uint8(BODStates.Circulated);
     }
 
     function qtyOfDocs() external view returns (uint256) {
@@ -290,18 +265,9 @@ contract DocumentsRepo is IDocumentsRepo, CloneFactory, SHASetting, BOSSetting {
         onlyRegistered(body)
         returns (uint8)
     {
-        return _docs[body].states.currentState;
+        return _docs[body].state;
     }
 
-    function startDateOf(address body, uint8 state)
-        external
-        view
-        onlyRegistered(body)
-        returns (uint32)
-    {
-        require(state <= _docs[body].states.currentState, "state overflow");
-        return uint32(_docs[body].states.startDateOf[state]);
-    }
 
     function reviewDeadlineBNOf(address body)
         external

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: UNLICENSED
+
 /* *
  * Copyright 2021-2022 LI LI of JINGTIAN & GONGCHENG.
  * All Rights Reserved.
@@ -27,10 +29,10 @@ contract BOSKeeper is IBOSKeeper, BOSSetting {
 
     function requestPaidInCapital(
         uint32 ssn,
-        string hashKey,
+        string memory hashKey,
         uint40 caller
     ) external onlyManager(1) {
-        (bytes32 shareNumber, , , , , ) = _bos.getShare(ssn);
+        (bytes32 shareNumber, , , , ) = _bos.getShare(ssn);
         require(
             caller == shareNumber.shareholder(),
             "caller is not shareholder"
@@ -40,14 +42,10 @@ contract BOSKeeper is IBOSKeeper, BOSSetting {
 
     function decreaseCapital(
         uint32 ssn,
-        uint64 parValue,
-        uint64 paidPar
+        uint64 paid,
+        uint64 par
     ) external onlyManager(1) {
-        _bos.decreaseCapital(ssn, parValue, paidPar);
-    }
-
-    function updateShareState(uint32 ssn, uint8 state) external onlyManager(1) {
-        _bos.updateShareState(ssn, state);
+        _bos.decreaseCapital(ssn, paid, par);
     }
 
     function setMaxQtyOfMembers(uint8 max) external onlyManager(1) {

@@ -11,6 +11,13 @@ import "./IAccessControl.sol";
 import "./RegCenterSetting.sol";
 
 contract AccessControl is IAccessControl, RegCenterSetting {
+
+    enum TitleOfManagers {
+        Owner,
+        DirectKeeper,
+        GeneralCounsel
+    }
+
     bool internal _finalized;
     bool private _initiated;
 
@@ -18,7 +25,7 @@ contract AccessControl is IAccessControl, RegCenterSetting {
     bytes32 constant ATTORNEYS = keccak256("Attorneys");
 
     // ##################
-    // ##   修饰器     ##
+    // ##   修饰器      ##
     // ##################
 
     modifier onlyManager(uint8 title) {
@@ -47,7 +54,7 @@ contract AccessControl is IAccessControl, RegCenterSetting {
 
     modifier onlyKeeper() {
         require(
-            _rc.isKeeper(msg.sender) || _rc.isManager(1, msg.sender),
+            _gk.isKeeper(msg.sender) || _rc.isManager(1, msg.sender),
             "AC.onlyKeeper: not Keeper"
         );
         _;
@@ -64,7 +71,7 @@ contract AccessControl is IAccessControl, RegCenterSetting {
     modifier attorneyOrKeeper() {
         require(
             _rc.hasRole(ATTORNEYS, msg.sender) ||
-                _rc.isKeeper(msg.sender) ||
+                _gk.isKeeper(msg.sender) ||
                 _rc.isManager(1, msg.sender),
             "not Attorney or Bookeeper"
         );
@@ -74,12 +81,12 @@ contract AccessControl is IAccessControl, RegCenterSetting {
     // ==== DocState ====
 
     modifier onlyPending() {
-        require(!_finalized, "Doc is _finalized");
+        require(!_finalized, "AC.onlyPending: Doc is finalized");
         _;
     }
 
     modifier onlyFinalized() {
-        require(_finalized, "Doc is still pending");
+        require(_finalized, "AC.onlyFinalized: Doc is still pending");
         _;
     }
 
@@ -91,8 +98,7 @@ contract AccessControl is IAccessControl, RegCenterSetting {
         address owner,
         address directKeeper,
         address regCenter,
-        uint8 roleOfUser,
-        uint40 entity
+        address generalKeeper
     ) public {
         require(!_initiated, "already initiated.");
 
@@ -100,18 +106,15 @@ contract AccessControl is IAccessControl, RegCenterSetting {
 
         _setRegCenter(regCenter);
 
-        _rc.regUser(roleOfUser, entity);
+        _setGeneralKeeper(generalKeeper);
 
-        _rc.setManager(0, owner);
-        _rc.setManager(1, directKeeper);
+        _rc.regUser();
 
-        emit Init(owner, directKeeper, address(_rc));
+        _rc.setManager(uint8(TitleOfManagers.Owner), owner);
+        _rc.setManager(uint8(TitleOfManagers.DirectKeeper), directKeeper);
+
+        emit Init(owner, directKeeper, address(_rc), generalKeeper);
     }
-
-    // function regThisContract(uint8 roleOfUser, uint40 entity) public {
-    //     uint40 userNo = _rc.regUser(roleOfUser, entity);
-    //     emit RegThisContract(userNo);
-    // }
 
     function setManager(
         uint8 title,
@@ -119,7 +122,7 @@ contract AccessControl is IAccessControl, RegCenterSetting {
         address acct
     ) external onlyOwnerOrBookeeper {
         require(
-            title > 1 || _rc.isManager(title, caller),
+            title > uint8(TitleOfManagers.DirectKeeper) || _rc.isManager(title, caller),
             "AC.setManager: caller does not has title"
         );
         _rc.setManager(title, acct);
@@ -147,19 +150,11 @@ contract AccessControl is IAccessControl, RegCenterSetting {
 
     function lockContents() public onlyPending {
         _rc.abandonRole(ATTORNEYS, msg.sender);
-        _rc.setManager(2, address(0));
+        _rc.setManager(uint8(TitleOfManagers.GeneralCounsel), address(0));
         _finalized = true;
 
         emit LockContents();
     }
-
-    function quitEntity(uint8 roleOfUser) external onlyManager(0) {
-        _rc.quitEntity(roleOfUser);
-    }
-
-    // function copyRoleTo(bytes32 role, address to) public onlyManager(1) {
-    //     _rc.copyRoleTo(role, msg.sender, to);
-    // }
 
     // ##################
     // ##   查询端口   ##

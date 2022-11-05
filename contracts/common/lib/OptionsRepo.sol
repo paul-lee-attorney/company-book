@@ -9,9 +9,7 @@ pragma solidity ^0.8.8;
 
 import "../../common/lib/SNFactory.sol";
 import "../../common/lib/SNParser.sol";
-import "../../common/lib/EnumsRepo.sol";
 import "../../common/lib/EnumerableSet.sol";
-import "../../common/lib/ObjsRepo.sol";
 import "../../common/lib/Checkpoints.sol";
 
 import "../../books/bos/IBookOfShares.sol";
@@ -106,7 +104,7 @@ library OptionsRepo {
 
         repo.options[0].rightholder++;
 
-        uint40 seq = repo.options[0].rightholder;
+        uint32 seq = uint32(repo.options[0].rightholder);
 
         _sn = _updateSequence(sn, seq);
 
@@ -131,15 +129,28 @@ library OptionsRepo {
         } else return bytes32(0);
     }
 
-    function _updateSequence(bytes32 sn, uint40 seq) private pure returns(bytes32 output) {
+    function _updateSequence(bytes32 sn, uint32 seq) private pure returns(bytes32 output) {
         bytes memory _sn = abi.encodePacked(sn);
-        for (uint i = 0; i < 5; i++) {
+        for (uint i = 0; i < 4; i++) {
             _sn[i+1] = bytes1(uint8(seq >> (8*i)));
         }
         assembly {
             output := mload(add(_sn, 0x20))
         }
     }
+
+    function addObligorIntoOption(Repo storage repo, bytes32 sn, uint40 obligor) internal returns(bool flag) {
+        if (repo.snList.contains(sn) && repo.options[sn].obligors.add(obligor)) {
+            flag = true;
+        }
+    }
+
+    function removeObligorFromOption(Repo storage repo, bytes32 sn, uint40 obligor) internal returns(bool flag) {
+        if (repo.snList.contains(sn) && repo.options[sn].obligors.remove(obligor)) {
+            flag = true;
+        }
+    }
+
 
     function removeOption(Repo storage repo, bytes32 sn) internal returns(bool flag) {
         if (repo.snList.remove(sn)) {
@@ -247,6 +258,15 @@ library OptionsRepo {
         _sn = _sn.intToSN(12, par, 8);
 
         sn = _sn.bytesToBytes32();
+    }
+
+    function removeFuture(Repo storage repo, bytes32 sn, bytes32 ft) 
+        internal 
+        optionExist(repo, sn) 
+        returns(bool flag) 
+    {
+        if (repo.options[sn].futures.remove(ft))
+            flag = true;
     }
 
     function requestPledge(

@@ -20,7 +20,7 @@ import "../../common/ruting/SHASetting.sol";
 import "../../common/ruting/BOSSetting.sol";
 
 import "../../common/lib/SNParser.sol";
-import "../../common/lib/EnumsRepo.sol";
+import "../../common/lib/sol";
 import "../../common/lib/MotionsRepo.sol";
 import "../../common/lib/DelegateMap.sol";
 import "../../common/lib/BallotsBox.sol";
@@ -35,6 +35,21 @@ contract BookOfMotions is
     using DelegateMap for DelegateMap.Map;
     using BallotsBox for BallotsBox.Box;
 
+    enum TypeOfVoting {
+        ZeroPoint,
+        CapitalIncrease,
+        ShareTransferExt,
+        ShareTransferInt,
+        CI_STI,
+        STE_STI,
+        CI_STE_STI,
+        CI_STE,
+        ElectDirector,
+        ReviseAOA,
+        NomalAction,
+        SpecialAction
+    }
+
     //##################
     //##    写接口    ##
     //##################
@@ -46,11 +61,11 @@ contract BookOfMotions is
         onlyManager(1)
     {
         bytes32 rule = _getSHA().votingRules(
-            uint8(EnumsRepo.TypeOfVoting.ElectDirector)
+            uint8(TypeOfVoting.ElectDirector)
         );
 
         MotionsRepo.Head memory head = MotionsRepo.Head({
-            typeOfMotion:uint8(EnumsRepo.TypeOfVoting.ElectDirector),
+            typeOfMotion:uint8(TypeOfVoting.ElectDirector),
             state: 0,        
             submitter: nominator,
             executor: candidate,

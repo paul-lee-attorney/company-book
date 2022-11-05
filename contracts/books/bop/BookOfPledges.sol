@@ -27,14 +27,14 @@ contract BookOfPledges is IBookOfPledges, BOSSetting {
     }
 
     // struct snInfo {
-    //     uint32 ssnOfShare; 5
-    //     uint32 sequence; 5
+    //     uint32 ssnOfShare; 4
+    //     uint16 sequence; 2
     //     uint32 createDate; 4
     //     uint40 pledgor; 5
     //     uint40 debtor; 5
     // }
 
-    // _pledges[ssn][0] : counterOfPledge
+    // _pledges[ssn][0].creditor : counterOfPledge
 
     // ssn => seq => Pledge
     mapping(uint256 => mapping(uint256 => Pledge)) private _pledges;
@@ -81,7 +81,7 @@ contract BookOfPledges is IBookOfPledges, BOSSetting {
     function _updateSNDate(bytes32 sn) private view returns (bytes32) {
         bytes memory _sn = abi.encodePacked(sn);
         
-        _sn = _sn.dateToSN(80, uint32(block.timestamp));
+        _sn = _sn.dateToSN(6, uint32(block.timestamp));
 
         return _sn.bytesToBytes32();
     }
@@ -136,7 +136,7 @@ contract BookOfPledges is IBookOfPledges, BOSSetting {
         uint32 ssn = sn.ssnOfPledge();
         uint32 seq = sn.sequenceOfPledge();
 
-        return seq > 0 && _pledges[ssn][seq].sn.sequenceOfPledge() == seq;
+        return ssn > 0 && _pledges[ssn][seq].sn.sequenceOfPledge() == seq;
     }
 
     function getPledge(bytes32 sn)

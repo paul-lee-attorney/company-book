@@ -7,11 +7,10 @@
 
 pragma solidity ^0.8.8;
 
-pragma experimental ABIEncoderV2;
-
 import "../common/access/AccessControl.sol";
 import "../common/access/IAccessControl.sol";
 
+import "./IGeneralKeeper.sol";
 import "./IBOAKeeper.sol";
 import "./IBODKeeper.sol";
 import "./ISHAKeeper.sol";
@@ -21,7 +20,7 @@ import "./IBOOKeeper.sol";
 import "./IBOPKeeper.sol";
 import "./IBOSKeeper.sol";
 
-contract GeneralKeeper is AccessControl {
+contract GeneralKeeper is IGeneralKeeper, AccessControl {
     IBOAKeeper private _BOAKeeper;
     IBODKeeper private _BODKeeper;
     ISHAKeeper private _SHAKeeper;
@@ -30,26 +29,6 @@ contract GeneralKeeper is AccessControl {
     IBOOKeeper private _BOOKeeper;
     IBOPKeeper private _BOPKeeper;
     IBOSKeeper private _BOSKeeper;
-
-    // ###############
-    // ##   Event   ##
-    // ###############
-
-    event SetBOAKeeper(address keeper);
-
-    event SetBODKeeper(address keeper);
-
-    event SetSHAKeeper(address keeper);
-
-    event SetBOHKeeper(address keeper);
-
-    event SetBOMKeeper(address keeper);
-
-    event SetBOOKeeper(address keeper);
-
-    event SetBOPKeeper(address keeper);
-
-    event SetBOSKeeper(address keeper);
 
     // ######################
     // ##   AccessControl   ##
@@ -93,6 +72,18 @@ contract GeneralKeeper is AccessControl {
     function setSHAKeeper(address keeper) external onlyManager(1) {
         _SHAKeeper = ISHAKeeper(keeper);
         emit SetSHAKeeper(keeper);
+    }
+
+    function isKeeper(address caller) external view returns(bool flag) {
+        if (caller == address(_BOAKeeper) ||
+            caller == address(_BODKeeper) ||
+            caller == address(_BOHKeeper) ||
+            caller == address(_SHAKeeper) ||
+            caller == address(_BOMKeeper) ||
+            caller == address(_BOOKeeper) ||
+            caller == address(_BOPKeeper) ||
+            caller == address(_BOSKeeper)
+        ) flag = true;
     }
 
     // ###################
@@ -146,7 +137,7 @@ contract GeneralKeeper is AccessControl {
     // ##   BODKeeper   ##
     // ###################
 
-    function appointDirector(uint32 candidate, uint8 title) external {
+    function appointDirector(uint40 candidate, uint8 title) external {
         _BODKeeper.appointDirector(candidate, title, _msgSender());
     }
 
@@ -154,7 +145,7 @@ contract GeneralKeeper is AccessControl {
         _BODKeeper.takePosition(_msgSender(), motionId);
     }
 
-    function removeDirector(uint32 director) external {
+    function removeDirector(uint40 director) external {
         _BODKeeper.removeDirector(director, _msgSender());
     }
 
@@ -165,7 +156,7 @@ contract GeneralKeeper is AccessControl {
     // ==== resolution ====
 
     function entrustDirectorDelegate(
-        uint32 delegate,
+        uint40 delegate,
         uint256 actionId
     ) external {
         _BODKeeper.entrustDelegate(_msgSender(), delegate, actionId);
@@ -236,13 +227,13 @@ contract GeneralKeeper is AccessControl {
     // ###################
 
     function entrustMemberDelegate(
-        uint32 delegate,
+        uint40 delegate,
         uint256 motionId
     ) external {
         _BOMKeeper.entrustDelegate(_msgSender(), delegate, motionId);
     }
 
-    function nominateDirector(uint32 candidate)
+    function nominateDirector(uint40 candidate)
         external
     {
         _BOMKeeper.nominateDirector(candidate, _msgSender());
@@ -294,7 +285,7 @@ contract GeneralKeeper is AccessControl {
     function requestToBuy(
         address ia,
         bytes32 sn,
-        uint32 againstVoter
+        uint40 againstVoter
     ) external {
         _BOMKeeper.requestToBuy(ia, sn, againstVoter, _msgSender());
     }
@@ -305,15 +296,13 @@ contract GeneralKeeper is AccessControl {
 
     function createOption(
         bytes32 sn,
-        uint32 rightholder,
-        uint32[] memory obligors,
+        uint40 rightholder,
         uint64 paid,
         uint64 par
     ) external {
         _BOOKeeper.createOption(
             sn,
             rightholder,
-            obligors,
             paid,
             par,
             _msgSender()
@@ -365,17 +354,17 @@ contract GeneralKeeper is AccessControl {
     // ###################
 
     function createPledge(
+        bytes32 sn,
         bytes32 shareNumber,
         uint64 pledgedPar,
-        uint32 creditor,
-        uint32 debtor,
+        uint40 creditor,
         uint64 guaranteedAmt
     ) external {
         _BOPKeeper.createPledge(
+            sn,
             shareNumber,
-            pledgedPar,
             creditor,
-            debtor,
+            pledgedPar,
             guaranteedAmt,
             _msgSender()
         );
@@ -383,7 +372,7 @@ contract GeneralKeeper is AccessControl {
 
     function updatePledge(
         bytes32 sn,
-        uint32 creditor,
+        uint40 creditor,
         uint64 pledgedPar,
         uint64 guaranteedAmt
     ) external {
@@ -420,10 +409,6 @@ contract GeneralKeeper is AccessControl {
         _BOSKeeper.decreaseCapital(ssn, parValue, paidPar);
     }
 
-    function freezeShare(uint32 ssn) external onlyManager(1) {
-        _BOSKeeper.freezeShare(ssn);
-    }
-
     function setMaxQtyOfMembers(uint8 max) external onlyManager(1) {
         _BOSKeeper.setMaxQtyOfMembers(max);
     }
@@ -438,8 +423,8 @@ contract GeneralKeeper is AccessControl {
         address ia,
         bytes32 sn,
         bytes32 shareNumber,
-        uint64 parValue,
-        uint64 paidPar,
+        uint64 paid,
+        uint64 par,
         bytes32 sigHash
     ) external {
         _SHAKeeper.execAlongRight(
@@ -447,9 +432,9 @@ contract GeneralKeeper is AccessControl {
             sn,
             false,
             shareNumber,
-            parValue,
-            paidPar,
-            msg.sender,
+            paid,
+            par,
+            _msgSender(),
             sigHash
         );
     }
@@ -468,8 +453,8 @@ contract GeneralKeeper is AccessControl {
         address ia,
         bytes32 sn,
         bytes32 shareNumber,
-        uint64 parValue,
-        uint64 paidPar,
+        uint64 paid,
+        uint64 par,
         bytes32 sigHash
     ) external {
         _SHAKeeper.execAlongRight(
@@ -477,9 +462,9 @@ contract GeneralKeeper is AccessControl {
             sn,
             true,
             shareNumber,
-            parValue,
-            paidPar,
-            msg.sender,
+            paid,
+            par,
+            _msgSender(),
             sigHash
         );
     }

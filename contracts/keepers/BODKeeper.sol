@@ -7,6 +7,8 @@
 
 pragma solidity ^0.8.8;
 
+import "../books/bod/BookOfDirectors.sol";
+
 import "../common/ruting/BODSetting.sol";
 import "../common/ruting/BOMSetting.sol";
 import "../common/ruting/BOSSetting.sol";
@@ -30,12 +32,12 @@ contract BODKeeper is
         uint40 appointer
     ) external onlyManager(1) {
         require(
-            _getSHA().boardSeatsQuotaOf(appointer) >
+            _getSHA().boardSeatsOf(appointer) >
                 _bod.appointmentCounter(appointer),
             "BODKeeper.appointDirector: board seats quota used out"
         );
 
-        if (title == uint8(EnumsRepo.TitleOfDirectors.Chairman)) {
+        if (title == uint8(BookOfDirectors.TitleOfDirectors.Chairman)) {
             require(
                 _getSHA().appointerOfChairman() == appointer,
                 "BODKeeper.appointDirector: has no appointment right"
@@ -45,7 +47,7 @@ contract BODKeeper is
                 _bod.whoIs(title) == 0 || _bod.whoIs(title) == candidate,
                 "BODKeeper.appointDirector: current Chairman shall quit first"
             );
-        } else if (title == uint8(EnumsRepo.TitleOfDirectors.ViceChairman)) {
+        } else if (title == uint8(BookOfDirectors.TitleOfDirectors.ViceChairman)) {
             require(
                 _getSHA().appointerOfViceChairman() == appointer,
                 "BODKeeper.appointDirector: has no appointment right"
@@ -54,7 +56,7 @@ contract BODKeeper is
                 _bod.whoIs(title) == 0 || _bod.whoIs(title) == candidate,
                 "BODKeeper.appointDirector: current ViceChairman shall quit first"
             );
-        } else if (title != uint8(EnumsRepo.TitleOfDirectors.Director)) {
+        } else if (title != uint8(BookOfDirectors.TitleOfDirectors.Director)) {
             revert("BODKeeper.appointDirector: there is not such title for candidate");
         }
 

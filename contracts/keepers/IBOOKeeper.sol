@@ -13,20 +13,16 @@ interface IBOOKeeper {
     // #################
 
     function createOption(
-        uint8 typeOfOpt,
+        bytes32 sn,
         uint40 rightholder,
-        uint32 triggerDate,
-        uint8 exerciseDays,
-        uint8 closingDays,
-        uint32 rate,
-        uint64 parValue,
-        uint64 paidPar,
+        uint64 paid,
+        uint64 par,
         uint40 caller
     ) external;
 
     function joinOptionAsObligor(bytes32 sn, uint40 caller) external;
 
-    function releaseObligorFromOption(
+    function removeObligorFromOption(
         bytes32 sn,
         uint40 obligor,
         uint40 caller

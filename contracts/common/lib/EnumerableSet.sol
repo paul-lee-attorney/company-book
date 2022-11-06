@@ -3,10 +3,7 @@
 
 pragma solidity ^0.8.8;
 
-import "./SNParser.sol";
-
 library EnumerableSet {
-    using SNParser for bytes32;
 
     struct Set {
         bytes32[] _values;

@@ -16,7 +16,7 @@ import "../../../common/ruting/BOASetting.sol";
 import "../../../common/lib/SNParser.sol";
 import "../../../common/lib/SNFactory.sol";
 import "../../../common/lib/EnumerableSet.sol";
-import "../../../common/lib/sol";
+import "../../../common/components/DocumentsRepo.sol";
 
 import "./IAlongs.sol";
 

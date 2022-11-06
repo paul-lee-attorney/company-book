@@ -10,12 +10,15 @@ pragma solidity ^0.8.8;
 import "./IShareholdersAgreement.sol";
 import "./terms/ITerm.sol";
 
+import "../../books/boh/BookOfSHA.sol";
+
 import "../../common/access/IAccessControl.sol";
 import "../../common/components/SigPage.sol";
 
 import "../../common/lib/SNParser.sol";
 
 import "../../common/ruting/IBookSetting.sol";
+import "../../common/ruting/BOASetting.sol";
 import "../../common/ruting/SHASetting.sol";
 import "../../common/ruting/BOSSetting.sol";
 import "../../common/ruting/BOMSetting.sol";
@@ -25,12 +28,24 @@ import "../../common/utils/CloneFactory.sol";
 contract ShareholdersAgreement is
     IShareholdersAgreement,
     CloneFactory,
+    BOASetting,
     SHASetting,
     BOMSetting,
     BOSSetting,
     SigPage
 {
     using SNParser for bytes32;
+
+    enum TermTitle {
+        ZeroPoint, //            0
+        LOCK_UP, //              1
+        ANTI_DILUTION, //        2
+        FIRST_REFUSAL, //        3
+        GROUPS_UPDATE, //        4
+        DRAG_ALONG, //           5
+        TAG_ALONG, //            6
+        OPTIONS //               7
+    }
 
     struct Term {
         uint8 title;
@@ -123,6 +138,12 @@ contract ShareholdersAgreement is
 
         IBookSetting(body).setBOS(address(_bos));
         IBookSetting(body).setBOM(address(_bom));
+
+        if (title == uint8(TermTitle.DRAG_ALONG) || 
+            title == uint8(TermTitle.TAG_ALONG)) 
+        {
+            IBookSetting(body).setBOA(address(_boa));
+        } 
 
         Term storage t = _terms[title];
         t.title = title;

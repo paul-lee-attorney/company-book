@@ -12,7 +12,7 @@ import "../books/boh/terms/ITerm.sol";
 import "../books/boh/terms/IAlongs.sol";
 import "../books/boh/terms/IFirstRefusal.sol";
 
-import "../books/boh/BookOfSHA.sol";
+import "../books/boh/ShareholdersAgreement.sol";
 
 import "../books/boa/InvestmentAgreement.sol";
 import "../books/boa/IInvestmentAgreement.sol";
@@ -125,8 +125,8 @@ contract SHAKeeper is ISHAKeeper, BOASetting, BOSSetting, SHASetting {
             .shareholder();
 
         address term = dragAlong
-            ? _getSHA().getTerm(uint8(BookOfSHA.TermTitle.DRAG_ALONG))
-            : _getSHA().getTerm(uint8(BookOfSHA.TermTitle.TAG_ALONG));
+            ? _getSHA().getTerm(uint8(ShareholdersAgreement.TermTitle.DRAG_ALONG))
+            : _getSHA().getTerm(uint8(ShareholdersAgreement.TermTitle.TAG_ALONG));
 
         require(ITerm(term).isTriggered(ia, sn), "not triggered");
 
@@ -264,7 +264,7 @@ contract SHAKeeper is ISHAKeeper, BOASetting, BOSSetting, SHASetting {
         );
 
         address ad = _getSHA().getTerm(
-            uint8(BookOfSHA.TermTitle.ANTI_DILUTION)
+            uint8(ShareholdersAgreement.TermTitle.ANTI_DILUTION)
         );
 
         uint64 giftPar = IAntiDilution(ad).giftPar(ia, sn, shareNumber);
@@ -387,7 +387,7 @@ contract SHAKeeper is ISHAKeeper, BOASetting, BOSSetting, SHASetting {
         require(!ISigPage(ia).isInitSigner(caller), "caller is an init signer");
 
         address term = _getSHA().getTerm(
-            uint8(BookOfSHA.TermTitle.FIRST_REFUSAL)
+            uint8(ShareholdersAgreement.TermTitle.FIRST_REFUSAL)
         );
         require(
             IFirstRefusal(term).isRightholder(snOfOD.typeOfDeal(), caller),

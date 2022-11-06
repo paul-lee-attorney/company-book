@@ -7,7 +7,7 @@
 
 pragma solidity ^0.8.8;
 
-import "../books/boh/BookOfSHA.sol";
+import "../books/boh/ShareholdersAgreement.sol";
 import "../books/boh/IShareholdersAgreement.sol";
 import "../books/boh/terms/IGroupsUpdate.sol";
 
@@ -28,6 +28,7 @@ import "./IBOHKeeper.sol";
 
 contract BOHKeeper is
     IBOHKeeper,
+    BOASetting,
     BODSetting,
     SHASetting,
     BOMSetting,
@@ -78,6 +79,7 @@ contract BOHKeeper is
             address(_gk)
         );
 
+        IBookSetting(sha).setBOA(address(_boa));
         IBookSetting(sha).setBOH(address(_boh));
         IBookSetting(sha).setBOS(address(_bos));
         IBookSetting(sha).setBOSCal(address(_bosCal));
@@ -168,23 +170,23 @@ contract BOHKeeper is
 
         if (
             IShareholdersAgreement(sha).hasTitle(
-                uint8(BookOfSHA.TermTitle.OPTIONS)
+                uint8(ShareholdersAgreement.TermTitle.OPTIONS)
             )
         )
             _boo.registerOption(
                 IShareholdersAgreement(sha).getTerm(
-                    uint8(BookOfSHA.TermTitle.OPTIONS)
+                    uint8(ShareholdersAgreement.TermTitle.OPTIONS)
                 )
             );
 
         if (
             IShareholdersAgreement(sha).hasTitle(
-                uint8(BookOfSHA.TermTitle.GROUPS_UPDATE)
+                uint8(ShareholdersAgreement.TermTitle.GROUPS_UPDATE)
             )
         ) {
             bytes32[] memory guo = IGroupsUpdate(
                 IShareholdersAgreement(sha).getTerm(
-                    uint8(BookOfSHA.TermTitle.GROUPS_UPDATE)
+                    uint8(ShareholdersAgreement.TermTitle.GROUPS_UPDATE)
                 )
             ).orders();
             len = guo.length;

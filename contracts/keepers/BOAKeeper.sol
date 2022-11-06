@@ -9,7 +9,7 @@ pragma solidity ^0.8.8;
 
 import "../books/boa/InvestmentAgreement.sol";
 import "../books/boa/IInvestmentAgreement.sol";
-import "../books/boh/BookOfSHA.sol";
+import "../books/boh/ShareholdersAgreement.sol";
 
 import "../common/access/IAccessControl.sol";
 
@@ -34,16 +34,16 @@ contract BOAKeeper is
 {
     using SNParser for bytes32;
 
-    BookOfSHA.TermTitle[] private _termsForCapitalIncrease = [
-        BookOfSHA.TermTitle.ANTI_DILUTION,
-        BookOfSHA.TermTitle.FIRST_REFUSAL
+    ShareholdersAgreement.TermTitle[] private _termsForCapitalIncrease = [
+        ShareholdersAgreement.TermTitle.ANTI_DILUTION,
+        ShareholdersAgreement.TermTitle.FIRST_REFUSAL
     ];
 
-    BookOfSHA.TermTitle[] private _termsForShareTransfer = [
-        BookOfSHA.TermTitle.LOCK_UP,
-        BookOfSHA.TermTitle.FIRST_REFUSAL,
-        BookOfSHA.TermTitle.TAG_ALONG,
-        BookOfSHA.TermTitle.DRAG_ALONG
+    ShareholdersAgreement.TermTitle[] private _termsForShareTransfer = [
+        ShareholdersAgreement.TermTitle.LOCK_UP,
+        ShareholdersAgreement.TermTitle.FIRST_REFUSAL,
+        ShareholdersAgreement.TermTitle.TAG_ALONG,
+        ShareholdersAgreement.TermTitle.DRAG_ALONG
     ];
 
     // ##################
@@ -257,7 +257,7 @@ contract BOAKeeper is
     }
 
     function _checkSHA(
-        BookOfSHA.TermTitle[] memory terms,
+        ShareholdersAgreement.TermTitle[] memory terms,
         address ia,
         bytes32 sn
     ) private view {

@@ -20,7 +20,6 @@ import "../../common/ruting/SHASetting.sol";
 import "../../common/ruting/BOSSetting.sol";
 
 import "../../common/lib/SNParser.sol";
-import "../../common/lib/sol";
 import "../../common/lib/MotionsRepo.sol";
 import "../../common/lib/DelegateMap.sol";
 import "../../common/lib/BallotsBox.sol";

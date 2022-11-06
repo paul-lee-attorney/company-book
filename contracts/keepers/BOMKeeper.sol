@@ -8,7 +8,7 @@
 pragma solidity ^0.8.8;
 
 import "../books/boa/IInvestmentAgreement.sol";
-import "../books/boh/BookOfSHA.sol";
+import "../books/boh/ShareholdersAgreement.sol";
 import "../books/boo/BookOfOptions.sol";
 
 import "../common/ruting/IBookSetting.sol";
@@ -104,27 +104,27 @@ contract BOMKeeper is
             len--;
 
             if (
-                _getSHA().hasTitle(uint8(BookOfSHA.TermTitle.FIRST_REFUSAL)) &&
+                _getSHA().hasTitle(uint8(ShareholdersAgreement.TermTitle.FIRST_REFUSAL)) &&
                 _getSHA().termIsTriggered(
-                    uint8(BookOfSHA.TermTitle.FIRST_REFUSAL),
+                    uint8(ShareholdersAgreement.TermTitle.FIRST_REFUSAL),
                     ia,
                     sn
                 )
             ) return true;
 
             if (
-                _getSHA().hasTitle(uint8(BookOfSHA.TermTitle.TAG_ALONG)) &&
+                _getSHA().hasTitle(uint8(ShareholdersAgreement.TermTitle.TAG_ALONG)) &&
                 _getSHA().termIsTriggered(
-                    uint8(BookOfSHA.TermTitle.TAG_ALONG),
+                    uint8(ShareholdersAgreement.TermTitle.TAG_ALONG),
                     ia,
                     sn
                 )
             ) return true;
 
             if (
-                _getSHA().hasTitle(uint8(BookOfSHA.TermTitle.DRAG_ALONG)) &&
+                _getSHA().hasTitle(uint8(ShareholdersAgreement.TermTitle.DRAG_ALONG)) &&
                 _getSHA().termIsTriggered(
-                    uint8(BookOfSHA.TermTitle.DRAG_ALONG),
+                    uint8(ShareholdersAgreement.TermTitle.DRAG_ALONG),
                     ia,
                     sn
                 )

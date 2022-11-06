@@ -188,8 +188,22 @@ library BallotsBox {
     function getVote(Box storage box, uint40 acct)
         internal
         view
-        returns (Ballot memory)
+        returns (
+            uint40 voter,
+            uint64 weight,
+            uint8 attitude,
+            uint32 blockNumber,
+            uint32 sigDate,
+            bytes32 sigHash
+        )
     {
-        return box.ballots[acct];
+        Ballot storage b = box.ballots[acct];
+
+        voter = b.voter;
+        weight = b.weight;
+        attitude = b.attitude;
+        blockNumber = b.blockNumber;
+        sigDate = b.sigDate;
+        sigHash = b.sigHash;
     }
 }

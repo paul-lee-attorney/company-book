@@ -149,7 +149,13 @@ interface IMeetingMinutes {
     function getVote(uint256 motionId, uint40 acct)
         external
         view
-        returns (BallotsBox.Ballot memory);
+        returns (
+            uint40 voter,
+            uint64 weight,
+            uint8 attitude,
+            uint32 blockNumber,
+            uint32 sigDate,
+            bytes32 sigHash);
 
     function isPassed(uint256 motionId)
         external

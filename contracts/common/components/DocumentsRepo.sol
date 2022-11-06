@@ -13,12 +13,13 @@ import "../lib/SNFactory.sol";
 import "../lib/SNParser.sol";
 import "../lib/EnumerableSet.sol";
 
+import "../ruting/BOASetting.sol"; 
 import "../ruting/BOSSetting.sol"; 
 import "../ruting/SHASetting.sol";
 
 import "../utils/CloneFactory.sol";
 
-contract DocumentsRepo is IDocumentsRepo, CloneFactory, SHASetting, BOSSetting {
+contract DocumentsRepo is IDocumentsRepo, CloneFactory, BOASetting, SHASetting, BOSSetting {
     using SNFactory for bytes;
     using SNParser for bytes32;
     using EnumerableSet for EnumerableSet.Bytes32Set;

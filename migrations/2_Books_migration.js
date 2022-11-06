@@ -272,7 +272,6 @@ module.exports = async function (deployer, network, accounts) {
     await bom.setManager(1, accounts[0], bomKeeper.address);
     await boo.setManager(1, accounts[0], booKeeper.address);
     await bop.setManager(1, accounts[0], bopKeeper.address);
-    // await bos.setManager(1, accounts[0], bosKeeper.address);
     await bosCal.setManager(1, accounts[0], boaKeeper.address);
 
     // ==== Keepers Setting ====

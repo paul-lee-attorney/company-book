@@ -9,8 +9,9 @@ pragma solidity ^0.8.8;
 
 import "../../boa//IInvestmentAgreement.sol";
 
-import "../../../common/ruting/BOSSetting.sol";
+// import "../../../common/ruting/BOSSetting.sol";
 import "../../../common/ruting/BOMSetting.sol";
+import "../../../common/ruting/ROMSetting.sol";
 
 import "../../../common/lib/ArrayUtils.sol";
 import "../../../common/lib/EnumerableSet.sol";
@@ -22,7 +23,7 @@ import "../../../common/components/ISigPage.sol";
 import "./IFirstRefusal.sol";
 import "./ITerm.sol";
 
-contract FirstRefusal is IFirstRefusal, ITerm, BOSSetting, BOMSetting {
+contract FirstRefusal is IFirstRefusal, ITerm, BOMSetting, ROMSetting {
     using ArrayUtils for uint40[];
     using SNFactory for bytes;
     using SNParser for bytes32;
@@ -34,7 +35,7 @@ contract FirstRefusal is IFirstRefusal, ITerm, BOSSetting, BOMSetting {
     }
 
     // struct ruleInfo {
-    //     uint8 typeOfDeal; 1-CI; 2-ST(ext); 3-ST(int); (4-1&3; 5-2&3; 6-1&2&3; 7-1&2) 
+    //     uint8 typeOfDeal; 1-CI; 2-ST(ext); 3-ST(int); (4-1&3; 5-2&3; 6-1&2&3; 7-1&2)
     //     bool membersEqual;
     //     bool proRata;
     //     bool basedOnPar;
@@ -78,7 +79,6 @@ contract FirstRefusal is IFirstRefusal, ITerm, BOSSetting, BOMSetting {
         bool proRata,
         bool basedOnPar
     ) external onlyAttorney {
-
         bytes32 rule = _createRule(
             typeOfDeal,
             membersEqualOfFR,
@@ -152,7 +152,7 @@ contract FirstRefusal is IFirstRefusal, ITerm, BOSSetting, BOMSetting {
     {
         FR storage fr = _firstRefusals[typeOfDeal];
 
-        if (fr.rule.membersEqualOfFR()) return _bos.isMember(acct);
+        if (fr.rule.membersEqualOfFR()) return _rom.isMember(acct);
         else return fr.rightholders.contains(acct);
     }
 
@@ -164,7 +164,7 @@ contract FirstRefusal is IFirstRefusal, ITerm, BOSSetting, BOMSetting {
     {
         FR storage fr = _firstRefusals[typeOfDeal];
 
-        if (fr.rule.membersEqualOfFR()) return _bos.membersList();
+        if (fr.rule.membersEqualOfFR()) return _rom.membersList();
         else return fr.rightholders.valuesToUint40();
     }
 
@@ -187,12 +187,12 @@ contract FirstRefusal is IFirstRefusal, ITerm, BOSSetting, BOMSetting {
 
         (uint40[] memory consentParties, ) = _bom.getYea(uint256(uint160(ia)));
 
-        uint40[] memory signers = ISigPage(ia).parties();
+        uint40[] memory signers = ISigPage(ia).partiesOfDoc();
 
         uint40[] memory agreedParties = consentParties.combine(signers);
 
         if (rule.membersEqualOfFR())
-            return _bos.membersList().fullyCoveredBy(agreedParties);
+            return _rom.membersList().fullyCoveredBy(agreedParties);
         else
             return
                 _firstRefusals[sn.typeOfDeal()]

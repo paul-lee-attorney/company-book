@@ -25,6 +25,7 @@ import "../common/components/ISigPage.sol";
 import "../common/ruting/IBookSetting.sol";
 import "../common/ruting/BOASetting.sol";
 import "../common/ruting/BOSSetting.sol";
+import "../common/ruting/ROMSetting.sol";
 import "../common/ruting/SHASetting.sol";
 
 import "../common/lib/SNParser.sol";
@@ -32,7 +33,13 @@ import "../common/lib/SNFactory.sol";
 
 import "./ISHAKeeper.sol";
 
-contract SHAKeeper is ISHAKeeper, BOASetting, BOSSetting, SHASetting {
+contract SHAKeeper is
+    ISHAKeeper,
+    BOASetting,
+    BOSSetting,
+    ROMSetting,
+    SHASetting
+{
     using SNParser for bytes32;
     using SNFactory for bytes;
 
@@ -58,7 +65,8 @@ contract SHAKeeper is ISHAKeeper, BOASetting, BOSSetting, SHASetting {
 
     modifier onlyEstablished(address ia) {
         require(
-            IDocumentsRepo(address(_boa)).currentState(ia) == uint8(DocumentsRepo.BODStates.Established),
+            IDocumentsRepo(address(_boa)).currentState(ia) ==
+                uint8(DocumentsRepo.BODStates.Established),
             "IA not established"
         );
         _;
@@ -85,16 +93,7 @@ contract SHAKeeper is ISHAKeeper, BOASetting, BOSSetting, SHASetting {
 
         IBookSetting(mock).setBOH(address(_boh));
 
-        _addAlongDeal(
-            dragAlong,
-            ia,
-            mock,
-            sn,
-            shareNumber,
-            paid,
-            par,
-            caller
-        );
+        _addAlongDeal(dragAlong, ia, mock, sn, shareNumber, paid, par, caller);
 
         bytes32 alongSN = _createAlongDeal(ia, sn, dragAlong, shareNumber);
 
@@ -103,11 +102,7 @@ contract SHAKeeper is ISHAKeeper, BOASetting, BOSSetting, SHASetting {
         _lockDealSubject(ia, alongSN, par);
 
         if (!dragAlong)
-            ISigPage(ia).signDeal(
-                alongSN.sequence(),
-                caller,
-                sigHash
-            );
+            ISigPage(ia).signDeal(alongSN.sequence(), caller, sigHash);
     }
 
     function _addAlongDeal(
@@ -125,8 +120,12 @@ contract SHAKeeper is ISHAKeeper, BOASetting, BOSSetting, SHASetting {
             .shareholder();
 
         address term = dragAlong
-            ? _getSHA().getTerm(uint8(ShareholdersAgreement.TermTitle.DRAG_ALONG))
-            : _getSHA().getTerm(uint8(ShareholdersAgreement.TermTitle.TAG_ALONG));
+            ? _getSHA().getTerm(
+                uint8(ShareholdersAgreement.TermTitle.DRAG_ALONG)
+            )
+            : _getSHA().getTerm(
+                uint8(ShareholdersAgreement.TermTitle.TAG_ALONG)
+            );
 
         require(ITerm(term).isTriggered(ia, sn), "not triggered");
 
@@ -173,13 +172,14 @@ contract SHAKeeper is ISHAKeeper, BOASetting, BOSSetting, SHASetting {
         uint40 buyer = sn.buyerOfDeal();
 
         bytes32 snOfAlong = _createDealSN(
-            shareNumber.class(), 
-            IInvestmentAgreement(ia).counterOfDeals() + 1, 
-            typeOfDeal, 
-            buyer, 
-            _bos.groupNo(buyer), 
-            shareNumber.ssn(), 
-            sn.sequence());
+            shareNumber.class(),
+            IInvestmentAgreement(ia).counterOfDeals() + 1,
+            typeOfDeal,
+            buyer,
+            _rom.groupNo(buyer),
+            shareNumber.ssn(),
+            sn.sequence()
+        );
 
         aSN = IInvestmentAgreement(ia).createDeal(snOfAlong, shareNumber);
     }
@@ -191,7 +191,9 @@ contract SHAKeeper is ISHAKeeper, BOASetting, BOSSetting, SHASetting {
         uint64 paid,
         uint64 par
     ) private {
-        uint32 unitPrice = IInvestmentAgreement(ia).unitPriceOfDeal(sn.sequence());
+        uint32 unitPrice = IInvestmentAgreement(ia).unitPriceOfDeal(
+            sn.sequence()
+        );
 
         uint32 closingDate = IInvestmentAgreement(ia).closingDateOfDeal(
             sn.sequence()
@@ -228,16 +230,14 @@ contract SHAKeeper is ISHAKeeper, BOASetting, BOSSetting, SHASetting {
         address mock = _boa.mockResultsOfIA(ia);
         require(mock > address(0), "no MockResults are found for IA");
 
-
         uint16 seq = sn.sequence();
         uint64 amount;
 
         if (_getSHA().basedOnPar()) {
-        (, , amount, , ) = IInvestmentAgreement(ia).getDeal(seq);
+            (, , amount, , ) = IInvestmentAgreement(ia).getDeal(seq);
         } else {
-        (, amount, , , ) = IInvestmentAgreement(ia).getDeal(seq);
+            (, amount, , , ) = IInvestmentAgreement(ia).getDeal(seq);
         }
-
 
         IMockResults(mock).mockDealOfBuy(sn, amount);
 
@@ -284,7 +284,7 @@ contract SHAKeeper is ISHAKeeper, BOASetting, BOSSetting, SHASetting {
         bytes32 sigHash
     ) private {
         for (uint256 i = 0; i < obligors.length; i++) {
-            bytes32[] memory sharesInHand = _bos.sharesInHand(obligors[i]);
+            bytes32[] memory sharesInHand = _rom.sharesInHand(obligors[i]);
 
             for (uint256 j = 0; j < sharesInHand.length; j++) {
                 (bytes32 snOfGiftDeal, uint64 result) = _createGift(
@@ -317,21 +317,22 @@ contract SHAKeeper is ISHAKeeper, BOASetting, BOSSetting, SHASetting {
         uint64 lockAmount;
 
         if (targetCleanPar > 0) {
-            
             snOfGiftDeal = _createDealSN(
-                shareNumber.class(), 
-                IInvestmentAgreement(ia).counterOfDeals()+1,
-                uint8(InvestmentAgreement.TypeOfDeal.FreeGift), 
-                caller, 
-                _bos.groupNo(caller), 
-                shareNumber.ssn(), 
-                sn.sequence());
+                shareNumber.class(),
+                IInvestmentAgreement(ia).counterOfDeals() + 1,
+                uint8(InvestmentAgreement.TypeOfDeal.FreeGift),
+                caller,
+                _rom.groupNo(caller),
+                shareNumber.ssn(),
+                sn.sequence()
+            );
 
-            snOfGiftDeal = IInvestmentAgreement(ia).createDeal(snOfGiftDeal, shareNumber);
+            snOfGiftDeal = IInvestmentAgreement(ia).createDeal(
+                snOfGiftDeal,
+                shareNumber
+            );
 
-            lockAmount = (targetCleanPar < giftPar)
-                ? targetCleanPar
-                : giftPar;
+            lockAmount = (targetCleanPar < giftPar) ? targetCleanPar : giftPar;
 
             _updateGiftDeal(ia, snOfGiftDeal, lockAmount);
 
@@ -419,8 +420,7 @@ contract SHAKeeper is ISHAKeeper, BOASetting, BOSSetting, SHASetting {
 
         bytes32 shareNumber;
 
-        if (ssnOfOD > 0)
-            (shareNumber, , , , ) = _bos.getShare(ssnOfOD);
+        if (ssnOfOD > 0) (shareNumber, , , , ) = _bos.getShare(ssnOfOD);
 
         uint16 seq = IInvestmentAgreement(ia).counterOfDeals() + 1;
 
@@ -429,16 +429,15 @@ contract SHAKeeper is ISHAKeeper, BOASetting, BOSSetting, SHASetting {
             seq,
             ssnOfOD == 0
                 ? uint8(InvestmentAgreement.TypeOfDeal.PreEmptive)
-                : uint8(InvestmentAgreement.TypeOfDeal.FirstRefusal), 
-            caller, 
-            _bos.groupNo(caller),
-            shareNumber.ssn(), 
+                : uint8(InvestmentAgreement.TypeOfDeal.FirstRefusal),
+            caller,
+            _rom.groupNo(caller),
+            shareNumber.ssn(),
             snOfOD.sequence()
         );
 
         snOfFR = IInvestmentAgreement(ia).createDeal(snOfFR, shareNumber);
-        
-     }
+    }
 
     function _createDealSN(
         uint16 class,
@@ -448,7 +447,7 @@ contract SHAKeeper is ISHAKeeper, BOASetting, BOSSetting, SHASetting {
         uint16 group,
         uint32 ssn,
         uint16 preSeq
-    ) private pure returns(bytes32 sn) {
+    ) private pure returns (bytes32 sn) {
         bytes memory _sn = new bytes(32);
 
         _sn = _sn.sequenceToSN(0, class);
@@ -471,9 +470,12 @@ contract SHAKeeper is ISHAKeeper, BOASetting, BOSSetting, SHASetting {
     ) external onlyManager(1) onlyEstablished(ia) afterReviewPeriod(ia) {
         uint16 ssnOfOD = snOfOD.sequence();
 
-        if (snOfOD.typeOfDeal() == uint8(InvestmentAgreement.TypeOfDeal.CapitalIncrease))
+        if (
+            snOfOD.typeOfDeal() ==
+            uint8(InvestmentAgreement.TypeOfDeal.CapitalIncrease)
+        )
             require(
-                _bos.groupNo(caller) == _bos.controllor(),
+                _rom.groupNo(caller) == _rom.controllor(),
                 "caller not belong to controller group"
             );
         else
@@ -513,10 +515,13 @@ contract SHAKeeper is ISHAKeeper, BOASetting, BOSSetting, SHASetting {
         uint16 ssnOfFR,
         uint64 ratio
     ) private {
-        (, uint64 paid, uint64 par, , ) = IInvestmentAgreement(ia)
-            .getDeal(ssnOfOD);
+        (, uint64 paid, uint64 par, , ) = IInvestmentAgreement(ia).getDeal(
+            ssnOfOD
+        );
         uint32 unitPrice = IInvestmentAgreement(ia).unitPriceOfDeal(ssnOfOD);
-        uint32 closingDate = IInvestmentAgreement(ia).closingDateOfDeal(ssnOfOD);
+        uint32 closingDate = IInvestmentAgreement(ia).closingDateOfDeal(
+            ssnOfOD
+        );
 
         par = (par * ratio) / 10000;
         paid = (paid * ratio) / 10000;

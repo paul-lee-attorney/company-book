@@ -10,6 +10,7 @@ pragma solidity ^0.8.8;
 import "../../common/ruting/BOASetting.sol";
 import "../../common/ruting/SHASetting.sol";
 import "../../common/ruting/BOSSetting.sol";
+import "../../common/ruting/ROMSetting.sol";
 
 import "../../common/lib/SNParser.sol";
 import "../../common/lib/MotionsRepo.sol";
@@ -18,11 +19,7 @@ import "../../common/lib/BallotsBox.sol";
 
 import "./IMeetingMinutes.sol";
 
-contract MeetingMinutes is
-    IMeetingMinutes,
-    SHASetting,
-    BOSSetting
-{
+contract MeetingMinutes is IMeetingMinutes, SHASetting, ROMSetting {
     using SNParser for bytes32;
     using MotionsRepo for MotionsRepo.Repo;
     using DelegateMap for DelegateMap.Map;
@@ -41,7 +38,7 @@ contract MeetingMinutes is
         uint40 delegate,
         uint256 motionId
     ) external onlyManager(1) {
-        if (_mm.entrustDelegate(authorizer, delegate, motionId)) 
+        if (_mm.entrustDelegate(authorizer, delegate, motionId))
             emit EntrustDelegate(motionId, authorizer, delegate);
     }
 
@@ -52,15 +49,14 @@ contract MeetingMinutes is
         address[] memory targets,
         uint256[] memory values,
         bytes[] memory params,
-        bytes32 desHash        
-    ) private pure returns(uint256) {
-        return uint256(keccak256(abi.encode(
-            actionType,
-            targets,
-            values,
-            params,
-            desHash
-        )));
+        bytes32 desHash
+    ) private pure returns (uint256) {
+        return
+            uint256(
+                keccak256(
+                    abi.encode(actionType, targets, values, params, desHash)
+                )
+            );
     }
 
     function proposeAction(
@@ -71,7 +67,6 @@ contract MeetingMinutes is
         bytes32 desHash,
         uint40 submitter
     ) external onlyManager(1) {
-
         uint256 actionId = _hashAction(
             actionType,
             targets,
@@ -90,16 +85,25 @@ contract MeetingMinutes is
 
         MotionsRepo.Head memory head = MotionsRepo.Head({
             typeOfMotion: actionType,
-            state: 0,        
+            state: 0,
             submitter: submitter,
             executor: 0,
             proposeBN: uint32(block.number),
-            weightRegBN: uint32(block.number) + uint32(rule.reviewDaysOfVR()) * 24 * _rc.blocksPerHour(),
-            voteStartBN: uint32(block.number) + uint32(rule.reviewDaysOfVR()) * 24 * _rc.blocksPerHour(),
-            voteEndBN: uint32(block.number) + uint32(rule.votingDaysOfVR()) * 24 * _rc.blocksPerHour()
+            weightRegBN: uint32(block.number) +
+                uint32(rule.reviewDaysOfVR()) *
+                24 *
+                _rc.blocksPerHour(),
+            voteStartBN: uint32(block.number) +
+                uint32(rule.reviewDaysOfVR()) *
+                24 *
+                _rc.blocksPerHour(),
+            voteEndBN: uint32(block.number) +
+                uint32(rule.votingDaysOfVR()) *
+                24 *
+                _rc.blocksPerHour()
         });
 
-        if (_mm.proposeMotion(actionId, rule,head))
+        if (_mm.proposeMotion(actionId, rule, head))
             emit ProposeAction(actionId, actionType, submitter);
     }
 
@@ -108,16 +112,18 @@ contract MeetingMinutes is
         view
         returns (uint64)
     {
-        uint40[] memory principals = _mm.motions[actionId].map.getPrincipals(acct);        
+        uint40[] memory principals = _mm.motions[actionId].map.getPrincipals(
+            acct
+        );
         uint256 len = principals.length;
-        uint64 weight = _bos.votesInHand(acct);
+        uint64 weight = _rom.votesInHand(acct);
 
         while (len > 0) {
-            weight += _bos.votesInHand(principals[len-1]);
+            weight += _rom.votesInHand(principals[len - 1]);
             len--;
         }
 
-        return (weight * 10000) / _bos.totalVotes();
+        return (weight * 10000) / _rom.totalVotes();
     }
 
     // ==== cast vote ====
@@ -127,51 +133,49 @@ contract MeetingMinutes is
         uint8 attitude,
         uint40 caller,
         bytes32 sigHash
-    )
-        external
-        onlyManager(1)
-    {
+    ) external onlyManager(1) {
         MotionsRepo.Head memory head = _mm.headOf(motionId);
 
         uint64 voteAmt;
-        
-        if (_mm.motions[motionId].map.isDelegate(caller)) voteAmt = _voteWeight(motionId, caller, head.weightRegBN);
-        else voteAmt = uint64(_bos.votesAtBlock(caller, head.weightRegBN));
+
+        if (_mm.motions[motionId].map.isDelegate(caller))
+            voteAmt = _voteWeight(motionId, caller, head.weightRegBN);
+        else voteAmt = uint64(_rom.votesAtBlock(caller, head.weightRegBN));
 
         _mm.castVote(motionId, attitude, caller, sigHash, voteAmt);
     }
 
-    function _voteWeight(uint256 motionId, uint40 acct, uint64 blocknumber)
-        private
-        view
-        returns (uint64)
-    {
-        uint40[] memory principals = _mm.motions[motionId].map.getPrincipals(acct);        
+    function _voteWeight(
+        uint256 motionId,
+        uint40 acct,
+        uint64 blocknumber
+    ) private view returns (uint64) {
+        uint40[] memory principals = _mm.motions[motionId].map.getPrincipals(
+            acct
+        );
         uint256 len = principals.length;
-        uint64 weight = _bos.votesAtBlock(acct, blocknumber);
+        uint64 weight = _rom.votesAtBlock(acct, blocknumber);
 
         while (len > 0) {
-            weight += _bos.votesAtBlock(principals[len-1], blocknumber);
+            weight += _rom.votesAtBlock(principals[len - 1], blocknumber);
             len--;
         }
 
         uint64 votes;
-        
-        if (_getSHA().basedOnPar())  (,votes) = _bos.capAtBlock(blocknumber);
-        else (votes,) = _bos.capAtBlock(blocknumber); 
+
+        if (_getSHA().basedOnPar()) (, votes) = _rom.capAtBlock(blocknumber);
+        else (votes, ) = _rom.capAtBlock(blocknumber);
 
         return (weight * 10000) / votes;
     }
 
     // ==== counting ====
 
-    function voteCounting(uint256 motionId)
-        external
-        onlyManager(1)
-    {
-        if (_mm.state(motionId) == uint8(MotionsRepo.StateOfMotion.Proposed) && 
-            _mm.voteCounting(motionId, _bos))
-                emit VoteCounting(motionId, _mm.state(motionId));
+    function voteCounting(uint256 motionId) external onlyManager(1) {
+        if (
+            _mm.state(motionId) == uint8(MotionsRepo.StateOfMotion.Proposed) &&
+            _mm.voteCounting(motionId, _rom)
+        ) emit VoteCounting(motionId, _mm.state(motionId));
     }
 
     // ==== execute ====
@@ -183,7 +187,6 @@ contract MeetingMinutes is
         bytes[] memory params,
         bytes32 desHash
     ) external onlyManager(1) returns (uint256) {
-
         uint256 motionId = _hashAction(
             actionType,
             targets,
@@ -197,20 +200,24 @@ contract MeetingMinutes is
             "BOD.execAction: voting NOT end"
         );
 
-        _mm.motions[motionId].head.state = uint8(MotionsRepo.StateOfMotion.Executed);
+        _mm.motions[motionId].head.state = uint8(
+            MotionsRepo.StateOfMotion.Executed
+        );
 
-        if (_execute(targets, values, params)) emit ExecuteAction(motionId, true);
+        if (_execute(targets, values, params))
+            emit ExecuteAction(motionId, true);
         else emit ExecuteAction(motionId, false);
 
         return motionId;
     }
 
-    function _execute(address[] memory targets, uint256[] memory values, bytes[] memory params)
-        private
-        returns (bool success)
-    {
+    function _execute(
+        address[] memory targets,
+        uint256[] memory values,
+        bytes[] memory params
+    ) private returns (bool success) {
         for (uint256 i = 0; i < targets.length; i++) {
-            (success,) = targets[i].call{value: values[i]}(params[i]);
+            (success, ) = targets[i].call{value: values[i]}(params[i]);
             if (!success) return success;
         }
     }
@@ -221,25 +228,41 @@ contract MeetingMinutes is
 
     // ==== delegate ====
 
-    function isPrincipal(uint256 motionId, uint40 acct) external view returns(bool) {
+    function isPrincipal(uint256 motionId, uint40 acct)
+        external
+        view
+        returns (bool)
+    {
         return _mm.motions[motionId].map.isPrincipal(acct);
     }
 
-    function isDelegate(uint256 motionId, uint40 acct) external view returns(bool) {
+    function isDelegate(uint256 motionId, uint40 acct)
+        external
+        view
+        returns (bool)
+    {
         return _mm.motions[motionId].map.isDelegate(acct);
     }
 
-    function delegateOf(uint256 motionId, uint40 acct) external view returns(uint40) {
+    function delegateOf(uint256 motionId, uint40 acct)
+        external
+        view
+        returns (uint40)
+    {
         return _mm.motions[motionId].map.getDelegate(acct);
     }
 
-    function principalsOf(uint256 motionId, uint40 acct) external view returns(uint40[] memory) {
+    function principalsOf(uint256 motionId, uint40 acct)
+        external
+        view
+        returns (uint40[] memory)
+    {
         return _mm.motions[motionId].map.getPrincipals(acct);
     }
 
     // ==== motion ====
 
-    function isProposed(uint256 motionId) external view returns(bool) {
+    function isProposed(uint256 motionId) external view returns (bool) {
         return _mm.isProposed(motionId);
     }
 
@@ -251,19 +274,11 @@ contract MeetingMinutes is
         return _mm.headOf(motionId);
     }
 
-    function votingRule(uint256 motionId)
-        external
-        view
-        returns (bytes32)
-    {
+    function votingRule(uint256 motionId) external view returns (bytes32) {
         return _mm.votingRule(motionId);
     }
 
-    function state(uint256 motionId)
-        external
-        view
-        returns (uint8)
-    {
+    function state(uint256 motionId) external view returns (uint8) {
         return _mm.state(motionId);
     }
 
@@ -293,39 +308,39 @@ contract MeetingMinutes is
         return _mm.motions[motionId].box.votedAbs(acct);
     }
 
-    function getYea(uint256 motionId) external view returns (uint40[] memory, uint64) {
+    function getYea(uint256 motionId)
+        external
+        view
+        returns (uint40[] memory, uint64)
+    {
         return _mm.motions[motionId].box.getYea();
     }
 
-    function qtyOfYea(uint256 motionId)
-        external
-        view
-        returns (uint)
-    {
+    function qtyOfYea(uint256 motionId) external view returns (uint256) {
         return _mm.motions[motionId].box.qtyOfYea();
     }
 
-    function getNay(uint256 motionId) external view returns (uint40[] memory, uint64) {
+    function getNay(uint256 motionId)
+        external
+        view
+        returns (uint40[] memory, uint64)
+    {
         return _mm.motions[motionId].box.getNay();
     }
 
-    function qtyOfNay(uint256 motionId)
-        external
-        view
-        returns (uint)
-    {
+    function qtyOfNay(uint256 motionId) external view returns (uint256) {
         return _mm.motions[motionId].box.qtyOfNay();
     }
 
-    function getAbs(uint256 motionId) external view returns (uint40[] memory, uint64) {
+    function getAbs(uint256 motionId)
+        external
+        view
+        returns (uint40[] memory, uint64)
+    {
         return _mm.motions[motionId].box.getAbs();
     }
 
-    function qtyOfAbs(uint256 motionId)
-        external
-        view
-        returns (uint)
-    {
+    function qtyOfAbs(uint256 motionId) external view returns (uint256) {
         return _mm.motions[motionId].box.qtyOfAbs();
     }
 
@@ -337,11 +352,7 @@ contract MeetingMinutes is
         return _mm.motions[motionId].box.allVoters();
     }
 
-    function qtyOfAllVoters(uint256 motionId)
-        external
-        view
-        returns (uint256)
-    {
+    function qtyOfAllVoters(uint256 motionId) external view returns (uint256) {
         return _mm.motions[motionId].box.qtyOfAllVoters();
     }
 
@@ -362,34 +373,21 @@ contract MeetingMinutes is
             uint8 attitude,
             uint32 blockNumber,
             uint32 sigDate,
-            bytes32 sigHash)
+            bytes32 sigHash
+        )
     {
         return _mm.motions[motionId].box.getVote(acct);
     }
 
-    function isPassed(uint256 motionId)
-        external
-        view
-        returns (bool)
-    {
-        return
-            _mm.isPassed(motionId);
+    function isPassed(uint256 motionId) external view returns (bool) {
+        return _mm.isPassed(motionId);
     }
 
-    function isExecuted(uint256 motionId)
-        external
-        view
-        returns (bool)
-    {
-        return
-            _mm.isExecuted(motionId);
+    function isExecuted(uint256 motionId) external view returns (bool) {
+        return _mm.isExecuted(motionId);
     }
 
-    function isRejected(uint256 motionId)
-        external
-        view
-        returns (bool)
-    {
+    function isRejected(uint256 motionId) external view returns (bool) {
         return _mm.isRejected(motionId);
     }
 }

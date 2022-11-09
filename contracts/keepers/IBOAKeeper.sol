@@ -18,6 +18,14 @@ interface IBOAKeeper {
 
     function circulateIA(address ia, address callerAddr) external;
 
+    function decreaseCapital(
+        uint32 ssn,
+        uint64 paid,
+        uint64 par
+    ) external;
+
+    function setMaxQtyOfMembers(uint8 max) external;
+
     function signIA(
         address ia,
         uint40 caller,

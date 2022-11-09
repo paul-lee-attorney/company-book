@@ -13,6 +13,7 @@ import "../books/boh/terms/IGroupsUpdate.sol";
 
 import "../common/components/ISigPage.sol";
 
+import "../common/ruting/ROMSetting.sol";
 import "../common/ruting/BOMSetting.sol";
 import "../common/ruting/BOOSetting.sol";
 import "../common/ruting/BOSSetting.sol";
@@ -31,6 +32,7 @@ contract BOHKeeper is
     BOASetting,
     BODSetting,
     SHASetting,
+    ROMSetting,
     BOMSetting,
     BOOSetting,
     BOSSetting
@@ -69,7 +71,7 @@ contract BOHKeeper is
     }
 
     function createSHA(uint8 docType, address caller) external onlyManager(1) {
-        require(_bos.isMember(_rc.userNo(caller)), "not MEMBER");
+        require(_rom.isMember(_rc.userNo(caller)), "not MEMBER");
         address sha = _boh.createDoc(docType, _rc.userNo(caller));
 
         IAccessControl(sha).init(
@@ -146,11 +148,12 @@ contract BOHKeeper is
         onlyPartyOf(sha, caller)
     {
         require(
-            _boh.currentState(sha) == uint8(DocumentsRepo.BODStates.Established),
+            _boh.currentState(sha) ==
+                uint8(DocumentsRepo.BODStates.Established),
             "SHA not executed yet"
         );
 
-        uint40[] memory members = _bos.membersList();
+        uint40[] memory members = _rom.membersList();
         uint256 len = members.length;
         while (len > 0) {
             require(
@@ -162,7 +165,7 @@ contract BOHKeeper is
 
         _boh.changePointer(sha, caller);
 
-        _bos.setAmtBase(IShareholdersAgreement(sha).basedOnPar());
+        _rom.setAmtBase(IShareholdersAgreement(sha).basedOnPar());
 
         _bod.setMaxQtyOfDirectors(
             IShareholdersAgreement(sha).maxNumOfDirectors()
@@ -192,12 +195,12 @@ contract BOHKeeper is
             len = guo.length;
             while (len > 0) {
                 if (guo[len - 1].addMemberOfGUO())
-                    _bos.addMemberToGroup(
+                    _rom.addMemberToGroup(
                         guo[len - 1].memberOfGUO(),
                         guo[len - 1].groupNoOfGUO()
                     );
                 else
-                    _bos.removeMemberFromGroup(
+                    _rom.removeMemberFromGroup(
                         guo[len - 1].memberOfGUO(),
                         guo[len - 1].groupNoOfGUO()
                     );

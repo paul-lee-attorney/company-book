@@ -7,10 +7,6 @@
 
 pragma solidity ^0.8.8;
 
-pragma experimental ABIEncoderV2;
-
-import "../../common/lib/TopChain.sol";
-
 interface IBookOfShares {
     //##################
     //##    Event     ##
@@ -20,80 +16,48 @@ interface IBookOfShares {
 
     event IssueShare(
         bytes32 indexed shareNumber,
-        uint64 par,
         uint64 paid,
-        uint32 paidInDeadline,
-        uint32 unitPrice
+        uint64 par,
+        uint32 paidInDeadline
     );
 
-    event PayInCapital(uint32 indexed ssn, uint64 amount, uint32 paidInDate);
+    event PayInCapital(
+        bytes32 indexed shareNumber,
+        uint64 amount,
+        uint32 paidInDate
+    );
 
-    event SubAmountFromShare(uint32 indexed ssn, uint64 paid, uint64 par);
-
-    event CapIncrease(uint64 paid, uint64 par, uint64 blocknumber);
-
-    event CapDecrease(uint64 paid, uint64 par, uint64 blocknumber);
+    event SubAmountFromShare(
+        bytes32 indexed shareNumber,
+        uint64 paid,
+        uint64 par
+    );
 
     event DeregisterShare(bytes32 indexed shareNumber);
 
-    event FreezeShare(uint32 indexed ssn);
+    event UpdateStateOfShare(bytes32 indexed shareNumber, uint8 state);
 
-    event UpdatePaidInDeadline(uint32 indexed ssn, uint32 paidInDeadline);
-
-    event DecreaseCleanPar(uint32 indexed ssn, uint64 paid);
-
-    event IncreaseCleanPar(uint32 indexed ssn, uint64 paid);
-
-    event SetPayInAmount(uint32 indexed ssn, uint64 amount, bytes32 hashLock);
-
-    // ==== MembersRepo ====
-
-    event SetMaxQtyOfMembers(uint8 max);
-
-    event SetAmtBase(bool basedOnPar);
-
-    event AddMember(uint40 indexed acct, uint16 qtyOfMembers);
-
-    event RemoveMember(uint40 indexed acct, uint16 qtyOfMembers);
-
-    event AddShareToMember(bytes32 indexed sharenumber, uint40 indexed acct);
-
-    event RemoveShareFromMember(bytes32 indexed sn, uint40 indexed acct);
-
-    event ChangeAmtOfMember(
-        uint40 indexed acct,
-        uint64 paid,
-        uint64 par,
-        bool decrease,
-        uint64 blocknumber
+    event UpdatePaidInDeadline(
+        bytes32 indexed shareNumber,
+        uint32 paidInDeadline
     );
 
-    event DecreaseAmountFromMember(
-        uint40 indexed acct,
-        uint64 paid,
-        uint64 par,
-        uint64 blocknumber
-    );
+    event DecreaseCleanPar(bytes32 indexed shareNumber, uint64 paid);
 
-    event AddMemberToGroup(uint40 indexed acct, uint16 indexed group);
+    event IncreaseCleanPar(bytes32 indexed shareNumber, uint64 paid);
 
-    event RemoveMemberFromGroup(uint40 indexed acct, uint16 indexed group);
+    event SetPayInAmount(bytes32 indexed ssn, uint64 amount, bytes32 hashLock);
 
     //##################
     //##    写接口    ##
     //##################
 
     function issueShare(
-        uint40 shareholder,
-        uint16 class,
+        bytes32 shareNumber,
         uint64 paid,
         uint64 par,
-        uint32 paidInDeadline,
-        uint32 issueDate,
-        uint32 issuePrice
+        uint32 paidInDeadline
     ) external;
-
-    // ==== PayInCapital ====
 
     function setPayInAmount(
         uint32 ssn,
@@ -103,8 +67,6 @@ interface IBookOfShares {
 
     function requestPaidInCapital(uint32 ssn, string memory hashKey) external;
 
-    // ==== TransferShare ====
-
     function transferShare(
         uint32 ssn,
         uint64 paid,
@@ -113,7 +75,14 @@ interface IBookOfShares {
         uint32 unitPrice
     ) external;
 
-    // ==== DecreaseCapital ====
+    function createShareNumber(
+        uint16 class,
+        uint32 ssn,
+        uint32 issueDate,
+        uint32 unitPrice,
+        uint40 shareholder,
+        uint32 preSSN
+    ) external pure returns (bytes32 sn);
 
     function decreaseCapital(
         uint32 ssn,
@@ -129,19 +98,9 @@ interface IBookOfShares {
 
     // ==== State & PaidInDeadline ====
 
-    function freezeShare(uint32 ssn) external;
+    function updateStateOfShare(uint32 ssn, uint8 state) external;
 
     function updatePaidInDeadline(uint32 ssn, uint32 paidInDeadline) external;
-
-    // ==== MembersRepo ====
-
-    function setMaxQtyOfMembers(uint8 max) external;
-
-    function setAmtBase(bool basedOnPar) external;
-
-    function addMemberToGroup(uint40 acct, uint16 group) external;
-
-    function removeMemberFromGroup(uint40 acct, uint16 group) external;
 
     // ##################
     // ##   查询接口   ##
@@ -151,24 +110,9 @@ interface IBookOfShares {
 
     function verifyRegNum(string memory regNum) external view returns (bool);
 
-    function maxQtyOfMembers() external view returns (uint16);
-
     function counterOfShares() external view returns (uint32);
 
     function counterOfClasses() external view returns (uint16);
-
-    function paidCap() external view returns (uint64);
-
-    function parCap() external view returns (uint64);
-
-    function capAtBlock(uint64 blocknumber)
-        external
-        view
-        returns (uint64, uint64);
-
-    function totalVotes() external view returns (uint64);
-
-    // ==== SharesRepo ====
 
     function isShare(uint32 ssn) external view returns (bool);
 
@@ -182,73 +126,11 @@ interface IBookOfShares {
             uint64 paid,
             uint64 par,
             uint32 paidInDeadline,
-            uint32 unitPrice
-            // uint8 state
+            uint8 state
         );
-
-    function sharesList() external view returns (bytes32[] memory);
-
-    function sharenumberExist(bytes32 sharenumbre) external view returns (bool);
-
-    // ==== PayInCapital ====
 
     function getLocker(uint32 ssn)
         external
         view
         returns (uint64 amount, bytes32 hashLock);
-
-    // ==== MembersRepo ====
-
-    function isMember(uint40 acct) external view returns (bool);
-
-    // function indexOfMember(uint40 acct) external view returns (uint16);
-
-    function paidOfMember(uint40 acct) external view returns (uint64 paid);
-
-    function parOfMember(uint40 acct) external view returns (uint64 par);
-
-    function votesInHand(uint40 acct) external view returns (uint64);
-
-    function votesAtBlock(uint40 acct, uint64 blocknumber)
-        external
-        view
-        returns (uint64);
-
-    function sharesInHand(uint40 acct) external view returns (bytes32[] memory);
-
-    function groupNo(uint40 acct) external view returns (uint16);
-
-    function qtyOfMembers() external view returns (uint16);
-
-    function membersList() external view returns (uint40[] memory);
-
-    function affiliated(uint40 acct1, uint40 acct2)
-        external
-        view
-        returns (bool);
-
-    // ==== group ====
-
-    function isGroup(uint16 group) external view returns (bool);
-
-    function counterOfGroups() external view returns(uint16);
-
-    function controllor() external view returns (uint40);
-
-    function votesOfController() external view returns (uint64);
-
-    function votesOfGroup(uint16 group) external view returns (uint64);
-
-    function leaderOfGroup(uint16 group) external view returns (uint64);
-
-    function membersOfGroup(uint16 group)
-        external
-        view
-        returns (uint40[] memory);
-
-    function deepOfGroup(uint16 group) external view returns (uint16);
-
-    // ==== snapshot ====
-
-    function getSnapshot() external view returns (TopChain.Node[] memory);
 }

@@ -15,10 +15,17 @@ import "../../common/lib/MembersRepo.sol";
 import "../../common/lib/SNParser.sol";
 
 import "../../common/ruting/BOSSetting.sol";
+import "../../common/ruting/ROMSetting.sol";
 import "../../common/ruting/SHASetting.sol";
 import "../../common/ruting/IASetting.sol";
 
-contract MockResults is IMockResults, IASetting, SHASetting, BOSSetting {
+contract MockResults is
+    IMockResults,
+    IASetting,
+    SHASetting,
+    BOSSetting,
+    ROMSetting
+{
     using SNParser for bytes32;
     using TopChain for TopChain.Chain;
     using MembersRepo for MembersRepo.GeneralMeeting;
@@ -30,8 +37,8 @@ contract MockResults is IMockResults, IASetting, SHASetting, BOSSetting {
     //#################
 
     function createMockGM() external onlyManager(0) {
-        TopChain.Node[] memory snapshot = _bos.getSnapshot();
-        
+        TopChain.Node[] memory snapshot = _rom.getSnapshot();
+
         _mgm.setMaxQtyOfMembers(0);
         _mgm.restoreChain(snapshot);
         _mockDealsOfIA();
@@ -49,7 +56,7 @@ contract MockResults is IMockResults, IASetting, SHASetting, BOSSetting {
             uint64 amount;
 
             if (_getSHA().basedOnPar())
-                (, , amount,  , ) = _ia.getDeal(sn.sequence());
+                (, , amount, , ) = _ia.getDeal(sn.sequence());
             else (, amount, , , ) = _ia.getDeal(sn.sequence());
 
             uint32 short = sn.ssnOfDeal();
@@ -111,11 +118,11 @@ contract MockResults is IMockResults, IASetting, SHASetting, BOSSetting {
         uint16 dGroup,
         uint16 fGroup,
         uint64 amount
-    ) private view{
-        uint64 orgDGVotes = _bos.votesOfGroup(dGroup);
+    ) private view {
+        uint64 orgDGVotes = _rom.votesOfGroup(dGroup);
         uint64 curDGVotes = _mgm.votesOfGroup(dGroup);
 
-        uint64 orgFGVotes = _bos.votesOfGroup(fGroup);
+        uint64 orgFGVotes = _rom.votesOfGroup(fGroup);
         uint64 curFGVotes = _mgm.votesOfGroup(fGroup);
 
         require(

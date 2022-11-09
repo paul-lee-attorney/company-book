@@ -18,7 +18,6 @@ import "./IBOHKeeper.sol";
 import "./IBOMKeeper.sol";
 import "./IBOOKeeper.sol";
 import "./IBOPKeeper.sol";
-import "./IBOSKeeper.sol";
 
 contract GeneralKeeper is IGeneralKeeper, AccessControl {
     IBOAKeeper private _BOAKeeper;
@@ -28,7 +27,6 @@ contract GeneralKeeper is IGeneralKeeper, AccessControl {
     IBOMKeeper private _BOMKeeper;
     IBOOKeeper private _BOOKeeper;
     IBOPKeeper private _BOPKeeper;
-    IBOSKeeper private _BOSKeeper;
 
     // ######################
     // ##   AccessControl   ##
@@ -64,25 +62,20 @@ contract GeneralKeeper is IGeneralKeeper, AccessControl {
         emit SetBOPKeeper(keeper);
     }
 
-    function setBOSKeeper(address keeper) external onlyManager(1) {
-        _BOSKeeper = IBOSKeeper(keeper);
-        emit SetBOSKeeper(keeper);
-    }
-
     function setSHAKeeper(address keeper) external onlyManager(1) {
         _SHAKeeper = ISHAKeeper(keeper);
         emit SetSHAKeeper(keeper);
     }
 
-    function isKeeper(address caller) external view returns(bool flag) {
-        if (caller == address(_BOAKeeper) ||
+    function isKeeper(address caller) external view returns (bool flag) {
+        if (
+            caller == address(_BOAKeeper) ||
             caller == address(_BODKeeper) ||
             caller == address(_BOHKeeper) ||
             caller == address(_SHAKeeper) ||
             caller == address(_BOMKeeper) ||
             caller == address(_BOOKeeper) ||
-            caller == address(_BOPKeeper) ||
-            caller == address(_BOSKeeper)
+            caller == address(_BOPKeeper)
         ) flag = true;
     }
 
@@ -133,6 +126,30 @@ contract GeneralKeeper is IGeneralKeeper, AccessControl {
         _BOAKeeper.revokeDeal(ia, sn, _msgSender(), hashKey);
     }
 
+    function setPayInAmount(
+        uint32 ssn,
+        uint64 amount,
+        bytes32 hashLock
+    ) external onlyManager(1) {
+        _BOAKeeper.setPayInAmount(ssn, amount, hashLock);
+    }
+
+    function requestPaidInCapital(uint32 ssn, string memory hashKey) external {
+        _BOAKeeper.requestPaidInCapital(ssn, hashKey, _msgSender());
+    }
+
+    function decreaseCapital(
+        uint32 ssn,
+        uint64 parValue,
+        uint64 paidPar
+    ) external onlyManager(1) {
+        _BOAKeeper.decreaseCapital(ssn, parValue, paidPar);
+    }
+
+    function setMaxQtyOfMembers(uint8 max) external onlyManager(1) {
+        _BOAKeeper.setMaxQtyOfMembers(max);
+    }
+
     // ###################
     // ##   BODKeeper   ##
     // ###################
@@ -155,10 +172,9 @@ contract GeneralKeeper is IGeneralKeeper, AccessControl {
 
     // ==== resolution ====
 
-    function entrustDirectorDelegate(
-        uint40 delegate,
-        uint256 actionId
-    ) external {
+    function entrustDirectorDelegate(uint40 delegate, uint256 actionId)
+        external
+    {
         _BODKeeper.entrustDelegate(_msgSender(), delegate, actionId);
     }
 
@@ -169,7 +185,14 @@ contract GeneralKeeper is IGeneralKeeper, AccessControl {
         bytes[] memory params,
         bytes32 desHash
     ) external {
-        _BODKeeper.proposeAction(actionType, targets, values, params, desHash, _msgSender());
+        _BODKeeper.proposeAction(
+            actionType,
+            targets,
+            values,
+            params,
+            desHash,
+            _msgSender()
+        );
     }
 
     function castBoardVote(
@@ -191,7 +214,14 @@ contract GeneralKeeper is IGeneralKeeper, AccessControl {
         bytes[] memory params,
         bytes32 desHash
     ) external {
-        _BODKeeper.execAction(actionType, targets, values, params, desHash, _msgSender());
+        _BODKeeper.execAction(
+            actionType,
+            targets,
+            values,
+            params,
+            desHash,
+            _msgSender()
+        );
     }
 
     // ##################
@@ -226,16 +256,11 @@ contract GeneralKeeper is IGeneralKeeper, AccessControl {
     // ##   BOMKeeper   ##
     // ###################
 
-    function entrustMemberDelegate(
-        uint40 delegate,
-        uint256 motionId
-    ) external {
+    function entrustMemberDelegate(uint40 delegate, uint256 motionId) external {
         _BOMKeeper.entrustDelegate(_msgSender(), delegate, motionId);
     }
 
-    function nominateDirector(uint40 candidate)
-        external
-    {
+    function nominateDirector(uint40 candidate) external {
         _BOMKeeper.nominateDirector(candidate, _msgSender());
     }
 
@@ -249,8 +274,15 @@ contract GeneralKeeper is IGeneralKeeper, AccessControl {
         uint256[] memory values,
         bytes[] memory params,
         bytes32 desHash
-    ) external { 
-        _BOMKeeper.proposeAction(actionType, targets, values, params, desHash, _msgSender());
+    ) external {
+        _BOMKeeper.proposeAction(
+            actionType,
+            targets,
+            values,
+            params,
+            desHash,
+            _msgSender()
+        );
     }
 
     function castGMVote(
@@ -272,14 +304,15 @@ contract GeneralKeeper is IGeneralKeeper, AccessControl {
         bytes[] memory params,
         bytes32 desHash
     ) external returns (uint256) {
-        return _BOMKeeper.execAction(
-            actionType,
-            targets,
-            values,
-            params,
-            desHash,
-            _msgSender()
-        );
+        return
+            _BOMKeeper.execAction(
+                actionType,
+                targets,
+                values,
+                params,
+                desHash,
+                _msgSender()
+            );
     }
 
     function requestToBuy(
@@ -300,13 +333,7 @@ contract GeneralKeeper is IGeneralKeeper, AccessControl {
         uint64 paid,
         uint64 par
     ) external {
-        _BOOKeeper.createOption(
-            sn,
-            rightholder,
-            paid,
-            par,
-            _msgSender()
-        );
+        _BOOKeeper.createOption(sn, rightholder, paid, par, _msgSender());
     }
 
     function execOption(bytes32 sn) external {
@@ -383,34 +410,6 @@ contract GeneralKeeper is IGeneralKeeper, AccessControl {
             guaranteedAmt,
             _msgSender()
         );
-    }
-
-    // ###################
-    // ##   BOSKeeper   ##
-    // ###################
-
-    function setPayInAmount(
-        uint32 ssn,
-        uint64 amount,
-        bytes32 hashLock
-    ) external onlyManager(1) {
-        _BOSKeeper.setPayInAmount(ssn, amount, hashLock);
-    }
-
-    function requestPaidInCapital(uint32 ssn, string memory hashKey) external {
-        _BOSKeeper.requestPaidInCapital(ssn, hashKey, _msgSender());
-    }
-
-    function decreaseCapital(
-        uint32 ssn,
-        uint64 parValue,
-        uint64 paidPar
-    ) external onlyManager(1) {
-        _BOSKeeper.decreaseCapital(ssn, parValue, paidPar);
-    }
-
-    function setMaxQtyOfMembers(uint8 max) external onlyManager(1) {
-        _BOSKeeper.setMaxQtyOfMembers(max);
     }
 
     // ###################

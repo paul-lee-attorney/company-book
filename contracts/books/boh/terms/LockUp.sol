@@ -36,7 +36,7 @@ contract LockUp is ILockUp, ITerm, BOSSetting, BOMSetting {
         EnumerableSet.UintSet keyHolders;
     }
 
-/*
+    /*
     lockers[0] {
         ssn: qtyOfLockers;
         uint32 (null);
@@ -51,7 +51,6 @@ contract LockUp is ILockUp, ITerm, BOSSetting, BOMSetting {
 
     // ssn => Locker
     mapping(uint256 => Locker) private _lockers;
-
 
     // ################
     // ##  Modifier  ##
@@ -71,11 +70,8 @@ contract LockUp is ILockUp, ITerm, BOSSetting, BOMSetting {
         onlyAttorney
         shareExist(ssn)
     {
-
         _lockers[ssn].ssn = ssn;
-        _lockers[ssn].dueDate = dueDate == 0
-            ? REMOTE_FUTURE
-            : dueDate;
+        _lockers[ssn].dueDate = dueDate == 0 ? REMOTE_FUTURE : dueDate;
 
         uint32 tail = _lockers[0].prev;
 
@@ -89,27 +85,24 @@ contract LockUp is ILockUp, ITerm, BOSSetting, BOMSetting {
         emit SetLocker(ssn, _lockers[ssn].dueDate);
     }
 
-    function updateLocker(uint32 ssn, uint32 dueDate) 
+    function updateLocker(uint32 ssn, uint32 dueDate)
         external
         onlyManager(1)
         beLocked(ssn)
     {
         Locker storage l = _lockers[ssn];
 
-        require(l.dueDate == REMOTE_FUTURE, 
-            "LU.updateLocker: not a REMOTE_FUTURE Locker");
+        require(
+            l.dueDate == REMOTE_FUTURE,
+            "LU.updateLocker: not a REMOTE_FUTURE Locker"
+        );
 
         l.dueDate = dueDate;
 
         emit UpdateLocker(ssn, dueDate);
     }
 
-    function delLocker(uint32 ssn)
-        external
-        onlyAttorney
-        beLocked(ssn)
-    {
-
+    function delLocker(uint32 ssn) external onlyAttorney beLocked(ssn) {
         Locker storage l = _lockers[ssn];
 
         _lockers[l.prev].next = l.next;
@@ -161,12 +154,11 @@ contract LockUp is ILockUp, ITerm, BOSSetting, BOMSetting {
     }
 
     function lockedShares() external view returns (uint32[] memory) {
-
         uint32[] memory list = new uint32[](_lockers[0].ssn);
 
-        uint i=0;
+        uint256 i = 0;
         uint32 cur = _lockers[0].next;
-        while(cur > 0) {
+        while (cur > 0) {
             list[i] = _lockers[cur].ssn;
             cur = _lockers[cur].next;
             i++;
@@ -179,12 +171,8 @@ contract LockUp is ILockUp, ITerm, BOSSetting, BOMSetting {
     // ##  Term接口  ##
     // ################
 
-    function isTriggered(address ia, bytes32 sn) 
-        external 
-        view 
-        returns (bool) 
-    {
-        uint32 closingDate = IInvestmentAgreement(ia).closingDate(
+    function isTriggered(address ia, bytes32 sn) external view returns (bool) {
+        uint32 closingDate = IInvestmentAgreement(ia).closingDateOfDeal(
             sn.sequence()
         );
 
@@ -222,7 +210,7 @@ contract LockUp is ILockUp, ITerm, BOSSetting, BOMSetting {
     function isExempted(address ia, bytes32 sn) external view returns (bool) {
         (uint40[] memory consentParties, ) = _bom.getYea(uint256(uint160(ia)));
 
-        uint40[] memory signers = ISigPage(ia).parties();
+        uint40[] memory signers = ISigPage(ia).partiesOfDoc();
 
         uint40[] memory agreedParties = consentParties.combine(signers);
 

@@ -8,6 +8,7 @@
 pragma solidity ^0.8.8;
 
 import "../../common/ruting/BOSSetting.sol";
+import "../../common/ruting/ROMSetting.sol";
 
 import "../../common/lib/SNParser.sol";
 import "../../common/lib/EnumerableSet.sol";
@@ -16,7 +17,12 @@ import "../../common/components/SigPage.sol";
 
 import "./IInvestmentAgreement.sol";
 
-contract InvestmentAgreement is IInvestmentAgreement, BOSSetting, SigPage {
+contract InvestmentAgreement is
+    IInvestmentAgreement,
+    BOSSetting,
+    ROMSetting,
+    SigPage
+{
     using SNParser for bytes32;
     using EnumerableSet for EnumerableSet.Bytes32Set;
 
@@ -75,7 +81,10 @@ contract InvestmentAgreement is IInvestmentAgreement, BOSSetting, SigPage {
     }
 
     modifier dealExist(uint16 seq) {
-        require(_dealsList.contains(_deals[seq].sn), "IA.dealExist: deal not exist");
+        require(
+            _dealsList.contains(_deals[seq].sn),
+            "IA.dealExist: deal not exist"
+        );
         _;
     }
 
@@ -83,7 +92,11 @@ contract InvestmentAgreement is IInvestmentAgreement, BOSSetting, SigPage {
     //##    写接口    ##
     //##################
 
-    function createDeal(bytes32 sn, bytes32 shareNumber) external attorneyOrKeeper returns (bytes32) {
+    function createDeal(bytes32 sn, bytes32 shareNumber)
+        external
+        attorneyOrKeeper
+        returns (bytes32)
+    {
         require(sn.buyerOfDeal() != 0, "IA.createDeal: ZERO buyer");
         require(sn.groupOfBuyer() > 0, "IA.createDeal: ZERO group");
 
@@ -92,10 +105,12 @@ contract InvestmentAgreement is IInvestmentAgreement, BOSSetting, SigPage {
                 _bos.isShare(shareNumber.ssn()),
                 "IA.createDeal: shareNumber not exist"
             );
-            require(shareNumber.class() == sn.class(), 
-                "IA.createDeal: class NOT correct");
+            require(
+                shareNumber.class() == sn.class(),
+                "IA.createDeal: class NOT correct"
+            );
 
-            if (_bos.isMember(sn.buyerOfDeal()))
+            if (_rom.isMember(sn.buyerOfDeal()))
                 require(
                     sn.typeOfDeal() == uint8(TypeOfDeal.ShareTransferInt) ||
                         sn.typeOfDeal() == uint8(TypeOfDeal.FirstRefusal) ||
@@ -110,8 +125,10 @@ contract InvestmentAgreement is IInvestmentAgreement, BOSSetting, SigPage {
                     "IA.createDeal: wrong typeOfDeal"
                 );
         } else {
-            require(sn.classOfDeal() <= _bos.counterOfClasses(), 
-                "IA.createDeal: class overflow");
+            require(
+                sn.classOfDeal() <= _bos.counterOfClasses(),
+                "IA.createDeal: class overflow"
+            );
             require(
                 sn.typeOfDeal() == uint8(TypeOfDeal.CapitalIncrease) ||
                     sn.typeOfDeal() == uint8(TypeOfDeal.PreEmptive),
@@ -234,10 +251,7 @@ contract InvestmentAgreement is IInvestmentAgreement, BOSSetting, SigPage {
             "closingDate LATER than deadline"
         );
 
-        require(
-            deal.state == uint8(StateOfDeal.Locked),
-            "Deal state wrong"
-        );
+        require(deal.state == uint8(StateOfDeal.Locked), "Deal state wrong");
 
         deal.state++;
 
@@ -245,12 +259,7 @@ contract InvestmentAgreement is IInvestmentAgreement, BOSSetting, SigPage {
 
         if (closingDate > 0) deal.closingDate = closingDate;
 
-        emit ClearDealCP(
-            deal.sn,
-            deal.state,
-            hashLock,
-            deal.closingDate
-        );
+        emit ClearDealCP(deal.sn, deal.state, hashLock, deal.closingDate);
     }
 
     function closeDeal(uint16 seq, string memory hashKey)
@@ -265,17 +274,21 @@ contract InvestmentAgreement is IInvestmentAgreement, BOSSetting, SigPage {
             "hashKey NOT correct"
         );
 
-        require(block.timestamp + 15 minutes <= deal.closingDate, "MISSED closing date");
+        require(
+            block.timestamp + 15 minutes <= deal.closingDate,
+            "MISSED closing date"
+        );
 
         deal.state++;
 
         emit CloseDeal(deal.sn, hashKey);
     }
 
-    function revokeDeal(
-        uint16 seq,
-        string memory hashKey
-    ) external onlyCleared(seq) onlyManager(1) {
+    function revokeDeal(uint16 seq, string memory hashKey)
+        external
+        onlyCleared(seq)
+        onlyManager(1)
+    {
         Deal storage deal = _deals[seq];
 
         require(
@@ -312,17 +325,13 @@ contract InvestmentAgreement is IInvestmentAgreement, BOSSetting, SigPage {
         );
 
         require(
-            _deals[deal.sn.preSeqOfDeal()].state ==
-                uint8(StateOfDeal.Closed),
+            _deals[deal.sn.preSeqOfDeal()].state == uint8(StateOfDeal.Closed),
             "Capital Increase not closed"
         );
 
         require(deal.unitPrice == 0, "unitPrice is not zero");
 
-        require(
-            deal.state == uint8(StateOfDeal.Locked),
-            "wrong state"
-        );
+        require(deal.state == uint8(StateOfDeal.Locked), "wrong state");
 
         deal.state += 2;
 

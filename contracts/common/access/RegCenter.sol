@@ -86,7 +86,10 @@ contract RegCenter is IRegCenter {
         User storage u = _users[user];
 
         require(msg.sender == u.primeKey, "RC.setBackupKey: wrong primeKey");
-        require(!_isContract(msg.sender), "RC.setBackupKey: msgSender shall not be a contract");
+        require(
+            !_isContract(msg.sender),
+            "RC.setBackupKey: msgSender shall not be a contract"
+        );
 
         require(!u.flag, "RC.setBackupKey: already set backup key");
 
@@ -101,7 +104,10 @@ contract RegCenter is IRegCenter {
     function replacePrimeKey(uint40 user) external {
         User storage u = _users[user];
 
-        require(msg.sender == u.backupKey, "RC.replacePrimeKey: wrong backupKey");
+        require(
+            msg.sender == u.backupKey,
+            "RC.replacePrimeKey: wrong backupKey"
+        );
 
         delete _userNo[u.primeKey];
         _userNo[u.backupKey] = user;
@@ -145,13 +151,16 @@ contract RegCenter is IRegCenter {
         returns (uint40 doc, uint40 originator)
     {
         require(caller != address(0), "RC.getRegUserNo: zero address caller");
-        require(addrOfOriginator != address(0), "RC.getRegUserNo: zero address originator");
+        require(
+            addrOfOriginator != address(0),
+            "RC.getRegUserNo: zero address originator"
+        );
 
         doc = _userNo[caller];
         require(doc > 0, "contract not registered");
 
         originator = _userNo[addrOfOriginator];
-        require(originator > 0, "originator not registered");
+        require(originator > 0, "RC.getRegUerNo: originator not registered");
     }
 
     function revokeRole(
@@ -244,7 +253,12 @@ contract RegCenter is IRegCenter {
         return key == _users[user].primeKey;
     }
 
-    function userNo(address key) external view onlyRegKey(key) returns (uint40) {
+    function userNo(address key)
+        external
+        view
+        onlyRegKey(key)
+        returns (uint40)
+    {
         return _userNo[key];
     }
 

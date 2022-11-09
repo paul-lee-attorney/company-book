@@ -12,10 +12,11 @@ import "../../../common/lib/SNParser.sol";
 import "../../../common/lib/EnumerableSet.sol";
 
 import "../../../common/ruting/BOSSetting.sol";
+import "../../../common/ruting/ROMSetting.sol";
 
 import "./IGroupsUpdate.sol";
 
-contract GroupsUpdate is IGroupsUpdate, BOSSetting {
+contract GroupsUpdate is IGroupsUpdate, BOSSetting, ROMSetting {
     using SNFactory for bytes;
     using SNParser for bytes32;
     using EnumerableSet for EnumerableSet.Bytes32Set;
@@ -42,7 +43,7 @@ contract GroupsUpdate is IGroupsUpdate, BOSSetting {
 
     function addMemberOrder(uint40 acct, uint16 groupNo) external onlyAttorney {
         require(groupNo > 0, "ZERO groupNo");
-        require(groupNo <= _bos.counterOfGroups() + 1, "groupNo OVER FLOW");
+        require(groupNo <= _rom.counterOfGroups() + 1, "groupNo OVER FLOW");
 
         bool addMember = true;
 
@@ -56,8 +57,8 @@ contract GroupsUpdate is IGroupsUpdate, BOSSetting {
         memberExist(acct)
         onlyAttorney
     {
-        require(_bos.isGroup(groupNo), "groupNo NOT EXIST");
-        require(_bos.groupNo(acct) == groupNo, "WRONG group number");
+        require(_rom.isGroup(groupNo), "groupNo NOT EXIST");
+        require(_rom.groupNo(acct) == groupNo, "WRONG group number");
 
         bool addMember = false;
 

@@ -11,23 +11,28 @@ import "../../common/lib/SNParser.sol";
 
 import "../../common/ruting/IBookSetting.sol";
 import "../../common/ruting/BOSSetting.sol";
+import "../../common/ruting/ROMSetting.sol";
 import "../../common/access/AccessControl.sol";
 
 import "./IBOSCalculator.sol";
 
-contract BOSCalculator is IBOSCalculator, BOSSetting {
+contract BOSCalculator is IBOSCalculator, BOSSetting, ROMSetting {
     using SNParser for bytes32;
 
     //##################
     //##   查询接口   ##
     //##################
 
-    function membersOfClass(uint16 class) external view returns (uint40[] memory) {
+    function membersOfClass(uint16 class)
+        external
+        view
+        returns (uint40[] memory)
+    {
         require(class < _bos.counterOfClasses(), "class over flow");
 
-        bytes32[] memory list = _bos.sharesList();
+        bytes32[] memory list = _rom.sharesList();
 
-        uint256 len = _bos.qtyOfMembers();
+        uint256 len = _rom.qtyOfMembers();
         uint40[] memory members = new uint40[](len);
 
         uint256 numOfMembers;
@@ -58,10 +63,14 @@ contract BOSCalculator is IBOSCalculator, BOSSetting {
         return output;
     }
 
-    function sharesOfClass(uint16 class) external view returns (bytes32[] memory) {
+    function sharesOfClass(uint16 class)
+        external
+        view
+        returns (bytes32[] memory)
+    {
         require(class < _bos.counterOfClasses(), "class over flow");
 
-        bytes32[] memory list = _bos.sharesList();
+        bytes32[] memory list = _rom.sharesList();
 
         uint256 len = list.length;
         bytes32[] memory shares = new bytes32[](len);

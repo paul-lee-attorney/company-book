@@ -9,8 +9,7 @@ pragma solidity ^0.8.8;
 
 import "../../common/components/IDocumentsRepo.sol";
 
-interface IBookOfIA is IDocumentsRepo{
-
+interface IBookOfIA is IDocumentsRepo {
     //##################
     //##    写接口    ##
     //##################

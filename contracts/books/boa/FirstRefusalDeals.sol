@@ -7,12 +7,13 @@
 
 pragma solidity ^0.8.8;
 
-import "../../common/ruting/BOSSetting.sol";
+import "../../common/ruting/ROMSetting.sol";
+// import "../../common/ruting/BOSSetting.sol";
 import "../../common/ruting/IASetting.sol";
 
 import "./IFirstRefusalDeals.sol";
 
-contract FirstRefusalDeals is IFirstRefusalDeals, IASetting, BOSSetting {
+contract FirstRefusalDeals is IFirstRefusalDeals, IASetting, ROMSetting {
     struct Claim {
         uint64 weight; // FR rightholder's voting weight
         uint64 ratio;
@@ -36,7 +37,7 @@ contract FirstRefusalDeals is IFirstRefusalDeals, IASetting, BOSSetting {
         uint16 seqOfFR,
         uint40 acct
     ) external onlyManager(1) {
-        uint64 weight = _bos.votesInHand(acct);
+        uint64 weight = _rom.votesInHand(acct);
         require(weight > 0, "first refusal request has ZERO weight");
 
         if (_frDeals[seqOfOD].claims[seqOfFR].weight == 0) {

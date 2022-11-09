@@ -18,6 +18,7 @@ import "../common/ruting/BODSetting.sol";
 import "../common/ruting/BOMSetting.sol";
 import "../common/ruting/BOOSetting.sol";
 import "../common/ruting/SHASetting.sol";
+import "../common/ruting/ROMSetting.sol";
 
 import "../common/lib/SNFactory.sol";
 import "../common/lib/SNParser.sol";
@@ -35,7 +36,8 @@ contract BOMKeeper is
     BOMSetting,
     SHASetting,
     BOOSetting,
-    BOSSetting
+    BOSSetting,
+    ROMSetting
 {
     using SNFactory for bytes;
     using SNParser for bytes32;
@@ -57,7 +59,7 @@ contract BOMKeeper is
     function nominateDirector(uint40 candidate, uint40 nominator)
         external
         onlyManager(1)
-        memberExist(nominator) 
+        memberExist(nominator)
     {
         _bom.nominateDirector(candidate, nominator);
     }
@@ -67,7 +69,10 @@ contract BOMKeeper is
         onlyManager(1)
         memberExist(caller)
     {
-        require(ISigPage(ia).isParty(caller), "BOMKeeper.proposeIA: NOT Party of Doc");
+        require(
+            ISigPage(ia).isParty(caller),
+            "BOMKeeper.proposeIA: NOT Party of Doc"
+        );
 
         require(
             _boa.currentState(ia) == uint8(DocumentsRepo.BODStates.Established),
@@ -104,7 +109,9 @@ contract BOMKeeper is
             len--;
 
             if (
-                _getSHA().hasTitle(uint8(ShareholdersAgreement.TermTitle.FIRST_REFUSAL)) &&
+                _getSHA().hasTitle(
+                    uint8(ShareholdersAgreement.TermTitle.FIRST_REFUSAL)
+                ) &&
                 _getSHA().termIsTriggered(
                     uint8(ShareholdersAgreement.TermTitle.FIRST_REFUSAL),
                     ia,
@@ -113,7 +120,9 @@ contract BOMKeeper is
             ) return true;
 
             if (
-                _getSHA().hasTitle(uint8(ShareholdersAgreement.TermTitle.TAG_ALONG)) &&
+                _getSHA().hasTitle(
+                    uint8(ShareholdersAgreement.TermTitle.TAG_ALONG)
+                ) &&
                 _getSHA().termIsTriggered(
                     uint8(ShareholdersAgreement.TermTitle.TAG_ALONG),
                     ia,
@@ -122,7 +131,9 @@ contract BOMKeeper is
             ) return true;
 
             if (
-                _getSHA().hasTitle(uint8(ShareholdersAgreement.TermTitle.DRAG_ALONG)) &&
+                _getSHA().hasTitle(
+                    uint8(ShareholdersAgreement.TermTitle.DRAG_ALONG)
+                ) &&
                 _getSHA().termIsTriggered(
                     uint8(ShareholdersAgreement.TermTitle.DRAG_ALONG),
                     ia,
@@ -142,7 +153,14 @@ contract BOMKeeper is
         bytes32 desHash,
         uint40 submitter
     ) external onlyManager(1) memberExist(submitter) {
-        _bom.proposeAction(actionType, targets, values, params, desHash, submitter);
+        _bom.proposeAction(
+            actionType,
+            targets,
+            values,
+            params,
+            desHash,
+            submitter
+        );
     }
 
     // ==== vote ====
@@ -153,15 +171,17 @@ contract BOMKeeper is
         uint40 caller,
         bytes32 sigHash
     ) external onlyManager(1) memberExist(caller) {
-
         if (_isIA(motionId))
-            require(!ISigPage(address(uint160(motionId))).isParty(caller), "BOMKeeper.castVote: Party has no voting right");
-        
+            require(
+                !ISigPage(address(uint160(motionId))).isParty(caller),
+                "BOMKeeper.castVote: Party has no voting right"
+            );
+
         _bom.castVote(motionId, attitude, caller, sigHash);
     }
 
-    function _isIA(uint256 motionId) private pure returns(bool) {
-        return motionId>0 && ((motionId >> 160) == 0);
+    function _isIA(uint256 motionId) private pure returns (bool) {
+        return motionId > 0 && ((motionId >> 160) == 0);
     }
 
     function voteCounting(uint256 motionId, uint40 caller)
@@ -208,7 +228,9 @@ contract BOMKeeper is
 
         require(caller == shareNumber.shareholder(), "NOT Seller of the Deal");
 
-        uint32 unitPrice = IInvestmentAgreement(ia).unitPriceOfDeal(sn.sequence());
+        uint32 unitPrice = IInvestmentAgreement(ia).unitPriceOfDeal(
+            sn.sequence()
+        );
         uint32 closingDate = IInvestmentAgreement(ia).closingDateOfDeal(
             sn.sequence()
         );
@@ -245,9 +267,9 @@ contract BOMKeeper is
         uint8 closingDays,
         uint16 classOfOpt,
         uint32 rateOfOpt
-    ) private pure returns(bytes32 sn) {
+    ) private pure returns (bytes32 sn) {
         bytes memory _sn = new bytes(32);
-        
+
         _sn[0] = bytes1(typeOfOpt);
         _sn = _sn.dateToSN(5, triggerBN);
         _sn[9] = bytes1(execDays);

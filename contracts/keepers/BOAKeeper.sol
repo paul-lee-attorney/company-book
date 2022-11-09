@@ -20,6 +20,7 @@ import "../common/ruting/BOASetting.sol";
 import "../common/ruting/BOMSetting.sol";
 import "../common/ruting/BOSSetting.sol";
 import "../common/ruting/SHASetting.sol";
+import "../common/ruting/ROMSetting.sol";
 
 import "../common/lib/SNParser.sol";
 
@@ -30,7 +31,8 @@ contract BOAKeeper is
     BOASetting,
     SHASetting,
     BOMSetting,
-    BOSSetting
+    BOSSetting,
+    ROMSetting
 {
     using SNParser for bytes32;
 
@@ -73,7 +75,7 @@ contract BOAKeeper is
     // #############################
 
     function createIA(uint8 typOfIA, address caller) external onlyManager(1) {
-        require(_bos.isMember(_rc.userNo(caller)), "caller not MEMBER");
+        require(_rom.isMember(_rc.userNo(caller)), "caller not MEMBER");
 
         address ia = _boa.createDoc(typOfIA, _rc.userNo(caller));
 
@@ -112,9 +114,7 @@ contract BOAKeeper is
     }
 
     function _releaseCleanParOfDeal(address ia, bytes32 sn) private {
-        (, , uint64 par,  , ) = IInvestmentAgreement(ia).getDeal(
-            sn.sequence()
-        );
+        (, , uint64 par, , ) = IInvestmentAgreement(ia).getDeal(sn.sequence());
 
         if (IInvestmentAgreement(ia).releaseDealSubject(sn.sequence()))
             _bos.increaseCleanPar(sn.ssnOfDeal(), par);
@@ -183,7 +183,8 @@ contract BOAKeeper is
                 }
             } else if (
                 sn.buyerOfDeal() == caller &&
-                sn.typeOfDeal() == uint8(InvestmentAgreement.TypeOfDeal.CapitalIncrease)
+                sn.typeOfDeal() ==
+                uint8(InvestmentAgreement.TypeOfDeal.CapitalIncrease)
             ) IInvestmentAgreement(ia).lockDealSubject(seq);
             // _boa.mockDealOfBuy(ia, seq, caller, amount);
         }
@@ -212,6 +213,18 @@ contract BOAKeeper is
         _bos.requestPaidInCapital(ssn, hashKey);
     }
 
+    function decreaseCapital(
+        uint32 ssn,
+        uint64 paid,
+        uint64 par
+    ) external onlyManager(1) {
+        _bos.decreaseCapital(ssn, paid, par);
+    }
+
+    function setMaxQtyOfMembers(uint8 max) external onlyManager(1) {
+        _rom.setMaxQtyOfMembers(max);
+    }
+
     // ======== Deal Closing ========
 
     function pushToCoffer(
@@ -234,11 +247,7 @@ contract BOAKeeper is
                         .shareholder(),
                 "NOT seller"
             );
-        else
-            require(
-                _bos.controllor() == caller,
-                "caller is not controller"
-            );
+        else require(_rom.controllor() == caller, "caller is not controller");
 
         bytes32 vr = _getSHA().votingRules(_boa.typeOfIA(ia));
 
@@ -315,10 +324,13 @@ contract BOAKeeper is
             sn.sequence()
         );
 
-        (, uint64 paid, uint64 par, , ) = IInvestmentAgreement(ia)
-            .getDeal(sn.sequence());
+        (, uint64 paid, uint64 par, , ) = IInvestmentAgreement(ia).getDeal(
+            sn.sequence()
+        );
 
-        uint32 unitPrice = IInvestmentAgreement(ia).unitPriceOfDeal(sn.sequence());
+        uint32 unitPrice = IInvestmentAgreement(ia).unitPriceOfDeal(
+            sn.sequence()
+        );
 
         //释放Share的质押标记(若需)，执行交易
         if (shareNumber > bytes32(0)) {
@@ -331,14 +343,20 @@ contract BOAKeeper is
                 unitPrice
             );
         } else {
-            _bos.issueShare(
-                sn.buyerOfDeal(),
+            shareNumber = _bos.createShareNumber(
                 sn.classOfDeal(),
+                _bos.counterOfShares() + 1,
+                uint32(block.timestamp),
+                unitPrice,
+                sn.buyerOfDeal(),
+                0
+            );
+
+            _bos.issueShare(
+                shareNumber,
                 paid,
                 par,
-                uint32(block.timestamp), //paidInDeadline
-                uint32(block.timestamp), //issueDate
-                unitPrice //issuePrice
+                uint32(block.timestamp) //paidInDeadline
             );
         }
     }

@@ -8,8 +8,10 @@
 pragma solidity ^0.8.8;
 
 import "../../boa/IInvestmentAgreement.sol";
+import "../../boa/InvestmentAgreement.sol";
 import "../../boa/IMockResults.sol";
 
+import "../../../common/ruting/ROMSetting.sol";
 import "../../../common/ruting/BOSSetting.sol";
 import "../../../common/ruting/BOASetting.sol";
 
@@ -20,7 +22,7 @@ import "../../../common/components/DocumentsRepo.sol";
 
 import "./IAlongs.sol";
 
-contract DragAlong is IAlongs, BOSSetting, BOASetting {
+contract DragAlong is IAlongs, ROMSetting, BOSSetting, BOASetting {
     using SNParser for bytes32;
     using SNFactory for bytes;
     using EnumerableSet for EnumerableSet.UintSet;
@@ -109,7 +111,7 @@ contract DragAlong is IAlongs, BOSSetting, BOASetting {
             "DA.createLink: tag rule ALREADY EXIST"
         );
 
-        uint16 group = _bos.groupNo(drager);
+        uint16 group = _rom.groupNo(drager);
 
         if (group == 0) {
             _dragers.add(drager);
@@ -134,7 +136,7 @@ contract DragAlong is IAlongs, BOSSetting, BOASetting {
     }
 
     function _addGroupMemberAsDrager(uint16 group, uint40 drager) private {
-        uint40[] memory members = _bos.membersOfGroup(group);
+        uint40[] memory members = _rom.membersOfGroup(group);
         uint256 len = members.length;
 
         while (len > 0) {
@@ -165,9 +167,9 @@ contract DragAlong is IAlongs, BOSSetting, BOASetting {
     function delLink(uint40 drager) external onlyAttorney dragerExist(drager) {
         delete _links[drager];
 
-        uint16 group = _bos.groupNo(drager);
+        uint16 group = _rom.groupNo(drager);
         if (group > 0) {
-            uint40[] memory members = _bos.membersOfGroup(group);
+            uint40[] memory members = _rom.membersOfGroup(group);
             uint256 len = members.length;
 
             while (len > 0) {
@@ -196,8 +198,13 @@ contract DragAlong is IAlongs, BOSSetting, BOASetting {
     function isDrager(uint40 drager) external view returns (bool) {
         return _dragers.contains(drager);
     }
-    
-    function repOf(uint40 drager) external dragerExist(drager) view returns(uint40) {
+
+    function repOf(uint40 drager)
+        external
+        view
+        dragerExist(drager)
+        returns (uint40)
+    {
         return uint40(_reps[drager]);
     }
 
@@ -228,22 +235,27 @@ contract DragAlong is IAlongs, BOSSetting, BOASetting {
         bytes32 sn,
         bytes32 shareNumber,
         uint40 caller
-    ) external view onlyKeeper returns (bool) {
+    ) external view returns (bool) {
         require(isTriggered(ia, sn), "not triggered");
 
         uint40 drager = IInvestmentAgreement(ia)
             .shareNumberOfDeal(sn.sequence())
             .shareholder();
 
-        require(caller == drager, "DA.priceCheck: caller is not drager of DragAlong");
+        require(
+            caller == drager,
+            "DA.priceCheck: caller is not drager of DragAlong"
+        );
 
         require(
             isLinked(caller, shareNumber.shareholder()),
             "DA.PriceCheck: caller and target shareholder NOT linked"
         );
 
-        uint32 dealPrice = IInvestmentAgreement(ia).unitPrice(sn.sequence());
-        uint32 closingDate = IInvestmentAgreement(ia).closingDate(
+        uint32 dealPrice = IInvestmentAgreement(ia).unitPriceOfDeal(
+            sn.sequence()
+        );
+        uint32 closingDate = IInvestmentAgreement(ia).closingDateOfDeal(
             sn.sequence()
         );
 
@@ -262,7 +274,7 @@ contract DragAlong is IAlongs, BOSSetting, BOASetting {
             else return false;
         }
 
-        (, , , , uint32 issuePrice, ) = _bos.getShare(shareNumber.ssn());
+        (, , , , uint32 issuePrice) = _bos.getShare(shareNumber.ssn());
         uint32 issueDate = shareNumber.issueDate();
 
         if (
@@ -278,13 +290,12 @@ contract DragAlong is IAlongs, BOSSetting, BOASetting {
     // ################
 
     function isTriggered(address ia, bytes32 sn) public view returns (bool) {
-        if (
-            _boa.currentState(ia) !=
-            uint8(DocumentsRepo.BODStates.Circulated)
-        ) return false;
+        if (_boa.currentState(ia) != uint8(DocumentsRepo.BODStates.Circulated))
+            return false;
 
         if (
-            sn.typeOfDeal() == uint8(InvestmentAgreement.TypeOfDeal.CapitalIncrease) ||
+            sn.typeOfDeal() ==
+            uint8(InvestmentAgreement.TypeOfDeal.CapitalIncrease) ||
             sn.typeOfDeal() == uint8(InvestmentAgreement.TypeOfDeal.PreEmptive)
         ) return false;
 
@@ -296,21 +307,25 @@ contract DragAlong is IAlongs, BOSSetting, BOASetting {
 
         bytes32 rule = _links[_reps[seller]].rule;
 
+        if (rule.triggerTypeOfLink() == uint8(TriggerTypeOfAlongs.NoConditions))
+            return true;
+
+        uint40 controllor = _rom.controllor();
+        uint16 conGroup = _rom.groupNo(controllor);
+
         if (
-            rule.triggerTypeOfLink() ==
-            uint8(TriggerTypeOfAlongs.NoConditions)
-        ) return true;
-
-        uint40 controllor = _bos.controllor();
-        uint16 conGroup = _bos.groupNo(controllor);
-
-        if ((controllor != seller) && (conGroup == 0 || conGroup != _bos.groupNo(seller))) return false;
+            (controllor != seller) &&
+            (conGroup == 0 || conGroup != _rom.groupNo(seller))
+        ) return false;
 
         (uint40 newControllor, uint16 newConGroup, uint64 ratio) = IMockResults(
             _boa.mockResultsOfIA(ia)
         ).topGroup();
 
-        if ((controllor != newControllor) && (conGroup == 0 || conGroup != newConGroup)) return true;
+        if (
+            (controllor != newControllor) &&
+            (conGroup == 0 || conGroup != newConGroup)
+        ) return true;
 
         if (ratio <= rule.thresholdOfLink()) return true;
 

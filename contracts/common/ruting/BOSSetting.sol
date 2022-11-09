@@ -20,21 +20,11 @@ contract BOSSetting is AccessControl {
 
     event SetBOSCal(address cal);
 
-    modifier onlyMember() {
-        require(_bos.isMember(_msgSender()), "NOT Member");
-        _;
-    }
-
-    modifier memberExist(uint40 acct) {
-        require(_bos.isMember(acct), "member NOT exist");
-        _;
-    }
-
     // modifier onlyStakeholders() {
     //     require(
     //         _msgSender() == getManagerKey(0) ||
     //             _msgSender() == getManager(1) ||
-    //             _bos.isMember(_msgSender()),
+    //             _rom.isMember(_msgSender()),
     //         "NOT Stakeholders"
     //     );
     //     _;

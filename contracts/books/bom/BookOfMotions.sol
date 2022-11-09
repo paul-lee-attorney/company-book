@@ -24,11 +24,7 @@ import "../../common/lib/MotionsRepo.sol";
 import "../../common/lib/DelegateMap.sol";
 import "../../common/lib/BallotsBox.sol";
 
-contract BookOfMotions is
-    IBookOfMotions,
-    MeetingMinutes,
-    BOASetting
-{
+contract BookOfMotions is IBookOfMotions, MeetingMinutes, BOASetting {
     using SNParser for bytes32;
     using MotionsRepo for MotionsRepo.Repo;
     using DelegateMap for DelegateMap.Map;
@@ -59,19 +55,26 @@ contract BookOfMotions is
         external
         onlyManager(1)
     {
-        bytes32 rule = _getSHA().votingRules(
-            uint8(TypeOfVoting.ElectDirector)
-        );
+        bytes32 rule = _getSHA().votingRules(uint8(TypeOfVoting.ElectDirector));
 
         MotionsRepo.Head memory head = MotionsRepo.Head({
-            typeOfMotion:uint8(TypeOfVoting.ElectDirector),
-            state: 0,        
+            typeOfMotion: uint8(TypeOfVoting.ElectDirector),
+            state: 0,
             submitter: nominator,
             executor: candidate,
             proposeBN: uint32(block.number),
-            weightRegBN: uint32(block.number) + uint32(rule.reviewDaysOfVR()) * 24 * _rc.blocksPerHour(),
-            voteStartBN: uint32(block.number) + uint32(rule.reviewDaysOfVR()) * 24 * _rc.blocksPerHour(),
-            voteEndBN: uint32(block.number) + uint32(rule.votingDaysOfVR()) * 24 * _rc.blocksPerHour()
+            weightRegBN: uint32(block.number) +
+                uint32(rule.reviewDaysOfVR()) *
+                24 *
+                _rc.blocksPerHour(),
+            voteStartBN: uint32(block.number) +
+                uint32(rule.reviewDaysOfVR()) *
+                24 *
+                _rc.blocksPerHour(),
+            voteEndBN: uint32(block.number) +
+                uint32(rule.votingDaysOfVR()) *
+                24 *
+                _rc.blocksPerHour()
         });
 
         uint256 motionId = uint256(keccak256(abi.encode(head)));
@@ -80,10 +83,7 @@ contract BookOfMotions is
             emit NominateDirector(motionId, candidate, nominator);
     }
 
-    function proposeIA(address ia, uint40 submitter)
-        external
-        onlyManager(1)
-    {
+    function proposeIA(address ia, uint40 submitter) external onlyManager(1) {
         require(ISigPage(ia).established(), "doc is not established");
 
         uint256 motionId = uint256(uint160(ia));
@@ -93,8 +93,8 @@ contract BookOfMotions is
         bytes32 rule = _getSHA().votingRules(motionType);
 
         MotionsRepo.Head memory head = MotionsRepo.Head({
-            typeOfMotion:motionType,
-            state: 0,        
+            typeOfMotion: motionType,
+            state: 0,
             submitter: submitter,
             executor: 0,
             proposeBN: uint32(block.number),
@@ -116,21 +116,25 @@ contract BookOfMotions is
         returns (uint64 paid, uint64 par)
     {
         require(
-            block.timestamp < IInvestmentAgreement(ia).closingDate(sn.sequence()),
+            block.timestamp <
+                IInvestmentAgreement(ia).closingDateOfDeal(sn.sequence()),
             "MISSED closing date"
         );
 
         require(
             block.number <
                 _mm.motions[uint256(uint160(ia))].head.voteEndBN +
-                    uint32(_mm.motions[uint256(uint160(ia))].votingRule.execDaysForPutOptOfVR()) *
-                    24 * _rc.blocksPerHour(),
+                    uint32(
+                        _mm
+                            .motions[uint256(uint160(ia))]
+                            .votingRule
+                            .execDaysForPutOptOfVR()
+                    ) *
+                    24 *
+                    _rc.blocksPerHour(),
             "MISSED execute deadline"
         );
 
-        (, paid, par,  , ) = IInvestmentAgreement(ia).getDeal(
-            sn.sequence()
-        );
+        (, paid, par, , ) = IInvestmentAgreement(ia).getDeal(sn.sequence());
     }
-
 }

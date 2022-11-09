@@ -50,7 +50,7 @@ contract TagAlong is BOMSetting, DragAlong {
         while (len > 0) {
             _supporters.add(arr[len - 1]);
             len--;
-        }        
+        }
     }
 
     function isExempted(address ia, bytes32 sn) public returns (bool) {
@@ -60,7 +60,7 @@ contract TagAlong is BOMSetting, DragAlong {
 
         (uint40[] memory consentParties, ) = _bom.getYea(uint256(uint160(ia)));
 
-        uint40[] memory signers = ISigPage(ia).parties();
+        uint40[] memory signers = ISigPage(ia).partiesOfDoc();
 
         _supporters.emptyItems();
 
@@ -69,9 +69,11 @@ contract TagAlong is BOMSetting, DragAlong {
         _inputArray(signers);
 
         uint40[] memory rightholders = _links[
-            _reps[IInvestmentAgreement(ia)
-                .shareNumberOfDeal(sn.sequence())
-                .shareholder()]
+            _reps[
+                IInvestmentAgreement(ia)
+                    .shareNumberOfDeal(sn.sequence())
+                    .shareholder()
+            ]
         ].followers.valuesToUint40();
 
         uint256 len = rightholders.length;

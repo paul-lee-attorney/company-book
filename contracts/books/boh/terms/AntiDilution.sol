@@ -8,6 +8,7 @@
 pragma solidity ^0.8.8;
 
 import "../../boa/IInvestmentAgreement.sol";
+import "../../boa/InvestmentAgreement.sol";
 
 import "../../../common/ruting/BOSSetting.sol";
 import "../../../common/ruting/BOMSetting.sol";
@@ -35,7 +36,10 @@ contract AntiDilution is IAntiDilution, ITerm, BOSSetting, BOMSetting {
     // #################
 
     modifier onlyMarked(uint16 class) {
-        require(_benchmarks.contains(class), "AD.onlyMarked: no uint price maked for the class");
+        require(
+            _benchmarks.contains(class),
+            "AD.onlyMarked: no uint price maked for the class"
+        );
         _;
     }
 
@@ -47,7 +51,11 @@ contract AntiDilution is IAntiDilution, ITerm, BOSSetting, BOMSetting {
         if (_benchmarks.addMark(class, price)) emit SetBenchmark(class, price);
     }
 
-    function delBenchmark(uint16 class) external onlyAttorney onlyMarked(class) {
+    function delBenchmark(uint16 class)
+        external
+        onlyAttorney
+        onlyMarked(class)
+    {
         if (_benchmarks.removeMark(class)) emit DelBenchmark(class);
     }
 
@@ -101,13 +109,13 @@ contract AntiDilution is IAntiDilution, ITerm, BOSSetting, BOMSetting {
     ) external view onlyMarked(shareNumber.class()) returns (uint64 gift) {
         uint64 markPrice = _benchmarks.markedValue(shareNumber.class());
 
-        uint64 dealPrice = IInvestmentAgreement(ia).unitPrice(
+        uint64 dealPrice = IInvestmentAgreement(ia).unitPriceOfDeal(
             snOfDeal.sequence()
         );
 
         require(markPrice > dealPrice, "AntiDilution not triggered");
 
-        (, uint64 paid, , , , ) = _bos.getShare(shareNumber.ssn());
+        (, uint64 paid, , , ) = _bos.getShare(shareNumber.ssn());
 
         gift = (paid * markPrice) / dealPrice - paid;
     }
@@ -117,10 +125,13 @@ contract AntiDilution is IAntiDilution, ITerm, BOSSetting, BOMSetting {
     // ################
 
     function isTriggered(address ia, bytes32 sn) public view returns (bool) {
-        uint64 unitPrice = IInvestmentAgreement(ia).unitPrice(sn.sequence());
+        uint64 unitPrice = IInvestmentAgreement(ia).unitPriceOfDeal(
+            sn.sequence()
+        );
 
         if (
-            sn.typeOfDeal() != uint8(InvestmentAgreement.TypeOfDeal.CapitalIncrease) &&
+            sn.typeOfDeal() !=
+            uint8(InvestmentAgreement.TypeOfDeal.CapitalIncrease) &&
             sn.typeOfDeal() != uint8(InvestmentAgreement.TypeOfDeal.PreEmptive)
         ) return false;
 
@@ -134,7 +145,10 @@ contract AntiDilution is IAntiDilution, ITerm, BOSSetting, BOMSetting {
         view
         returns (bool)
     {
-        require(consentParties.length > 0, "AD.isExempted: zero consentParties");
+        require(
+            consentParties.length > 0,
+            "AD.isExempted: zero consentParties"
+        );
 
         uint16 cur = uint16(_benchmarks.topKey());
 
@@ -157,7 +171,9 @@ contract AntiDilution is IAntiDilution, ITerm, BOSSetting, BOMSetting {
 
         (uint40[] memory consentParties, ) = _bom.getYea(uint256(uint160(ia)));
 
-        uint32 unitPrice = IInvestmentAgreement(ia).unitPrice(sn.sequence());
+        uint32 unitPrice = IInvestmentAgreement(ia).unitPriceOfDeal(
+            sn.sequence()
+        );
 
         return _isExempted(unitPrice, consentParties);
     }

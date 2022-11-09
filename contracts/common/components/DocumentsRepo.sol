@@ -13,13 +13,19 @@ import "../lib/SNFactory.sol";
 import "../lib/SNParser.sol";
 import "../lib/EnumerableSet.sol";
 
-import "../ruting/BOASetting.sol"; 
-import "../ruting/BOSSetting.sol"; 
+import "../ruting/BOASetting.sol";
+import "../ruting/BOSSetting.sol";
 import "../ruting/SHASetting.sol";
 
 import "../utils/CloneFactory.sol";
 
-contract DocumentsRepo is IDocumentsRepo, CloneFactory, BOASetting, SHASetting, BOSSetting {
+contract DocumentsRepo is
+    IDocumentsRepo,
+    CloneFactory,
+    BOASetting,
+    SHASetting,
+    BOSSetting
+{
     using SNFactory for bytes;
     using SNParser for bytes32;
     using EnumerableSet for EnumerableSet.Bytes32Set;
@@ -127,14 +133,11 @@ contract DocumentsRepo is IDocumentsRepo, CloneFactory, BOASetting, SHASetting, 
     {
         body = createClone(_templates[docType]);
 
-        uint32 seq = _docs[address(0)].reviewDeadlineBN++;
+        _docs[address(0)].reviewDeadlineBN++;
 
-        bytes32 sn = _createSN(
-            docType,
-            seq,
-            uint32(block.timestamp),
-            creator
-        );
+        uint32 seq = _docs[address(0)].reviewDeadlineBN;
+
+        bytes32 sn = _createSN(docType, seq, uint32(block.timestamp), creator);
 
         Doc storage doc = _docs[body];
 
@@ -221,11 +224,8 @@ contract DocumentsRepo is IDocumentsRepo, CloneFactory, BOASetting, SHASetting, 
     {
         Doc storage doc = _docs[body];
 
-        if (doc.state < uint8(BODStates.Established))
-            return false;
-        else if (
-            doc.state > uint8(BODStates.Established)
-        ) return true;
+        if (doc.state < uint8(BODStates.Established)) return false;
+        else if (doc.state > uint8(BODStates.Established)) return true;
         else if (doc.reviewDeadlineBN > uint32(block.number)) return false;
         else return true;
     }
@@ -236,8 +236,7 @@ contract DocumentsRepo is IDocumentsRepo, CloneFactory, BOASetting, SHASetting, 
         onlyRegistered(body)
         returns (bool)
     {
-        return
-            _docs[body].state >= uint8(BODStates.Circulated);
+        return _docs[body].state >= uint8(BODStates.Circulated);
     }
 
     function qtyOfDocs() external view returns (uint256) {
@@ -268,7 +267,6 @@ contract DocumentsRepo is IDocumentsRepo, CloneFactory, BOASetting, SHASetting, 
     {
         return _docs[body].state;
     }
-
 
     function reviewDeadlineBNOf(address body)
         external

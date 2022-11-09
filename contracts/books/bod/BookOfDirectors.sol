@@ -31,7 +31,7 @@ contract BookOfDirectors is IBookOfDirectors, MeetingMinutes {
         uint32 endBN;
     }
 
-/*
+    /*
     _dirctors[0] {
         title: maxQtyOfDirectors;
         acct: ViceChair;
@@ -97,44 +97,36 @@ contract BookOfDirectors is IBookOfDirectors, MeetingMinutes {
             acct: candidate,
             appointer: appointer,
             startBN: startBN,
-            endBN: endBN            
+            endBN: endBN
         });
 
         if (title == uint8(TitleOfDirectors.Chairman)) {
-            if (_directors[0].appointer == 0) _directors[0].appointer = candidate;
+            if (_directors[0].appointer == 0)
+                _directors[0].appointer = candidate;
             else revert("BOD.addDirector: Chairman's position is occupied");
         } else if (title == uint8(TitleOfDirectors.ViceChairman)) {
             if (_directors[0].acct == 0) _directors[0].acct = candidate;
             else revert("BOD.addDirector: ViceChairman's position is occupied");
-        } 
-        
+        }
+
         if (_board.add(candidate))
-            emit AddDirector(
-                title,
-                candidate,
-                appointer,
-                startBN,
-                endBN
-            );
+            emit AddDirector(title, candidate, appointer, startBN, endBN);
     }
 
     function takePosition(uint40 candidate, uint40 nominator)
         external
         onlyManager(1)
     {
-        _addDirector(
-            candidate,
-            uint8(TitleOfDirectors.Director),
-            nominator
-        );
+        _addDirector(candidate, uint8(TitleOfDirectors.Director), nominator);
     }
 
     function removeDirector(uint40 acct) external onlyManager(1) {
         if (isDirector(acct)) {
-
             if (_directors[acct].title == uint8(TitleOfDirectors.Chairman)) {
                 _directors[0].appointer = 0;
-            } else if (_directors[acct].title == uint8(TitleOfDirectors.ViceChairman)) {
+            } else if (
+                _directors[acct].title == uint8(TitleOfDirectors.ViceChairman)
+            ) {
                 _directors[0].acct = 0;
             }
 
@@ -164,10 +156,10 @@ contract BookOfDirectors is IBookOfDirectors, MeetingMinutes {
         returns (uint8 qty)
     {
         uint40[] memory list = _board.valuesToUint40();
-        uint len = list.length;
+        uint256 len = list.length;
 
         while (len > 0) {
-            if (_directors[len-1].appointer == appointer) qty++;
+            if (_directors[len - 1].appointer == appointer) qty++;
             len--;
         }
     }
@@ -182,12 +174,15 @@ contract BookOfDirectors is IBookOfDirectors, MeetingMinutes {
         directorExist(acct)
         returns (bool)
     {
-        return (_directors[acct].endBN >= block.number && _directors[acct].startBN <= block.number);
+        return (_directors[acct].endBN >= block.number &&
+            _directors[acct].startBN <= block.number);
     }
 
     function whoIs(uint8 title) external view returns (uint40) {
-        if (title == uint8(TitleOfDirectors.Chairman)) return _directors[0].appointer;
-        else if (title == uint8(TitleOfDirectors.ViceChairman)) return _directors[0].acct;
+        if (title == uint8(TitleOfDirectors.Chairman))
+            return _directors[0].appointer;
+        else if (title == uint8(TitleOfDirectors.ViceChairman))
+            return _directors[0].acct;
         else revert("BOD.whoIs: value of title overflow");
     }
 

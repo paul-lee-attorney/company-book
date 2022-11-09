@@ -136,7 +136,9 @@ contract InvestmentAgreement is
             );
         }
 
-        uint16 seq = uint16(_deals[0].unitPrice++);
+        _deals[0].unitPrice++;
+
+        uint16 seq = uint16(_deals[0].unitPrice);
 
         Deal storage deal = _deals[seq];
 

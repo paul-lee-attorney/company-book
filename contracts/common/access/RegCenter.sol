@@ -61,7 +61,9 @@ contract RegCenter is IRegCenter {
     function regUser() external {
         require(!_usedKeys[msg.sender], "RC.regUser: already registered");
 
-        uint40 seq = _userNo[address(0)]++;
+        _userNo[address(0)]++;
+
+        uint40 seq = _userNo[address(0)];
 
         _users[seq].primeKey = msg.sender;
 

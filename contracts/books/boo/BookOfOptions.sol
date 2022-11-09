@@ -54,7 +54,7 @@ contract BookOfOptions is IBookOfOptions, BOSSetting {
         uint40[] memory obligors,
         uint64 paid,
         uint64 par
-    ) external onlyKeeper returns(bytes32 _sn) {
+    ) external onlyKeeper returns (bytes32 _sn) {
         _sn = _options.createOption(sn, rightholder, obligors, paid, par);
         emit CreateOpt(_sn, rightholder, paid, par);
     }
@@ -70,16 +70,17 @@ contract BookOfOptions is IBookOfOptions, BOSSetting {
 
             if (!IOptions(opts).isOption(sn)) continue;
 
-            (uint40 rightholder, uint64 paid, uint64 par) = IOptions(opts).getOption(sn);
+            (uint40 rightholder, uint64 paid, uint64 par) = IOptions(opts)
+                .getOption(sn);
 
             sn = _options.createOption(
-                sn, 
+                sn,
                 rightholder,
                 IOptions(opts).obligorsOfOption(sn),
                 paid,
                 par
             );
-            
+
             emit RegisterOpt(sn, paid, par);
         }
     }
@@ -99,7 +100,7 @@ contract BookOfOptions is IBookOfOptions, BOSSetting {
         uint32 d1,
         uint32 d2
     ) external onlyKeeper {
-        _options.updateOracle(sn, d1,d2);
+        _options.updateOracle(sn, d1, d2);
         emit UpdateOracle(sn, d1, d2);
     }
 
@@ -119,10 +120,7 @@ contract BookOfOptions is IBookOfOptions, BOSSetting {
         }
     }
 
-    function removeFuture(
-        bytes32 sn,
-        bytes32 ft
-    ) external onlyKeeper {
+    function removeFuture(bytes32 sn, bytes32 ft) external onlyKeeper {
         if (_options.removeFuture(sn, ft)) {
             emit RemoveFuture(sn, ft);
         }
@@ -137,10 +135,7 @@ contract BookOfOptions is IBookOfOptions, BOSSetting {
             emit AddPledge(sn, shareNumber, paid);
     }
 
-    function lockOption(bytes32 sn, bytes32 hashLock)
-        external
-        onlyKeeper
-    {
+    function lockOption(bytes32 sn, bytes32 hashLock) external onlyKeeper {
         _options.lockOption(sn, hashLock);
         emit LockOpt(sn, hashLock);
     }
@@ -188,7 +183,11 @@ contract BookOfOptions is IBookOfOptions, BOSSetting {
         return _options.isObligor(sn, acct);
     }
 
-    function obligorsOfOption(bytes32 sn) external view returns (uint40[] memory) {
+    function obligorsOfOption(bytes32 sn)
+        external
+        view
+        returns (uint40[] memory)
+    {
         return _options.obligorsOfOption(sn);
     }
 
@@ -204,12 +203,15 @@ contract BookOfOptions is IBookOfOptions, BOSSetting {
         return _options.pledges(sn);
     }
 
-    function oracle(bytes32 sn, uint64 blockNumber) external view returns (uint32, uint32) {
+    function oracle(bytes32 sn, uint64 blockNumber)
+        external
+        view
+        returns (uint32, uint32)
+    {
         return _options.oracle(sn, blockNumber);
     }
 
-    function snList() external view returns(bytes32[] memory) {
+    function snList() external view returns (bytes32[] memory) {
         return _options.optsList();
     }
-
 }

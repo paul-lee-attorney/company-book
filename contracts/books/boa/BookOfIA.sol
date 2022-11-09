@@ -98,20 +98,25 @@ contract BookOfIA is IBookOfIA, DocumentsRepo {
                 sn.sequence()
             );
 
-            if (state == uint8(InvestmentAgreement.StateOfDeal.Terminated)) continue;
+            if (state == uint8(InvestmentAgreement.StateOfDeal.Terminated))
+                continue;
 
             if (
-                typeOfDeal == uint8(InvestmentAgreement.TypeOfDeal.CapitalIncrease) ||
+                typeOfDeal ==
+                uint8(InvestmentAgreement.TypeOfDeal.CapitalIncrease) ||
                 typeOfDeal == uint8(InvestmentAgreement.TypeOfDeal.PreEmptive)
             ) signal[0] = 1;
             else if (
-                typeOfDeal == uint8(InvestmentAgreement.TypeOfDeal.ShareTransferExt) ||
+                typeOfDeal ==
+                uint8(InvestmentAgreement.TypeOfDeal.ShareTransferExt) ||
                 typeOfDeal == uint8(InvestmentAgreement.TypeOfDeal.TagAlong) ||
                 typeOfDeal == uint8(InvestmentAgreement.TypeOfDeal.DragAlong)
             ) signal[1] = 2;
             else if (
-                typeOfDeal == uint8(InvestmentAgreement.TypeOfDeal.ShareTransferInt) ||
-                typeOfDeal == uint8(InvestmentAgreement.TypeOfDeal.FirstRefusal) ||
+                typeOfDeal ==
+                uint8(InvestmentAgreement.TypeOfDeal.ShareTransferInt) ||
+                typeOfDeal ==
+                uint8(InvestmentAgreement.TypeOfDeal.FirstRefusal) ||
                 typeOfDeal == uint8(InvestmentAgreement.TypeOfDeal.FreeGift)
             ) signal[2] = 3;
         }

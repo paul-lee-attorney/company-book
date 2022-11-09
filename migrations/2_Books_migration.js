@@ -289,7 +289,6 @@ module.exports = async function (deployer, network, accounts) {
     await gk.setBOMKeeper(bomKeeper.address);
     await gk.setBOOKeeper(booKeeper.address);
     await gk.setBOPKeeper(bopKeeper.address);
-    // await gk.setBOSKeeper(bosKeeper.address);
     await gk.setSHAKeeper(shaKeeper.address);
 
     await boaKeeper.setManager(1, accounts[0], gk.address);

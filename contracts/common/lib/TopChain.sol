@@ -27,13 +27,13 @@ library TopChain {
     }
 
     /* Node[0] {
-        acct: counterOfShares;
+        acct: basedOnPar;
         group: counterOfGroups;
         deep: maxQtyOfMembers;
         prev: tail;
         next: head;
         up: qtyOfMembers;
-        down: counterOfClasses;
+        down: null;
         amt: lenOfChain;
         sum: totalVotes;
     } */
@@ -41,6 +41,16 @@ library TopChain {
     //##################
     //##    写接口    ##
     //##################
+
+    function setVoteBase(Chain storage chain, bool onPar)
+        internal
+        returns (bool flag)
+    {
+        if (onPar != basedOnPar(chain)) {
+            chain.nodes[0].acct = onPar ? 1 : 0;
+            flag = true;
+        }
+    }
 
     // ==== restoreChain ====
 
@@ -65,8 +75,7 @@ library TopChain {
     {
         Node storage n = chain.nodes[acct];
 
-        if (acct > 0 && n.acct == 0) {            
-
+        if (acct > 0 && n.acct == 0) {
             n.acct = acct;
             n.deep = 1;
 
@@ -76,9 +85,11 @@ library TopChain {
         }
     }
 
-    function delNode(Chain storage chain, uint40 acct) internal returns(bool flag) {
+    function delNode(Chain storage chain, uint40 acct)
+        internal
+        returns (bool flag)
+    {
         if (isMember(chain, acct)) {
-
             delete chain.nodes[acct];
 
             _decreaseQtyOfMembers(chain);
@@ -89,10 +100,11 @@ library TopChain {
 
     // ==== CarveOut ====
 
-    function vCarveOut(Chain storage chain, uint40 acct) internal returns(bool flag) {
-
+    function vCarveOut(Chain storage chain, uint40 acct)
+        internal
+        returns (bool flag)
+    {
         if (isMember(chain, acct)) {
-            
             Node storage n = chain.nodes[acct];
 
             uint40 up = n.up;
@@ -148,10 +160,11 @@ library TopChain {
         }
     }
 
-    function hCarveOut(Chain storage chain, uint40 acct) internal returns(bool flag) {
-
+    function hCarveOut(Chain storage chain, uint40 acct)
+        internal
+        returns (bool flag)
+    {
         if (isMember(chain, acct)) {
-    
             Node storage n = chain.nodes[acct];
 
             chain.nodes[n.prev].next = n.next;
@@ -164,7 +177,6 @@ library TopChain {
 
             flag = true;
         }
-
     }
 
     // ==== Insert ====
@@ -385,7 +397,15 @@ library TopChain {
 
     // ==== Zero Node ====
 
-    function counterOfShares(Chain storage chain) internal view returns (uint32) {
+    function basedOnPar(Chain storage chain) internal view returns (bool) {
+        return chain.nodes[0].acct == 1;
+    }
+
+    function counterOfShares(Chain storage chain)
+        internal
+        view
+        returns (uint32)
+    {
         return uint32(chain.nodes[0].acct);
     }
 
@@ -397,7 +417,11 @@ library TopChain {
         return chain.nodes[0].group;
     }
 
-    function maxQtyOfMembers(Chain storage chain) internal view returns (uint16) {
+    function maxQtyOfMembers(Chain storage chain)
+        internal
+        view
+        returns (uint16)
+    {
         return chain.nodes[0].deep;
     }
 
@@ -413,7 +437,11 @@ library TopChain {
         return chain.nodes[0].up;
     }
 
-    function counterOfClasses(Chain storage chain) internal view returns (uint16) {
+    function counterOfClasses(Chain storage chain)
+        internal
+        view
+        returns (uint16)
+    {
         return uint16(chain.nodes[0].down);
     }
 
@@ -441,9 +469,7 @@ library TopChain {
             uint64 sum
         )
     {
-
         if (isMember(chain, acct)) {
-
             Node storage n = chain.nodes[acct];
 
             group = n.group;
@@ -503,13 +529,16 @@ library TopChain {
         return (up, down);
     }
 
-    function nextNode(Chain storage chain, uint40 acct) internal view returns(uint40 next) {
-
+    function nextNode(Chain storage chain, uint40 acct)
+        internal
+        view
+        returns (uint40 next)
+    {
         Node storage n = chain.nodes[acct];
 
         if (n.down > 0) next = n.down;
-        else if(n.next > 0) next = n.next;
-        else if(n.up > 0) {
+        else if (n.next > 0) next = n.next;
+        else if (n.up > 0) {
             next = topOfBranch(chain, acct);
             next = chain.nodes[next].next;
         }
@@ -526,11 +555,15 @@ library TopChain {
         else revert("TC.groupNo: acct is not a member");
     }
 
-    function topOfBranch(Chain storage chain, uint40 acct) internal view returns(uint40 top) {
+    function topOfBranch(Chain storage chain, uint40 acct)
+        internal
+        view
+        returns (uint40 top)
+    {
         while (acct > 0) {
             top = acct;
             acct = chain.nodes[top].up;
-        }    
+        }
     }
 
     function leaderOfGroup(Chain storage chain, uint16 group)
@@ -552,7 +585,8 @@ library TopChain {
         view
         returns (uint16)
     {
-        if (top > 0 && chain.nodes[top].acct == top) return chain.nodes[top].deep;
+        if (top > 0 && chain.nodes[top].acct == top)
+            return chain.nodes[top].deep;
         else revert("TC.deepOfBranch: top is not a member");
     }
 
@@ -589,13 +623,21 @@ library TopChain {
         uint40 acct1,
         uint40 acct2
     ) internal view returns (bool) {
-        if (acct1 > 0 && chain.nodes[acct1].acct == acct1 && acct2 > 0 && chain.nodes[acct2].acct == acct2) 
-        return chain.nodes[acct1].group == chain.nodes[acct2].group;
+        if (
+            acct1 > 0 &&
+            chain.nodes[acct1].acct == acct1 &&
+            acct2 > 0 &&
+            chain.nodes[acct2].acct == acct2
+        ) return chain.nodes[acct1].group == chain.nodes[acct2].group;
         else revert("TC.affiliated: not all accts are members");
     }
 
     // ==== members ====
-    function isMember(Chain storage chain, uint40 acct) internal view returns(bool) {
+    function isMember(Chain storage chain, uint40 acct)
+        internal
+        view
+        returns (bool)
+    {
         return acct > 0 && chain.nodes[acct].acct == acct;
     }
 
@@ -606,7 +648,7 @@ library TopChain {
     {
         uint256 len = qtyOfMembers(chain);
         uint40[] memory list = new uint40[](len);
-        
+
         uint40 cur = chain.nodes[0].next;
         uint256 i = 0;
 
@@ -628,11 +670,10 @@ library TopChain {
         view
         returns (Node[] memory)
     {
-
         uint256 len = qtyOfMembers(chain);
 
         Node[] memory list = new Node[](len + 1);
-        
+
         list[0] = chain.nodes[0];
 
         uint40 cur = chain.nodes[0].next;

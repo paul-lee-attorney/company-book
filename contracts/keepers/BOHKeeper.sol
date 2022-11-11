@@ -32,10 +32,10 @@ contract BOHKeeper is
     BOASetting,
     BODSetting,
     SHASetting,
-    ROMSetting,
     BOMSetting,
     BOOSetting,
-    BOSSetting
+    BOSSetting,
+    ROMSetting
 {
     using SNParser for bytes32;
 
@@ -84,8 +84,8 @@ contract BOHKeeper is
         IBookSetting(sha).setBOA(address(_boa));
         IBookSetting(sha).setBOH(address(_boh));
         IBookSetting(sha).setBOS(address(_bos));
-        IBookSetting(sha).setBOSCal(address(_bosCal));
         IBookSetting(sha).setBOM(address(_bom));
+        IBookSetting(sha).setROM(address(_rom));
 
         // copyRoleTo(KEEPERS, sha);
     }

@@ -15,7 +15,7 @@ import "../lib/EnumerableSet.sol";
 
 import "../ruting/BOASetting.sol";
 import "../ruting/BOSSetting.sol";
-import "../ruting/SHASetting.sol";
+import "../ruting/ROMSetting.sol";
 
 import "../utils/CloneFactory.sol";
 
@@ -23,7 +23,7 @@ contract DocumentsRepo is
     IDocumentsRepo,
     CloneFactory,
     BOASetting,
-    SHASetting,
+    ROMSetting,
     BOSSetting
 {
     using SNFactory for bytes;

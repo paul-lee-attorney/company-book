@@ -16,9 +16,10 @@ import "../../common/components/DocumentsRepo.sol";
 import "../../common/lib/SNParser.sol";
 import "../../common/lib/EnumerableSet.sol";
 
+import "../../common/ruting/SHASetting.sol";
 import "../../common/ruting/IBookSetting.sol";
 
-contract BookOfIA is IBookOfIA, DocumentsRepo {
+contract BookOfIA is IBookOfIA, SHASetting, DocumentsRepo {
     using SNParser for bytes32;
 
     // ia => frd
@@ -50,7 +51,8 @@ contract BookOfIA is IBookOfIA, DocumentsRepo {
                 address(_rc),
                 address(_gk)
             );
-            IBookSetting(frd).setIA(ia);
+            IBookSetting(frd).setROM(address(_rom));
+
             IAccessControl(frd).setManager(1, address(this), msg.sender);
         }
     }
@@ -72,7 +74,7 @@ contract BookOfIA is IBookOfIA, DocumentsRepo {
             );
             IBookSetting(mock).setIA(ia);
             IBookSetting(mock).setBOS(address(_bos));
-            IBookSetting(mock).setBOSCal(address(_bosCal));
+            IBookSetting(mock).setROM(address(_rom));
 
             IAccessControl(mock).setManager(1, address(this), creator);
         }

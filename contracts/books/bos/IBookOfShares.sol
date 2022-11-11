@@ -12,8 +12,6 @@ interface IBookOfShares {
     //##    Event     ##
     //##################
 
-    // ==== SharesRepo ====
-
     event IssueShare(
         bytes32 indexed shareNumber,
         uint64 paid,

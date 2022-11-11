@@ -163,7 +163,7 @@ contract MeetingMinutes is IMeetingMinutes, SHASetting, ROMSetting {
 
         uint64 votes;
 
-        if (_getSHA().basedOnPar()) (, votes) = _rom.capAtBlock(blocknumber);
+        if (_rom.basedOnPar()) (, votes) = _rom.capAtBlock(blocknumber);
         else (votes, ) = _rom.capAtBlock(blocknumber);
 
         return (weight * 10000) / votes;

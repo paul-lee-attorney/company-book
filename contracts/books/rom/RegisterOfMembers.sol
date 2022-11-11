@@ -46,6 +46,10 @@ contract RegisterOfMembers is IRegisterOfMembers, BOSSetting, SHASetting {
     //##    写接口    ##
     //##################
 
+    function setVoteBase(bool onPar) external onlyKeeper {
+        if (_gm.setVoteBase(onPar)) emit SetVoteBase(onPar);
+    }
+
     function capIncrease(uint64 paid, uint64 par) external onlyBOS {
         uint64 blocknumber = _gm.changeAmtOfCap(paid, par, false);
         emit CapIncrease(paid, par, blocknumber);
@@ -61,8 +65,8 @@ contract RegisterOfMembers is IRegisterOfMembers, BOSSetting, SHASetting {
         emit SetMaxQtyOfMembers(max);
     }
 
-    function setAmtBase(bool basedOnPar) external onlyKeeper {
-        if (_gm.setAmtBase(basedOnPar)) emit SetAmtBase(basedOnPar);
+    function setAmtBase(bool onPar) external onlyKeeper {
+        if (_gm.setAmtBase(onPar)) emit SetAmtBase(onPar);
     }
 
     function addMember(uint40 acct) external onlyBOS {
@@ -157,6 +161,10 @@ contract RegisterOfMembers is IRegisterOfMembers, BOSSetting, SHASetting {
     // ##   查询接口   ##
     // ##################
 
+    function basedOnPar() external view returns (bool) {
+        return _gm.basedOnPar();
+    }
+
     function maxQtyOfMembers() external view returns (uint16) {
         return _gm.maxQtyOfMembers();
     }
@@ -172,7 +180,7 @@ contract RegisterOfMembers is IRegisterOfMembers, BOSSetting, SHASetting {
     function capAtBlock(uint64 blocknumber)
         external
         view
-        returns (uint64, uint64)
+        returns (uint64 paid, uint64 par)
     {
         return _gm.capAtBlock(blocknumber);
     }
@@ -229,7 +237,7 @@ contract RegisterOfMembers is IRegisterOfMembers, BOSSetting, SHASetting {
         view
         returns (uint64)
     {
-        return _gm.votesAtBlock(acct, blocknumber, _getSHA().basedOnPar());
+        return _gm.votesAtBlock(acct, blocknumber, _gm.basedOnPar());
     }
 
     function sharesInHand(uint40 acct)

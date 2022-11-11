@@ -30,7 +30,7 @@ contract BookOfShares is IBookOfShares, ROMSetting {
         uint64 par; //票面金额（注册资本面值）
         uint64 cleanPar; //清洁金额（扣除出质、远期票面金额）
         uint32 paidInDeadline; //出资期限（时间戳）
-        uint16 state; //股票状态 （0:正常，1:查封）
+        uint8 state; //股票状态 （0:正常，1:查封）
     }
 
     // SNInfo: 股票编号编码规则
@@ -44,8 +44,8 @@ contract BookOfShares is IBookOfShares, ROMSetting {
     // }
 
     // _shares[0] {
-    //     paidInDeadline: counterOfShares;
-    //     state: counterOfClass;
+    //     paid: counterOfShares;
+    //     par: counterOfClass;
     // }
 
     // ssn => Share
@@ -110,7 +110,7 @@ contract BookOfShares is IBookOfShares, ROMSetting {
         _increaseCounterOfShares();
 
         require(
-            shareNumber.sequence() == counterOfShares(),
+            shareNumber.ssn() == counterOfShares(),
             "BOS.issueShare: sequence OVER FLOW"
         );
 
@@ -322,11 +322,11 @@ contract BookOfShares is IBookOfShares, ROMSetting {
     // ==== private funcs ====
 
     function _increaseCounterOfShares() private {
-        _shares[0].paidInDeadline++;
+        _shares[0].paid++;
     }
 
     function _increaseCounterOfClasses() private {
-        _shares[0].state++;
+        _shares[0].par++;
     }
 
     function _updateIssueDate(bytes32 shareNumber, uint32 issueDate)
@@ -443,11 +443,11 @@ contract BookOfShares is IBookOfShares, ROMSetting {
     }
 
     function counterOfShares() public view returns (uint32) {
-        return _shares[0].paidInDeadline;
+        return uint32(_shares[0].paid);
     }
 
     function counterOfClasses() public view returns (uint16) {
-        return _shares[0].state;
+        return uint16(_shares[0].par);
     }
 
     // ==== SharesRepo ====
@@ -484,7 +484,7 @@ contract BookOfShares is IBookOfShares, ROMSetting {
         paid = share.paid;
         par = share.par;
         paidInDeadline = share.paidInDeadline;
-        state = uint8(share.state);
+        state = share.state;
     }
 
     // ==== PayInCapital ====

@@ -16,16 +16,9 @@ import "../../common/lib/SNParser.sol";
 
 import "../../common/ruting/BOSSetting.sol";
 import "../../common/ruting/ROMSetting.sol";
-import "../../common/ruting/SHASetting.sol";
 import "../../common/ruting/IASetting.sol";
 
-contract MockResults is
-    IMockResults,
-    IASetting,
-    SHASetting,
-    BOSSetting,
-    ROMSetting
-{
+contract MockResults is IMockResults, IASetting, BOSSetting, ROMSetting {
     using SNParser for bytes32;
     using TopChain for TopChain.Chain;
     using MembersRepo for MembersRepo.GeneralMeeting;
@@ -55,7 +48,7 @@ contract MockResults is
             bytes32 sn = dealsList[len - 1];
             uint64 amount;
 
-            if (_getSHA().basedOnPar())
+            if (_rom.basedOnPar())
                 (, , amount, , ) = _ia.getDeal(sn.sequence());
             else (, amount, , , ) = _ia.getDeal(sn.sequence());
 

@@ -14,6 +14,8 @@ interface IRegisterOfMembers {
     //##    Event     ##
     //##################
 
+    event SetVoteBase(bool basedOnPar);
+
     event CapIncrease(uint64 paid, uint64 par, uint64 blocknumber);
 
     event CapDecrease(uint64 paid, uint64 par, uint64 blocknumber);
@@ -53,6 +55,8 @@ interface IRegisterOfMembers {
     //##    写接口    ##
     //##################
 
+    function setVoteBase(bool onPar) external;
+
     function capIncrease(uint64 paid, uint64 par) external;
 
     function capDecrease(uint64 paid, uint64 par) external;
@@ -81,6 +85,8 @@ interface IRegisterOfMembers {
     // ##################
     // ##   查询接口   ##
     // ##################
+
+    function basedOnPar() external view returns (bool);
 
     function maxQtyOfMembers() external view returns (uint16);
 

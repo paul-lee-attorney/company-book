@@ -7,16 +7,17 @@
 
 pragma solidity ^0.8.8;
 
-import "../../../common/ruting/BOSSetting.sol";
+// import "../../../common/ruting/BOSSetting.sol";
 
 // import "../../../common/lib/EnumerableSet.sol";
 // import "../../../common/lib/SNFactory.sol";
 // import "../../../common/lib/SNParser.sol";
 import "../../../common/lib/OptionsRepo.sol";
+import "../../../common/access/AccessControl.sol";
 
 import "./IOptions.sol";
 
-contract Options is IOptions, BOSSetting {
+contract Options is IOptions, AccessControl {
     using OptionsRepo for OptionsRepo.Repo;
 
     OptionsRepo.Repo private _options;
@@ -31,7 +32,7 @@ contract Options is IOptions, BOSSetting {
         uint40[] memory obligors,
         uint64 paid,
         uint64 par
-    ) external onlyAttorney returns(bytes32 _sn) {
+    ) external onlyAttorney returns (bytes32 _sn) {
         _sn = _options.createOption(sn, rightholder, obligors, paid, par);
         emit CreateOpt(_sn, paid, par, rightholder);
     }
@@ -54,15 +55,11 @@ contract Options is IOptions, BOSSetting {
         return _options.isOption(sn);
     }
 
-    function qtyOfOpts() external view returns(uint40) {
+    function qtyOfOpts() external view returns (uint40) {
         return _options.qtyOfOptions();
     }
 
-    function isObligor(bytes32 sn, uint40 acct)
-        external
-        view
-        returns (bool)
-    {
+    function isObligor(bytes32 sn, uint40 acct) external view returns (bool) {
         return _options.isObligor(sn, acct);
     }
 
@@ -71,7 +68,7 @@ contract Options is IOptions, BOSSetting {
         view
         returns (
             uint40 rightholder,
-            uint64 paid, 
+            uint64 paid,
             uint64 par
         )
     {

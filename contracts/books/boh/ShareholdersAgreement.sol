@@ -21,6 +21,7 @@ import "../../common/ruting/IBookSetting.sol";
 import "../../common/ruting/BOASetting.sol";
 import "../../common/ruting/SHASetting.sol";
 import "../../common/ruting/BOSSetting.sol";
+import "../../common/ruting/ROMSetting.sol";
 import "../../common/ruting/BOMSetting.sol";
 
 import "../../common/utils/CloneFactory.sol";
@@ -32,6 +33,7 @@ contract ShareholdersAgreement is
     SHASetting,
     BOMSetting,
     BOSSetting,
+    ROMSetting,
     SigPage
 {
     using SNParser for bytes32;
@@ -54,7 +56,7 @@ contract ShareholdersAgreement is
         address body;
     }
 
-/*
+    /*
     terms[0] {
         title: qtyOfTerms;
         prev: tail;
@@ -62,7 +64,7 @@ contract ShareholdersAgreement is
         body: (null);
 */
 
-    mapping(uint256 => Term) private _terms; 
+    mapping(uint256 => Term) private _terms;
 
     // ==== VotingRules ========
 
@@ -79,7 +81,6 @@ contract ShareholdersAgreement is
     //     uint8 typeOfVote;
     //     uint40 vetoHolder;
     // }
-
 
     // _rules[0]: GovernanceRule {
     //     bool basedOnPar;
@@ -111,7 +112,10 @@ contract ShareholdersAgreement is
     }
 
     modifier tempReadyFor(uint8 title) {
-        require(_boh.hasTemplate(title), "SHA.tempReadyFor: Template NOT ready");
+        require(
+            _boh.hasTemplate(title),
+            "SHA.tempReadyFor: Template NOT ready"
+        );
         _;
     }
 
@@ -136,14 +140,31 @@ contract ShareholdersAgreement is
 
         IAccessControl(body).setManager(2, address(this), msg.sender);
 
-        IBookSetting(body).setBOS(address(_bos));
-        IBookSetting(body).setBOM(address(_bom));
+        if (
+            title == uint8(TermTitle.ANTI_DILUTION) ||
+            title == uint8(TermTitle.LOCK_UP) ||
+            title == uint8(TermTitle.FIRST_REFUSAL) ||
+            title == uint8(TermTitle.TAG_ALONG)
+        ) IBookSetting(body).setBOS(address(_bos));
 
-        if (title == uint8(TermTitle.DRAG_ALONG) || 
-            title == uint8(TermTitle.TAG_ALONG)) 
-        {
-            IBookSetting(body).setBOA(address(_boa));
-        } 
+        if (
+            title == uint8(TermTitle.ANTI_DILUTION) ||
+            title == uint8(TermTitle.DRAG_ALONG) ||
+            title == uint8(TermTitle.TAG_ALONG)
+        ) IBookSetting(body).setBOS(address(_bos));
+
+        if (
+            title == uint8(TermTitle.ANTI_DILUTION) ||
+            title == uint8(TermTitle.FIRST_REFUSAL) ||
+            title == uint8(TermTitle.GROUPS_UPDATE) ||
+            title == uint8(TermTitle.DRAG_ALONG) ||
+            title == uint8(TermTitle.TAG_ALONG)
+        ) IBookSetting(body).setROM(address(_rom));
+
+        if (
+            title == uint8(TermTitle.DRAG_ALONG) ||
+            title == uint8(TermTitle.TAG_ALONG)
+        ) IBookSetting(body).setBOA(address(_boa));
 
         Term storage t = _terms[title];
         t.title = title;
@@ -165,7 +186,6 @@ contract ShareholdersAgreement is
     }
 
     function removeTerm(uint8 title) external onlyAttorney {
-
         Term storage t = _terms[title];
 
         _terms[t.prev].next = t.next;
@@ -205,15 +225,13 @@ contract ShareholdersAgreement is
 
         if (orgQuota > 0) {
             require(
-                _boardSeatsOf[0] - orgQuota + quota <=
-                    maxNumOfDirectors(),
+                _boardSeatsOf[0] - orgQuota + quota <= maxNumOfDirectors(),
                 "board seats quota overflow"
             );
             _boardSeatsOf[0] -= orgQuota;
         } else {
             require(
-                _boardSeatsOf[0] + quota <=
-                    maxNumOfDirectors(),
+                _boardSeatsOf[0] + quota <= maxNumOfDirectors(),
                 "board seats quota overflow"
             );
         }
@@ -240,10 +258,10 @@ contract ShareholdersAgreement is
         uint8[] memory list = new uint8[](qtyOfTerms());
 
         uint8 cur = _terms[0].next;
-        uint i=0;
+        uint256 i = 0;
 
-        while(cur > 0) {
-            list[i]=_terms[cur].title;
+        while (cur > 0) {
+            list[i] = _terms[cur].title;
             cur = _terms[cur].next;
             i++;
         }
@@ -252,14 +270,13 @@ contract ShareholdersAgreement is
     }
 
     function bodies() external view returns (address[] memory) {
-
         address[] memory list = new address[](qtyOfTerms());
 
         uint8 cur = _terms[0].next;
-        uint i=0;
+        uint256 i = 0;
 
-        while(cur > 0) {
-            list[i]=_terms[cur].body;
+        while (cur > 0) {
+            list[i] = _terms[cur].body;
             cur = _terms[cur].next;
             i++;
         }

@@ -1,4 +1,5 @@
 const BOS = artifacts.require("BookOfShares");
+const ROM = artifacts.require("RegisterOfMembers");
 const GK = artifacts.require("GeneralKeeper");
 const BOSKeeper = artifacts.require("BOSKeeper");
 const RC = artifacts.require("RegCenter");
@@ -13,6 +14,9 @@ module.exports = async function (callback) {
     const bos = await BOS.deployed();
     console.log("bos: ", bos.address);
 
+    const rom = await ROM.deployed();
+    console.log("rom: ", rom.address);
+
     const gk = await GK.deployed();
     console.log("gk: ", gk.address);
 
@@ -25,71 +29,126 @@ module.exports = async function (callback) {
     const accounts = await web3.eth.getAccounts();
     console.log("accts: ", accounts);
 
-    const acct2 = await rc.userNo(accounts[2]);
-    const acct3 = await rc.userNo(accounts[3]);
-    const acct4 = await rc.userNo(accounts[4]);
+    let acct2 = await rc.userNo(accounts[2]);
+    acct2 = acct2.toNumber();
+    let acct3 = await rc.userNo(accounts[3]);
+    acct3 = acct3.toNumber();
+    let acct4 = await rc.userNo(accounts[4]);
+    acct4 = acct4.toNumber();
+
+    console.log("acct2: ", acct2);
+
 
     // ==== IssueShare ====
 
     cur = Date.parse(new Date()) / 1000;
 
-    await bos.issueShare(acct2.toNumber(), 0, 500000000, 500000000, cur + 86400, cur, 1);
+    let classOfShare = '0000';
+    let ssn = '00000001';
+    let issueDate = '00000000';
+    let shareholder = web3.utils.numberToHex(acct2);
 
-    events = await bos.getPastEvents("AddMember");
+    shareholder = web3.utils.padLeft(shareholder.slice(2, ), 10);
+
+    console.log("shareholder: ", shareholder);
+
+
+    let shareNumber = '0x' + classOfShare + ssn + issueDate + shareholder;
+
+    shareNumber = web3.utils.padRight(shareNumber, 64);
+
+    console.log("shareNumber: ", shareNumber);
+
+    await bos.issueShare(shareNumber, 500000000, 500000000, cur + 86400);
+
+    events = await rom.getPastEvents("AddMember");
     console.log("Event 'AddMember': ", events[0].returnValues);
 
     events = await bos.getPastEvents("IssueShare");
     console.log("Event 'IssueShare': ", events[0].returnValues);
 
-    events = await bos.getPastEvents("IncreaseAmountToMember");
-    console.log("Event 'IncreaseAmountToMember': ", events[0].returnValues);
-
-    events = await bos.getPastEvents("AddShareToMember");
+    events = await rom.getPastEvents("AddShareToMember");
     console.log("Event 'AddShareToMember': ", events[0].returnValues);
 
-    events = await bos.getPastEvents("CapIncrease");
+    events = await rom.getPastEvents("CapIncrease");
     console.log("Event 'CapIncrease': ", events[0].returnValues);
 
-    // ---- IssueShare No.2 ----
+    // -- --IssueShare No .2-- --
 
     cur = Date.parse(new Date()) / 1000;
 
-    await bos.issueShare(acct3.toNumber(), 0, 300000000, 300000000, cur + 86400, cur, 1);
+    classOfShare = '0000';
+    ssn = '00000002';
+    issueDate = '00000000';
 
-    events = await bos.getPastEvents("AddMember");
+    shareholder = web3.utils.numberToHex(acct3);
+    shareholder = web3.utils.padLeft(shareholder.slice(2, ), 10);
+    console.log("shareholder: ", shareholder);
+
+    shareNumber = '0x' + classOfShare + ssn + issueDate + shareholder;
+    shareNumber = web3.utils.padRight(shareNumber, 64);
+    console.log("shareNumber: ", shareNumber);
+
+    await bos.issueShare(shareNumber, 300000000, 300000000, cur + 86400);
+
+    events = await rom.getPastEvents("AddMember");
     console.log("Event 'AddMember': ", events[0].returnValues);
 
     events = await bos.getPastEvents("IssueShare");
     console.log("Event 'IssueShare': ", events[0].returnValues);
 
-    events = await bos.getPastEvents("IncreaseAmountToMember");
-    console.log("Event 'IncreaseAmountToMember': ", events[0].returnValues);
-
-    events = await bos.getPastEvents("AddShareToMember");
+    events = await rom.getPastEvents("AddShareToMember");
     console.log("Event 'AddShareToMember': ", events[0].returnValues);
 
-    events = await bos.getPastEvents("CapIncrease");
+    events = await rom.getPastEvents("CapIncrease");
     console.log("Event 'CapIncrease': ", events[0].returnValues);
 
     // ---- IssueShare No.3 ----
 
     cur = Date.parse(new Date()) / 1000;
 
-    await bos.issueShare(acct4.toNumber(), 0, 200000000, 100000000, cur + 86400, cur, 1);
+    classOfShare = '0000';
+    ssn = '00000003';
+    issueDate = '00000000';
 
-    events = await bos.getPastEvents("AddMember");
+    shareholder = web3.utils.numberToHex(acct4);
+    shareholder = web3.utils.padLeft(shareholder.slice(2, ), 10);
+    console.log("shareholder: ", shareholder);
+
+    shareNumber = '0x' + classOfShare + ssn + issueDate + shareholder;
+    shareNumber = web3.utils.padRight(shareNumber, 64);
+    console.log("shareNumber: ", shareNumber);
+
+    await bos.issueShare(shareNumber, 100000000, 200000000, cur + 86400);
+
+    events = await rom.getPastEvents("AddMember");
     console.log("Event 'AddMember': ", events[0].returnValues);
 
     events = await bos.getPastEvents("IssueShare");
     console.log("Event 'IssueShare': ", events[0].returnValues);
 
-    events = await bos.getPastEvents("IncreaseAmountToMember");
-    console.log("Event 'IncreaseAmountToMember': ", events[0].returnValues);
-
-    events = await bos.getPastEvents("AddShareToMember");
+    events = await rom.getPastEvents("AddShareToMember");
     console.log("Event 'AddShareToMember': ", events[0].returnValues);
 
-    events = await bos.getPastEvents("CapIncrease");
+    events = await rom.getPastEvents("CapIncrease");
+    console.log("Event 'CapIncrease': ", events[0].returnValues);
+
+    // ==== PayInCapital ====
+
+    await bos.setPayInAmount(3, 100000000, "0x6fab4ee53719b2a733996d8b9ce1b89a04d2b877e7f006f90bb73a454e2fdaee");
+
+    events = await bos.getPastEvents("SetPayInAmount");
+    console.log("Event 'SetPayInAmount': ", events[0].returnValues);
+
+    await bos.requestPaidInCapital(3, "Paul is an attorney.");
+
+    events = await bos.getPastEvents("PayInCapital");
+    console.log("Event 'PayInCapital': ", events[0].returnValues);
+
+    events = await rom.getPastEvents("ChangeAmtOfMember");
+    console.log("Event 'ChangeAmtOfMember': ", events[0].returnValues);
+
+    events = await rom.getPastEvents("CapIncrease");
     console.log("Event 'CapIncrease': ", events[0].returnValues);
 
     // ==== decreaseCapital ====
@@ -99,10 +158,7 @@ module.exports = async function (callback) {
     events = await bos.getPastEvents("SubAmountFromShare");
     console.log("Event 'SubAmountFromShare': ", events[0].returnValues);
 
-    events = await bos.getPastEvents("DecreaseAmountFromMember");
-    console.log("Event 'DecreaseAmountFromMember': ", events[0].returnValues);
-
-    events = await bos.getPastEvents("CapDecrease");
+    events = await rom.getPastEvents("CapDecrease");
     console.log("Event 'CapDecrease': ", events[0].returnValues);
 
     // ==== CleanPar ====
@@ -125,18 +181,18 @@ module.exports = async function (callback) {
 
     // ==== UpdateShareState ====
 
-    await bos.updateShareState(1, 4);
+    await bos.updateStateOfShare(1, 4);
 
-    events = await bos.getPastEvents("UpdateShareState");
-    console.log("Event 'UpdateShareState': ", events[0].returnValues);
+    events = await bos.getPastEvents("UpdateStateOfShare");
+    console.log("Event 'UpdateStateOfShare': ", events[0].returnValues);
 
     res = await bos.getShare(1);
     console.log("state of share_1: ", res.state.toNumber());
 
-    await bos.updateShareState(1, 0);
+    await bos.updateStateOfShare(1, 0);
 
-    events = await bos.getPastEvents("UpdateShareState");
-    console.log("Event 'UpdateShareState': ", events[0].returnValues);
+    events = await bos.getPastEvents("UpdateStateOfShare");
+    console.log("Event 'UpdateStateOfShare': ", events[0].returnValues);
 
     res = await bos.getShare(1);
     console.log("state of share_1: ", res.state.toNumber());
@@ -163,16 +219,7 @@ module.exports = async function (callback) {
     res = await bos.counterOfClasses();
     console.log("counterOfClasses: ", res.toNumber());
 
-    res = await bos.regCap();
-    console.log("regCap: ", res.toNumber());
-
-    res = await bos.paidCap();
-    console.log("paidCap: ", res.toNumber());
-
     let bn = await web3.eth.getBlockNumber();
-
-    res = await bos.capAtBlock(bn);
-    console.log("capAtBlock: parValue: ", res.par.toNumber(), "paidPar: ", res.paid.toNumber());
 
     res = await bos.isShare(55);
     console.log("isShare: ", res);
@@ -180,40 +227,64 @@ module.exports = async function (callback) {
     res = await bos.isShare(2);
     console.log("isShare: ", res);
 
-    res = await bos.snList();
-    console.log("snList: ", res);
-
     res = await bos.cleanPar(1);
     console.log("cleanPar of share_1: ", res.toNumber());
 
     res = await bos.getShare(3);
-    console.log("details of share_3: ShareNumber: ", res.shareNumber, "ParValue: ", res.parValue.toNumber(), "PaidPar: ", res.paidPar.toNumber(), "PaidInDeadline: ", res.paidInDeadline.toNumber(), "UnitPrice: ", res.unitPrice.toNumber(), "State: ", res.state.toNumber());
+    console.log("details of share_3: ShareNumber: ", res.shareNumber, "Par: ", res.par.toNumber(), "Paid: ", res.paid.toNumber(), "PaidInDeadline: ", res.paidInDeadline.toNumber(), "State: ", res.state.toNumber());
 
-    res = await bos.maxQtyOfMembers();
+    res = await rom.maxQtyOfMembers();
     console.log("maxQtyOfMembers: ", res.toNumber());
+
+    res = await rom.parCap();
+    console.log("parCap: ", res.toNumber());
+
+    res = await rom.paidCap();
+    console.log("paidCap: ", res.toNumber());
+
+    res = await rom.capAtBlock(bn);
+    console.log("capAtBlock: parValue: ", res.par.toNumber(), "paidPar: ", res.paid.toNumber());
+
+    res = await rom.totalVotes();
+    console.log("totalVotes: ", res.toNumber());
+
+    res = await rom.sharesList();
+    console.log("sharesList: ", res);
+
+    res = await rom.sharenumberExist("0x000000000001636cf10a00000000140000000000000000000000000000000000");
+    console.log("sharenumberExist: ", res);
 
     let acct5 = await rc.userNo(accounts[5]);
 
-    res = await bos.isMember(acct5.toNumber());
+    res = await rom.isMember(acct5.toNumber());
     console.log("isMember: ", res);
 
-    res = await bos.isMember(acct3.toNumber());
+    res = await rom.isMember(acct3);
     console.log("isMember: ", res);
 
-    res = await bos.members();
-    console.log("members: ", res.map(m => m.toNumber()));
+    res = await rom.paidOfMember(acct2);
+    console.log("paidOfMember of acct2: ", res.toNumber());
 
-    res = await bos.qtyOfMembersAtBlock(bn);
-    console.log("qtyOfMembersAtBlock: ", res.toNumber());
+    res = await rom.parOfMember(acct2);
+    console.log("parOfMember of acct2: ", res.toNumber());
 
-    res = await bos.parInHand(acct2.toNumber());
-    console.log("parInHand of acct2: ", res.toNumber());
+    res = await rom.votesInHand(acct2);
+    console.log("votesInHand of acct2: ", res.toNumber());
 
-    res = await bos.paidInHand(acct2.toNumber());
-    console.log("paidInHand of acct2: ", res.toNumber());
+    // res = await rom.votesAtBlock(acct2, bn);
+    // console.log("votesAtBlock of acct2: ", res);
 
-    res = await bos.sharesInHand(acct2.toNumber());
+    res = await rom.sharesInHand(acct2);
     console.log("sharesInHand of acct2: ", res);
+
+    // res = await rom.groupNo(acct2);
+    // console.log("groupNo of acct2: ", res.toNumber());
+
+    res = await rom.qtyOfMembers();
+    console.log("qtyOfMembers: ", res.toNumber());
+
+    res = await rom.membersList();
+    console.log("membersList: ", res.map(m => m.toNumber()));
 
     // ==== HandOver keeper rights ====
 

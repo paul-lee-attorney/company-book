@@ -8,27 +8,13 @@
 pragma solidity ^0.8.8;
 
 import "../../books/bos/IBookOfShares.sol";
-import "../../books/bos/IBOSCalculator.sol";
 
 import "../access/AccessControl.sol";
 
 contract BOSSetting is AccessControl {
     IBookOfShares internal _bos;
-    IBOSCalculator internal _bosCal;
 
     event SetBOS(address bos);
-
-    event SetBOSCal(address cal);
-
-    // modifier onlyStakeholders() {
-    //     require(
-    //         _msgSender() == getManagerKey(0) ||
-    //             _msgSender() == getManager(1) ||
-    //             _rom.isMember(_msgSender()),
-    //         "NOT Stakeholders"
-    //     );
-    //     _;
-    // }
 
     modifier shareExist(uint32 ssn) {
         require(_bos.isShare(ssn), "shareNumber NOT exist");
@@ -42,10 +28,5 @@ contract BOSSetting is AccessControl {
     function setBOS(address bos) external onlyManager(1) {
         _bos = IBookOfShares(bos);
         emit SetBOS(bos);
-    }
-
-    function setBOSCal(address cal) external onlyManager(1) {
-        _bosCal = IBOSCalculator(cal);
-        emit SetBOSCal(cal);
     }
 }

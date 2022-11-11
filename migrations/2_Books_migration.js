@@ -26,7 +26,6 @@ const BOM = artifacts.require("BookOfMotions");
 const BOO = artifacts.require("BookOfOptions");
 const BOP = artifacts.require("BookOfPledges");
 const BOS = artifacts.require("BookOfShares");
-const BOSCal = artifacts.require("BOSCalculator");
 const ROM = artifacts.require("RegisterOfMembers");
 
 const BOAKeeper = artifacts.require("BOAKeeper");
@@ -64,7 +63,7 @@ module.exports = async function (deployer, network, accounts) {
     await deployer.link(LibDelegateMap, [BOD, BOM, LibMotionsRepo]);
 
     await deployer.deploy(LibSNParser);
-    await deployer.link(LibSNParser, [IA, MR, SHA, AD, DA, FR, GU, LU, OP, TA, BOA, BOD, BOH, BOM, BOO, BOP, BOS, BOSCal, BOAKeeper, BOHKeeper, BOMKeeper, BOOKeeper, BOPKeeper, SHAKeeper, LibMotionsRepo, LibOptionsRepo]);
+    await deployer.link(LibSNParser, [IA, MR, SHA, AD, DA, FR, GU, LU, OP, TA, BOA, BOD, BOH, BOM, BOO, BOP, BOS, BOAKeeper, BOHKeeper, BOMKeeper, BOOKeeper, BOPKeeper, SHAKeeper, LibMotionsRepo, LibOptionsRepo]);
 
     await deployer.deploy(LibSNFactory);
     await deployer.link(LibSNFactory, [DA, FR, GU, OP, BOP, BOS, BOA, BOH, BOMKeeper, SHAKeeper, LibOptionsRepo]);
@@ -116,10 +115,6 @@ module.exports = async function (deployer, network, accounts) {
     await deployer.deploy(BOS, "0x38301fb0b5fcf3aaa4b97c4771bb6c75546e313b4ce7057c51a8cc6a3ace9d7e");
     let bos = await BOS.deployed();
     await bos.init(accounts[0], accounts[0], rc.address, gk.address);
-
-    await deployer.deploy(BOSCal);
-    let bosCal = await BOSCal.deployed();
-    await bosCal.init(accounts[0], accounts[0], rc.address, gk.address);
 
     // ==== Keepers ====
 
@@ -198,28 +193,17 @@ module.exports = async function (deployer, network, accounts) {
 
     // ==== BOSSetting ====
     await boaKeeper.setBOS(bos.address);
-    await boaKeeper.setBOSCal(bosCal.address);
     await bodKeeper.setBOS(bos.address);
-    await bodKeeper.setBOSCal(bosCal.address);
     await bohKeeper.setBOS(bos.address);
-    await bohKeeper.setBOSCal(bosCal.address);
     await bomKeeper.setBOS(bos.address);
-    await bomKeeper.setBOSCal(bosCal.address);
     await booKeeper.setBOS(bos.address);
-    await booKeeper.setBOSCal(bosCal.address);
     await bopKeeper.setBOS(bos.address);
-    await bopKeeper.setBOSCal(bosCal.address);
 
     await boa.setBOS(bos.address);
-    await boa.setBOSCal(bosCal.address);
     await boh.setBOS(bos.address);
-    await boh.setBOSCal(bosCal.address);
     await boo.setBOS(bos.address);
-    await boo.setBOSCal(bosCal.address);
     await bop.setBOS(bos.address);
-    await bop.setBOSCal(bosCal.address);
     await rom.setBOS(bos.address);
-    await rom.setBOSCal(bosCal.address);
 
     // ==== BOASetting ====
     await boaKeeper.setBOA(boa.address);
@@ -266,12 +250,14 @@ module.exports = async function (deployer, network, accounts) {
     await bopKeeper.setBOP(bop.address);
 
     // ==== ROMSetting ==== 
+    await boa.setROM(rom.address);
     await bod.setROM(rom.address);
+    await boh.setROM(rom.address);
     await bom.setROM(rom.address);
     await bos.setROM(rom.address);
     await boaKeeper.setROM(rom.address);
     await bohKeeper.setROM(rom.address);
-    await bomKeeper.setROM(rom.address);
+    await bomKeeper.setROM(rom.address);  
 
     // ==== DirectKeeper ====
     await boa.setManager(1, accounts[0], boaKeeper.address);

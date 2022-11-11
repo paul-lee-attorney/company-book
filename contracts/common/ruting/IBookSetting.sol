@@ -26,7 +26,7 @@ interface IBookSetting {
 
     function setBOS(address bos) external;
 
-    function setBOSCal(address bosCal) external;
-
     function setIA(address ia) external;
+
+    function setROM(address rom) external;
 }

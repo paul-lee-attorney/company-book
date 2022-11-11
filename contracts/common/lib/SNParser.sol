@@ -8,7 +8,6 @@
 pragma solidity ^0.8.8;
 
 library SNParser {
-
     // ======== ShareNumber ========
 
     function class(bytes32 shareNumber) internal pure returns (uint16) {
@@ -23,12 +22,12 @@ library SNParser {
         return uint32(bytes4(shareNumber << 48));
     }
 
-    function shareholder(bytes32 shareNumber) internal pure returns (uint32) {
-        return uint32(bytes4(shareNumber << 80));
+    function shareholder(bytes32 shareNumber) internal pure returns (uint40) {
+        return uint40(bytes5(shareNumber << 80));
     }
 
     function preSSN(bytes32 shareNumber) internal pure returns (uint32) {
-        return uint32(bytes4(shareNumber << 112));
+        return uint32(bytes4(shareNumber << 120));
     }
 
     // ======== DealSN ========
@@ -229,19 +228,11 @@ library SNParser {
 
     // ======== Pledge ========
 
-    function ssnOfPledge(bytes32 sn)
-        internal
-        pure
-        returns (uint32)
-    {
+    function ssnOfPledge(bytes32 sn) internal pure returns (uint32) {
         return uint32(bytes4(sn));
     }
 
-    function sequenceOfPledge(bytes32 sn)
-        internal
-        pure
-        returns (uint16)
-    {
+    function sequenceOfPledge(bytes32 sn) internal pure returns (uint16) {
         return uint16(bytes2(sn << 32));
     }
 

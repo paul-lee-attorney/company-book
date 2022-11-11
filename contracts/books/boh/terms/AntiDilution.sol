@@ -11,6 +11,7 @@ import "../../boa/IInvestmentAgreement.sol";
 import "../../boa/InvestmentAgreement.sol";
 
 import "../../../common/ruting/BOSSetting.sol";
+import "../../../common/ruting/ROMSetting.sol";
 import "../../../common/ruting/BOMSetting.sol";
 
 import "../../../common/lib/ArrayUtils.sol";
@@ -21,7 +22,13 @@ import "../../../common/lib/ArrowChain.sol";
 import "./IAntiDilution.sol";
 import "./ITerm.sol";
 
-contract AntiDilution is IAntiDilution, ITerm, BOSSetting, BOMSetting {
+contract AntiDilution is
+    IAntiDilution,
+    ITerm,
+    BOSSetting,
+    ROMSetting,
+    BOMSetting
+{
     using SNParser for bytes32;
     using EnumerableSet for EnumerableSet.UintSet;
     using ArrowChain for ArrowChain.MarkChain;
@@ -155,7 +162,7 @@ contract AntiDilution is IAntiDilution, ITerm, BOSSetting, BOMSetting {
         while (cur > 0) {
             if (_benchmarks.markedValue(cur) <= price) break;
 
-            uint40[] memory classMember = _bosCal.membersOfClass(cur);
+            uint40[] memory classMember = _membersOfClass(cur);
 
             if (classMember.length > consentParties.length) return false;
             else if (!classMember.fullyCoveredBy(consentParties)) return false;
@@ -164,6 +171,46 @@ contract AntiDilution is IAntiDilution, ITerm, BOSSetting, BOMSetting {
         }
 
         return true;
+    }
+
+    function _membersOfClass(uint16 class)
+        private
+        view
+        returns (uint40[] memory)
+    {
+        require(class < _bos.counterOfClasses(), "class over flow");
+
+        bytes32[] memory list = _rom.sharesList();
+
+        uint256 len = _rom.qtyOfMembers();
+        uint40[] memory members = new uint40[](len);
+
+        uint256 numOfMembers;
+        len = list.length;
+
+        while (len > 0) {
+            if (list[len - 1].class() == class) {
+                uint256 lenOfM = numOfMembers;
+                while (lenOfM > 0) {
+                    if (members[lenOfM - 1] == list[len - 1].shareholder())
+                        break;
+                    lenOfM--;
+                }
+                if (lenOfM == 0) {
+                    numOfMembers++;
+                    members[numOfMembers - 1] = list[len - 1].shareholder();
+                }
+            }
+            len--;
+        }
+
+        uint40[] memory output = new uint40[](numOfMembers);
+
+        assembly {
+            output := members
+        }
+
+        return output;
     }
 
     function isExempted(address ia, bytes32 sn) public view returns (bool) {

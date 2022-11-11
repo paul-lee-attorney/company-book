@@ -87,7 +87,7 @@ contract BOAKeeper is
         );
 
         IBookSetting(ia).setBOS(address(_bos));
-        IBookSetting(ia).setBOSCal(address(_bosCal));
+        IBookSetting(ia).setROM(address(_rom));
 
         // copyRoleTo(KEEPERS, ia);
     }
@@ -162,7 +162,6 @@ contract BOAKeeper is
     function _lockDealsOfParty(address ia, uint40 caller) private onlyKeeper {
         bytes32[] memory snList = IInvestmentAgreement(ia).dealsList();
         uint256 len = snList.length;
-        // uint64 amount;
         while (len > 0) {
             bytes32 sn = snList[len - 1];
             len--;
@@ -170,7 +169,6 @@ contract BOAKeeper is
             uint16 seq = sn.sequence();
 
             (, uint64 paid, , , ) = IInvestmentAgreement(ia).getDeal(seq);
-            // amount = _getSHA().basedOnPar() ? parValue : paidPar;
 
             bytes32 shareNumber = IInvestmentAgreement(ia).shareNumberOfDeal(
                 seq
@@ -220,6 +218,8 @@ contract BOAKeeper is
     ) external onlyManager(1) {
         _bos.decreaseCapital(ssn, paid, par);
     }
+
+    // ==== setConfig ====
 
     function setMaxQtyOfMembers(uint8 max) external onlyManager(1) {
         _rom.setMaxQtyOfMembers(max);

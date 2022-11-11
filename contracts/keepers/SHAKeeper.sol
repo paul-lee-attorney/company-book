@@ -155,7 +155,7 @@ contract SHAKeeper is
         IMockResults(mock).addAlongDeal(
             IAlongs(term).linkRule(drager),
             shareNumber,
-            _getSHA().basedOnPar() ? par : paid
+            _rom.basedOnPar() ? par : paid
         );
     }
 
@@ -233,7 +233,7 @@ contract SHAKeeper is
         uint16 seq = sn.sequence();
         uint64 amount;
 
-        if (_getSHA().basedOnPar()) {
+        if (_rom.basedOnPar()) {
             (, , amount, , ) = IInvestmentAgreement(ia).getDeal(seq);
         } else {
             (, amount, , , ) = IInvestmentAgreement(ia).getDeal(seq);

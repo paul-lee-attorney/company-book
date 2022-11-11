@@ -31,13 +31,13 @@ library MembersRepo {
     */
 
     /* Node[0] {
-        acct: counterOfShares;
+        acct: basedOnPar;
         group: counterOfGroups;
         deep: maxQtyOfMembers;
         prev: tail;
         next: head;
         up: qtyOfMembers;
-        down: counterOfClasses;
+        down: null;
         amt: lenOfChain;
         sum: totalVotes;
     } */
@@ -51,6 +51,13 @@ library MembersRepo {
     //##    写接口    ##
     //##################
 
+    function setVoteBase(GeneralMeeting storage gm, bool onPar)
+        internal
+        returns (bool)
+    {
+        return gm.chain.setVoteBase(onPar);
+    }
+
     // ==== restore mapping ====
 
     function restoreChain(
@@ -62,35 +69,35 @@ library MembersRepo {
 
     // ==== Zero Node Setting ====
 
-    function increaseCounterOfShares(GeneralMeeting storage gm) internal {
-        gm.chain.increaseCounterOfShares();
-    }
-
-    function setMaxQtyOfMembers(GeneralMeeting storage gm, uint16 max) internal {
+    function setMaxQtyOfMembers(GeneralMeeting storage gm, uint16 max)
+        internal
+    {
         gm.chain.setMaxQtyOfMembers(max);
     }
 
-    function increaseCounterOfClasses(GeneralMeeting storage gm) internal {
-        gm.chain.increaseCounterOfClasses();
-    }
-
-    function setAmtBase(GeneralMeeting storage gm, bool _basedOnPar) internal returns (bool flag) {
-        
+    function setAmtBase(GeneralMeeting storage gm, bool _basedOnPar)
+        internal
+        returns (bool flag)
+    {
         if (basedOnPar(gm) != _basedOnPar) {
-
             uint40 cur = gm.chain.head();
 
             while (cur > 0) {
-
-                (uint64 paid, uint64 par) = gm.members[cur].votesInHand.latest();
+                (uint64 paid, uint64 par) = gm
+                    .members[cur]
+                    .votesInHand
+                    .latest();
 
                 if (paid != par) {
-                    if (_basedOnPar) gm.chain.changeAmt(cur, (par - paid), false);
+                    if (_basedOnPar)
+                        gm.chain.changeAmt(cur, (par - paid), false);
                     else gm.chain.changeAmt(cur, (par - paid), true);
                 }
 
                 cur = gm.chain.nextNode(cur);
             }
+
+            gm.chain.setVoteBase(_basedOnPar);
 
             flag = true;
         }
@@ -169,13 +176,14 @@ library MembersRepo {
                 true
             );
 
-            if (prev != n.prev && next != n.next) gm.chain.hInsert(acct, prev, next);
+            if (prev != n.prev && next != n.next)
+                gm.chain.hInsert(acct, prev, next);
         }
     }
 
     function removeMemberFromChain(GeneralMeeting storage gm, uint40 acct)
         internal
-        returns(bool flag)
+        returns (bool flag)
     {
         flag = gm.chain.hCarveOut(acct);
     }
@@ -231,44 +239,45 @@ library MembersRepo {
 
     // ==== Zero Node Setting ====
 
-    function addShareNumberToList(GeneralMeeting storage gm, bytes32 shareNumber) internal returns (bool flag) {
+    function addShareNumberToList(
+        GeneralMeeting storage gm,
+        bytes32 shareNumber
+    ) internal returns (bool flag) {
         flag = gm.members[0].sharesInHand.add(shareNumber);
     }
 
-    function removeShareNumberFromList(GeneralMeeting storage gm, bytes32 shareNumber) internal returns (bool flag) {
+    function removeShareNumberFromList(
+        GeneralMeeting storage gm,
+        bytes32 shareNumber
+    ) internal returns (bool flag) {
         flag = gm.members[0].sharesInHand.remove(shareNumber);
-    }
-
-    function addCounterOfShares(GeneralMeeting storage gm) internal {
-        gm.chain.increaseCounterOfShares();
     }
 
     function addCounterOfGroups(GeneralMeeting storage gm) internal {
         gm.chain.increaseCounterOfGroups();
     }
 
-    function addCounterOfClasses(GeneralMeeting storage gm) internal {
-        gm.chain.increaseCounterOfClasses();
-    }
-
-    function updateOwnersEquity(GeneralMeeting storage gm, uint64 paid, uint64 par) internal returns(uint64 blocknumber) {
+    function updateOwnersEquity(
+        GeneralMeeting storage gm,
+        uint64 paid,
+        uint64 par
+    ) internal returns (uint64 blocknumber) {
         blocknumber = gm.members[0].votesInHand.push(paid, par);
     }
-
 
     //##################
     //##    读接口    ##
     //##################
 
-    // ==== Zero Node ====
-
-    function counterOfShares(GeneralMeeting storage gm)
+    function basedOnPar(GeneralMeeting storage gm)
         internal
         view
-        returns (uint32)
+        returns (bool)
     {
-        return gm.chain.counterOfShares();
+        return gm.chain.basedOnPar();
     }
+
+    // ==== Zero Node ====
 
     function counterOfGroups(GeneralMeeting storage gm)
         internal
@@ -310,24 +319,12 @@ library MembersRepo {
         return gm.chain.lenOfChain();
     }
 
-    function counterOfClasses(GeneralMeeting storage gm)
-        internal
-        view
-        returns (uint16)
-    {
-        return gm.chain.counterOfClasses();
-    }
-
     function totalVotes(GeneralMeeting storage gm)
         internal
         view
         returns (uint64)
     {
         return gm.chain.totalVotes();
-    }
-
-    function basedOnPar(GeneralMeeting storage gm) internal view returns(bool) {
-        return parCap(gm) == totalVotes(gm);
     }
 
     // ==== shares ====
@@ -397,8 +394,7 @@ library MembersRepo {
         view
         returns (uint64 votes)
     {
-        if(isMember(gm, acct))
-        votes = gm.chain.nodes[acct].amt;
+        if (isMember(gm, acct)) votes = gm.chain.nodes[acct].amt;
     }
 
     function votesAtBlock(
@@ -501,7 +497,11 @@ library MembersRepo {
         }
     }
 
-    function ownersEquity(GeneralMeeting storage gm) internal view returns(uint64 paid, uint64 par) {
+    function ownersEquity(GeneralMeeting storage gm)
+        internal
+        view
+        returns (uint64 paid, uint64 par)
+    {
         (paid, par) = gm.members[0].votesInHand.latest();
     }
 

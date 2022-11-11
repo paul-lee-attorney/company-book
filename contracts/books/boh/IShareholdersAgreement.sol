@@ -10,7 +10,6 @@ pragma solidity ^0.8.8;
 import "../../common/components/ISigPage.sol";
 
 interface IShareholdersAgreement is ISigPage {
-
     //##############
     //##  Event   ##
     //##############

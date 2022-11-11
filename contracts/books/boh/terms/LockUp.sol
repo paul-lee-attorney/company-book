@@ -9,7 +9,6 @@ pragma solidity ^0.8.8;
 
 import "../../boa//IInvestmentAgreement.sol";
 
-import "../../../common/ruting/BOSSetting.sol";
 import "../../../common/ruting/BOMSetting.sol";
 
 import "../../../common/lib/ArrayUtils.sol";
@@ -22,7 +21,7 @@ import "./ILockUp.sol";
 
 import "./ITerm.sol";
 
-contract LockUp is ILockUp, ITerm, BOSSetting, BOMSetting {
+contract LockUp is ILockUp, ITerm, BOMSetting {
     using ArrayUtils for uint40[];
     using SNParser for bytes32;
     using EnumerableSet for EnumerableSet.UintSet;
@@ -65,11 +64,7 @@ contract LockUp is ILockUp, ITerm, BOSSetting, BOMSetting {
     // ##   写接口   ##
     // ################
 
-    function setLocker(uint32 ssn, uint32 dueDate)
-        external
-        onlyAttorney
-        shareExist(ssn)
-    {
+    function setLocker(uint32 ssn, uint32 dueDate) external onlyAttorney {
         _lockers[ssn].ssn = ssn;
         _lockers[ssn].dueDate = dueDate == 0 ? REMOTE_FUTURE : dueDate;
 

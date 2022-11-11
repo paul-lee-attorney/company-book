@@ -8,12 +8,10 @@
 pragma solidity ^0.8.8;
 
 import "../../common/ruting/ROMSetting.sol";
-// import "../../common/ruting/BOSSetting.sol";
-import "../../common/ruting/IASetting.sol";
 
 import "./IFirstRefusalDeals.sol";
 
-contract FirstRefusalDeals is IFirstRefusalDeals, IASetting, ROMSetting {
+contract FirstRefusalDeals is IFirstRefusalDeals, ROMSetting {
     struct Claim {
         uint64 weight; // FR rightholder's voting weight
         uint64 ratio;

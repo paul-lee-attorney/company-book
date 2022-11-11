@@ -12,10 +12,9 @@ import "./IRegisterOfMembers.sol";
 import "../../common/lib/MembersRepo.sol";
 import "../../common/lib/TopChain.sol";
 
-import "../../common/ruting/SHASetting.sol";
 import "../../common/ruting/BOSSetting.sol";
 
-contract RegisterOfMembers is IRegisterOfMembers, BOSSetting, SHASetting {
+contract RegisterOfMembers is IRegisterOfMembers, BOSSetting {
     using MembersRepo for MembersRepo.GeneralMeeting;
 
     MembersRepo.GeneralMeeting private _gm;

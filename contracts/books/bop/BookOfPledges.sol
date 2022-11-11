@@ -10,11 +10,13 @@ pragma solidity ^0.8.8;
 import "../../common/lib/SNFactory.sol";
 import "../../common/lib/SNParser.sol";
 
-import "../../common/ruting/BOSSetting.sol";
+import "../../common/access/AccessControl.sol";
+
+// import "../../common/ruting/BOSSetting.sol";
 
 import "./IBookOfPledges.sol";
 
-contract BookOfPledges is IBookOfPledges, BOSSetting {
+contract BookOfPledges is IBookOfPledges, AccessControl {
     using SNFactory for bytes;
     using SNParser for bytes32;
 
@@ -57,16 +59,17 @@ contract BookOfPledges is IBookOfPledges, BOSSetting {
         uint40 creditor,
         uint64 pledgedPar,
         uint64 guaranteedAmt
-    ) external onlyManager(1) shareExist(sn.ssnOfPledge()) {
-
+    ) external onlyManager(1) {
         sn = _updateSNDate(sn);
         uint32 ssn = sn.ssnOfPledge();
         uint32 seq = sn.sequenceOfPledge();
 
         require(pledgedPar > 0, "BOP.createPledge: ZERO pledgedPar");
 
-        require(_increaseCounterOfPledges(ssn) == seq, 
-            "BOP.createPledge: wrong sequence");
+        require(
+            _increaseCounterOfPledges(ssn) == seq,
+            "BOP.createPledge: wrong sequence"
+        );
 
         _pledges[ssn][seq] = Pledge({
             sn: sn,
@@ -80,7 +83,7 @@ contract BookOfPledges is IBookOfPledges, BOSSetting {
 
     function _updateSNDate(bytes32 sn) private view returns (bytes32) {
         bytes memory _sn = abi.encodePacked(sn);
-        
+
         _sn = _sn.dateToSN(6, uint32(block.timestamp));
 
         return _sn.bytesToBytes32();
@@ -89,7 +92,7 @@ contract BookOfPledges is IBookOfPledges, BOSSetting {
     function _increaseCounterOfPledges(uint32 ssn) private returns (uint40) {
         _pledges[ssn][0].creditor++;
         return _pledges[ssn][0].creditor;
-    } 
+    }
 
     function updatePledge(
         bytes32 sn,
@@ -113,15 +116,14 @@ contract BookOfPledges is IBookOfPledges, BOSSetting {
     //##################
 
     function pledgesOf(uint32 ssn) external view returns (bytes32[] memory) {
-        
         uint40 seq = _pledges[ssn][0].creditor;
 
         require(seq > 0, "BOP.pledgesOf: no pledges found");
 
         bytes32[] memory output = new bytes32[](seq);
-        
+
         while (seq > 0) {
-            output[seq-1] = _pledges[ssn][seq].sn;
+            output[seq - 1] = _pledges[ssn][seq].sn;
             seq--;
         }
 

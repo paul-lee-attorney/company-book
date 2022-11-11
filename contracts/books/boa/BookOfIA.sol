@@ -16,10 +16,18 @@ import "../../common/components/DocumentsRepo.sol";
 import "../../common/lib/SNParser.sol";
 import "../../common/lib/EnumerableSet.sol";
 
+import "../../common/ruting/BOSSetting.sol";
+import "../../common/ruting/ROMSetting.sol";
 import "../../common/ruting/SHASetting.sol";
 import "../../common/ruting/IBookSetting.sol";
 
-contract BookOfIA is IBookOfIA, SHASetting, DocumentsRepo {
+contract BookOfIA is
+    IBookOfIA,
+    SHASetting,
+    BOSSetting,
+    ROMSetting,
+    DocumentsRepo
+{
     using SNParser for bytes32;
 
     // ia => frd

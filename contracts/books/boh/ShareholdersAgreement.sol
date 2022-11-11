@@ -31,7 +31,6 @@ contract ShareholdersAgreement is
     CloneFactory,
     BOASetting,
     SHASetting,
-    BOMSetting,
     BOSSetting,
     ROMSetting,
     SigPage

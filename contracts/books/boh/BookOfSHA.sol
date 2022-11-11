@@ -12,7 +12,6 @@ import "./IBookOfSHA.sol";
 import "../../common/components/DocumentsRepo.sol";
 
 contract BookOfSHA is IBookOfSHA, DocumentsRepo {
-
     mapping(uint256 => address) private _templates;
 
     // _templates[0]: pointer;
@@ -54,12 +53,15 @@ contract BookOfSHA is IBookOfSHA, DocumentsRepo {
         return _templates[0];
     }
 
-    function hasTemplate(uint8 title) public view returns(bool flag) {
+    function hasTemplate(uint8 title) public view returns (bool flag) {
         flag = title > 0 && _templates[title] > address(0);
     }
 
-    function getTermTemplate(uint8 title) external view returns(address temp) {
-        require(hasTemplate(title), "BOH.getTermTemplate: template not available");
+    function getTermTemplate(uint8 title) external view returns (address temp) {
+        require(
+            hasTemplate(title),
+            "BOH.getTermTemplate: template not available"
+        );
         temp = _templates[title];
     }
 }

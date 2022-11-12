@@ -201,10 +201,7 @@ module.exports = async function (deployer, network, accounts) {
     await shaKeeper.setBOS(bos.address);
 
     await boa.setBOS(bos.address);
-    await boh.setBOS(bos.address);
-
     await boo.setBOS(bos.address);
-    await bop.setBOS(bos.address);
     await rom.setBOS(bos.address);
 
     // ==== BOASetting ====
@@ -220,7 +217,7 @@ module.exports = async function (deployer, network, accounts) {
     await bohKeeper.setBOD(bod.address);
     await bomKeeper.setBOD(bod.address);
 
-    // ==== BOHSetting ==== 
+    // ==== SHASetting ==== 
     await boaKeeper.setBOH(boh.address);
     await bodKeeper.setBOH(boh.address);
     await bohKeeper.setBOH(boh.address);
@@ -228,9 +225,9 @@ module.exports = async function (deployer, network, accounts) {
     await shaKeeper.setBOH(boh.address);
 
     await boa.setBOH(boh.address);
+
     await bod.setBOH(boh.address);
     await bom.setBOH(boh.address);
-    await rom.setBOH(boh.address);
 
     // ==== BODSetting ==== 
     await bodKeeper.setBOD(bod.address);
@@ -254,7 +251,6 @@ module.exports = async function (deployer, network, accounts) {
     // ==== ROMSetting ==== 
     await boa.setROM(rom.address);
     await bod.setROM(rom.address);
-    await boh.setROM(rom.address);
     await bom.setROM(rom.address);
     await bos.setROM(rom.address);
 
@@ -270,7 +266,6 @@ module.exports = async function (deployer, network, accounts) {
     await bom.setManager(1, accounts[0], bomKeeper.address);
     await boo.setManager(1, accounts[0], booKeeper.address);
     await bop.setManager(1, accounts[0], bopKeeper.address);
-    await bosCal.setManager(1, accounts[0], boaKeeper.address);
 
     // ==== Keepers Setting ====
     await gk.setBOAKeeper(boaKeeper.address);

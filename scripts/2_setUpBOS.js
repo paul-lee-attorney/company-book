@@ -284,16 +284,16 @@ module.exports = async function (callback) {
     console.log("qtyOfMembers: ", res.toNumber());
 
     res = await rom.membersList();
-    console.log("membersList: ", res.map(m => m.toNumber()));
+    console.log("membersList: ", res.map(v => v.toNumber()));
 
     // ==== HandOver keeper rights ====
 
-    const bosKeeper = await BOSKeeper.deployed();
-    await bos.setManager(1, accounts[0], bosKeeper.address);
+    // const bosKeeper = await BOSKeeper.deployed();
+    // await bos.setManager(1, accounts[0], bosKeeper.address);
 
-    events = await rc.getPastEvents("SetManager");
+    // events = await rc.getPastEvents("SetManager");
 
-    console.log("Event 'SetManager': ", events[0].returnValues);
+    // console.log("Event 'SetManager': ", events[0].returnValues);
 
     callback();
 }

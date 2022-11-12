@@ -12,8 +12,6 @@ import "../../common/lib/SNParser.sol";
 
 import "../../common/access/AccessControl.sol";
 
-// import "../../common/ruting/BOSSetting.sol";
-
 import "./IBookOfPledges.sol";
 
 contract BookOfPledges is IBookOfPledges, AccessControl {

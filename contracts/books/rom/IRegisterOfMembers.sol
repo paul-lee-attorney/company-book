@@ -137,6 +137,8 @@ interface IRegisterOfMembers {
 
     function counterOfGroups() external view returns (uint16);
 
+    function qtyOfGroups() external view returns (uint64);
+
     function controllor() external view returns (uint40);
 
     function votesOfController() external view returns (uint64);

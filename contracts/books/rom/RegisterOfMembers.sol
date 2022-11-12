@@ -285,6 +285,10 @@ contract RegisterOfMembers is IRegisterOfMembers, BOSSetting {
         return _gm.counterOfGroups();
     }
 
+    function qtyOfGroups() external view returns (uint64) {
+        return _gm.qtyOfGroups();
+    }
+
     function controllor() external view returns (uint40) {
         return _gm.controllor();
     }

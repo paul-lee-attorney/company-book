@@ -13,6 +13,7 @@ import "../books/boh/terms/IGroupsUpdate.sol";
 
 import "../common/components/ISigPage.sol";
 
+import "../common/ruting/BOASetting.sol";
 import "../common/ruting/ROMSetting.sol";
 import "../common/ruting/BOMSetting.sol";
 import "../common/ruting/BOOSetting.sol";

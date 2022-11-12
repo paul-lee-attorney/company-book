@@ -319,7 +319,11 @@ library TopChain {
 
             _increaseTotalVotes(chain, deltaAmt);
 
-            if (n.prev == 0 && n.next == 0) n.prev = chain.nodes[0].prev;
+            if (n.prev == 0 && n.next == 0) {
+                n.prev = chain.nodes[0].prev;
+                chain.nodes[n.prev].next = acct;
+                chain.nodes[0].prev = acct;
+            }
         }
 
         if (n.amt > 0) {
@@ -491,16 +495,14 @@ library TopChain {
         bool decrease
     ) internal view returns (uint40, uint40) {
         if (decrease)
-            while (chain.nodes[next].sum > amount) {
+            while (next > 0 && chain.nodes[next].sum > amount) {
                 prev = next;
                 next = chain.nodes[next].next;
-                if (next == 0) break;
             }
         else
-            while (chain.nodes[prev].sum < amount) {
+            while (prev > 0 && chain.nodes[prev].sum < amount) {
                 next = prev;
                 prev = chain.nodes[prev].prev;
-                if (prev == 0) break;
             }
 
         return (prev, next);
@@ -514,16 +516,14 @@ library TopChain {
         bool decrease
     ) internal view returns (uint40, uint40) {
         if (decrease)
-            while (chain.nodes[down].amt > amount) {
+            while (down > 0 && chain.nodes[down].amt > amount) {
                 up = down;
                 down = chain.nodes[down].down;
-                if (down == 0) break;
             }
         else
-            while (chain.nodes[up].amt < amount) {
+            while (up > 0 && chain.nodes[up].amt < amount) {
                 down = up;
                 up = chain.nodes[up].up;
-                if (up == 0) break;
             }
 
         return (up, down);

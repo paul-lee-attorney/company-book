@@ -8,17 +8,17 @@
 pragma solidity ^0.8.8;
 
 library RolesRepo {
-    bytes32 constant ATTORNEYS = keccak256("Attorneys");
+    bytes32 constant ATTORNEYS = bytes32("Attorneys");
 
-    struct Data {
+    struct GroupOfRole {
         mapping(uint40 => bool) isMember;
         uint40 admin;
     }
 
     struct Roles {
-        uint40[3] managers; // 0-Owner; 1-Bookeeper; 2-GeneralCounsel
-        // NameOfRole => Data
-        mapping(bytes32 => Data) roles;
+        uint8 state; // 0-pending; 1-initiated; 2-finalized
+        uint40[6] managers; // 0-owner; 1-generalCounsel; ...
+        mapping(bytes32 => GroupOfRole) roles;
     }
 
     // ##################
@@ -28,17 +28,18 @@ library RolesRepo {
     function setManager(
         Roles storage self,
         uint8 title,
+        uint40 originator,
         uint40 acct
     ) internal {
+
+        if (self.state == 0) self.state = 1;
+        else require(originator == self.managers[0], 
+            "RR.setManager: originator not owner");
+
         self.managers[title] = acct;
 
-        // ==== BooKeeper ====
-        // if (title == 1) {
-        //     // self.roles[KEEPERS].admin = acct;
-        //     // self.roles[KEEPERS].isMember[acct] = true;
-
         // ==== GeneralCounsel ====
-        if (title == 2) {
+        if (title == 1) {
             self.roles[ATTORNEYS].admin = acct;
             self.roles[ATTORNEYS].isMember[acct] = true;
         }
@@ -65,7 +66,7 @@ library RolesRepo {
         uint40 originator,
         uint40 acct
     ) internal {
-        require(originator == roleAdmin(self, role), "originator not admin");
+        require(originator == roleAdmin(self, role), "RR.revokeRole: originator not admin");
 
         delete self.roles[role].isMember[acct];
     }
@@ -83,7 +84,6 @@ library RolesRepo {
         bytes32 role,
         uint40 originator
     ) internal {
-        // require(role != KEEPERS, "RR.abandonRole: KEEPERS cannot be abandoned");
 
         require(
             originator == self.managers[0] ||
@@ -91,6 +91,7 @@ library RolesRepo {
             "RR.abandonRole: originator not owner or roleAdmin"
         );
 
+        self.roles[role].admin = 0;
         delete self.roles[role];
     }
 
@@ -101,12 +102,7 @@ library RolesRepo {
         uint40 originator,
         uint40 acct
     ) internal {
-        // if (role == KEEPERS)
-        //     require(
-        //         originator == self.managers[1],
-        //         "RR.setRoleAdmin: originator not bookeeper"
-        //     );
-        // else
+
         require(
             originator == self.managers[0],
             "RR.setRoleAdmin: originator not owner"
@@ -114,33 +110,6 @@ library RolesRepo {
 
         self.roles[role].admin = acct;
     }
-
-    function _removeRole(
-        Roles storage self,
-        bytes32 role,
-        uint40 acct
-    ) private {
-        delete self.roles[role].isMember[acct];
-    }
-
-    // function copyRoleTo(
-    //     Roles storage self,
-    //     bytes32 role,
-    //     uint40 originator,
-    //     Roles storage to
-    // ) internal returns (bool) {
-    //     if (role == KEEPERS)
-    //         require(
-    //             originator == self.managers[1],
-    //             "RR.copyRoleTo: originator not owner"
-    //         );
-    //     else if (role == ATTORNEYS)
-    //         require(originator == self.managers[0], "originator not owner");
-
-    //     to.roles[role] = self.roles[role];
-
-    //     return true;
-    // }
 
     // ##################
     // ##   查询端口   ##
@@ -151,8 +120,14 @@ library RolesRepo {
         uint8 title,
         uint40 acct
     ) internal view returns (bool) {
-        require(title < 3, "title overflow");
         return self.managers[title] == acct;
+    }
+
+    function getManager(
+        Roles storage self,
+        uint8 title
+    ) internal view returns (uint40) {
+        return self.managers[title];
     }
 
     function hasRole(

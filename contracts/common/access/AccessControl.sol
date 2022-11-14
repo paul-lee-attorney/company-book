@@ -9,20 +9,19 @@ pragma solidity ^0.8.8;
 
 import "./IAccessControl.sol";
 import "./RegCenterSetting.sol";
+import "../lib/RolesRepo.sol";
 
 contract AccessControl is IAccessControl, RegCenterSetting {
+    using RolesRepo for RolesRepo.Roles;
 
     enum TitleOfManagers {
         Owner,
-        DirectKeeper,
         GeneralCounsel
     }
 
-    bool internal _finalized;
-    bool private _initiated;
+    bytes32 constant ATTORNEYS = bytes32("Attorneys");
 
-    // bytes32 constant KEEPERS = keccak256("Keepers");
-    bytes32 constant ATTORNEYS = keccak256("Attorneys");
+    RolesRepo.Roles private _roles;
 
     // ##################
     // ##   修饰器      ##
@@ -30,31 +29,15 @@ contract AccessControl is IAccessControl, RegCenterSetting {
 
     modifier onlyManager(uint8 title) {
         require(
-            _rc.isManager(title, msg.sender),
-            "AC.Md.onlyManager: not the specific manager"
-        );
-        _;
-    }
-
-    modifier onlyOwnerOrBookeeper() {
-        require(
-            _rc.isManager(0, msg.sender) || _rc.isManager(1, msg.sender),
-            "neither owner nor bookeeper"
-        );
-        _;
-    }
-
-    modifier onlyRole(bytes32 role) {
-        require(
-            _rc.hasRole(role, msg.sender),
-            "AC.onlyRole: caller not has Role"
+            _roles.isManager(title, _msgSender()),
+            "AC.onlyManager: not the specific manager"
         );
         _;
     }
 
     modifier onlyKeeper() {
         require(
-            _gk.isKeeper(msg.sender) || _rc.isManager(1, msg.sender),
+            _gk.isKeeper(msg.sender),
             "AC.onlyKeeper: not Keeper"
         );
         _;
@@ -62,7 +45,7 @@ contract AccessControl is IAccessControl, RegCenterSetting {
 
     modifier onlyAttorney() {
         require(
-            _rc.hasRole(ATTORNEYS, msg.sender),
+            _roles.hasRole(ATTORNEYS, _msgSender()),
             "AC.onlyAttorney: not Attorney"
         );
         _;
@@ -70,23 +53,20 @@ contract AccessControl is IAccessControl, RegCenterSetting {
 
     modifier attorneyOrKeeper() {
         require(
-            _rc.hasRole(ATTORNEYS, msg.sender) ||
-                _gk.isKeeper(msg.sender) ||
-                _rc.isManager(1, msg.sender),
+            _roles.hasRole(ATTORNEYS, _msgSender()) ||
+                _gk.isKeeper(msg.sender),
             "not Attorney or Bookeeper"
         );
         _;
     }
 
-    // ==== DocState ====
-
     modifier onlyPending() {
-        require(!_finalized, "AC.onlyPending: Doc is finalized");
+        require(_roles.state < 2, "AC.onlyPending: Doc is finalized");
         _;
     }
 
     modifier onlyFinalized() {
-        require(_finalized, "AC.onlyFinalized: Doc is still pending");
+        require(_roles.state == 2, "AC.onlyFinalized: Doc is still pending");
         _;
     }
 
@@ -95,63 +75,51 @@ contract AccessControl is IAccessControl, RegCenterSetting {
     // ##################
 
     function init(
-        address owner,
-        address directKeeper,
+        uint40 owner,
         address regCenter,
         address generalKeeper
     ) public {
-        require(!_initiated, "already initiated.");
-
-        _initiated = true;
 
         _setRegCenter(regCenter);
 
         _setGeneralKeeper(generalKeeper);
 
-        _rc.regUser();
+        _roles.setManager(uint8(TitleOfManagers.Owner), 0, owner);
+        // _roles.setManager(uint8(TitleOfManagers.DirectKeeper), directKeeper);
 
-        _rc.setManager(uint8(TitleOfManagers.Owner), owner);
-        _rc.setManager(uint8(TitleOfManagers.DirectKeeper), directKeeper);
-
-        emit Init(owner, directKeeper, address(_rc), generalKeeper);
+        emit Init(owner, address(_rc), generalKeeper);
     }
 
     function setManager(
         uint8 title,
-        address caller,
-        address acct
-    ) external onlyOwnerOrBookeeper {
-        require(
-            title > uint8(TitleOfManagers.DirectKeeper) || _rc.isManager(title, caller),
-            "AC.setManager: caller does not has title"
-        );
-        _rc.setManager(title, acct);
+        uint40 acct
+    ) external {
+        _roles.setManager(title, _msgSender(), acct);
     }
 
     function grantRole(bytes32 role, uint40 acct) external {
-        _rc.grantRole(role, msg.sender, acct);
+        _roles.grantRole(role, _msgSender(), acct);
     }
 
     function revokeRole(bytes32 role, uint40 acct) external {
-        _rc.revokeRole(role, msg.sender, acct);
+        _roles.revokeRole(role, _msgSender(), acct);
     }
 
     function renounceRole(bytes32 role) external {
-        _rc.renounceRole(role, msg.sender);
+        _roles.renounceRole(role, _msgSender());
     }
 
     function abandonRole(bytes32 role) external {
-        _rc.abandonRole(role, msg.sender);
+        _roles.abandonRole(role, _msgSender());
     }
 
     function setRoleAdmin(bytes32 role, uint40 acct) external onlyManager(0) {
-        _rc.setRoleAdmin(role, msg.sender, acct);
+        _roles.setRoleAdmin(role, _msgSender(), acct);
     }
 
     function lockContents() public onlyPending {
-        _rc.abandonRole(ATTORNEYS, msg.sender);
-        _rc.setManager(uint8(TitleOfManagers.GeneralCounsel), address(0));
-        _finalized = true;
+        _roles.abandonRole(ATTORNEYS, _msgSender());
+        _roles.state = 2;
 
         emit LockContents();
     }
@@ -161,15 +129,15 @@ contract AccessControl is IAccessControl, RegCenterSetting {
     // ##################
 
     function getManager(uint8 title) public view returns (uint40) {
-        return _rc.getManager(title);
+        return _roles.getManager(title);
     }
 
     function getManagerKey(uint8 title) public view returns (address) {
-        return _rc.getManagerKey(title);
+        return _rc.primeKey(getManager(title));
     }
 
-    function finalized() external view returns (bool) {
-        return _finalized;
+    function finalized() public view returns (bool) {
+        return _roles.state == 2;
     }
 
     function hasRole(address acctAddr, bytes32 role)
@@ -177,6 +145,6 @@ contract AccessControl is IAccessControl, RegCenterSetting {
         view
         returns (bool)
     {
-        return _rc.hasRole(role, acctAddr);
+        return _roles.hasRole(role, _rc.userNo(acctAddr));
     }
 }

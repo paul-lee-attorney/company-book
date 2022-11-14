@@ -147,7 +147,7 @@ contract InvestmentAgreement is
 
         _dealsList.add(sn);
 
-        if (_finalized) {
+        if (finalized()) {
             if (
                 shareNumber > bytes32(0) &&
                 sn.typeOfDeal() != uint8(TypeOfDeal.DragAlong) &&

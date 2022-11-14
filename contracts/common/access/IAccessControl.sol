@@ -13,28 +13,26 @@ interface IAccessControl {
     // ##################
 
     event Init(
-        address indexed owner,
-        address indexed directKeeper,
+        uint40 owner,
         address regCenter,
         address generalKeeper
     );
 
     event LockContents();
+
     // ##################
     // ##    写端口    ##
     // ##################
 
     function init(
-        address owner,
-        address directKeeper,
+        uint40 owner,
         address regCenter,
         address generalKeeper
     ) external;
 
     function setManager(
         uint8 title,
-        address caller,
-        address acct
+        uint40 acct
     ) external;
 
     function grantRole(bytes32 role, uint40 acct) external;

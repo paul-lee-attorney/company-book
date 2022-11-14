@@ -26,6 +26,10 @@ contract RegCenterSetting {
     // ##    写端口    ##
     // ##################
 
+    function regDoc() external {
+        _rc.regUser();
+    }
+
     // shall be set up at the creation stage of a contract
     function _setRegCenter(address rc) internal {
         require(address(_rc) == address(0), "already set regCenter");

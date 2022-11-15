@@ -17,7 +17,8 @@ library RolesRepo {
 
     struct Roles {
         uint8 state; // 0-pending; 1-initiated; 2-finalized
-        uint40[6] managers; // 0-owner; 1-generalCounsel; ...
+        address bookeeper;
+        uint40[2] managers; // 0-owner; 1-generalCounsel; ...
         mapping(bytes32 => GroupOfRole) roles;
     }
 
@@ -25,16 +26,26 @@ library RolesRepo {
     // ##    写端口    ##
     // ##################
 
+    function initDoc(
+        Roles storage self,
+        uint40 owner,
+        address keeper
+    ) internal {
+
+        require(self.state == 0, 
+            "RR.initiate: already initiated");
+
+        self.state = 1;
+        self.managers[0] = owner;
+        self.bookeeper = keeper;
+    }
+
+
     function setManager(
         Roles storage self,
         uint8 title,
-        uint40 originator,
         uint40 acct
     ) internal {
-
-        if (self.state == 0) self.state = 1;
-        else require(originator == self.managers[0], 
-            "RR.setManager: originator not owner");
 
         self.managers[title] = acct;
 
@@ -47,15 +58,30 @@ library RolesRepo {
 
     // ==== role ====
 
+    function setRoleAdmin(
+        Roles storage self,
+        bytes32 role,
+        uint40 caller,
+        uint40 acct
+    ) internal {
+
+        require(
+            caller == self.managers[0],
+            "RR.setRoleAdmin: caller not owner"
+        );
+
+        self.roles[role].admin = acct;
+    }
+
     function grantRole(
         Roles storage self,
         bytes32 role,
-        uint40 originator,
+        uint40 caller,
         uint40 acct
     ) internal {
         require(
-            originator == roleAdmin(self, role),
-            "RR.grantRole: originator not admin"
+            caller == roleAdmin(self, role),
+            "RR.grantRole: caller not admin of role"
         );
         self.roles[role].isMember[acct] = true;
     }
@@ -81,34 +107,10 @@ library RolesRepo {
 
     function abandonRole(
         Roles storage self,
-        bytes32 role,
-        uint40 originator
+        bytes32 role
     ) internal {
-
-        require(
-            originator == self.managers[0] ||
-                originator == roleAdmin(self, role),
-            "RR.abandonRole: originator not owner or roleAdmin"
-        );
-
         self.roles[role].admin = 0;
         delete self.roles[role];
-    }
-
-    // very important API for role admin setting, which shall be only exposed to AccessControl func.
-    function setRoleAdmin(
-        Roles storage self,
-        bytes32 role,
-        uint40 originator,
-        uint40 acct
-    ) internal {
-
-        require(
-            originator == self.managers[0],
-            "RR.setRoleAdmin: originator not owner"
-        );
-
-        self.roles[role].admin = acct;
     }
 
     // ##################
@@ -123,12 +125,27 @@ library RolesRepo {
         return self.managers[title] == acct;
     }
 
+    function isKeeper(
+        Roles storage self,
+        address keeper
+    ) internal view returns (bool) {
+        return self.bookeeper == keeper;
+    }
+
+    function getKeeper(
+        Roles storage self
+    ) internal view returns (address) {
+        return self.bookeeper;
+    }
+
     function getManager(
         Roles storage self,
         uint8 title
     ) internal view returns (uint40) {
         return self.managers[title];
     }
+
+    // ==== role ====
 
     function hasRole(
         Roles storage self,

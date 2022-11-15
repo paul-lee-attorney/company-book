@@ -42,8 +42,6 @@ interface IRegCenter {
 
     // ==== Roles ====
 
-    function setManager(uint8 title, address addrOfAcct) external;
-
     function grantRole(
         bytes32 role,
         address addrOfOriginator,

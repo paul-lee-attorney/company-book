@@ -27,6 +27,14 @@ contract AccessControl is IAccessControl, RegCenterSetting {
     // ##   修饰器      ##
     // ##################
 
+    modifier onlyDK() {
+        require(
+            _roles.isKeeper(msg.sender),
+            "AC.onlyDK: not direct keeper"
+        );
+        _;
+    }
+
     modifier onlyManager(uint8 title) {
         require(
             _roles.isManager(title, _msgSender()),
@@ -37,6 +45,7 @@ contract AccessControl is IAccessControl, RegCenterSetting {
 
     modifier onlyKeeper() {
         require(
+            _roles.isKeeper(msg.sender) ||
             _gk.isKeeper(msg.sender),
             "AC.onlyKeeper: not Keeper"
         );
@@ -54,7 +63,8 @@ contract AccessControl is IAccessControl, RegCenterSetting {
     modifier attorneyOrKeeper() {
         require(
             _roles.hasRole(ATTORNEYS, _msgSender()) ||
-                _gk.isKeeper(msg.sender),
+            _roles.isKeeper(msg.sender) ||
+            _gk.isKeeper(msg.sender),
             "not Attorney or Bookeeper"
         );
         _;
@@ -76,25 +86,29 @@ contract AccessControl is IAccessControl, RegCenterSetting {
 
     function init(
         uint40 owner,
+        address directKeeper,
         address regCenter,
         address generalKeeper
-    ) public {
+    ) external {
 
         _setRegCenter(regCenter);
 
         _setGeneralKeeper(generalKeeper);
 
-        _roles.setManager(uint8(TitleOfManagers.Owner), 0, owner);
-        // _roles.setManager(uint8(TitleOfManagers.DirectKeeper), directKeeper);
+        _roles.initDoc(owner, directKeeper);
 
-        emit Init(owner, address(_rc), generalKeeper);
+        emit Init(owner, directKeeper, regCenter, generalKeeper);
     }
 
     function setManager(
         uint8 title,
         uint40 acct
-    ) external {
-        _roles.setManager(title, _msgSender(), acct);
+    ) external onlyDK {
+        _roles.setManager(title, acct);
+    }
+
+    function setRoleAdmin(bytes32 role, uint40 acct) external onlyManager(0) {
+        _roles.setRoleAdmin(role, _msgSender(), acct);
     }
 
     function grantRole(bytes32 role, uint40 acct) external {
@@ -109,16 +123,12 @@ contract AccessControl is IAccessControl, RegCenterSetting {
         _roles.renounceRole(role, _msgSender());
     }
 
-    function abandonRole(bytes32 role) external {
-        _roles.abandonRole(role, _msgSender());
+    function abandonRole(bytes32 role) external onlyDK {
+        _roles.abandonRole(role);
     }
 
-    function setRoleAdmin(bytes32 role, uint40 acct) external onlyManager(0) {
-        _roles.setRoleAdmin(role, _msgSender(), acct);
-    }
-
-    function lockContents() public onlyPending {
-        _roles.abandonRole(ATTORNEYS, _msgSender());
+    function lockContents() public onlyPending onlyDK {
+        _roles.abandonRole(ATTORNEYS);
         _roles.state = 2;
 
         emit LockContents();

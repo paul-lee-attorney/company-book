@@ -71,9 +71,9 @@ contract BOHKeeper is
         _boh.addTermTemplate(title, add, caller);
     }
 
-    function createSHA(uint8 docType, address caller) external onlyManager(1) {
-        require(_rom.isMember(_rc.userNo(caller)), "not MEMBER");
-        address sha = _boh.createDoc(docType, _rc.userNo(caller));
+    function createSHA(uint8 docType, uint40 caller) external onlyKeeper {
+        require(_rom.isMember(caller), "not MEMBER");
+        address sha = _boh.createDoc(docType, caller);
 
         IAccessControl(sha).init(
             caller,
@@ -100,10 +100,10 @@ contract BOHKeeper is
         _boh.removeDoc(sha);
     }
 
-    function circulateSHA(address sha, address callerAddr)
+    function circulateSHA(address sha, uint40 caller)
         external
-        onlyManager(1)
-        onlyOwnerOf(sha, _rc.userNo(callerAddr))
+        onlyKeeper
+        onlyOwnerOf(sha, caller)
     {
         address[] memory bodies = IShareholdersAgreement(sha).bodies();
 
@@ -119,11 +119,9 @@ contract BOHKeeper is
 
         require(IAccessControl(sha).finalized(), "let GC finalize SHA first");
 
-        IAccessControl(sha).setManager(0, callerAddr, address(0));
+        IAccessControl(sha).setManager(0, 0);
 
-        // IAccessControl(sha).abandonOwnership();
-
-        _boh.circulateDoc(sha, bytes32(0), _rc.userNo(callerAddr));
+        _boh.circulateDoc(sha, bytes32(0));
     }
 
     // ======== Sign SHA ========

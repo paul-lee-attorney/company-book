@@ -158,9 +158,8 @@ contract DocumentsRepo is IDocumentsRepo, CloneFactory, AccessControl {
 
     function circulateDoc(
         address body,
-        bytes32 rule,
-        uint40 submitter
-    ) public onlyManager(1) onlyRegistered(body) onlyForPending(body) {
+        bytes32 rule
+    ) public onlyKeeper onlyRegistered(body) onlyForPending(body) {
         Doc storage doc = _docs[body];
 
         doc.reviewDeadlineBN =
@@ -177,7 +176,7 @@ contract DocumentsRepo is IDocumentsRepo, CloneFactory, AccessControl {
 
         doc.state++;
 
-        emit UpdateStateOfDoc(doc.sn, doc.state, submitter);
+        emit UpdateStateOfDoc(doc.sn, doc.state);
     }
 
     function pushToNextState(address body, uint40 caller)

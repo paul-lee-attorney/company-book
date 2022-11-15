@@ -66,9 +66,9 @@ contract SigPage is ISigPage, AccessControl {
         emit SetClosingDeadline(deadline);
     }
 
-    function finalizeDoc() public onlyManager(2) onlyPending {
+    function finalizeDoc() public onlyManager(1) onlyPending {
         lockContents();
-        _sigPage.finalizeDoc();
+        // _sigPage.finalizeDoc();
         emit DocFinalized();
     }
 

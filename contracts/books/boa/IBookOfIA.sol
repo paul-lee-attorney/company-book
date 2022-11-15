@@ -16,7 +16,7 @@ interface IBookOfIA is IDocumentsRepo {
 
     // ======== BookOfIA ========
 
-    function circulateIA(address ia, uint40 caller) external;
+    function circulateIA(address ia) external;
 
     function createFRDeals(address ia, uint40 creator)
         external

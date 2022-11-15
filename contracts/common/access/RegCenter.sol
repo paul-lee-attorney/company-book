@@ -122,17 +122,6 @@ contract RegCenter is IRegCenter {
 
     // ==== Roles ====
 
-    function setManager(uint8 title, address addrOfAcct) external onlyContract {
-        require(addrOfAcct != address(0), "RC.setManager: zero acct's address");
-
-        uint40 doc = _userNo[msg.sender];
-        uint40 acct = _userNo[addrOfAcct];
-
-        _roles[doc].setManager(title, acct);
-
-        emit SetManager(doc, title, acct);
-    }
-
     function grantRole(
         bytes32 role,
         address addrOfOriginator,

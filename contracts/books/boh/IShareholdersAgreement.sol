@@ -36,6 +36,8 @@ interface IShareholdersAgreement is ISigPage {
 
     function removeTerm(uint8 title) external;
 
+    function finalizeTerms() external;
+    
     // ======== Rules ========
     function setGovernanceRule(bytes32 sn) external;
 

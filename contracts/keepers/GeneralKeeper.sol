@@ -84,7 +84,7 @@ contract GeneralKeeper is IGeneralKeeper, AccessControl {
     // ###################
 
     function createIA(uint8 typeOfIA) external {
-        _BOAKeeper.createIA(typeOfIA, msg.sender);
+        _BOAKeeper.createIA(typeOfIA, _msgSender());
     }
 
     function removeIA(address body) external {
@@ -233,7 +233,7 @@ contract GeneralKeeper is IGeneralKeeper, AccessControl {
     }
 
     function createSHA(uint8 docType) external {
-        _BOHKeeper.createSHA(docType, msg.sender);
+        _BOHKeeper.createSHA(docType, _msgSender());
     }
 
     function removeSHA(address body) external {

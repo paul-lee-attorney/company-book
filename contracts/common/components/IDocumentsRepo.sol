@@ -14,7 +14,7 @@ interface IDocumentsRepo {
 
     event SetTemplate(address temp, uint8 typeOfDoc);
 
-    event UpdateStateOfDoc(bytes32 indexed sn, uint8 state, uint40 caller);
+    event UpdateStateOfDoc(bytes32 indexed sn, uint8 state);
 
     event RemoveDoc(bytes32 indexed sn);
 
@@ -32,8 +32,7 @@ interface IDocumentsRepo {
 
     function circulateDoc(
         address body,
-        bytes32 rule,
-        uint40 submitter
+        bytes32 rule
     ) external;
 
     function pushToNextState(address body, uint40 caller) external;

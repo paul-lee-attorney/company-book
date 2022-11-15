@@ -12,7 +12,7 @@ interface IBOAKeeper {
     // ##   Write IO  ##
     // #################
 
-    function createIA(uint8 docType, address caller) external;
+    function createIA(uint8 docType, uint40 caller) external;
 
     function removeIA(address ia, uint40 caller) external;
 

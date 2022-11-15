@@ -14,6 +14,7 @@ interface IAccessControl {
 
     event Init(
         uint40 owner,
+        address directKeeper,
         address regCenter,
         address generalKeeper
     );
@@ -26,6 +27,7 @@ interface IAccessControl {
 
     function init(
         uint40 owner,
+        address directKeeper,
         address regCenter,
         address generalKeeper
     ) external;

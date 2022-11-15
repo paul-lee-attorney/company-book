@@ -124,20 +124,24 @@ contract ShareholdersAgreement is
 
     function createTerm(uint8 title)
         external
-        onlyManager(2)
+        onlyManager(1)
         tempReadyFor(title)
         returns (address body)
     {
         body = createClone(_boh.getTermTemplate(title));
 
+        uint40 owner = getManager(0);
+
+        uint40 gc = _msgSender();
+
         IAccessControl(body).init(
-            getManagerKey(0),
+            owner,
             address(this),
             address(_rc),
             address(_gk)
         );
 
-        IAccessControl(body).setManager(2, address(this), msg.sender);
+        IAccessControl(body).setManager(1, gc);
 
         if (
             title == uint8(TermTitle.ANTI_DILUTION) ||
@@ -177,7 +181,7 @@ contract ShareholdersAgreement is
         _terms[tail].next = title;
         _terms[0].prev = title;
 
-        emit CreateTerm(title, body, _msgSender());
+        emit CreateTerm(title, body, gc);
     }
 
     function _increaseQtyOfTerms() private {
@@ -199,6 +203,16 @@ contract ShareholdersAgreement is
 
     function _decreaseQtyOfTerms() private {
         _terms[0].title--;
+    }
+
+    function finalizeTerms() external onlyManager(1) {
+        uint8 cur = _terms[0].next;
+
+        while (cur>0) {
+            IAccessControl(_terms[cur].body).lockContents();
+            IAccessControl(_terms[cur].body).setManager(1, 0);
+            cur = _terms[cur].next;
+        }
     }
 
     // ==== Rules ====

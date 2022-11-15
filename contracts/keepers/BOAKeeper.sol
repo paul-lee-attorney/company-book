@@ -74,10 +74,10 @@ contract BOAKeeper is
     // ##   InvestmentAgreement   ##
     // #############################
 
-    function createIA(uint8 typOfIA, address caller) external onlyManager(1) {
-        require(_rom.isMember(_rc.userNo(caller)), "caller not MEMBER");
+    function createIA(uint8 typOfIA, uint40 caller) external onlyManager(1) {
+        require(_rom.isMember(caller), "caller not MEMBER");
 
-        address ia = _boa.createDoc(typOfIA, _rc.userNo(caller));
+        address ia = _boa.createDoc(typOfIA, caller);
 
         IAccessControl(ia).init(
             caller,
@@ -122,19 +122,19 @@ contract BOAKeeper is
 
     // ======== Circulate IA ========
 
-    function circulateIA(address ia, address callerAddr)
+    function circulateIA(address ia, uint40 caller)
         external
-        onlyManager(1)
-        onlyOwnerOf(ia, _rc.userNo(callerAddr))
+        onlyDK
+        onlyOwnerOf(ia, caller)
     {
         require(
             IAccessControl(ia).finalized(),
             "BOAKeeper.circualteIA: IA not finalized"
         );
 
-        IAccessControl(ia).setManager(0, callerAddr, address(0));
+        IAccessControl(ia).setManager(0, 0);
 
-        _boa.circulateIA(ia, _rc.userNo(callerAddr));
+        _boa.circulateIA(ia);
     }
 
     // ======== Sign IA ========

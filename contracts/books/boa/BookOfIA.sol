@@ -40,51 +40,47 @@ contract BookOfIA is
     //##  Write I/O  ##
     //#################
 
-    function circulateIA(address ia, uint40 caller) external onlyManager(1) {
+    function circulateIA(address ia) external onlyKeeper {
         bytes32 rule = _getSHA().votingRules(typeOfIA(ia));
 
-        circulateDoc(ia, rule, caller);
+        circulateDoc(ia, rule);
     }
 
     function createFRDeals(address ia, uint40 creator)
         external
-        onlyKeeper
+        onlyDK
         returns (address frd)
     {
         if (_frDeals[ia] == address(0)) {
             frd = createDoc(1, creator);
             IAccessControl(frd).init(
-                address(this),
-                address(this),
+                creator,
+                msg.sender,
                 address(_rc),
                 address(_gk)
             );
             IBookSetting(frd).setROM(address(_rom));
-
-            IAccessControl(frd).setManager(1, address(this), msg.sender);
         }
     }
 
     function createMockResults(address ia)
         external
-        onlyKeeper
+        onlyDK
         returns (address mock)
     {
-        address creator = msg.sender;
+        uint40 creator = _msgSender();
 
         if (_mockResults[ia] == address(0)) {
-            mock = createDoc(2, _rc.userNo(creator));
+            mock = createDoc(2, creator);
             IAccessControl(mock).init(
                 creator,
-                address(this),
+                msg.sender,
                 address(_rc),
                 address(_gk)
             );
             IBookSetting(mock).setIA(ia);
             IBookSetting(mock).setBOS(address(_bos));
             IBookSetting(mock).setROM(address(_rom));
-
-            IAccessControl(mock).setManager(1, address(this), creator);
         }
     }
 

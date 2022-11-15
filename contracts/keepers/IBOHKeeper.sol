@@ -24,7 +24,7 @@ interface IBOHKeeper {
         uint40 caller
     ) external;
 
-    function createSHA(uint8 docType, address caller) external;
+    function createSHA(uint8 docType, uint40 caller) external;
 
     function removeSHA(address sha, uint40 caller) external;
 

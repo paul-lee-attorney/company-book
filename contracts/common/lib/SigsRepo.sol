@@ -65,9 +65,9 @@ library SigsRepo {
         p.signatures[0][0].sigDate = deadline;
     }
 
-    function finalizeDoc(Page storage p) internal {
-        p.signatures[0][0].sigHash = keccak256('true');
-    }
+    // function finalizeDoc(Page storage p) internal {
+    //     p.signatures[0][0].sigHash = bytes32('true');
+    // }
 
     function addBlank(Page storage p, uint40 acct, uint16 ssn) internal returns (bool flag) {
         if (p.signatures[0][0].sigHash != bytes32(0)) p.signatures[0][0].sigHash = bytes32(0);

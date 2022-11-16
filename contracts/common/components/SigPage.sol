@@ -84,7 +84,7 @@ contract SigPage is ISigPage, AccessControl {
     function addBlank(uint40 acct, uint16 ssn) public {
         if (!finalized())
             require(
-                _rc.hasRole(ATTORNEYS, msg.sender),
+                hasRole(ATTORNEYS, _msgSender()),
                 "only Attorney may add party to a pending DOC"
             );
         else

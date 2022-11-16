@@ -59,7 +59,7 @@ interface IAccessControl {
 
     function finalized() external view returns (bool);
 
-    function hasRole(address acctAddr, bytes32 role)
+    function hasRole(bytes32 role, uint40 acct)
         external
         view
         returns (bool);

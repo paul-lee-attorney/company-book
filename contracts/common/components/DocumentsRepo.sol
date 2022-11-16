@@ -138,7 +138,7 @@ contract DocumentsRepo is IDocumentsRepo, CloneFactory, AccessControl {
 
         _docsList.add(sn);
 
-        emit UpdateStateOfDoc(sn, doc.state, creator);
+        emit UpdateStateOfDoc(sn, doc.state);
     }
 
     function removeDoc(address body)
@@ -179,7 +179,7 @@ contract DocumentsRepo is IDocumentsRepo, CloneFactory, AccessControl {
         emit UpdateStateOfDoc(doc.sn, doc.state);
     }
 
-    function pushToNextState(address body, uint40 caller)
+    function pushToNextState(address body)
         public
         onlyKeeper
         onlyRegistered(body)
@@ -188,7 +188,7 @@ contract DocumentsRepo is IDocumentsRepo, CloneFactory, AccessControl {
 
         doc.state++;
 
-        emit UpdateStateOfDoc(doc.sn, doc.state, caller);
+        emit UpdateStateOfDoc(doc.sn, doc.state);
     }
 
     //##################

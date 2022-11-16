@@ -36,9 +36,9 @@ contract BookOfSHA is IBookOfSHA, DocumentsRepo {
         onlyManager(1)
         onlyRegistered(body)
     {
-        if (_templates[0] != address(0)) pushToNextState(_templates[0], caller);
+        if (_templates[0] != address(0)) pushToNextState(_templates[0]);
 
-        pushToNextState(body, caller);
+        pushToNextState(body);
 
         _templates[0] = body;
 

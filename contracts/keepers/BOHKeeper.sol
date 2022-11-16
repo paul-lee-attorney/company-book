@@ -138,7 +138,7 @@ contract BOHKeeper is
 
         ISigPage(sha).signDoc(caller, sigHash);
 
-        if (ISigPage(sha).established()) _boh.pushToNextState(sha, caller);
+        if (ISigPage(sha).established()) _boh.pushToNextState(sha);
     }
 
     function effectiveSHA(address sha, uint40 caller)

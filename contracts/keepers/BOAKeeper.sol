@@ -155,7 +155,7 @@ contract BOAKeeper is
 
         if (ISigPage(ia).established()) {
             // _boa.calculateMockResult(ia);
-            _boa.pushToNextState(ia, caller);
+            _boa.pushToNextState(ia);
         }
     }
 
@@ -316,7 +316,7 @@ contract BOAKeeper is
             len--;
         }
 
-        if (len == 0) _boa.pushToNextState(ia, caller);
+        if (len == 0) _boa.pushToNextState(ia);
     }
 
     function transferTargetShare(address ia, bytes32 sn) public onlyManager(1) {

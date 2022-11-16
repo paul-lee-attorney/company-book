@@ -95,7 +95,7 @@ contract BOMKeeper is
         if (vr.ratioHeadOfVR() > 0 || vr.ratioAmountOfVR() > 0)
             _bom.proposeIA(ia, caller);
 
-        _boa.pushToNextState(ia, caller);
+        _boa.pushToNextState(ia);
 
         _bom.proposeIA(ia, caller);
     }
@@ -192,7 +192,7 @@ contract BOMKeeper is
         _bom.voteCounting(motionId);
 
         if (_isIA(motionId))
-            _boa.pushToNextState(address(uint160(motionId)), caller);
+            _boa.pushToNextState(address(uint160(motionId)));
     }
 
     // ==== execute ====

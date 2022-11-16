@@ -35,7 +35,7 @@ interface IDocumentsRepo {
         bytes32 rule
     ) external;
 
-    function pushToNextState(address body, uint40 caller) external;
+    function pushToNextState(address body) external;
 
     //##################
     //##    读接口    ##

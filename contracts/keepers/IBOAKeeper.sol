@@ -16,7 +16,7 @@ interface IBOAKeeper {
 
     function removeIA(address ia, uint40 caller) external;
 
-    function circulateIA(address ia, address callerAddr) external;
+    function circulateIA(address ia, uint40 caller) external;
 
     function decreaseCapital(
         uint32 ssn,

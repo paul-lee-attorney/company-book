@@ -150,11 +150,11 @@ contract AccessControl is IAccessControl, RegCenterSetting {
         return _roles.state == 2;
     }
 
-    function hasRole(address acctAddr, bytes32 role)
-        external
+    function hasRole(bytes32 role, uint40 acct)
+        public
         view
         returns (bool)
     {
-        return _roles.hasRole(role, _rc.userNo(acctAddr));
+        return _roles.hasRole(role, acct);
     }
 }

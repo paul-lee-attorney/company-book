@@ -22,7 +22,9 @@ interface IBookOfIA is IDocumentsRepo {
         external
         returns (address frd);
 
-    function createMockResults(address ia) external returns (address mock);
+    function createMockResults(address ia, uint40 caller)
+        external
+        returns (address mock);
 
     //##################
     //##    读接口    ##

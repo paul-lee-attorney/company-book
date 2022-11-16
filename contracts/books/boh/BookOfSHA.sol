@@ -31,7 +31,7 @@ contract BookOfSHA is IBookOfSHA, DocumentsRepo {
         emit AddTemplate(title, add);
     }
 
-    function changePointer(address body, uint40 caller)
+    function changePointer(address body)
         external
         onlyManager(1)
         onlyRegistered(body)

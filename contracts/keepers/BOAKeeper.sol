@@ -301,10 +301,10 @@ contract BOAKeeper is
 
         transferTargetShare(ia, sn);
 
-        _checkCompletionOfIA(ia, caller);
+        _checkCompletionOfIA(ia);
     }
 
-    function _checkCompletionOfIA(address ia, uint40 caller) private {
+    function _checkCompletionOfIA(address ia) private {
         bytes32[] memory snList = IInvestmentAgreement(ia).dealsList();
 
         uint256 len = snList.length;
@@ -390,6 +390,6 @@ contract BOAKeeper is
 
         _releaseCleanParOfDeal(ia, sn);
 
-        _checkCompletionOfIA(ia, caller);
+        _checkCompletionOfIA(ia);
     }
 }

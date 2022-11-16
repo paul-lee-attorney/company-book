@@ -162,7 +162,7 @@ contract BOHKeeper is
             len--;
         }
 
-        _boh.changePointer(sha, caller);
+        _boh.changePointer(sha);
 
         _rom.setAmtBase(IShareholdersAgreement(sha).basedOnPar());
 

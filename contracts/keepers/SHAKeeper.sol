@@ -89,8 +89,18 @@ contract SHAKeeper is
         bytes32 sigHash
     ) external onlyManager(1) onlyEstablished(ia) withinReviewPeriod(ia) {
         address mock = _boa.mockResultsOfIA(ia);
-        if (mock == address(0)) mock = _boa.createMockResults(ia);
-
+        if (mock == address(0)) {
+            mock = _boa.createMockResults(ia);
+            IAccessControl(mock).init(
+                caller,
+                address(this),
+                address(_rc),
+                address(_gk)
+            );
+            IBookSetting(mock).setIA(ia);
+            IBookSetting(mock).setBOS(address(_bos));
+            IBookSetting(mock).setROM(address(_rom));
+        }
         IBookSetting(mock).setBOH(address(_boh));
 
         _addAlongDeal(dragAlong, ia, mock, sn, shareNumber, paid, par, caller);
@@ -401,10 +411,19 @@ contract SHAKeeper is
         ISigPage(ia).signDeal(snOfFR.sequence(), caller, sigHash);
 
         // ==== record FR deal in frDeals ====
-        address frDeals = _boa.frDealsOfIA(ia);
-        if (frDeals == address(0)) frDeals = _boa.createFRDeals(ia, caller);
+        address frd = _boa.frDealsOfIA(ia);
+        if (frd == address(0)) {
+            frd = _boa.createFRDeals(ia, caller);
+            IAccessControl(frd).init(
+                caller,
+                address(this),
+                address(_rc),
+                address(_gk)
+            );
+            IBookSetting(frd).setROM(address(_rom));
+        }
 
-        IFirstRefusalDeals(frDeals).execFirstRefusalRight(
+        IFirstRefusalDeals(frd).execFirstRefusalRight(
             snOfOD.sequence(),
             snOfFR.sequence(),
             caller

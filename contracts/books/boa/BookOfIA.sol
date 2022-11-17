@@ -53,13 +53,6 @@ contract BookOfIA is
     {
         if (_frDeals[ia] == address(0)) {
             frd = createDoc(1, creator);
-            IAccessControl(frd).init(
-                creator,
-                msg.sender,
-                address(_rc),
-                address(_gk)
-            );
-            IBookSetting(frd).setROM(address(_rom));
         }
     }
 
@@ -72,15 +65,6 @@ contract BookOfIA is
 
         if (_mockResults[ia] == address(0)) {
             mock = createDoc(2, creator);
-            IAccessControl(mock).init(
-                creator,
-                msg.sender,
-                address(_rc),
-                address(_gk)
-            );
-            IBookSetting(mock).setIA(ia);
-            IBookSetting(mock).setBOS(address(_bos));
-            IBookSetting(mock).setROM(address(_rom));
         }
     }
 

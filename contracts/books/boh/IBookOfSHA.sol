@@ -28,7 +28,7 @@ interface IBookOfSHA is IDocumentsRepo {
         uint40 caller
     ) external;
 
-    function changePointer(address body, uint40 caller) external;
+    function changePointer(address body) external;
 
     //##################
     //##    读接口    ##

@@ -70,48 +70,6 @@ contract BOAKeeper is
         _;
     }
 
-    // #############
-    // ##   BOS   ##
-    // #############
-
-    // ======== PayInCapital ========
-
-    function setPayInAmount(
-        uint32 ssn,
-        uint64 amount,
-        bytes32 hashLock
-    ) external onlyDK {
-        _bos.setPayInAmount(ssn, amount, hashLock);
-    }
-
-    function requestPaidInCapital(
-        uint32 ssn,
-        string memory hashKey,
-        uint40 caller
-    ) external onlyDK {
-        (bytes32 shareNumber, , , , ) = _bos.getShare(ssn);
-        require(
-            caller == shareNumber.shareholder(),
-            "caller is not shareholder"
-        );
-        _bos.requestPaidInCapital(ssn, hashKey);
-    }
-
-    function decreaseCapital(
-        uint32 ssn,
-        uint64 paid,
-        uint64 par
-    ) external onlyDK {
-        _bos.decreaseCapital(ssn, paid, par);
-    }
-
-    function updatePaidInDeadline(uint32 ssn, uint32 line)
-        external
-        onlyDK
-    {
-        _bos.updatePaidInDeadline(ssn, line);
-    }
-
     // #############################
     // ##   InvestmentAgreement   ##
     // #############################

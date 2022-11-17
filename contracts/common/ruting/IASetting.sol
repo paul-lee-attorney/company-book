@@ -29,7 +29,7 @@ contract IASetting is AccessControl {
     //##    写接口    ##
     //##################
 
-    function setIA(address ia) external onlyManager(1) {
+    function setIA(address ia) external onlyDK {
         _ia = IInvestmentAgreement(ia);
         emit SetIA(ia);
     }

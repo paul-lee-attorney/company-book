@@ -16,7 +16,7 @@ contract BOASetting is AccessControl {
 
     event SetBOA(address boa);
 
-    function setBOA(address boa) external onlyManager(1) {
+    function setBOA(address boa) external onlyDK {
         _boa = IBookOfIA(boa);
         emit SetBOA(boa);
     }

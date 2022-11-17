@@ -38,13 +38,9 @@ interface ISigPage {
 
     function setClosingDeadline(uint32 deadline) external;
 
-    // function removeParty(uint40 acct) external;
-
-    function finalizeDoc() external;
-
     function signDoc(uint40 caller, bytes32 sigHash) external;
 
-    function acceptDoc(bytes32 sigHash) external;
+    function acceptDoc(bytes32 sigHash, uint40 caller) external;
 
     function addBlank(uint40 acct, uint16 ssn) external;
 

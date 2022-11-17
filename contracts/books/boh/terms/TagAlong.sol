@@ -7,21 +7,19 @@
 
 pragma solidity ^0.8.8;
 
-import "../../boa//IInvestmentAgreement.sol";
+import "../../boa/IInvestmentAgreement.sol";
 
 import "../../../common/ruting/BOMSetting.sol";
 
+import "../../../common/components/ISigPage.sol";
+
 import "../../../common/lib/EnumerableSet.sol";
-import "../../../common/lib/ArrayUtils.sol";
 import "../../../common/lib/SNParser.sol";
 
 import "./DragAlong.sol";
 
-import "../../../common/components/ISigPage.sol";
-
-contract TagAlong is BOMSetting, DragAlong {
+contract TagAlong is DragAlong, BOMSetting {
     using EnumerableSet for EnumerableSet.UintSet;
-    using ArrayUtils for uint40[];
     using SNParser for bytes32;
 
     // struct linkRule {
@@ -40,9 +38,9 @@ contract TagAlong is BOMSetting, DragAlong {
 
     EnumerableSet.UintSet private _supporters;
 
-    // ################
-    // ##  Term接口  ##
-    // ################
+    // #############
+    // ##  写接口  ##
+    // #############
 
     function _inputArray(uint40[] memory arr) private {
         uint256 len = arr.length;
@@ -53,7 +51,7 @@ contract TagAlong is BOMSetting, DragAlong {
         }
     }
 
-    function isExempted(address ia, bytes32 sn) public returns (bool) {
+    function isExempted(address ia, bytes32 sn) external returns (bool) {
         require(_bom.isPassed(uint256(uint160(ia))), "motion NOT passed");
 
         if (!isTriggered(ia, sn)) return true;

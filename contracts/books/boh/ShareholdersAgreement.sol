@@ -22,7 +22,7 @@ import "../../common/ruting/BOASetting.sol";
 import "../../common/ruting/SHASetting.sol";
 import "../../common/ruting/BOSSetting.sol";
 import "../../common/ruting/ROMSetting.sol";
-import "../../common/ruting/BOMSetting.sol";
+// import "../../common/ruting/BOMSetting.sol";
 
 import "../../common/utils/CloneFactory.sol";
 
@@ -210,6 +210,7 @@ contract ShareholdersAgreement is
 
         while (cur>0) {
             IAccessControl(_terms[cur].body).lockContents();
+            IAccessControl(_terms[cur].body).setManager(0, 0);
             IAccessControl(_terms[cur].body).setManager(1, 0);
             cur = _terms[cur].next;
         }

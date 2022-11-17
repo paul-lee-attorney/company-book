@@ -16,19 +16,13 @@ import "../../common/components/ISigPage.sol";
 import "../../common/components/MeetingMinutes.sol";
 
 import "../../common/ruting/BOASetting.sol";
-import "../../common/ruting/SHASetting.sol";
-import "../../common/ruting/BOSSetting.sol";
 
 import "../../common/lib/SNParser.sol";
 import "../../common/lib/MotionsRepo.sol";
-import "../../common/lib/DelegateMap.sol";
-import "../../common/lib/BallotsBox.sol";
 
 contract BookOfMotions is IBookOfMotions, MeetingMinutes, BOASetting {
     using SNParser for bytes32;
     using MotionsRepo for MotionsRepo.Repo;
-    using DelegateMap for DelegateMap.Map;
-    using BallotsBox for BallotsBox.Box;
 
     enum TypeOfVoting {
         ZeroPoint,
@@ -53,7 +47,7 @@ contract BookOfMotions is IBookOfMotions, MeetingMinutes, BOASetting {
 
     function nominateDirector(uint40 candidate, uint40 nominator)
         external
-        onlyManager(1)
+        onlyDK
     {
         bytes32 rule = _getSHA().votingRules(uint8(TypeOfVoting.ElectDirector));
 
@@ -83,7 +77,7 @@ contract BookOfMotions is IBookOfMotions, MeetingMinutes, BOASetting {
             emit NominateDirector(motionId, candidate, nominator);
     }
 
-    function proposeIA(address ia, uint40 submitter) external onlyManager(1) {
+    function proposeIA(address ia, uint40 submitter) external onlyDK {
         require(ISigPage(ia).established(), "doc is not established");
 
         uint256 motionId = uint256(uint160(ia));
@@ -112,7 +106,7 @@ contract BookOfMotions is IBookOfMotions, MeetingMinutes, BOASetting {
     function requestToBuy(address ia, bytes32 sn)
         external
         view
-        onlyManager(1)
+        onlyDK
         returns (uint64 paid, uint64 par)
     {
         require(

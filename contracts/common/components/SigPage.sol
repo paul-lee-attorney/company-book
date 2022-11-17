@@ -19,38 +19,12 @@ contract SigPage is ISigPage, AccessControl {
     SigsRepo.Page private _sigPage;
 
     //####################
-    //##    modifier    ##
-    //####################
-
-    modifier onlyParty() {
-        require(isParty(_msgSender()), "_msgSender() NOT a party");
-        _;
-    }
-
-    modifier onlyInitSigner() {
-        require(isInitSigner(_msgSender()), "not an InitSigner");
-        _;
-    }
-
-    modifier notInitSigner() {
-        require(!isInitSigner(_msgSender()), "is an InitSigner");
-        _;
-    }
-
-    modifier onlyFutureTime(uint32 date) {
-        require(uint256(date) > block.timestamp + 15 minutes, "NOT FUTURE time");
-        _;
-    }
-
-    //####################
     //##    设置接口    ##
     //####################
 
     function setSigDeadline(uint32 deadline)
         external
         onlyAttorney
-        onlyFutureTime(deadline)
-        onlyPending
     {
         _sigPage.setSigDeadline(deadline);
         emit SetSigDeadline(deadline);
@@ -59,26 +33,18 @@ contract SigPage is ISigPage, AccessControl {
     function setClosingDeadline(uint32 deadline)
         external
         onlyAttorney
-        onlyFutureTime(deadline)
-        onlyPending
     {
         _sigPage.setClosingDeadline(deadline);
         emit SetClosingDeadline(deadline);
     }
 
-    function finalizeDoc() public onlyManager(1) onlyPending {
-        lockContents();
-        // _sigPage.finalizeDoc();
-        emit DocFinalized();
-    }
-
-    function signDoc(uint40 caller, bytes32 sigHash) public onlyFinalized {
+    function signDoc(uint40 caller, bytes32 sigHash) external onlyDK onlyFinalized {
         signDeal(0, caller, sigHash);
     }
 
-    function acceptDoc(bytes32 sigHash) external onlyParty {
+    function acceptDoc(bytes32 sigHash, uint40 caller) external onlyDK {
         require(_sigPage.established(), "SP.acceptDoc: Doc not established");
-        signDeal(0, _msgSender(), sigHash);
+        signDeal(0, caller, sigHash);
     }
 
     function addBlank(uint40 acct, uint16 ssn) public {
@@ -99,14 +65,13 @@ contract SigPage is ISigPage, AccessControl {
 
     function removeBlank(uint40 acct, uint16 ssn)
         public
-        onlyPending
         onlyAttorney
     {
         if (_sigPage.removeBlank(acct, ssn))
             emit RemoveBlank(acct, ssn);  
     }
 
-    function addParty(uint40 acct) external onlyPending onlyAttorney {
+    function addParty(uint40 acct) external onlyAttorney {
         addBlank(acct, 0);
     }
 
@@ -135,11 +100,11 @@ contract SigPage is ISigPage, AccessControl {
         return _sigPage.closingDeadline();
     }
 
-    function isParty(uint40 acct) public view returns (bool) {
+    function isParty(uint40 acct) external view returns (bool) {
         return _sigPage.isParty(acct);
     }
 
-    function isInitSigner(uint40 acct) public view returns (bool) {
+    function isInitSigner(uint40 acct) external view returns (bool) {
         return _sigPage.isInitSigner(acct);
     }
 

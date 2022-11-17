@@ -85,12 +85,12 @@ contract BookOfOptions is IBookOfOptions, BOSSetting {
         }
     }
 
-    function addObligorIntoOption(bytes32 sn, uint40 obligor) external {
+    function addObligorIntoOption(bytes32 sn, uint40 obligor) external onlyDK {
         if (_options.addObligorIntoOption(sn, obligor))
             emit AddObligorIntoOpt(sn, obligor);
     }
 
-    function removeObligorFromOption(bytes32 sn, uint40 obligor) external {
+    function removeObligorFromOption(bytes32 sn, uint40 obligor) external onlyDK {
         if (_options.removeObligorFromOption(sn, obligor))
             emit RemoveObligorFromOpt(sn, obligor);
     }
@@ -99,7 +99,7 @@ contract BookOfOptions is IBookOfOptions, BOSSetting {
         bytes32 sn,
         uint32 d1,
         uint32 d2
-    ) external onlyKeeper {
+    ) external onlyDK {
         _options.updateOracle(sn, d1, d2);
         emit UpdateOracle(sn, d1, d2);
     }
@@ -130,25 +130,25 @@ contract BookOfOptions is IBookOfOptions, BOSSetting {
         bytes32 sn,
         bytes32 shareNumber,
         uint64 paid
-    ) external onlyKeeper {
+    ) external onlyDK {
         if (_options.requestPledge(sn, shareNumber, paid))
             emit AddPledge(sn, shareNumber, paid);
     }
 
-    function lockOption(bytes32 sn, bytes32 hashLock) external onlyKeeper {
+    function lockOption(bytes32 sn, bytes32 hashLock) external onlyDK {
         _options.lockOption(sn, hashLock);
         emit LockOpt(sn, hashLock);
     }
 
     function closeOption(bytes32 sn, string memory hashKey)
         external
-        onlyKeeper
+        onlyDK
     {
         _options.closeOption(sn, hashKey);
         emit CloseOpt(sn, hashKey);
     }
 
-    function revokeOption(bytes32 sn) external onlyKeeper {
+    function revokeOption(bytes32 sn) external onlyDK {
         _options.revokeOption(sn);
         emit RevokeOpt(sn);
     }
@@ -211,7 +211,7 @@ contract BookOfOptions is IBookOfOptions, BOSSetting {
         return _options.oracle(sn, blockNumber);
     }
 
-    function snList() external view returns (bytes32[] memory) {
+    function optsList() external view returns (bytes32[] memory) {
         return _options.optsList();
     }
 }

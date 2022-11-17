@@ -43,6 +43,8 @@ interface IAlongs {
     // ##  查询接口  ##
     // ###############
 
+    function isTriggered(address ia, bytes32 sn) external view returns (bool);
+
     function linkRule(uint40 drager) external view returns (bytes32);
 
     function isDrager(uint40 drager) external view returns (bool);

@@ -45,7 +45,6 @@ contract AccessControl is IAccessControl, RegCenterSetting {
 
     modifier onlyKeeper() {
         require(
-            _roles.isKeeper(msg.sender) ||
             _gk.isKeeper(msg.sender),
             "AC.onlyKeeper: not Keeper"
         );
@@ -63,7 +62,6 @@ contract AccessControl is IAccessControl, RegCenterSetting {
     modifier attorneyOrKeeper() {
         require(
             _roles.hasRole(ATTORNEYS, _msgSender()) ||
-            _roles.isKeeper(msg.sender) ||
             _gk.isKeeper(msg.sender),
             "not Attorney or Bookeeper"
         );
@@ -100,6 +98,12 @@ contract AccessControl is IAccessControl, RegCenterSetting {
         emit Init(owner, directKeeper, regCenter, generalKeeper);
     }
 
+    function setBookeeper(
+        address keeper
+    ) external {
+        _roles.setBookeeper(msg.sender, keeper);
+    }
+
     function setManager(
         uint8 title,
         uint40 acct
@@ -129,6 +133,7 @@ contract AccessControl is IAccessControl, RegCenterSetting {
 
     function lockContents() public onlyPending onlyDK {
         _roles.abandonRole(ATTORNEYS);
+        _roles.setManager(1, 0);
         _roles.state = 2;
 
         emit LockContents();

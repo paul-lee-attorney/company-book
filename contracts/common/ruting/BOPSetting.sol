@@ -16,7 +16,7 @@ contract BOPSetting is AccessControl {
 
     event SetBOP(address bop);
 
-    function setBOP(address bop) external onlyManager(1) {
+    function setBOP(address bop) external onlyDK {
         _bop = IBookOfPledges(bop);
         emit SetBOP(bop);
     }

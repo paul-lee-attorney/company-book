@@ -11,8 +11,6 @@ import "./IBookOfShares.sol";
 
 import "../../common/lib/SNFactory.sol";
 import "../../common/lib/SNParser.sol";
-import "../../common/lib/MembersRepo.sol";
-import "../../common/lib/TopChain.sol";
 
 import "../../common/ruting/ROMSetting.sol";
 
@@ -88,7 +86,7 @@ contract BookOfShares is IBookOfShares, ROMSetting {
         uint64 paid,
         uint64 par,
         uint32 paidInDeadline
-    ) external onlyManager(1) {
+    ) external onlyDK {
         require(
             shareNumber.shareholder() > 0,
             "BOS.issueShare: zero shareholder"
@@ -143,7 +141,7 @@ contract BookOfShares is IBookOfShares, ROMSetting {
         uint32 ssn,
         uint64 amount,
         bytes32 hashLock
-    ) external shareExist(ssn) onlyManager(1) {
+    ) external shareExist(ssn) onlyDK {
         require(amount > 0, "BOS.setPayInAmount: zero payIn amount");
         require(
             hashLock > bytes32(0),
@@ -160,7 +158,7 @@ contract BookOfShares is IBookOfShares, ROMSetting {
     function requestPaidInCapital(uint32 ssn, string memory hashKey)
         external
         shareExist(ssn)
-        onlyManager(1)
+        onlyDK
     {
         require(
             _lockers[ssn].hashLock == keccak256(bytes(hashKey)),
@@ -196,7 +194,7 @@ contract BookOfShares is IBookOfShares, ROMSetting {
         uint64 par,
         uint40 to,
         uint32 unitPrice
-    ) external onlyManager(1) shareExist(ssn) notFreezed(ssn) {
+    ) external onlyDK shareExist(ssn) notFreezed(ssn) {
         bytes32 shareNumber = _shares[ssn].shareNumber;
 
         require(to > 0, "shareholder userNo is ZERO");
@@ -250,7 +248,7 @@ contract BookOfShares is IBookOfShares, ROMSetting {
         uint32 ssn,
         uint64 paid,
         uint64 par
-    ) external onlyManager(1) shareExist(ssn) notFreezed(ssn) {
+    ) external onlyDK shareExist(ssn) notFreezed(ssn) {
         // 减少特定“股票”项下的认缴和实缴金额
         _decreaseShareAmount(ssn, paid, par);
 
@@ -299,7 +297,7 @@ contract BookOfShares is IBookOfShares, ROMSetting {
     /// @param state - 股票状态 （0:正常，1:查封 ）
     function updateStateOfShare(uint32 ssn, uint8 state)
         external
-        onlyManager(1)
+        onlyDK
         shareExist(ssn)
     {
         _shares[ssn].state = state;
@@ -311,7 +309,7 @@ contract BookOfShares is IBookOfShares, ROMSetting {
     /// @param paidInDeadline - 实缴出资期限
     function updatePaidInDeadline(uint32 ssn, uint32 paidInDeadline)
         external
-        onlyKeeper
+        onlyDK
         shareExist(ssn)
     {
         _shares[ssn].paidInDeadline = paidInDeadline;

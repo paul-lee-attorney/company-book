@@ -16,7 +16,7 @@ contract BOOSetting is AccessControl {
 
     event SetBOO(address boo);
 
-    function setBOO(address boo) external onlyManager(1) {
+    function setBOO(address boo) external onlyDK {
         _boo = IBookOfOptions(boo);
         emit SetBOO(boo);
     }

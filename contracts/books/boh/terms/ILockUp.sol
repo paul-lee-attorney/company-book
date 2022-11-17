@@ -7,7 +7,9 @@
 
 pragma solidity ^0.8.8;
 
-interface ILockUp {
+import "./ITerm.sol";
+
+interface ILockUp is ITerm{
     // ################
     // ##   Event   ##
     // ################

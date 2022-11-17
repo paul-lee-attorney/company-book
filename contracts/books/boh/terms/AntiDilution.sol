@@ -20,11 +20,9 @@ import "../../../common/lib/EnumerableSet.sol";
 import "../../../common/lib/ArrowChain.sol";
 
 import "./IAntiDilution.sol";
-import "./ITerm.sol";
 
 contract AntiDilution is
     IAntiDilution,
-    ITerm,
     BOSSetting,
     ROMSetting,
     BOMSetting
@@ -213,7 +211,7 @@ contract AntiDilution is
         return output;
     }
 
-    function isExempted(address ia, bytes32 sn) public view returns (bool) {
+    function isExempted(address ia, bytes32 sn) external view returns (bool) {
         if (!isTriggered(ia, sn)) return true;
 
         (uint40[] memory consentParties, ) = _bom.getYea(uint256(uint160(ia)));

@@ -14,7 +14,7 @@ interface IBookOfSHA is IDocumentsRepo {
     //##  Event   ##
     //##############
 
-    event AddTemplate(uint8 indexed title, address add);
+    event SetTermTemplate(uint8 indexed title, address add);
 
     event ChangePointer(address indexed pointer);
 
@@ -22,10 +22,9 @@ interface IBookOfSHA is IDocumentsRepo {
     //##    写接口    ##
     //##################
 
-    function addTermTemplate(
+    function setTermTemplate(
         uint8 title,
-        address add,
-        uint40 caller
+        address add
     ) external;
 
     function changePointer(address body) external;

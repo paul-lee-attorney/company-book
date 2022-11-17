@@ -45,7 +45,7 @@ contract RegisterOfMembers is IRegisterOfMembers, BOSSetting {
     //##    写接口    ##
     //##################
 
-    function setVoteBase(bool onPar) external onlyKeeper {
+    function setVoteBase(bool onPar) external onlyDK {
         if (_gm.setVoteBase(onPar)) emit SetVoteBase(onPar);
     }
 
@@ -59,12 +59,12 @@ contract RegisterOfMembers is IRegisterOfMembers, BOSSetting {
         emit CapDecrease(paid, par, blocknumber);
     }
 
-    function setMaxQtyOfMembers(uint8 max) external onlyManager(1) {
+    function setMaxQtyOfMembers(uint8 max) external onlyDK {
         _gm.setMaxQtyOfMembers(max);
         emit SetMaxQtyOfMembers(max);
     }
 
-    function setAmtBase(bool onPar) external onlyKeeper {
+    function setAmtBase(bool onPar) external onlyDK {
         if (_gm.setAmtBase(onPar)) emit SetAmtBase(onPar);
     }
 

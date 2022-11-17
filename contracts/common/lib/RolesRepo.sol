@@ -40,6 +40,15 @@ library RolesRepo {
         self.bookeeper = keeper;
     }
 
+    function setBookeeper(
+        Roles storage self,
+        address caller,
+        address acct
+    ) internal {
+        require(caller == self.bookeeper, 
+            "RR.setBookeeper: caller not bookeeper");
+        self.bookeeper = acct;
+    }
 
     function setManager(
         Roles storage self,
@@ -50,7 +59,7 @@ library RolesRepo {
         self.managers[title] = acct;
 
         // ==== GeneralCounsel ====
-        if (title == 1) {
+        if (title == 1 && acct != 0) {
             self.roles[ATTORNEYS].admin = acct;
             self.roles[ATTORNEYS].isMember[acct] = true;
         }

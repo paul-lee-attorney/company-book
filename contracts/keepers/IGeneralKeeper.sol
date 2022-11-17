@@ -29,6 +29,8 @@ interface IGeneralKeeper {
 
     event SetBOSKeeper(address keeper);
 
+    event SetROMKeeper(address keeper);
+
     // ######################
     // ##   AccessControl  ##
     // ######################

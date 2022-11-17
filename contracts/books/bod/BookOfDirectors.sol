@@ -70,7 +70,7 @@ contract BookOfDirectors is IBookOfDirectors, MeetingMinutes {
         uint40 candidate,
         uint8 title,
         uint40 appointer
-    ) external onlyManager(1) {
+    ) external onlyDK {
         _addDirector(candidate, title, appointer);
     }
 
@@ -115,12 +115,12 @@ contract BookOfDirectors is IBookOfDirectors, MeetingMinutes {
 
     function takePosition(uint40 candidate, uint40 nominator)
         external
-        onlyManager(1)
+        onlyDK
     {
         _addDirector(candidate, uint8(TitleOfDirectors.Director), nominator);
     }
 
-    function removeDirector(uint40 acct) external onlyManager(1) {
+    function removeDirector(uint40 acct) external onlyDK {
         if (isDirector(acct)) {
             if (_directors[acct].title == uint8(TitleOfDirectors.Chairman)) {
                 _directors[0].appointer = 0;

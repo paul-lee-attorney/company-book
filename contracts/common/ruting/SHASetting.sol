@@ -17,7 +17,7 @@ contract SHASetting is AccessControl {
 
     event SetBOH(address boh);
 
-    function setBOH(address boh) external onlyManager(1) {
+    function setBOH(address boh) external onlyDK {
         _boh = IBookOfSHA(boh);
         emit SetBOH(boh);
     }

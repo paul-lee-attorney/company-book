@@ -94,7 +94,7 @@ contract DocumentsRepo is IDocumentsRepo, CloneFactory, AccessControl {
 
     function setTemplate(address body, uint8 typeOfDoc)
         external
-        onlyManager(0)
+        onlyDK
     {
         require(typeOfDoc < 18, "DR.setTemplate: typeOfDoc over flow");
         _templates[typeOfDoc] = body;
@@ -119,7 +119,7 @@ contract DocumentsRepo is IDocumentsRepo, CloneFactory, AccessControl {
 
     function createDoc(uint8 docType, uint40 creator)
         public
-        onlyManager(1)
+        onlyKeeper
         tempReady(docType)
         returns (address body)
     {
@@ -143,7 +143,7 @@ contract DocumentsRepo is IDocumentsRepo, CloneFactory, AccessControl {
 
     function removeDoc(address body)
         external
-        onlyManager(1)
+        onlyDK
         onlyRegistered(body)
         onlyForPending(body)
     {
@@ -159,7 +159,7 @@ contract DocumentsRepo is IDocumentsRepo, CloneFactory, AccessControl {
     function circulateDoc(
         address body,
         bytes32 rule
-    ) public onlyKeeper onlyRegistered(body) onlyForPending(body) {
+    ) public onlyDK onlyRegistered(body) onlyForPending(body) {
         Doc storage doc = _docs[body];
 
         doc.reviewDeadlineBN =
@@ -185,9 +185,7 @@ contract DocumentsRepo is IDocumentsRepo, CloneFactory, AccessControl {
         onlyRegistered(body)
     {
         Doc storage doc = _docs[body];
-
         doc.state++;
-
         emit UpdateStateOfDoc(doc.sn, doc.state);
     }
 

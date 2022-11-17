@@ -7,7 +7,9 @@
 
 pragma solidity ^0.8.8;
 
-interface IAntiDilution {
+import "./ITerm.sol";
+
+interface IAntiDilution is ITerm{
     // ################
     // ##   Event    ##
     // ################

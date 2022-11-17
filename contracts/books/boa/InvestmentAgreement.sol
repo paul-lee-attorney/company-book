@@ -91,9 +91,9 @@ contract InvestmentAgreement is
         _;
     }
 
-    //##################
+    //#################
     //##    写接口    ##
-    //##################
+    //#################
 
     function createDeal(bytes32 sn, bytes32 shareNumber)
         external
@@ -168,7 +168,7 @@ contract InvestmentAgreement is
         return sn;
     }
 
-    function setTypeOfIA(uint8 t) external onlyAttorney {
+    function setTypeOfIA(uint8 t) external onlyPending onlyAttorney {
         _deals[0].state = t;
         emit SetTypeOfIA(t);
     }
@@ -297,7 +297,7 @@ contract InvestmentAgreement is
     function revokeDeal(uint16 seq, string memory hashKey)
         external
         onlyCleared(seq)
-        onlyManager(1)
+        onlyKeeper
     {
         Deal storage deal = _deals[seq];
 

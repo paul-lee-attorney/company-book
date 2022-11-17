@@ -42,11 +42,11 @@ contract Options is IOptions, AccessControl {
     // ##  查询接口   ##
     // ################
 
-    function counterOfOpts() public view returns (uint40) {
+    function counterOfOpts() external view returns (uint40) {
         return _options.counterOfOptions();
     }
 
-    function isOption(bytes32 sn) public view returns (bool) {
+    function isOption(bytes32 sn) external view returns (bool) {
         return _options.isOption(sn);
     }
 

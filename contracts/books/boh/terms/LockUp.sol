@@ -19,9 +19,7 @@ import "../../../common/components/ISigPage.sol";
 
 import "./ILockUp.sol";
 
-import "./ITerm.sol";
-
-contract LockUp is ILockUp, ITerm, BOMSetting {
+contract LockUp is ILockUp, BOMSetting {
     using ArrayUtils for uint40[];
     using SNParser for bytes32;
     using EnumerableSet for EnumerableSet.UintSet;
@@ -82,7 +80,7 @@ contract LockUp is ILockUp, ITerm, BOMSetting {
 
     function updateLocker(uint32 ssn, uint32 dueDate)
         external
-        onlyManager(1)
+        onlyAttorney
         beLocked(ssn)
     {
         Locker storage l = _lockers[ssn];
@@ -139,7 +137,7 @@ contract LockUp is ILockUp, ITerm, BOMSetting {
     }
 
     function getLocker(uint32 ssn)
-        public
+        external
         view
         beLocked(ssn)
         returns (uint32 dueDate, uint40[] memory keyHolders)

@@ -70,9 +70,61 @@ contract BOAKeeper is
         _;
     }
 
+    // #############
+    // ##   BOS   ##
+    // #############
+
+    // ======== PayInCapital ========
+
+    function setPayInAmount(
+        uint32 ssn,
+        uint64 amount,
+        bytes32 hashLock
+    ) external onlyDK {
+        _bos.setPayInAmount(ssn, amount, hashLock);
+    }
+
+    function requestPaidInCapital(
+        uint32 ssn,
+        string memory hashKey,
+        uint40 caller
+    ) external onlyDK {
+        (bytes32 shareNumber, , , , ) = _bos.getShare(ssn);
+        require(
+            caller == shareNumber.shareholder(),
+            "caller is not shareholder"
+        );
+        _bos.requestPaidInCapital(ssn, hashKey);
+    }
+
+    function decreaseCapital(
+        uint32 ssn,
+        uint64 paid,
+        uint64 par
+    ) external onlyDK {
+        _bos.decreaseCapital(ssn, paid, par);
+    }
+
+    function updatePaidInDeadline(uint32 ssn, uint32 line)
+        external
+        onlyDK
+    {
+        _bos.updatePaidInDeadline(ssn, line);
+    }
+
     // #############################
     // ##   InvestmentAgreement   ##
     // #############################
+
+    function setTempOfIA(address temp, uint8 typeOfDoc, uint40 caller)
+        external
+        onlyDK
+    {
+        require(caller == getManager(1), 
+            "BOAKeeper.setTempOfIA: caller is not GeneralCounsel");
+
+        _boa.setTemplate(temp, typeOfDoc);
+    }
 
     function createIA(uint8 typOfIA, uint40 caller) external onlyManager(1) {
         require(_rom.isMember(caller), "caller not MEMBER");
@@ -188,43 +240,6 @@ contract BOAKeeper is
         }
     }
 
-    // ======== PayInCapital ========
-
-    function setPayInAmount(
-        uint32 ssn,
-        uint64 amount,
-        bytes32 hashLock
-    ) external onlyManager(1) {
-        _bos.setPayInAmount(ssn, amount, hashLock);
-    }
-
-    function requestPaidInCapital(
-        uint32 ssn,
-        string memory hashKey,
-        uint40 caller
-    ) external onlyManager(1) {
-        (bytes32 shareNumber, , , , ) = _bos.getShare(ssn);
-        require(
-            caller == shareNumber.shareholder(),
-            "caller is not shareholder"
-        );
-        _bos.requestPaidInCapital(ssn, hashKey);
-    }
-
-    function decreaseCapital(
-        uint32 ssn,
-        uint64 paid,
-        uint64 par
-    ) external onlyManager(1) {
-        _bos.decreaseCapital(ssn, paid, par);
-    }
-
-    // ==== setConfig ====
-
-    function setMaxQtyOfMembers(uint8 max) external onlyManager(1) {
-        _rom.setMaxQtyOfMembers(max);
-    }
-
     // ======== Deal Closing ========
 
     function pushToCoffer(
@@ -287,7 +302,7 @@ contract BOAKeeper is
         bytes32 sn,
         string memory hashKey,
         uint40 caller
-    ) external onlyManager(1) {
+    ) external onlyDK {
         require(
             _boa.currentState(ia) == uint8(DocumentsRepo.BODStates.Voted),
             "InvestmentAgreement NOT in voted state"
@@ -319,7 +334,7 @@ contract BOAKeeper is
         if (len == 0) _boa.pushToNextState(ia);
     }
 
-    function transferTargetShare(address ia, bytes32 sn) public onlyManager(1) {
+    function transferTargetShare(address ia, bytes32 sn) public onlyDK {
         bytes32 shareNumber = IInvestmentAgreement(ia).shareNumberOfDeal(
             sn.sequence()
         );
@@ -365,7 +380,6 @@ contract BOAKeeper is
         address ia,
         bytes32 sn,
         uint40 caller,
-        // uint32 sigDate,
         string memory hashKey
     ) external onlyManager(1) {
         require(_boa.isRegistered(ia), "IA NOT registered");
@@ -384,7 +398,6 @@ contract BOAKeeper is
 
         IInvestmentAgreement(ia).revokeDeal(
             sn.sequence(),
-            // sigDate,
             hashKey
         );
 

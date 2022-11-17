@@ -87,6 +87,15 @@ contract BOOKeeper is IBOOKeeper, BOOSetting, BOSSetting {
         _boo.removeObligorFromOption(sn, obligor);
     }
 
+    function updateOracle(bytes32 sn, uint32 d1, uint32 d2, uint40 caller)
+        external
+        onlyDK
+    {
+        require(caller == getManager(1), "BOOKeeper.updateOracle: caller not GC");
+        _boo.updateOracle(sn, d1, d2);
+    }
+
+
     function execOption(bytes32 sn, uint40 caller)
         external
         onlyManager(1)

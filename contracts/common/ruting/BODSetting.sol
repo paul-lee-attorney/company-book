@@ -21,7 +21,7 @@ contract BODSetting is AccessControl {
         _;
     }
 
-    function setBOD(address bod) external onlyManager(1) {
+    function setBOD(address bod) external onlyDK {
         _bod = IBookOfDirectors(bod);
         emit SetBOD(bod);
     }

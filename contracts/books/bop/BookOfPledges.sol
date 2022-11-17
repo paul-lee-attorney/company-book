@@ -57,7 +57,7 @@ contract BookOfPledges is IBookOfPledges, AccessControl {
         uint40 creditor,
         uint64 pledgedPar,
         uint64 guaranteedAmt
-    ) external onlyManager(1) {
+    ) external onlyDK {
         sn = _updateSNDate(sn);
         uint32 ssn = sn.ssnOfPledge();
         uint32 seq = sn.sequenceOfPledge();
@@ -97,7 +97,7 @@ contract BookOfPledges is IBookOfPledges, AccessControl {
         uint40 creditor,
         uint64 pledgedPar,
         uint64 guaranteedAmt
-    ) external onlyKeeper pledgeExist(sn) {
+    ) external onlyDK pledgeExist(sn) {
         require(pledgedPar > 0, "ZERO pledged parvalue");
 
         Pledge storage pld = _pledges[sn.ssnOfPledge()][sn.sequenceOfPledge()];

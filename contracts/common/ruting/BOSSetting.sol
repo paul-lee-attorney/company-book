@@ -25,7 +25,7 @@ contract BOSSetting is AccessControl {
     // ##    写端口    ##
     // ##################
 
-    function setBOS(address bos) external onlyManager(1) {
+    function setBOS(address bos) external onlyDK {
         _bos = IBookOfShares(bos);
         emit SetBOS(bos);
     }

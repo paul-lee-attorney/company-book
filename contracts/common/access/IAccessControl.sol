@@ -32,6 +32,8 @@ interface IAccessControl {
         address generalKeeper
     ) external;
 
+    function setBookeeper(address keeper) external;
+
     function setManager(
         uint8 title,
         uint40 acct

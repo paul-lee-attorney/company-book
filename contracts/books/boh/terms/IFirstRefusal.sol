@@ -7,7 +7,9 @@
 
 pragma solidity ^0.8.8;
 
-interface IFirstRefusal {
+import "./ITerm.sol";
+
+interface IFirstRefusal is ITerm{
     // ###############
     // ##   Event   ##
     // ###############

@@ -8,19 +8,26 @@
 pragma solidity ^0.8.8;
 
 interface IBOHKeeper {
-    // ################
-    // ##   Events   ##
-    // ################
 
-    event AddTemplate(uint8 title, address add);
+    // ############
+    // ##  ROM   ##
+    // ############
 
-    // ##################
-    // ##  BOHKeeper   ##
-    // ##################
+    function setVoteBase(bool onPar) external;
 
-    function addTermTemplate(
+    function setMaxQtyOfMembers(uint8 max) external;
+
+    function setAmtBase(bool onPar) external;
+
+    // ############
+    // ##  SHA   ##
+    // ############
+
+    function setTempOfSHA(address temp, uint8 typeOfDoc, uint40 caller) external;
+
+    function setTermTemplate(
         uint8 title,
-        address add,
+        address body,
         uint40 caller
     ) external;
 
@@ -37,4 +44,6 @@ interface IBOHKeeper {
     ) external;
 
     function effectiveSHA(address sha, uint40 caller) external;
+
+    function acceptSHA(bytes32 sigHash, uint40 caller) external;
 }

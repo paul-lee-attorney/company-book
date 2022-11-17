@@ -16,7 +16,7 @@ contract BOMSetting is AccessControl {
 
     event SetBOM(address bom);
 
-    function setBOM(address bom) external onlyManager(1) {
+    function setBOM(address bom) external onlyDK {
         _bom = IBookOfMotions(bom);
         emit SetBOM(bom);
     }

@@ -12,35 +12,33 @@ import "./IBookOfSHA.sol";
 import "../../common/components/DocumentsRepo.sol";
 
 contract BookOfSHA is IBookOfSHA, DocumentsRepo {
-    mapping(uint256 => address) private _templates;
+    mapping(uint256 => address) private _termTemplates;
 
-    // _templates[0]: pointer;
+    // _termTemplates[0]: pointer;
 
     //##################
     //##    写接口    ##
     //##################
 
-    function addTermTemplate(
+    function setTermTemplate(
         uint8 title,
-        address add,
-        uint40 caller
-    ) external onlyManager(1) {
-        require(title > 0, "BOH.addTermTemplate: zero title");
-        require(caller == getManager(0), "caller is not Owner");
-        _templates[title] = add;
-        emit AddTemplate(title, add);
+        address body
+    ) external onlyDK {
+        require(title > 0, "BOH.setTermTemplate: zero title");
+        _termTemplates[title] = body;
+        emit SetTermTemplate(title, body);
     }
 
     function changePointer(address body)
         external
-        onlyManager(1)
+        onlyDK
         onlyRegistered(body)
     {
-        if (_templates[0] != address(0)) pushToNextState(_templates[0]);
+        if (_termTemplates[0] != address(0)) pushToNextState(_termTemplates[0]);
 
         pushToNextState(body);
 
-        _templates[0] = body;
+        _termTemplates[0] = body;
 
         emit ChangePointer(body);
     }
@@ -50,11 +48,11 @@ contract BookOfSHA is IBookOfSHA, DocumentsRepo {
     //##################
 
     function pointer() external view returns (address) {
-        return _templates[0];
+        return _termTemplates[0];
     }
 
     function hasTemplate(uint8 title) public view returns (bool flag) {
-        flag = title > 0 && _templates[title] > address(0);
+        flag = title > 0 && _termTemplates[title] > address(0);
     }
 
     function getTermTemplate(uint8 title) external view returns (address temp) {
@@ -62,6 +60,6 @@ contract BookOfSHA is IBookOfSHA, DocumentsRepo {
             hasTemplate(title),
             "BOH.getTermTemplate: template not available"
         );
-        temp = _templates[title];
+        temp = _termTemplates[title];
     }
 }

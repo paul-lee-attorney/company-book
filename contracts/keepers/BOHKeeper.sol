@@ -15,7 +15,7 @@ import "../common/components/ISigPage.sol";
 
 import "../common/ruting/BOASetting.sol";
 import "../common/ruting/ROMSetting.sol";
-import "../common/ruting/BOMSetting.sol";
+// import "../common/ruting/BOMSetting.sol";
 import "../common/ruting/BOOSetting.sol";
 import "../common/ruting/BOSSetting.sol";
 import "../common/ruting/BODSetting.sol";
@@ -33,7 +33,6 @@ contract BOHKeeper is
     BOASetting,
     BODSetting,
     SHASetting,
-    BOMSetting,
     BOOSetting,
     BOSSetting,
     ROMSetting
@@ -63,12 +62,20 @@ contract BOHKeeper is
     // ##   SHA   ##
     // #############
 
-    function addTermTemplate(
+    function setTempOfSHA(address temp, uint8 typeOfDoc, uint40 caller) external onlyDK {
+        require(caller == getManager(1), 
+            "caller is not General Counsel");
+        _boh.setTemplate(temp, typeOfDoc);
+    }
+
+    function setTermTemplate(
         uint8 title,
-        address add,
+        address body,
         uint40 caller
     ) external onlyManager(1) {
-        _boh.addTermTemplate(title, add, caller);
+        require(caller == getManager(1),
+            "BOHKeeper.setTermTemplate: caller is not General Counsel");
+        _boh.setTermTemplate(title, body);
     }
 
     function createSHA(uint8 docType, uint40 caller) external onlyKeeper {
@@ -85,7 +92,7 @@ contract BOHKeeper is
         IBookSetting(sha).setBOA(address(_boa));
         IBookSetting(sha).setBOH(address(_boh));
         IBookSetting(sha).setBOS(address(_bos));
-        IBookSetting(sha).setBOM(address(_bom));
+        // IBookSetting(sha).setBOM(address(_bom));
         IBookSetting(sha).setROM(address(_rom));
 
         // copyRoleTo(KEEPERS, sha);
@@ -117,7 +124,7 @@ contract BOHKeeper is
             len--;
         }
 
-        require(IAccessControl(sha).finalized(), "let GC finalize SHA first");
+        IAccessControl(sha).lockContents();
 
         IAccessControl(sha).setManager(0, 0);
 
@@ -166,6 +173,8 @@ contract BOHKeeper is
 
         _rom.setAmtBase(IShareholdersAgreement(sha).basedOnPar());
 
+        _rom.setVoteBase(IShareholdersAgreement(sha).basedOnPar());
+
         _bod.setMaxQtyOfDirectors(
             IShareholdersAgreement(sha).maxNumOfDirectors()
         );
@@ -206,5 +215,9 @@ contract BOHKeeper is
                 len--;
             }
         }
+    }
+
+    function acceptSHA(bytes32 sigHash, uint40 caller) external onlyDK {
+        ISigPage(_boh.pointer()).acceptDoc(sigHash, caller);
     }
 }

@@ -9,7 +9,6 @@ pragma solidity ^0.8.8;
 
 import "../../boa//IInvestmentAgreement.sol";
 
-// import "../../../common/ruting/BOSSetting.sol";
 import "../../../common/ruting/BOMSetting.sol";
 import "../../../common/ruting/ROMSetting.sol";
 
@@ -23,7 +22,7 @@ import "../../../common/components/ISigPage.sol";
 import "./IFirstRefusal.sol";
 import "./ITerm.sol";
 
-contract FirstRefusal is IFirstRefusal, ITerm, BOMSetting, ROMSetting {
+contract FirstRefusal is IFirstRefusal, BOMSetting, ROMSetting {
     using ArrayUtils for uint40[];
     using SNFactory for bytes;
     using SNParser for bytes32;

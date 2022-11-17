@@ -36,8 +36,7 @@ interface IBookOfSHA is IDocumentsRepo {
 
     function pointer() external view returns (address);
 
-    function hasTemplate(uint8 title) external view returns(bool flag);
+    function hasTemplate(uint8 title) external view returns (bool flag);
 
-    function getTermTemplate(uint8 title) external view returns(address temp);
-
+    function getTermTemplate(uint8 title) external view returns (address temp);
 }

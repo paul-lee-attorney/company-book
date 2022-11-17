@@ -40,15 +40,14 @@ contract BookOfIA is
     //##  Write I/O  ##
     //#################
 
-    function circulateIA(address ia) external onlyKeeper {
+    function circulateIA(address ia) external onlyDK {
         bytes32 rule = _getSHA().votingRules(typeOfIA(ia));
-
         circulateDoc(ia, rule);
     }
 
     function createFRDeals(address ia, uint40 creator)
         external
-        onlyDK
+        onlyKeeper
         returns (address frd)
     {
         if (_frDeals[ia] == address(0)) {
@@ -56,13 +55,11 @@ contract BookOfIA is
         }
     }
 
-    function createMockResults(address ia)
+    function createMockResults(address ia, uint40 creator)
         external
-        onlyDK
+        onlyKeeper
         returns (address mock)
     {
-        uint40 creator = _msgSender();
-
         if (_mockResults[ia] == address(0)) {
             mock = createDoc(2, creator);
         }

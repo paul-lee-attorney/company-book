@@ -26,31 +26,6 @@ interface IBOAKeeper {
         bytes32 sigHash
     ) external;
 
-    // ==== BOS funcs ====
-
-    function setPayInAmount(
-        uint32 ssn,
-        uint64 amount,
-        bytes32 hashLock
-    ) external;
-
-    function requestPaidInCapital(
-        uint32 ssn,
-        string memory hashKey,
-        uint40 caller
-    ) external;
-
-    function decreaseCapital(
-        uint32 ssn,
-        uint64 paid,
-        uint64 par
-    ) external;
-
-    function updatePaidInDeadline(
-        uint32 ssn, 
-        uint32 line
-    ) external;
-
     // ==== Deal & IA ====
 
     function pushToCoffer(

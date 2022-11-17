@@ -11,7 +11,7 @@ import "../common/ruting/BOSSetting.sol";
 import "../common/lib/SNParser.sol";
 import "./IBOSKeeper.sol";
 
-contract BOAKeeper is
+contract BOSKeeper is
     IBOSKeeper,
     BOSSetting
 {

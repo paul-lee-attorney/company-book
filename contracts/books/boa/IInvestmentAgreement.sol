@@ -18,6 +18,8 @@ interface IInvestmentAgreement is ISigPage{
 
     event CreateDeal(bytes32 indexed sn, bytes32 shareNumber);
 
+    event SetTypeOfIA(uint8 t);
+
     event UpdateDeal(
         bytes32 indexed sn,
         uint32 unitPrice,
@@ -54,6 +56,8 @@ interface IInvestmentAgreement is ISigPage{
         bytes32 shareNumber
     ) external returns (bytes32);
 
+    function setTypeOfIA(uint8 t) external;
+
     function updateDeal(
         uint16 seq,
         uint32 unitPrice,
@@ -88,6 +92,7 @@ interface IInvestmentAgreement is ISigPage{
     //  ######################
 
     // ======== InvestmentAgreement ========
+    function typeOfIA() external view returns (uint8);
 
     function isDeal(uint16 seq) external view returns (bool);
 

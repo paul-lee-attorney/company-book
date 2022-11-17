@@ -22,7 +22,7 @@ interface IBookOfIA is IDocumentsRepo {
         external
         returns (address frd);
 
-    function createMockResults(address ia, uint40 caller)
+    function createMockResults(address ia, uint40 creator)
         external
         returns (address mock);
 
@@ -31,8 +31,6 @@ interface IBookOfIA is IDocumentsRepo {
     //##################
 
     // ======== BookOfIA ========
-
-    function typeOfIA(address ia) external view returns (uint8 output);
 
     function frDealsOfIA(address ia) external view returns (address);
 

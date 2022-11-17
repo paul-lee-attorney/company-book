@@ -61,7 +61,10 @@ contract InvestmentAgreement is
         bytes32 hashLock;
     }
 
-    // _deals[0].unitPrice : counterOfDeal;
+    // _deals[0] {
+    //     unitPrice: counterOfDeal;
+    //     state: typeOfIA;
+    // }
 
     // seq => Deal
     mapping(uint256 => Deal) private _deals;
@@ -163,6 +166,11 @@ contract InvestmentAgreement is
         emit CreateDeal(sn, shareNumber);
 
         return sn;
+    }
+
+    function setTypeOfIA(uint8 t) external onlyAttorney {
+        _deals[0].state = t;
+        emit SetTypeOfIA(t);
     }
 
     function updateDeal(
@@ -343,6 +351,10 @@ contract InvestmentAgreement is
     //  #################################
     //  ##       查询接口               ##
     //  ################################
+
+    function typeOfIA() external view returns (uint8) {
+        return _deals[0].state;
+    }
 
     function isDeal(uint16 seq) external view returns (bool) {
         return _dealsList.contains(_deals[seq].sn);

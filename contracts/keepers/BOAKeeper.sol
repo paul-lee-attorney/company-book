@@ -249,7 +249,7 @@ contract BOAKeeper is
             );
         else require(_rom.controllor() == caller, "caller is not controller");
 
-        bytes32 vr = _getSHA().votingRules(_boa.typeOfIA(ia));
+        bytes32 vr = _getSHA().votingRules(IInvestmentAgreement(ia).typeOfIA());
 
         if (vr.ratioHeadOfVR() > 0 || vr.ratioAmountOfVR() > 0) {
             require(_bom.isPassed(uint256(uint160(ia))), "Motion NOT passed");

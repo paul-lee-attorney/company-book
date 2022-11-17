@@ -90,11 +90,9 @@ contract SHAKeeper is
     ) external onlyManager(1) onlyEstablished(ia) withinReviewPeriod(ia) {
         address mock = _boa.mockResultsOfIA(ia);
         if (mock == address(0)) {
-<<<<<<< HEAD
-            mock = _boa.createMockResults(ia);
-=======
+
             mock = _boa.createMockResults(ia, caller);
->>>>>>> f368a85d9c49cbae5a8ee7128a4f5419e41d85e6
+
             IAccessControl(mock).init(
                 caller,
                 address(this),
@@ -105,10 +103,7 @@ contract SHAKeeper is
             IBookSetting(mock).setBOS(address(_bos));
             IBookSetting(mock).setROM(address(_rom));
         }
-<<<<<<< HEAD
-=======
 
->>>>>>> f368a85d9c49cbae5a8ee7128a4f5419e41d85e6
         IBookSetting(mock).setBOH(address(_boh));
 
         _addAlongDeal(dragAlong, ia, mock, sn, shareNumber, paid, par, caller);

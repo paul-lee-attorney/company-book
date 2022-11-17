@@ -88,7 +88,7 @@ contract BookOfMotions is IBookOfMotions, MeetingMinutes, BOASetting {
 
         uint256 motionId = uint256(uint160(ia));
 
-        uint8 motionType = _boa.typeOfIA(ia);
+        uint8 motionType = IInvestmentAgreement(ia).typeOfIA();
 
         bytes32 rule = _getSHA().votingRules(motionType);
 

@@ -90,7 +90,7 @@ contract BOMKeeper is
             "missed votingDeadlineBN"
         );
 
-        bytes32 vr = _getSHA().votingRules(_boa.typeOfIA(ia));
+        bytes32 vr = _getSHA().votingRules(IInvestmentAgreement(ia).typeOfIA());
 
         if (vr.ratioHeadOfVR() > 0 || vr.ratioAmountOfVR() > 0)
             _bom.proposeIA(ia, caller);

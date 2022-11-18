@@ -13,86 +13,55 @@ import "../common/access/IAccessControl.sol";
 import "./IGeneralKeeper.sol";
 import "./IBOAKeeper.sol";
 import "./IBODKeeper.sol";
-import "./ISHAKeeper.sol";
 import "./IBOHKeeper.sol";
 import "./IBOMKeeper.sol";
 import "./IBOOKeeper.sol";
 import "./IBOPKeeper.sol";
 import "./IBOSKeeper.sol";
 import "./IROMKeeper.sol";
+import "./ISHAKeeper.sol";
 
 contract GeneralKeeper is IGeneralKeeper, AccessControl {
+
     IBOAKeeper private _BOAKeeper;
     IBODKeeper private _BODKeeper;
-    ISHAKeeper private _SHAKeeper;
     IBOHKeeper private _BOHKeeper;
     IBOMKeeper private _BOMKeeper;
     IBOOKeeper private _BOOKeeper;
     IBOPKeeper private _BOPKeeper;
     IBOSKeeper private _BOSKeeper;
     IROMKeeper private _ROMKeeper;
+    ISHAKeeper private _SHAKeeper;
 
     // ######################
     // ##   AccessControl  ##
     // ######################
 
-    function setBOAKeeper(address keeper) external onlyDK {
-        _BOAKeeper = IBOAKeeper(keeper);
-        emit SetBOAKeeper(keeper);
+    function setBookeeper(uint8 title, address keeper) external onlyDK {
+        if (title == uint8(TitleOfKeepers.BOAKeeper)) _BOAKeeper = IBOAKeeper(keeper);
+        else if (title == uint8(TitleOfKeepers.BODKeeper)) _BODKeeper = IBODKeeper(keeper);
+        else if (title == uint8(TitleOfKeepers.BOHKeeper)) _BOHKeeper = IBOHKeeper(keeper);
+        else if (title == uint8(TitleOfKeepers.BOMKeeper)) _BOMKeeper = IBOMKeeper(keeper);
+        else if (title == uint8(TitleOfKeepers.BOOKeeper)) _BOOKeeper = IBOOKeeper(keeper);
+        else if (title == uint8(TitleOfKeepers.BOPKeeper)) _BOPKeeper = IBOPKeeper(keeper);
+        else if (title == uint8(TitleOfKeepers.BOSKeeper)) _BOSKeeper = IBOSKeeper(keeper);
+        else if (title == uint8(TitleOfKeepers.ROMKeeper)) _ROMKeeper = IROMKeeper(keeper);
+        else if (title == uint8(TitleOfKeepers.SHAKeeper)) _SHAKeeper = ISHAKeeper(keeper);
+
+        if (title < 9)
+            emit SetBookeeper(title, keeper);
     }
 
-    function setBODKeeper(address keeper) external onlyDK {
-        _BODKeeper = IBODKeeper(keeper);
-        emit SetBODKeeper(keeper);
-    }
-
-    function setBOHKeeper(address keeper) external onlyDK {
-        _BOHKeeper = IBOHKeeper(keeper);
-        emit SetBOHKeeper(keeper);
-    }
-
-    function setBOMKeeper(address keeper) external onlyDK {
-        _BOMKeeper = IBOMKeeper(keeper);
-        emit SetBOMKeeper(keeper);
-    }
-
-    function setBOOKeeper(address keeper) external onlyDK {
-        _BOOKeeper = IBOOKeeper(keeper);
-        emit SetBOOKeeper(keeper);
-    }
-
-    function setBOPKeeper(address keeper) external onlyDK {
-        _BOPKeeper = IBOPKeeper(keeper);
-        emit SetBOPKeeper(keeper);
-    }
-
-    function setBOSKeeper(address keeper) external onlyDK {
-        _BOSKeeper = IBOSKeeper(keeper);
-        emit SetBOSKeeper(keeper);
-    }
-
-    function setROMKeeper(address keeper) external onlyDK {
-        _ROMKeeper = IROMKeeper(keeper);
-        emit SetROMKeeper(keeper);
-    }
-
-    function setSHAKeeper(address keeper) external onlyDK {
-        _SHAKeeper = ISHAKeeper(keeper);
-        emit SetSHAKeeper(keeper);
-    }
-
-    function isKeeper(address caller) external view returns (bool flag) {
-        if (
-            caller == address(_BOAKeeper) ||
-            caller == address(_BODKeeper) ||
-            caller == address(_BOHKeeper) ||
-            caller == address(_SHAKeeper) ||
-            caller == address(_BOMKeeper) ||
-            caller == address(_BOOKeeper) ||
-            caller == address(_BOPKeeper) ||
-            caller == address(_BOSKeeper) ||
-            caller == address(_ROMKeeper)
-        ) flag = true;
+    function isKeeper(uint8 title, address caller) external view returns (bool flag) {
+        if (title == uint8(TitleOfKeepers.BOAKeeper) && caller == address(_BOAKeeper)) flag = true;
+        else if (title == uint8(TitleOfKeepers.BODKeeper) && caller == address(_BODKeeper)) flag = true;
+        else if (title == uint8(TitleOfKeepers.BOHKeeper) && caller == address(_BOHKeeper)) flag = true;
+        else if (title == uint8(TitleOfKeepers.BOMKeeper) && caller == address(_BOMKeeper)) flag = true;
+        else if (title == uint8(TitleOfKeepers.BOOKeeper) && caller == address(_BOOKeeper)) flag = true;
+        else if (title == uint8(TitleOfKeepers.BOPKeeper) && caller == address(_BOPKeeper)) flag = true;
+        else if (title == uint8(TitleOfKeepers.BOSKeeper) && caller == address(_BOSKeeper)) flag = true;
+        else if (title == uint8(TitleOfKeepers.ROMKeeper) && caller == address(_ROMKeeper)) flag = true;
+        else if (title == uint8(TitleOfKeepers.SHAKeeper) && caller == address(_SHAKeeper)) flag = true;
     }
 
     // ###################
@@ -138,8 +107,12 @@ contract GeneralKeeper is IGeneralKeeper, AccessControl {
         _BOAKeeper.closeDeal(ia, sn, hashKey, _msgSender());
     }
 
-    function transferTargetShare(address ia, bytes32 sn) external onlyDK {
-        _BOAKeeper.transferTargetShare(ia, sn);
+    function transferTargetShare(address ia, bytes32 sn) external {
+        _BOAKeeper.transferTargetShare(ia, sn, _msgSender());
+    }
+
+    function issueNewShare(address ia, bytes32 sn) external onlyManager(0) {
+        _BOAKeeper.issueNewShare(ia, sn);
     }
 
     function revokeDeal(
@@ -563,7 +536,7 @@ contract GeneralKeeper is IGeneralKeeper, AccessControl {
 
     function takeGiftShares(address ia, bytes32 sn) external {
         _SHAKeeper.takeGiftShares(ia, sn, _msgSender());
-        _BOAKeeper.transferTargetShare(ia, sn);
+        _BOAKeeper.transferTargetShare(ia, sn, _msgSender());
     }
 
     // ======== First Refusal ========

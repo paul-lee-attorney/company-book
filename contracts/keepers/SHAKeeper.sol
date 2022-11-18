@@ -385,9 +385,28 @@ contract SHAKeeper is
         address ia,
         bytes32 sn,
         uint40 caller
-    ) external onlyManager(1) {
+    ) external onlyDK {
         require(caller == sn.buyerOfDeal(), "caller is not buyer");
-        IInvestmentAgreement(ia).takeGift(sn.sequence());
+
+        uint16 seq = sn.sequence();
+
+        IInvestmentAgreement(ia).takeGift(seq);
+
+        (, uint64 paid, uint64 par, , ) = IInvestmentAgreement(ia).getDeal(seq);
+
+        uint32 unitPrice = IInvestmentAgreement(ia).unitPriceOfDeal(seq);
+
+        uint32 ssn = sn.ssnOfDeal();
+
+        _bos.increaseCleanPar(ssn, paid);
+
+        _bos.transferShare(
+            ssn,
+            paid,
+            par,
+            sn.buyerOfDeal(),
+            unitPrice
+        );
     }
 
     // ======== FirstRefusal ========

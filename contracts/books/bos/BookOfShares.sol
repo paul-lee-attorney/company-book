@@ -71,6 +71,15 @@ contract BookOfShares is IBookOfShares, ROMSetting {
         _;
     }
 
+    modifier keepersAllowed() {
+        require(_gk.isKeeper(uint8(TitleOfKeepers.BOAKeeper), msg.sender) ||
+            _gk.isKeeper(uint8(TitleOfKeepers.BOOKeeper), msg.sender) ||
+            _gk.isKeeper(uint8(TitleOfKeepers.BOPKeeper), msg.sender) ||
+            _gk.isKeeper(uint8(TitleOfKeepers.SHAKeeper), msg.sender), 
+            "BOS.keepersAllowed: not have access right");
+        _;
+    }
+
     //##################
     //##    写接口    ##
     //##################
@@ -260,7 +269,7 @@ contract BookOfShares is IBookOfShares, ROMSetting {
 
     function decreaseCleanPar(uint32 ssn, uint64 paid)
         external
-        onlyKeeper
+        keepersAllowed
         shareExist(ssn)
         notFreezed(ssn)
     {
@@ -277,7 +286,7 @@ contract BookOfShares is IBookOfShares, ROMSetting {
 
     function increaseCleanPar(uint32 ssn, uint64 paid)
         external
-        onlyKeeper
+        keepersAllowed
         shareExist(ssn)
         notFreezed(ssn)
     {

@@ -134,7 +134,7 @@ library RolesRepo {
         return self.managers[title] == acct;
     }
 
-    function isKeeper(
+    function isDirectKeeper(
         Roles storage self,
         address keeper
     ) internal view returns (bool) {

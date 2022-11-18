@@ -57,6 +57,8 @@ interface IAccessControl {
 
     function getManager(uint8 title) external view returns (uint40);
 
+    function getBookeeper() external view returns(address);
+
     function getManagerKey(uint8 title) external view returns (address);
 
     function finalized() external view returns (bool);

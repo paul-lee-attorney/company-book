@@ -13,27 +13,11 @@ interface IGeneralKeeper {
     // ##   Event   ##
     // ###############
 
-    event SetBOAKeeper(address keeper);
-
-    event SetBODKeeper(address keeper);
-
-    event SetSHAKeeper(address keeper);
-
-    event SetBOHKeeper(address keeper);
-
-    event SetBOMKeeper(address keeper);
-
-    event SetBOOKeeper(address keeper);
-
-    event SetBOPKeeper(address keeper);
-
-    event SetBOSKeeper(address keeper);
-
-    event SetROMKeeper(address keeper);
+    event SetBookeeper(uint8 title, address keeper);
 
     // ######################
     // ##   AccessControl  ##
     // ######################
 
-    function isKeeper(address caller) external returns(bool flag);
+    function isKeeper(uint8 title, address caller) external returns(bool flag);
 }

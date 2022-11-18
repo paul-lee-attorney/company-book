@@ -79,7 +79,7 @@ contract SigPage is ISigPage, AccessControl {
         uint16 ssn,
         uint40 caller,
         bytes32 sigHash
-    ) public onlyKeeper {
+    ) public onlyDK {
         _sigPage.signDeal(caller, ssn, sigHash);
         emit SignDeal(caller, ssn, sigHash);
     }

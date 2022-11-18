@@ -141,7 +141,7 @@ contract ShareholdersAgreement is
             address(_gk)
         );
 
-        IAccessControl(body).setManager(1, gc);
+        IAccessControl(body).setManager(owner, 1, gc);
 
         if (
             title == uint8(TermTitle.ANTI_DILUTION) ||
@@ -208,12 +208,14 @@ contract ShareholdersAgreement is
     function finalizeTerms() external onlyManager(1) {
         uint8 cur = _terms[0].next;
 
+        uint40 gc = _msgSender();
+
         while (cur>0) {
-            IAccessControl(_terms[cur].body).lockContents();
-            IAccessControl(_terms[cur].body).setManager(0, 0);
-            IAccessControl(_terms[cur].body).setManager(1, 0);
+            IAccessControl(_terms[cur].body).lockContents(gc);
             cur = _terms[cur].next;
         }
+
+        lockContents(gc);
     }
 
     // ==== Rules ====

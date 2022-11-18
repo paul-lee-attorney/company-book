@@ -14,6 +14,18 @@ import "../lib/RolesRepo.sol";
 contract AccessControl is IAccessControl, RegCenterSetting {
     using RolesRepo for RolesRepo.Roles;
 
+    enum TitleOfKeepers {
+        BOAKeeper, // 0
+        BODKeeper, // 1
+        BOHKeeper, // 2
+        BOMKeeper, // 3
+        BOOKeeper, // 4
+        BOPKeeper, // 5
+        BOSKeeper, // 6
+        ROMKeeper, // 7
+        SHAKeeper  // 8
+    }
+
     enum TitleOfManagers {
         Owner,
         GeneralCounsel
@@ -29,7 +41,7 @@ contract AccessControl is IAccessControl, RegCenterSetting {
 
     modifier onlyDK() {
         require(
-            _roles.isKeeper(msg.sender),
+            _roles.isDirectKeeper(msg.sender),
             "AC.onlyDK: not direct keeper"
         );
         _;
@@ -43,9 +55,9 @@ contract AccessControl is IAccessControl, RegCenterSetting {
         _;
     }
 
-    modifier onlyKeeper() {
+    modifier onlyKeeper(uint8 title) {
         require(
-            _gk.isKeeper(msg.sender),
+            _gk.isKeeper(title, msg.sender),
             "AC.onlyKeeper: not Keeper"
         );
         _;
@@ -59,10 +71,10 @@ contract AccessControl is IAccessControl, RegCenterSetting {
         _;
     }
 
-    modifier attorneyOrKeeper() {
+    modifier attorneyOrKeeper(uint8 title) {
         require(
             _roles.hasRole(ATTORNEYS, _msgSender()) ||
-            _gk.isKeeper(msg.sender),
+            _gk.isKeeper(title, msg.sender),
             "not Attorney or Bookeeper"
         );
         _;
@@ -145,6 +157,10 @@ contract AccessControl is IAccessControl, RegCenterSetting {
 
     function getManager(uint8 title) public view returns (uint40) {
         return _roles.getManager(title);
+    }
+
+    function getBookeeper() public view returns(address) {
+        return _roles.getKeeper();
     }
 
     function getManagerKey(uint8 title) public view returns (address) {

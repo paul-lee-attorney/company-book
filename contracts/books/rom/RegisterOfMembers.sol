@@ -132,7 +132,7 @@ contract RegisterOfMembers is IRegisterOfMembers, BOSSetting {
         );
     }
 
-    function addMemberToGroup(uint40 acct, uint16 group) external onlyKeeper {
+    function addMemberToGroup(uint40 acct, uint16 group) external onlyKeeper(uint8(TitleOfKeepers.BOHKeeper)) {
         require(
             _gm.groupNo(acct) == 0,
             "BOS.addMemberToGroup: remove acct from group first"
@@ -146,7 +146,7 @@ contract RegisterOfMembers is IRegisterOfMembers, BOSSetting {
 
     function removeMemberFromGroup(uint40 acct, uint16 group)
         external
-        onlyKeeper
+        onlyKeeper(uint8(TitleOfKeepers.BOHKeeper))
     {
         require(
             group == _gm.groupNo(acct),

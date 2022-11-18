@@ -42,7 +42,7 @@ contract BookOfIA is
 
     function createFRDeals(address ia, uint40 creator)
         external
-        onlyKeeper
+        onlyKeeper(uint8(TitleOfKeepers.SHAKeeper))
         returns (address frd)
     {
         if (_frDeals[ia] == address(0)) {
@@ -52,7 +52,7 @@ contract BookOfIA is
 
     function createMockResults(address ia, uint40 creator)
         external
-        onlyKeeper
+        onlyKeeper(uint8(TitleOfKeepers.SHAKeeper))
         returns (address mock)
     {
         if (_mockResults[ia] == address(0)) {

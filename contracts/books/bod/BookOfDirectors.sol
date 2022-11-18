@@ -61,7 +61,7 @@ contract BookOfDirectors is IBookOfDirectors, MeetingMinutes {
 
     // ======== Directors ========
 
-    function setMaxQtyOfDirectors(uint8 max) external onlyKeeper {
+    function setMaxQtyOfDirectors(uint8 max) external onlyKeeper(uint8(TitleOfKeepers.BOHKeeper)) {
         _directors[0].title = max;
         emit SetMaxQtyOfDirectors(max);
     }

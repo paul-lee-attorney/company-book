@@ -44,6 +44,13 @@ contract BookOfOptions is IBookOfOptions, BOSSetting {
 
     OptionsRepo.Repo private _options;
 
+    modifier BOM_Or_BOO_Keeper() {
+        require(_gk.isKeeper(uint8(TitleOfKeepers.BOMKeeper), msg.sender) ||
+            _gk.isKeeper(uint8(TitleOfKeepers.BOOKeeper), msg.sender), 
+            "BOO.createOption: caller not have access right");
+        _;
+    } 
+
     // ################
     // ##   写接口   ##
     // ################
@@ -54,12 +61,12 @@ contract BookOfOptions is IBookOfOptions, BOSSetting {
         uint40[] memory obligors,
         uint64 paid,
         uint64 par
-    ) external onlyKeeper returns (bytes32 _sn) {
+    ) external BOM_Or_BOO_Keeper returns (bytes32 _sn) {
         _sn = _options.createOption(sn, rightholder, obligors, paid, par);
         emit CreateOpt(_sn, rightholder, paid, par);
     }
 
-    function registerOption(address opts) external onlyKeeper {
+    function registerOption(address opts) external onlyKeeper(uint8(TitleOfKeepers.BOHKeeper)) {
         bytes32[] memory list = IOptions(opts).snList();
         uint256 len = list.length;
 
@@ -104,7 +111,7 @@ contract BookOfOptions is IBookOfOptions, BOSSetting {
         emit UpdateOracle(sn, d1, d2);
     }
 
-    function execOption(bytes32 sn) external onlyKeeper {
+    function execOption(bytes32 sn) external BOM_Or_BOO_Keeper {
         _options.execOption(sn, _rc.blocksPerHour());
         emit ExecOpt(sn);
     }
@@ -114,13 +121,13 @@ contract BookOfOptions is IBookOfOptions, BOSSetting {
         bytes32 shareNumber,
         uint64 paid,
         uint64 par
-    ) external onlyKeeper {
+    ) external BOM_Or_BOO_Keeper {
         if (_options.addFuture(sn, shareNumber, paid, par, _bos)) {
             emit AddFuture(sn, shareNumber, paid, par);
         }
     }
 
-    function removeFuture(bytes32 sn, bytes32 ft) external onlyKeeper {
+    function removeFuture(bytes32 sn, bytes32 ft) external onlyDK {
         if (_options.removeFuture(sn, ft)) {
             emit RemoveFuture(sn, ft);
         }

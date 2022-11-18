@@ -59,6 +59,7 @@ contract BOAKeeper is
 
     modifier onlyOwnerOf(address body, uint40 caller) {
         require(
+            caller != 0 &&
             IAccessControl(body).getManager(0) == caller,
             "NOT Owner of Doc"
         );
@@ -68,48 +69,6 @@ contract BOAKeeper is
     modifier onlyPartyOf(address ia, uint40 caller) {
         require(ISigPage(ia).isParty(caller), "NOT Owner of Doc");
         _;
-    }
-
-    // #############
-    // ##   BOS   ##
-    // #############
-
-    // ======== PayInCapital ========
-
-    function setPayInAmount(
-        uint32 ssn,
-        uint64 amount,
-        bytes32 hashLock
-    ) external onlyDK {
-        _bos.setPayInAmount(ssn, amount, hashLock);
-    }
-
-    function requestPaidInCapital(
-        uint32 ssn,
-        string memory hashKey,
-        uint40 caller
-    ) external onlyDK {
-        (bytes32 shareNumber, , , , ) = _bos.getShare(ssn);
-        require(
-            caller == shareNumber.shareholder(),
-            "caller is not shareholder"
-        );
-        _bos.requestPaidInCapital(ssn, hashKey);
-    }
-
-    function decreaseCapital(
-        uint32 ssn,
-        uint64 paid,
-        uint64 par
-    ) external onlyDK {
-        _bos.decreaseCapital(ssn, paid, par);
-    }
-
-    function updatePaidInDeadline(uint32 ssn, uint32 line)
-        external
-        onlyDK
-    {
-        _bos.updatePaidInDeadline(ssn, line);
     }
 
     // #############################
@@ -126,7 +85,7 @@ contract BOAKeeper is
         _boa.setTemplate(temp, typeOfDoc);
     }
 
-    function createIA(uint8 typOfIA, uint40 caller) external onlyManager(1) {
+    function createIA(uint8 typOfIA, uint40 caller) external onlyDK {
         require(_rom.isMember(caller), "caller not MEMBER");
 
         address ia = _boa.createDoc(typOfIA, caller);
@@ -140,36 +99,14 @@ contract BOAKeeper is
 
         IBookSetting(ia).setBOS(address(_bos));
         IBookSetting(ia).setROM(address(_rom));
-
-        // copyRoleTo(KEEPERS, ia);
     }
 
     function removeIA(address ia, uint40 caller)
         external
-        onlyManager(1)
+        onlyDK
         onlyOwnerOf(ia, caller)
-        notEstablished(ia)
     {
-        _releaseCleanParOfIA(ia);
         _boa.removeDoc(ia);
-    }
-
-    function _releaseCleanParOfIA(address ia) private {
-        bytes32[] memory snList = IInvestmentAgreement(ia).dealsList();
-        uint256 len = snList.length;
-
-        while (len > 0) {
-            bytes32 sn = snList[len - 1];
-            if (sn.ssnOfDeal() > 0) _releaseCleanParOfDeal(ia, sn);
-            len--;
-        }
-    }
-
-    function _releaseCleanParOfDeal(address ia, bytes32 sn) private {
-        (, , uint64 par, , ) = IInvestmentAgreement(ia).getDeal(sn.sequence());
-
-        if (IInvestmentAgreement(ia).releaseDealSubject(sn.sequence()))
-            _bos.increaseCleanPar(sn.ssnOfDeal(), par);
     }
 
     // ======== Circulate IA ========
@@ -195,7 +132,7 @@ contract BOAKeeper is
         address ia,
         uint40 caller,
         bytes32 sigHash
-    ) external onlyManager(1) onlyPartyOf(ia, caller) {
+    ) external onlyDK onlyPartyOf(ia, caller) {
         require(
             _boa.currentState(ia) == uint8(DocumentsRepo.BODStates.Circulated),
             "IA not in Circulated State"
@@ -211,7 +148,7 @@ contract BOAKeeper is
         }
     }
 
-    function _lockDealsOfParty(address ia, uint40 caller) private onlyKeeper {
+    function _lockDealsOfParty(address ia, uint40 caller) private {
         bytes32[] memory snList = IInvestmentAgreement(ia).dealsList();
         uint256 len = snList.length;
         while (len > 0) {
@@ -248,7 +185,7 @@ contract BOAKeeper is
         bytes32 hashLock,
         uint32 closingDate,
         uint40 caller
-    ) external onlyManager(1) {
+    ) external onlyDK {
         require(
             _boa.currentState(ia) == uint8(DocumentsRepo.BODStates.Voted),
             "wrong state of BOD"
@@ -314,7 +251,13 @@ contract BOAKeeper is
         //验证hashKey, 执行Deal
         IInvestmentAgreement(ia).closeDeal(sn.sequence(), hashKey);
 
-        transferTargetShare(ia, sn);
+        bytes32 shareNumber = IInvestmentAgreement(ia).shareNumberOfDeal(
+            sn.sequence()
+        );
+
+        if (shareNumber > bytes32(0))
+            _shareTransfer(ia, sn, shareNumber);
+        else issueNewShare(ia, sn);
 
         _checkCompletionOfIA(ia);
     }
@@ -334,46 +277,63 @@ contract BOAKeeper is
         if (len == 0) _boa.pushToNextState(ia);
     }
 
-    function transferTargetShare(address ia, bytes32 sn) public onlyDK {
+    function _shareTransfer(
+        address ia,
+        bytes32 sn,
+        bytes32 shareNumber
+    ) private {
+
+        uint16 seq = sn.sequence();
+
+        (, uint64 paid, uint64 par, , ) = IInvestmentAgreement(ia).getDeal(seq);
+
+        uint32 unitPrice = IInvestmentAgreement(ia).unitPriceOfDeal(seq);
+        
+        _bos.increaseCleanPar(sn.ssnOfDeal(), paid);
+        _bos.transferShare(
+            shareNumber.ssn(),
+            paid,
+            par,
+            sn.buyerOfDeal(),
+            unitPrice
+        );
+    }
+
+    function issueNewShare(address ia, bytes32 sn) public onlyDK {
+
+        uint16 seq = sn.sequence();
+
+        (, uint64 paid, uint64 par, , ) = IInvestmentAgreement(ia).getDeal(seq);
+
+        uint32 unitPrice = IInvestmentAgreement(ia).unitPriceOfDeal(seq);
+
+        bytes32 shareNumber = _bos.createShareNumber(
+            sn.classOfDeal(),
+            _bos.counterOfShares() + 1,
+            uint32(block.timestamp),
+            unitPrice,
+            sn.buyerOfDeal(),
+            0
+        );
+
+        _bos.issueShare(
+            shareNumber,
+            paid,
+            par,
+            uint32(block.timestamp) //paidInDeadline
+        );
+    }
+
+    function transferTargetShare(address ia, bytes32 sn, uint40 caller) public onlyDK {
+
         bytes32 shareNumber = IInvestmentAgreement(ia).shareNumberOfDeal(
             sn.sequence()
         );
 
-        (, uint64 paid, uint64 par, , ) = IInvestmentAgreement(ia).getDeal(
-            sn.sequence()
-        );
+        require(caller == shareNumber.shareholder(), 
+            "BOAKeeper.transferTargetShare: caller not shareholder");
 
-        uint32 unitPrice = IInvestmentAgreement(ia).unitPriceOfDeal(
-            sn.sequence()
-        );
-
-        //释放Share的质押标记(若需)，执行交易
-        if (shareNumber > bytes32(0)) {
-            _bos.increaseCleanPar(sn.ssnOfDeal(), paid);
-            _bos.transferShare(
-                shareNumber.ssn(),
-                paid,
-                par,
-                sn.buyerOfDeal(),
-                unitPrice
-            );
-        } else {
-            shareNumber = _bos.createShareNumber(
-                sn.classOfDeal(),
-                _bos.counterOfShares() + 1,
-                uint32(block.timestamp),
-                unitPrice,
-                sn.buyerOfDeal(),
-                0
-            );
-
-            _bos.issueShare(
-                shareNumber,
-                paid,
-                par,
-                uint32(block.timestamp) //paidInDeadline
-            );
-        }
+        _shareTransfer(ia, sn, shareNumber);
     }
 
     function revokeDeal(
@@ -381,28 +341,44 @@ contract BOAKeeper is
         bytes32 sn,
         uint40 caller,
         string memory hashKey
-    ) external onlyManager(1) {
+    ) external onlyDK {
         require(_boa.isRegistered(ia), "IA NOT registered");
         require(
             _boa.currentState(ia) == uint8(DocumentsRepo.BODStates.Voted),
             "wrong State"
         );
 
+        uint16 seq = sn.sequence();
+
         require(
             caller ==
                 IInvestmentAgreement(ia)
-                    .shareNumberOfDeal(sn.sequence())
+                    .shareNumberOfDeal(seq)
                     .shareholder(),
             "NOT seller"
         );
 
         IInvestmentAgreement(ia).revokeDeal(
-            sn.sequence(),
+            seq,
             hashKey
         );
 
-        _releaseCleanParOfDeal(ia, sn);
+        (, , uint64 par, , ) = IInvestmentAgreement(ia).getDeal(seq);
+
+        if (IInvestmentAgreement(ia).releaseDealSubject(seq))
+            _bos.increaseCleanPar(sn.ssnOfDeal(), par);
+
+        // _releaseCleanParOfDeal(ia, sn);
 
         _checkCompletionOfIA(ia);
     }
+
+    // function _releaseCleanParOfDeal(address ia, bytes32 sn) private {
+    //     (, , uint64 par, , ) = IInvestmentAgreement(ia).getDeal(sn.sequence());
+
+    //     if (IInvestmentAgreement(ia).releaseDealSubject(sn.sequence()))
+    //         _bos.increaseCleanPar(sn.ssnOfDeal(), par);
+    // }
+
+
 }

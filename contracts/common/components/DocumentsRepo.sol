@@ -119,7 +119,7 @@ contract DocumentsRepo is IDocumentsRepo, CloneFactory, AccessControl {
 
     function createDoc(uint8 docType, uint40 creator)
         public
-        onlyKeeper
+        onlyDK
         tempReady(docType)
         returns (address body)
     {
@@ -181,9 +181,15 @@ contract DocumentsRepo is IDocumentsRepo, CloneFactory, AccessControl {
 
     function pushToNextState(address body)
         public
-        onlyKeeper
         onlyRegistered(body)
     {
+        require(
+            _gk.isKeeper(uint8(TitleOfKeepers.BOAKeeper), msg.sender) ||
+            _gk.isKeeper(uint8(TitleOfKeepers.BOHKeeper), msg.sender) ||
+            _gk.isKeeper(uint8(TitleOfKeepers.BOMKeeper), msg.sender),
+            "DR.pushToNextState: not have access right"
+        );
+
         Doc storage doc = _docs[body];
         doc.state++;
         emit UpdateStateOfDoc(doc.sn, doc.state);

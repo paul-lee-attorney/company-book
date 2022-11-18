@@ -49,7 +49,7 @@ contract BOHKeeper is
     }
 
     modifier onlyOwnerOf(address body, uint40 caller) {
-        require(IAccessControl(body).getManager(0) == caller, "not Owner");
+        require(caller != 0 && IAccessControl(body).getManager(0) == caller, "not Owner");
         _;
     }
 
@@ -78,7 +78,7 @@ contract BOHKeeper is
         _boh.setTermTemplate(title, body);
     }
 
-    function createSHA(uint8 docType, uint40 caller) external onlyKeeper {
+    function createSHA(uint8 docType, uint40 caller) external onlyDK {
         require(_rom.isMember(caller), "not MEMBER");
         address sha = _boh.createDoc(docType, caller);
 
@@ -109,7 +109,7 @@ contract BOHKeeper is
 
     function circulateSHA(address sha, uint40 caller)
         external
-        onlyKeeper
+        onlyDK
         onlyOwnerOf(sha, caller)
     {
         address[] memory bodies = IShareholdersAgreement(sha).bodies();
@@ -123,8 +123,6 @@ contract BOHKeeper is
             );
             len--;
         }
-
-        IAccessControl(sha).lockContents();
 
         IAccessControl(sha).setManager(0, 0);
 

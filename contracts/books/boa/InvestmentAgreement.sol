@@ -218,13 +218,16 @@ contract InvestmentAgreement is
 
     function lockDealSubject(uint16 seq)
         external
-        onlyKeeper
         dealExist(seq)
         returns (bool flag)
     {
+        require(_gk.isKeeper(uint8(TitleOfKeepers.BOAKeeper), msg.sender) ||
+            _gk.isKeeper(uint8(TitleOfKeepers.SHAKeeper), msg.sender), 
+            "IA.lockDealSubject: caller has no access right");
+
         Deal storage deal = _deals[seq];
         if (deal.state == uint8(StateOfDeal.Drafting)) {
-            deal.state++;
+            deal.state = uint8(StateOfDeal.Locked);
             flag = true;
             emit LockDealSubject(deal.sn);
         }
@@ -232,7 +235,7 @@ contract InvestmentAgreement is
 
     function releaseDealSubject(uint16 seq)
         external
-        onlyKeeper
+        onlyDK
         dealExist(seq)
         returns (bool flag)
     {
@@ -248,7 +251,7 @@ contract InvestmentAgreement is
         uint16 seq,
         bytes32 hashLock,
         uint32 closingDate
-    ) external onlyKeeper dealExist(seq) {
+    ) external onlyDK dealExist(seq) {
         Deal storage deal = _deals[seq];
 
         require(
@@ -263,7 +266,7 @@ contract InvestmentAgreement is
 
         require(deal.state == uint8(StateOfDeal.Locked), "Deal state wrong");
 
-        deal.state++;
+        deal.state = uint8(StateOfDeal.Cleared);
 
         deal.hashLock = hashLock;
 
@@ -275,7 +278,7 @@ contract InvestmentAgreement is
     function closeDeal(uint16 seq, string memory hashKey)
         external
         onlyCleared(seq)
-        onlyKeeper
+        onlyDK
     {
         Deal storage deal = _deals[seq];
 
@@ -289,7 +292,7 @@ contract InvestmentAgreement is
             "MISSED closing date"
         );
 
-        deal.state++;
+        deal.state = uint8(StateOfDeal.Closed);
 
         emit CloseDeal(deal.sn, hashKey);
     }
@@ -297,7 +300,7 @@ contract InvestmentAgreement is
     function revokeDeal(uint16 seq, string memory hashKey)
         external
         onlyCleared(seq)
-        onlyKeeper
+        onlyDK
     {
         Deal storage deal = _deals[seq];
 
@@ -321,12 +324,12 @@ contract InvestmentAgreement is
             "hashKey NOT correct"
         );
 
-        deal.state += 2;
+        deal.state = uint8(StateOfDeal.Terminated);
 
         emit RevokeDeal(deal.sn, hashKey);
     }
 
-    function takeGift(uint16 seq) external onlyKeeper {
+    function takeGift(uint16 seq) external onlyKeeper(uint8(TitleOfKeepers.SHAKeeper)) {
         Deal storage deal = _deals[seq];
 
         require(
@@ -343,7 +346,7 @@ contract InvestmentAgreement is
 
         require(deal.state == uint8(StateOfDeal.Locked), "wrong state");
 
-        deal.state += 2;
+        deal.state = uint8(StateOfDeal.Closed);
 
         emit CloseDeal(deal.sn, "0");
     }

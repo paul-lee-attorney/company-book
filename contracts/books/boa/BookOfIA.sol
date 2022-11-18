@@ -15,12 +15,12 @@ import "../../common/components/DocumentsRepo.sol";
 
 import "../../common/lib/SNParser.sol";
 
-import "../../common/ruting/SHASetting.sol";
+import "../../common/ruting/BOHSetting.sol";
 import "../../common/ruting/IBookSetting.sol";
 
 contract BookOfIA is
     IBookOfIA,
-    SHASetting,
+    BOHSetting,
     DocumentsRepo
 {
     using SNParser for bytes32;

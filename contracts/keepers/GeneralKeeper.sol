@@ -68,8 +68,8 @@ contract GeneralKeeper is IGeneralKeeper, AccessControl {
     // ##   BOAKeeper   ##
     // ###################
 
-    function setTempOfIA(address temp, uint8 typeOfDoc) external {
-        _BOAKeeper.setTempOfIA(temp, typeOfDoc, _msgSender());
+    function setTempOfIA(address temp, uint8 typeOfDoc) external onlyDK {
+        _BOAKeeper.setTempOfIA(temp, typeOfDoc);
     }
 
     function createIA(uint8 typeOfIA) external {
@@ -111,7 +111,7 @@ contract GeneralKeeper is IGeneralKeeper, AccessControl {
         _BOAKeeper.transferTargetShare(ia, sn, _msgSender());
     }
 
-    function issueNewShare(address ia, bytes32 sn) external onlyManager(0) {
+    function issueNewShare(address ia, bytes32 sn) external onlyDK {
         _BOAKeeper.issueNewShare(ia, sn);
     }
 
@@ -202,12 +202,12 @@ contract GeneralKeeper is IGeneralKeeper, AccessControl {
     // ##  BOHKeeper   ##
     // ##################
 
-    function setTempOfSHA(address temp, uint8 typeOfDoc) external {
-        _BOHKeeper.setTempOfSHA(temp, typeOfDoc, _msgSender());
+    function setTempOfSHA(address temp, uint8 typeOfDoc) external onlyDK {
+        _BOHKeeper.setTempOfSHA(temp, typeOfDoc);
     }
 
-    function setTermTemplate(uint8 title, address addr) external {
-        _BOHKeeper.setTermTemplate(title, addr, _msgSender());
+    function setTermTemplate(uint8 title, address addr) external onlyDK {
+        _BOHKeeper.setTermTemplate(title, addr);
     }
 
     function createSHA(uint8 docType) external {
@@ -330,9 +330,10 @@ contract GeneralKeeper is IGeneralKeeper, AccessControl {
     }
 
     function updateOracle(bytes32 sn, uint32 d1, uint32 d2) 
-        external 
+        external
+        onlyDK
     {
-        _BOOKeeper.updateOracle(sn, d1, d2, _msgSender());
+        _BOOKeeper.updateOracle(sn, d1, d2);
     }
 
     function execOption(bytes32 sn) external {
@@ -536,7 +537,6 @@ contract GeneralKeeper is IGeneralKeeper, AccessControl {
 
     function takeGiftShares(address ia, bytes32 sn) external {
         _SHAKeeper.takeGiftShares(ia, sn, _msgSender());
-        _BOAKeeper.transferTargetShare(ia, sn, _msgSender());
     }
 
     // ======== First Refusal ========

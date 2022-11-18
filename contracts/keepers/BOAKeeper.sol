@@ -19,7 +19,7 @@ import "../common/ruting/IBookSetting.sol";
 import "../common/ruting/BOASetting.sol";
 import "../common/ruting/BOMSetting.sol";
 import "../common/ruting/BOSSetting.sol";
-import "../common/ruting/SHASetting.sol";
+import "../common/ruting/BOHSetting.sol";
 import "../common/ruting/ROMSetting.sol";
 
 import "../common/lib/SNParser.sol";
@@ -29,7 +29,7 @@ import "./IBOAKeeper.sol";
 contract BOAKeeper is
     IBOAKeeper,
     BOASetting,
-    SHASetting,
+    BOHSetting,
     BOMSetting,
     BOSSetting,
     ROMSetting
@@ -75,13 +75,10 @@ contract BOAKeeper is
     // ##   InvestmentAgreement   ##
     // #############################
 
-    function setTempOfIA(address temp, uint8 typeOfDoc, uint40 caller)
+    function setTempOfIA(address temp, uint8 typeOfDoc)
         external
         onlyDK
     {
-        require(caller == getManager(1), 
-            "BOAKeeper.setTempOfIA: caller is not GeneralCounsel");
-
         _boa.setTemplate(temp, typeOfDoc);
     }
 
@@ -143,7 +140,6 @@ contract BOAKeeper is
         ISigPage(ia).signDoc(caller, sigHash);
 
         if (ISigPage(ia).established()) {
-            // _boa.calculateMockResult(ia);
             _boa.pushToNextState(ia);
         }
     }
@@ -191,11 +187,15 @@ contract BOAKeeper is
             "wrong state of BOD"
         );
 
-        if (sn.ssnOfDeal() > 0)
+        uint16 seq = sn.sequence();
+
+        bool isST = sn.ssnOfDeal() > 0;
+
+        if (isST)
             require(
                 caller ==
                     IInvestmentAgreement(ia)
-                        .shareNumberOfDeal(sn.sequence())
+                        .shareNumberOfDeal(seq)
                         .shareholder(),
                 "NOT seller"
             );
@@ -203,15 +203,15 @@ contract BOAKeeper is
 
         bytes32 vr = _getSHA().votingRules(IInvestmentAgreement(ia).typeOfIA());
 
-        if (vr.ratioHeadOfVR() > 0 || vr.ratioAmountOfVR() > 0) {
+        if (vr.ratioAmountOfVR() > 0 || vr.ratioHeadOfVR() > 0) {
             require(_bom.isPassed(uint256(uint160(ia))), "Motion NOT passed");
 
-            if (sn.ssnOfDeal() > 0) _checkSHA(_termsForShareTransfer, ia, sn);
+            if (isST) _checkSHA(_termsForShareTransfer, ia, sn);
             else _checkSHA(_termsForCapitalIncrease, ia, sn);
         }
 
         IInvestmentAgreement(ia).clearDealCP(
-            sn.sequence(),
+            seq,
             hashLock,
             closingDate
         );
@@ -248,12 +248,12 @@ contract BOAKeeper is
         //交易发起人为买方;
         require(sn.buyerOfDeal() == caller, "caller is NOT buyer");
 
-        //验证hashKey, 执行Deal
-        IInvestmentAgreement(ia).closeDeal(sn.sequence(), hashKey);
+        uint16 seq = sn.sequence();
 
-        bytes32 shareNumber = IInvestmentAgreement(ia).shareNumberOfDeal(
-            sn.sequence()
-        );
+        //验证hashKey, 执行Deal
+        IInvestmentAgreement(ia).closeDeal(seq, hashKey);
+
+        bytes32 shareNumber = IInvestmentAgreement(ia).shareNumberOfDeal(seq);
 
         if (shareNumber > bytes32(0))
             _shareTransfer(ia, sn, shareNumber);

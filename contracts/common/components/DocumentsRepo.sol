@@ -134,7 +134,7 @@ contract DocumentsRepo is IDocumentsRepo, CloneFactory, AccessControl {
         Doc storage doc = _docs[body];
 
         doc.sn = sn;
-        doc.state++;
+        doc.state = uint8(BODStates.Created);
 
         _docsList.add(sn);
 
@@ -174,7 +174,7 @@ contract DocumentsRepo is IDocumentsRepo, CloneFactory, AccessControl {
             24 *
             _rc.blocksPerHour();
 
-        doc.state++;
+        doc.state = uint8(BODStates.Circulated);
 
         emit UpdateStateOfDoc(doc.sn, doc.state);
     }

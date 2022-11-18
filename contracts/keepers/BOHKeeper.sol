@@ -14,12 +14,11 @@ import "../books/boh/terms/IGroupsUpdate.sol";
 import "../common/components/ISigPage.sol";
 
 import "../common/ruting/BOASetting.sol";
-import "../common/ruting/ROMSetting.sol";
-// import "../common/ruting/BOMSetting.sol";
+import "../common/ruting/BODSetting.sol";
 import "../common/ruting/BOOSetting.sol";
 import "../common/ruting/BOSSetting.sol";
-import "../common/ruting/BODSetting.sol";
-import "../common/ruting/SHASetting.sol";
+import "../common/ruting/ROMSetting.sol";
+import "../common/ruting/BOHSetting.sol";
 import "../common/ruting/IBookSetting.sol";
 
 import "../common/access/IAccessControl.sol";
@@ -32,10 +31,10 @@ contract BOHKeeper is
     IBOHKeeper,
     BOASetting,
     BODSetting,
-    SHASetting,
     BOOSetting,
     BOSSetting,
-    ROMSetting
+    ROMSetting,
+    BOHSetting
 {
     using SNParser for bytes32;
 
@@ -62,19 +61,11 @@ contract BOHKeeper is
     // ##   SHA   ##
     // #############
 
-    function setTempOfSHA(address temp, uint8 typeOfDoc, uint40 caller) external onlyDK {
-        require(caller == getManager(1), 
-            "caller is not General Counsel");
+    function setTempOfSHA(address temp, uint8 typeOfDoc) external onlyDK {
         _boh.setTemplate(temp, typeOfDoc);
     }
 
-    function setTermTemplate(
-        uint8 title,
-        address body,
-        uint40 caller
-    ) external onlyManager(1) {
-        require(caller == getManager(1),
-            "BOHKeeper.setTermTemplate: caller is not General Counsel");
+    function setTermTemplate(uint8 title, address body) external onlyDK {
         _boh.setTermTemplate(title, body);
     }
 
@@ -92,15 +83,12 @@ contract BOHKeeper is
         IBookSetting(sha).setBOA(address(_boa));
         IBookSetting(sha).setBOH(address(_boh));
         IBookSetting(sha).setBOS(address(_bos));
-        // IBookSetting(sha).setBOM(address(_bom));
         IBookSetting(sha).setROM(address(_rom));
-
-        // copyRoleTo(KEEPERS, sha);
     }
 
     function removeSHA(address sha, uint40 caller)
         external
-        onlyManager(1)
+        onlyDK
         onlyOwnerOf(sha, caller)
         notEstablished(sha)
     {
@@ -112,17 +100,7 @@ contract BOHKeeper is
         onlyDK
         onlyOwnerOf(sha, caller)
     {
-        address[] memory bodies = IShareholdersAgreement(sha).bodies();
-
-        uint256 len = bodies.length;
-
-        while (len > 0) {
-            require(
-                IAccessControl(bodies[len - 1]).finalized(),
-                "BOHKeeper.circulateSHA: Term not finalized"
-            );
-            len--;
-        }
+        IShareholdersAgreement(sha).finalizeTerms();
 
         IAccessControl(sha).setManager(0, 0);
 
@@ -135,7 +113,7 @@ contract BOHKeeper is
         address sha,
         uint40 caller,
         bytes32 sigHash
-    ) external onlyManager(1) onlyPartyOf(sha, caller) {
+    ) external onlyDK onlyPartyOf(sha, caller) {
         require(
             _boh.currentState(sha) == uint8(DocumentsRepo.BODStates.Circulated),
             "SHA not in Circulated State"
@@ -148,7 +126,7 @@ contract BOHKeeper is
 
     function effectiveSHA(address sha, uint40 caller)
         external
-        onlyManager(1)
+        onlyDK
         onlyPartyOf(sha, caller)
     {
         require(

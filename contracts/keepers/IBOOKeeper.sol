@@ -28,7 +28,7 @@ interface IBOOKeeper {
         uint40 caller
     ) external;
 
-    function updateOracle(bytes32 sn, uint32 d1, uint32 d2, uint40 caller) external;
+    function updateOracle(bytes32 sn, uint32 d1, uint32 d2) external;
 
     function execOption(bytes32 sn, uint40 caller) external;
 

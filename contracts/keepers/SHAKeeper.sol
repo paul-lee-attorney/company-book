@@ -26,7 +26,7 @@ import "../common/ruting/IBookSetting.sol";
 import "../common/ruting/BOASetting.sol";
 import "../common/ruting/BOSSetting.sol";
 import "../common/ruting/ROMSetting.sol";
-import "../common/ruting/SHASetting.sol";
+import "../common/ruting/BOHSetting.sol";
 
 import "../common/lib/SNParser.sol";
 import "../common/lib/SNFactory.sol";
@@ -38,7 +38,7 @@ contract SHAKeeper is
     BOASetting,
     BOSSetting,
     ROMSetting,
-    SHASetting
+    BOHSetting
 {
     using SNParser for bytes32;
     using SNFactory for bytes;
@@ -87,7 +87,7 @@ contract SHAKeeper is
         uint64 par,
         uint40 caller,
         bytes32 sigHash
-    ) external onlyManager(1) onlyEstablished(ia) withinReviewPeriod(ia) {
+    ) external onlyDK onlyEstablished(ia) withinReviewPeriod(ia) {
         address mock = _boa.mockResultsOfIA(ia);
         if (mock == address(0)) {
 
@@ -237,7 +237,7 @@ contract SHAKeeper is
         bytes32 sn,
         uint40 caller,
         bytes32 sigHash
-    ) external onlyManager(1) onlyEstablished(ia) withinReviewPeriod(ia) {
+    ) external onlyDK onlyEstablished(ia) withinReviewPeriod(ia) {
         require(caller == sn.buyerOfDeal(), "caller NOT buyer");
 
         address mock = _boa.mockResultsOfIA(ia);
@@ -265,7 +265,7 @@ contract SHAKeeper is
         bytes32 shareNumber,
         uint40 caller,
         bytes32 sigHash
-    ) external onlyManager(1) onlyEstablished(ia) withinReviewPeriod(ia) {
+    ) external onlyDK onlyEstablished(ia) withinReviewPeriod(ia) {
         require(
             caller == shareNumber.shareholder(),
             "caller is not shareholder"
@@ -416,7 +416,7 @@ contract SHAKeeper is
         bytes32 snOfOD,
         uint40 caller,
         bytes32 sigHash
-    ) external onlyManager(1) onlyEstablished(ia) withinReviewPeriod(ia) {
+    ) external onlyDK onlyEstablished(ia) withinReviewPeriod(ia) {
         require(!ISigPage(ia).isInitSigner(caller), "caller is an init signer");
 
         address term = _getSHA().getTerm(
@@ -508,7 +508,7 @@ contract SHAKeeper is
         uint16 ssnOfFR,
         uint40 caller,
         bytes32 sigHash
-    ) external onlyManager(1) onlyEstablished(ia) afterReviewPeriod(ia) {
+    ) external onlyDK onlyEstablished(ia) afterReviewPeriod(ia) {
         uint16 ssnOfOD = snOfOD.sequence();
 
         if (

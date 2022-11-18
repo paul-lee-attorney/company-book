@@ -81,7 +81,7 @@ contract AccessControl is IAccessControl, RegCenterSetting {
     }
 
     modifier onlyPending() {
-        require(_roles.state < 2, "AC.onlyPending: Doc is finalized");
+        require(_roles.state == 1, "AC.onlyPending: Doc is finalized");
         _;
     }
 

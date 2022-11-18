@@ -12,7 +12,7 @@ import "../books/bod/BookOfDirectors.sol";
 import "../common/ruting/BODSetting.sol";
 import "../common/ruting/BOMSetting.sol";
 import "../common/ruting/BOSSetting.sol";
-import "../common/ruting/SHASetting.sol";
+import "../common/ruting/BOHSetting.sol";
 
 import "../common/lib/MotionsRepo.sol";
 
@@ -21,7 +21,7 @@ import "./IBODKeeper.sol";
 contract BODKeeper is
     IBODKeeper,
     BODSetting,
-    SHASetting,
+    BOHSetting,
     BOMSetting,
     BOSSetting
 {
@@ -30,7 +30,7 @@ contract BODKeeper is
         uint40 candidate,
         uint8 title,
         uint40 appointer
-    ) external onlyManager(1) {
+    ) external onlyDK {
         require(
             _getSHA().boardSeatsOf(appointer) >
                 _bod.appointmentCounter(appointer),
@@ -65,7 +65,7 @@ contract BODKeeper is
 
     function takePosition(uint40 candidate, uint256 motionId)
         external
-        onlyManager(1)
+        onlyDK
     {
         require(_bom.isPassed(motionId), "BODKeeper.takePosition: candidate not be approved");
 
@@ -79,15 +79,9 @@ contract BODKeeper is
         _bod.takePosition(candidate, head.submitter);
     }
 
-    function quitPosition(uint40 director) external onlyManager(1) {
-        require(_bod.isDirector(director), "BODKeeper.quitPosition: appointer is not a member");
-
-        _bod.removeDirector(director);
-    }
-
     function removeDirector(uint40 director, uint40 appointer)
         external
-        onlyManager(1)
+        onlyDK
     {
         require(_bod.isDirector(director), "BODKeeper.removeDirector: appointer is not a member");
         require(
@@ -98,13 +92,19 @@ contract BODKeeper is
         _bod.removeDirector(director);
     }
 
+    function quitPosition(uint40 director) external onlyDK {
+        require(_bod.isDirector(director), "BODKeeper.quitPosition: appointer is not a member");
+
+        _bod.removeDirector(director);
+    }
+
     // ==== resolution ====
 
     function entrustDelegate(
         uint40 caller,
         uint40 delegate,
         uint256 actionId
-    ) external onlyManager(1) directorExist(caller) directorExist(delegate) {
+    ) external onlyDK directorExist(caller) directorExist(delegate) {
         _bod.entrustDelegate(caller, delegate, actionId);
     }
 
@@ -115,7 +115,7 @@ contract BODKeeper is
         bytes[] memory params,
         bytes32 desHash,
         uint40 submitter
-    ) external onlyManager(1) directorExist(submitter) {
+    ) external onlyDK directorExist(submitter) {
         _bod.proposeAction(actionType, targets, values, params, desHash, submitter);
     }
 
@@ -124,13 +124,13 @@ contract BODKeeper is
         uint8 attitude,
         uint40 caller,
         bytes32 sigHash
-    ) external onlyManager(1) directorExist(caller) {
+    ) external onlyDK directorExist(caller) {
         _bod.castVote(actionId, attitude, caller, sigHash);
     }
 
     function voteCounting(uint256 motionId, uint40 caller)
         external
-        onlyManager(1)
+        onlyDK
         directorExist(caller)
     {
         _bod.voteCounting(motionId);

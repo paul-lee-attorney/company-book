@@ -12,12 +12,12 @@ import "../books/boh/ShareholdersAgreement.sol";
 import "../books/boo/BookOfOptions.sol";
 
 import "../common/ruting/IBookSetting.sol";
-import "../common/ruting/BOSSetting.sol";
 import "../common/ruting/BOASetting.sol";
 import "../common/ruting/BODSetting.sol";
 import "../common/ruting/BOMSetting.sol";
+import "../common/ruting/BOHSetting.sol";
 import "../common/ruting/BOOSetting.sol";
-import "../common/ruting/SHASetting.sol";
+import "../common/ruting/BOSSetting.sol";
 import "../common/ruting/ROMSetting.sol";
 
 import "../common/lib/SNFactory.sol";
@@ -33,8 +33,8 @@ contract BOMKeeper is
     IBOMKeeper,
     BOASetting,
     BODSetting,
+    BOHSetting,
     BOMSetting,
-    SHASetting,
     BOOSetting,
     BOSSetting,
     ROMSetting
@@ -50,7 +50,7 @@ contract BOMKeeper is
         uint40 caller,
         uint40 delegate,
         uint256 actionId
-    ) external onlyManager(1) memberExist(caller) memberExist(delegate) {
+    ) external onlyDK memberExist(caller) memberExist(delegate) {
         _bom.entrustDelegate(caller, delegate, actionId);
     }
 
@@ -58,7 +58,7 @@ contract BOMKeeper is
 
     function nominateDirector(uint40 candidate, uint40 nominator)
         external
-        onlyManager(1)
+        onlyDK
         memberExist(nominator)
     {
         _bom.nominateDirector(candidate, nominator);
@@ -66,7 +66,7 @@ contract BOMKeeper is
 
     function proposeIA(address ia, uint40 caller)
         external
-        onlyManager(1)
+        onlyDK
         memberExist(caller)
     {
         require(
@@ -152,7 +152,7 @@ contract BOMKeeper is
         bytes[] memory params,
         bytes32 desHash,
         uint40 submitter
-    ) external onlyManager(1) memberExist(submitter) {
+    ) external onlyDK memberExist(submitter) {
         _bom.proposeAction(
             actionType,
             targets,
@@ -170,7 +170,7 @@ contract BOMKeeper is
         uint8 attitude,
         uint40 caller,
         bytes32 sigHash
-    ) external onlyManager(1) memberExist(caller) {
+    ) external onlyDK memberExist(caller) {
         if (_isIA(motionId))
             require(
                 !ISigPage(address(uint160(motionId))).isParty(caller),
@@ -186,7 +186,7 @@ contract BOMKeeper is
 
     function voteCounting(uint256 motionId, uint40 caller)
         external
-        onlyManager(1)
+        onlyDK
         memberExist(caller)
     {
         _bom.voteCounting(motionId);
@@ -215,25 +215,21 @@ contract BOMKeeper is
         bytes32 sn,
         uint40 againstVoter,
         uint40 caller
-    ) external onlyManager(1) {
+    ) external onlyDK {
         require(
             _bom.state(uint256(uint160(ia))) ==
                 uint8(MotionsRepo.StateOfMotion.Rejected_ToBuy),
             "agianst NO need to buy"
         );
 
-        bytes32 shareNumber = IInvestmentAgreement(ia).shareNumberOfDeal(
-            sn.sequence()
-        );
+        uint16 seq = sn.sequence();
+
+        bytes32 shareNumber = IInvestmentAgreement(ia).shareNumberOfDeal(seq);
 
         require(caller == shareNumber.shareholder(), "NOT Seller of the Deal");
 
-        uint32 unitPrice = IInvestmentAgreement(ia).unitPriceOfDeal(
-            sn.sequence()
-        );
-        uint32 closingDate = IInvestmentAgreement(ia).closingDateOfDeal(
-            sn.sequence()
-        );
+        uint32 unitPrice = IInvestmentAgreement(ia).unitPriceOfDeal(seq);
+        uint32 closingDate = IInvestmentAgreement(ia).closingDateOfDeal(seq);
 
         (uint64 paid, uint64 par) = _bom.requestToBuy(ia, sn);
 

@@ -8,7 +8,7 @@
 pragma solidity ^0.8.8;
 
 // import "../../common/ruting/BOASetting.sol";
-import "../../common/ruting/SHASetting.sol";
+import "../../common/ruting/BOHSetting.sol";
 // import "../../common/ruting/BOSSetting.sol";
 import "../../common/ruting/ROMSetting.sol";
 
@@ -19,7 +19,7 @@ import "../../common/lib/BallotsBox.sol";
 
 import "./IMeetingMinutes.sol";
 
-contract MeetingMinutes is IMeetingMinutes, SHASetting, ROMSetting {
+contract MeetingMinutes is IMeetingMinutes, BOHSetting, ROMSetting {
     using SNParser for bytes32;
     using MotionsRepo for MotionsRepo.Repo;
     using DelegateMap for DelegateMap.Map;

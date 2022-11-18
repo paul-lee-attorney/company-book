@@ -29,7 +29,7 @@ contract BOPKeeper is IBOPKeeper, BOPSetting, BOSSetting {
         uint64 pledgedPar,
         uint64 guaranteedAmt,
         uint40 caller
-    ) external onlyManager(1) {
+    ) external onlyDK {
         require(sn.ssnOfPledge() == shareNumber.ssn(), "BOPKeeper.createPledge: wrong shareNumber");
         require(shareNumber.shareholder() == caller, "NOT shareholder");
 
@@ -49,7 +49,7 @@ contract BOPKeeper is IBOPKeeper, BOPSetting, BOSSetting {
         uint64 pledgedPar,
         uint64 guaranteedAmt,
         uint40 caller
-    ) external onlyManager(1) {
+    ) external onlyDK {
         require(pledgedPar > 0, "BOPKeeper.updatePledge: ZERO pledgedPar");
 
         uint32 shortShareNumber = sn.ssnOfPledge();
@@ -71,7 +71,7 @@ contract BOPKeeper is IBOPKeeper, BOPSetting, BOSSetting {
         _bop.updatePledge(sn, creditor, pledgedPar, guaranteedAmt);
     }
 
-    function delPledge(bytes32 sn, uint40 caller) external onlyManager(1) {
+    function delPledge(bytes32 sn, uint40 caller) external onlyDK {
         (uint40 creditor, uint64 pledgedPar, ) = _bop.getPledge(sn);
 
         require(caller == creditor, "NOT creditor");

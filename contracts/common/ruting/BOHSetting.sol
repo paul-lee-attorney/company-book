@@ -12,7 +12,7 @@ import "../../books/boh/IBookOfSHA.sol";
 
 import "../access/AccessControl.sol";
 
-contract SHASetting is AccessControl {
+contract BOHSetting is AccessControl {
     IBookOfSHA internal _boh;
 
     event SetBOH(address boh);

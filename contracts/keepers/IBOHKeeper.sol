@@ -13,13 +13,9 @@ interface IBOHKeeper {
     // ##  SHA   ##
     // ############
 
-    function setTempOfSHA(address temp, uint8 typeOfDoc, uint40 caller) external;
+    function setTempOfSHA(address temp, uint8 typeOfDoc) external;
 
-    function setTermTemplate(
-        uint8 title,
-        address body,
-        uint40 caller
-    ) external;
+    function setTermTemplate(uint8 title, address body) external;
 
     function createSHA(uint8 docType, uint40 caller) external;
 

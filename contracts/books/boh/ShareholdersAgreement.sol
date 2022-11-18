@@ -19,10 +19,9 @@ import "../../common/lib/SNParser.sol";
 
 import "../../common/ruting/IBookSetting.sol";
 import "../../common/ruting/BOASetting.sol";
-import "../../common/ruting/SHASetting.sol";
+import "../../common/ruting/BOHSetting.sol";
 import "../../common/ruting/BOSSetting.sol";
 import "../../common/ruting/ROMSetting.sol";
-// import "../../common/ruting/BOMSetting.sol";
 
 import "../../common/utils/CloneFactory.sol";
 
@@ -30,7 +29,7 @@ contract ShareholdersAgreement is
     IShareholdersAgreement,
     CloneFactory,
     BOASetting,
-    SHASetting,
+    BOHSetting,
     BOSSetting,
     ROMSetting,
     SigPage
@@ -205,7 +204,7 @@ contract ShareholdersAgreement is
         _terms[0].title--;
     }
 
-    function finalizeTerms() external onlyManager(1) {
+    function finalizeTerms() external onlyDK {
         uint8 cur = _terms[0].next;
         
         while (cur>0) {

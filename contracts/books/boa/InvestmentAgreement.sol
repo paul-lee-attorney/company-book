@@ -97,7 +97,7 @@ contract InvestmentAgreement is
 
     function createDeal(bytes32 sn, bytes32 shareNumber)
         external
-        attorneyOrKeeper
+        attorneyOrKeeper(uint8(TitleOfKeepers.SHAKeeper))
         returns (bytes32)
     {
         require(sn.buyerOfDeal() != 0, "IA.createDeal: ZERO buyer");
@@ -179,7 +179,7 @@ contract InvestmentAgreement is
         uint64 paid,
         uint64 par,
         uint32 closingDate
-    ) external dealExist(seq) attorneyOrKeeper {
+    ) external dealExist(seq) attorneyOrKeeper(uint8(TitleOfKeepers.SHAKeeper)) {
         require(par > 0, "par is ZERO");
         require(par >= paid, "paid overflow");
         require(closingDate > block.number, "closingDate shall be future");

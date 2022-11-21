@@ -42,6 +42,26 @@ contract BOMKeeper is
     using SNFactory for bytes;
     using SNParser for bytes32;
 
+    // ######################
+    // ##   Corp Setting   ##
+    // ######################
+
+    function createCorpSeal() external onlyDK {
+        _bom.createCorpSeal();
+    }
+
+    function createBoardSeal(address bod) external onlyDK {
+        _bom.createBoardSeal(bod);
+    }
+
+    function setBooksOfCorp(address book) external onlyDK {
+        _bom.setBooksOfCorp(book);
+    }
+
+    function setRegNumberHash(bytes32 numHash) external onlyDK {
+        _bom.setRegNumberHash(numHash);
+    }
+
     // ################
     // ##   Motion   ##
     // ################

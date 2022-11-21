@@ -22,7 +22,6 @@ import "./IROMKeeper.sol";
 import "./ISHAKeeper.sol";
 
 contract GeneralKeeper is IGeneralKeeper, AccessControl {
-
     IBOAKeeper private _BOAKeeper;
     IBODKeeper private _BODKeeper;
     IBOHKeeper private _BOHKeeper;
@@ -38,30 +37,69 @@ contract GeneralKeeper is IGeneralKeeper, AccessControl {
     // ######################
 
     function setBookeeper(uint8 title, address keeper) external onlyDK {
-        if (title == uint8(TitleOfKeepers.BOAKeeper)) _BOAKeeper = IBOAKeeper(keeper);
-        else if (title == uint8(TitleOfKeepers.BODKeeper)) _BODKeeper = IBODKeeper(keeper);
-        else if (title == uint8(TitleOfKeepers.BOHKeeper)) _BOHKeeper = IBOHKeeper(keeper);
-        else if (title == uint8(TitleOfKeepers.BOMKeeper)) _BOMKeeper = IBOMKeeper(keeper);
-        else if (title == uint8(TitleOfKeepers.BOOKeeper)) _BOOKeeper = IBOOKeeper(keeper);
-        else if (title == uint8(TitleOfKeepers.BOPKeeper)) _BOPKeeper = IBOPKeeper(keeper);
-        else if (title == uint8(TitleOfKeepers.BOSKeeper)) _BOSKeeper = IBOSKeeper(keeper);
-        else if (title == uint8(TitleOfKeepers.ROMKeeper)) _ROMKeeper = IROMKeeper(keeper);
-        else if (title == uint8(TitleOfKeepers.SHAKeeper)) _SHAKeeper = ISHAKeeper(keeper);
+        if (title == uint8(TitleOfKeepers.BOAKeeper))
+            _BOAKeeper = IBOAKeeper(keeper);
+        else if (title == uint8(TitleOfKeepers.BODKeeper))
+            _BODKeeper = IBODKeeper(keeper);
+        else if (title == uint8(TitleOfKeepers.BOHKeeper))
+            _BOHKeeper = IBOHKeeper(keeper);
+        else if (title == uint8(TitleOfKeepers.BOMKeeper))
+            _BOMKeeper = IBOMKeeper(keeper);
+        else if (title == uint8(TitleOfKeepers.BOOKeeper))
+            _BOOKeeper = IBOOKeeper(keeper);
+        else if (title == uint8(TitleOfKeepers.BOPKeeper))
+            _BOPKeeper = IBOPKeeper(keeper);
+        else if (title == uint8(TitleOfKeepers.BOSKeeper))
+            _BOSKeeper = IBOSKeeper(keeper);
+        else if (title == uint8(TitleOfKeepers.ROMKeeper))
+            _ROMKeeper = IROMKeeper(keeper);
+        else if (title == uint8(TitleOfKeepers.SHAKeeper))
+            _SHAKeeper = ISHAKeeper(keeper);
 
-        if (title < 9)
-            emit SetBookeeper(title, keeper);
+        if (title < 9) emit SetBookeeper(title, keeper);
     }
 
-    function isKeeper(uint8 title, address caller) external view returns (bool flag) {
-        if (title == uint8(TitleOfKeepers.BOAKeeper) && caller == address(_BOAKeeper)) flag = true;
-        else if (title == uint8(TitleOfKeepers.BODKeeper) && caller == address(_BODKeeper)) flag = true;
-        else if (title == uint8(TitleOfKeepers.BOHKeeper) && caller == address(_BOHKeeper)) flag = true;
-        else if (title == uint8(TitleOfKeepers.BOMKeeper) && caller == address(_BOMKeeper)) flag = true;
-        else if (title == uint8(TitleOfKeepers.BOOKeeper) && caller == address(_BOOKeeper)) flag = true;
-        else if (title == uint8(TitleOfKeepers.BOPKeeper) && caller == address(_BOPKeeper)) flag = true;
-        else if (title == uint8(TitleOfKeepers.BOSKeeper) && caller == address(_BOSKeeper)) flag = true;
-        else if (title == uint8(TitleOfKeepers.ROMKeeper) && caller == address(_ROMKeeper)) flag = true;
-        else if (title == uint8(TitleOfKeepers.SHAKeeper) && caller == address(_SHAKeeper)) flag = true;
+    function isKeeper(uint8 title, address caller)
+        external
+        view
+        returns (bool flag)
+    {
+        if (
+            title == uint8(TitleOfKeepers.BOAKeeper) &&
+            caller == address(_BOAKeeper)
+        ) flag = true;
+        else if (
+            title == uint8(TitleOfKeepers.BODKeeper) &&
+            caller == address(_BODKeeper)
+        ) flag = true;
+        else if (
+            title == uint8(TitleOfKeepers.BOHKeeper) &&
+            caller == address(_BOHKeeper)
+        ) flag = true;
+        else if (
+            title == uint8(TitleOfKeepers.BOMKeeper) &&
+            caller == address(_BOMKeeper)
+        ) flag = true;
+        else if (
+            title == uint8(TitleOfKeepers.BOOKeeper) &&
+            caller == address(_BOOKeeper)
+        ) flag = true;
+        else if (
+            title == uint8(TitleOfKeepers.BOPKeeper) &&
+            caller == address(_BOPKeeper)
+        ) flag = true;
+        else if (
+            title == uint8(TitleOfKeepers.BOSKeeper) &&
+            caller == address(_BOSKeeper)
+        ) flag = true;
+        else if (
+            title == uint8(TitleOfKeepers.ROMKeeper) &&
+            caller == address(_ROMKeeper)
+        ) flag = true;
+        else if (
+            title == uint8(TitleOfKeepers.SHAKeeper) &&
+            caller == address(_SHAKeeper)
+        ) flag = true;
     }
 
     // ###################
@@ -123,7 +161,6 @@ contract GeneralKeeper is IGeneralKeeper, AccessControl {
         _BOAKeeper.revokeDeal(ia, sn, _msgSender(), hashKey);
     }
 
-  
     // ###################
     // ##   BODKeeper   ##
     // ###################
@@ -233,10 +270,26 @@ contract GeneralKeeper is IGeneralKeeper, AccessControl {
     function acceptSHA(bytes32 sigHash) external {
         _BOHKeeper.acceptSHA(sigHash, _msgSender());
     }
-    
+
     // ###################
     // ##   BOMKeeper   ##
     // ###################
+
+    function createCorpSeal() external onlyDK {
+        _BOMKeeper.createCorpSeal();
+    }
+
+    function createBoardSeal(address bod) external onlyDK {
+        _BOMKeeper.createBoardSeal(bod);
+    }
+
+    function setBooksOfCorp(address book) external onlyDK {
+        _BOMKeeper.setBooksOfCorp(book);
+    }
+
+    function setRegNumberHash(bytes32 numHash) external onlyDK {
+        _BOMKeeper.setRegNumberHash(numHash);
+    }
 
     function entrustMemberDelegate(uint40 delegate, uint256 motionId) external {
         _BOMKeeper.entrustDelegate(_msgSender(), delegate, motionId);
@@ -322,17 +375,15 @@ contract GeneralKeeper is IGeneralKeeper, AccessControl {
         _BOOKeeper.joinOptionAsObligor(sn, _msgSender());
     }
 
-    function removeObligorFromOption(
-        bytes32 sn,
-        uint40 obligor
-    ) external {
+    function removeObligorFromOption(bytes32 sn, uint40 obligor) external {
         _BOOKeeper.removeObligorFromOption(sn, obligor, _msgSender());
     }
 
-    function updateOracle(bytes32 sn, uint32 d1, uint32 d2) 
-        external
-        onlyDK
-    {
+    function updateOracle(
+        bytes32 sn,
+        uint32 d1,
+        uint32 d2
+    ) external onlyDK {
         _BOOKeeper.updateOracle(sn, d1, d2);
     }
 
@@ -412,7 +463,6 @@ contract GeneralKeeper is IGeneralKeeper, AccessControl {
         );
     }
 
-
     // ###################
     // ##   BOSKeeper   ##
     // ###################
@@ -437,10 +487,7 @@ contract GeneralKeeper is IGeneralKeeper, AccessControl {
         _BOSKeeper.decreaseCapital(ssn, parValue, paidPar);
     }
 
-    function updatePaidInDeadline(
-        uint32 ssn, 
-        uint32 line
-    ) external onlyDK {
+    function updatePaidInDeadline(uint32 ssn, uint32 line) external onlyDK {
         _BOSKeeper.updatePaidInDeadline(ssn, line);
     }
 

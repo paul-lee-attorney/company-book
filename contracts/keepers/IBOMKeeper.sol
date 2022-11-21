@@ -8,6 +8,18 @@
 pragma solidity ^0.8.8;
 
 interface IBOMKeeper {
+    // #####################
+    // ##   CorpSetting   ##
+    // #####################
+
+    function createCorpSeal() external;
+
+    function createBoardSeal(address bod) external;
+
+    function setBooksOfCorp(address book) external;
+
+    function setRegNumberHash(bytes32 numHash) external;
+
     // ################
     // ##   Motion   ##
     // ################

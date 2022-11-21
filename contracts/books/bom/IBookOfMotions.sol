@@ -28,6 +28,12 @@ interface IBookOfMotions is IMeetingMinutes {
     //##    写接口    ##
     //##################
 
+    function createCorpSeal() external;
+
+    function createBoardSeal(address bod) external;
+
+    function setBooksOfCorp(address book) external;
+
     function nominateDirector(uint40 candidate, uint40 nominator) external;
 
     function proposeIA(address ia, uint40 submitter) external;

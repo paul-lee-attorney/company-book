@@ -7,9 +7,7 @@
 
 pragma solidity ^0.8.8;
 
-// import "../../common/ruting/BOASetting.sol";
 import "../../common/ruting/BOHSetting.sol";
-// import "../../common/ruting/BOSSetting.sol";
 import "../../common/ruting/ROMSetting.sol";
 
 import "../../common/lib/SNParser.sol";
@@ -360,7 +358,11 @@ contract MeetingMinutes is IMeetingMinutes, BOHSetting, ROMSetting {
         return _mm.motions[motionId].box.sumOfWeight;
     }
 
-    function isVoted(uint256 motionId, uint40 acct) external view returns (bool) {
+    function isVoted(uint256 motionId, uint40 acct)
+        external
+        view
+        returns (bool)
+    {
         return _mm.motions[motionId].box.isVoted(acct);
     }
 

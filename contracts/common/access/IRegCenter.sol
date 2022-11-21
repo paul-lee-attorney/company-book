@@ -82,7 +82,7 @@ interface IRegCenter {
 
     function lockPoints(bytes32 sn, uint96 amt) external;
 
-    function transferPointsTo(uint40 to, uint96 amt) external;
+    function rechargePointsTo(uint40 to, uint96 amt) external;
 
     function sellPoints(bytes32 sn, uint96 amt) external;
 

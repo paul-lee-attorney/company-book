@@ -169,7 +169,7 @@ contract RegCenter is IRegCenter {
         } else revert("RC.lockPointsTo: locker not empty");
     }
 
-    function transferPointsTo(uint40 to, uint96 amt)
+    function rechargePointsTo(uint40 to, uint96 amt)
         external
         onlyPrimeKey
         onlyEOA

@@ -43,6 +43,20 @@ contract BookOfMotions is IBookOfMotions, MeetingMinutes, BOASetting {
     //##    写接口    ##
     //##################
 
+    // ==== Corp Register ====
+
+    function createCorpSeal() external onlyDK {
+        _rc.regUser();
+    }
+
+    function createBoardSeal(address bod) external onlyDK {
+        _rc.setBackupKey(bod);
+    }
+
+    function setBooksOfCorp(address book) external onlyDK {
+        _rc.acceptMember(book);
+    }
+
     // ==== propose ====
 
     function nominateDirector(uint40 candidate, uint40 nominator)

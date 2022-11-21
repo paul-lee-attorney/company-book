@@ -18,8 +18,6 @@ contract BookOfShares is IBookOfShares, ROMSetting {
     using SNFactory for bytes;
     using SNParser for bytes32;
 
-    //公司注册号哈希值（统一社会信用号码的“加盐”哈希值）
-    bytes32 private _regNumHash;
 
     //Share 股票
     struct Share {
@@ -84,9 +82,6 @@ contract BookOfShares is IBookOfShares, ROMSetting {
     //##    写接口    ##
     //##################
 
-    constructor(bytes32 regNumHash) {
-        _regNumHash = regNumHash;
-    }
 
     // ==== IssueShare ====
 
@@ -443,11 +438,6 @@ contract BookOfShares is IBookOfShares, ROMSetting {
     // ##   查询接口   ##
     // ##################
 
-    // ==== BookOfShares ====
-
-    function verifyRegNum(string memory regNum) external view returns (bool) {
-        return _regNumHash == keccak256(bytes(regNum));
-    }
 
     function counterOfShares() public view returns (uint32) {
         return uint32(_shares[0].paid);

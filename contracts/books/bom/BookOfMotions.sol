@@ -39,6 +39,8 @@ contract BookOfMotions is IBookOfMotions, MeetingMinutes, BOASetting {
         SpecialAction
     }
 
+    bytes32 private _regNumHash;
+
     //##################
     //##    写接口    ##
     //##################
@@ -55,6 +57,11 @@ contract BookOfMotions is IBookOfMotions, MeetingMinutes, BOASetting {
 
     function setBooksOfCorp(address book) external onlyDK {
         _rc.acceptMember(book);
+    }
+
+    function setRegNumberHash(bytes32 numHash) external onlyDK {
+        _regNumHash = numHash;
+        emit SetRegNumberHash(numHash);
     }
 
     // ==== propose ====
@@ -144,5 +151,17 @@ contract BookOfMotions is IBookOfMotions, MeetingMinutes, BOASetting {
         );
 
         (, paid, par, , ) = IInvestmentAgreement(ia).getDeal(sn.sequence());
+    }
+
+    //##################
+    //##    读接口    ##
+    //##################
+
+    function regNumHash() external view returns (bytes32) {
+        return _regNumHash;
+    }
+
+    function verifyRegNum(string memory regNum) external view returns (bool) {
+        return _regNumHash == keccak256(bytes(regNum));
     }
 }

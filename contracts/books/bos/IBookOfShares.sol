@@ -106,7 +106,6 @@ interface IBookOfShares {
 
     // ==== BookOfShares ====
 
-    function verifyRegNum(string memory regNum) external view returns (bool);
 
     function counterOfShares() external view returns (uint32);
 

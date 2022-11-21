@@ -24,6 +24,8 @@ interface IBookOfMotions is IMeetingMinutes {
 
     event ProposeIA(uint256 indexed motionId, address ia, uint40 submitter);
 
+    event SetRegNumberHash(bytes32 numHash);
+
     //##################
     //##    写接口    ##
     //##################
@@ -34,6 +36,8 @@ interface IBookOfMotions is IMeetingMinutes {
 
     function setBooksOfCorp(address book) external;
 
+    function setRegNumberHash(bytes32 numHash) external;
+
     function nominateDirector(uint40 candidate, uint40 nominator) external;
 
     function proposeIA(address ia, uint40 submitter) external;
@@ -42,4 +46,12 @@ interface IBookOfMotions is IMeetingMinutes {
         external
         view
         returns (uint64 paid, uint64 par);
+
+    //##################
+    //##    读接口    ##
+    //##################
+
+    function regNumHash() external view returns (bytes32);
+
+    function verifyRegNum(string memory regNum) external view returns (bool);
 }

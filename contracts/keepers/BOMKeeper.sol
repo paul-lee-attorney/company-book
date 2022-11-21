@@ -191,8 +191,7 @@ contract BOMKeeper is
     {
         _bom.voteCounting(motionId);
 
-        if (_isIA(motionId))
-            _boa.pushToNextState(address(uint160(motionId)));
+        if (_isIA(motionId)) _boa.pushToNextState(address(uint160(motionId)));
     }
 
     // ==== execute ====
@@ -206,7 +205,7 @@ contract BOMKeeper is
         uint40 caller
     ) external returns (uint256) {
         require(_bod.isDirector(caller), "caller is not a Director");
-        require(!_rc.isContract(caller), "caller is not an EOA");
+        require(!_rc.isCOA(caller), "caller is not an EOA");
         return _bom.execAction(actionType, targets, values, params, desHash);
     }
 

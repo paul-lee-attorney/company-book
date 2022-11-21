@@ -39,7 +39,7 @@ contract RegCenterSetting {
         emit SetGeneralKeeper(gk);
     }
 
-    function _msgSender() internal view returns (uint40) {
+    function _msgSender() internal returns (uint40) {
         return _rc.userNo(msg.sender);
     }
 }

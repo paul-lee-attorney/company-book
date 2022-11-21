@@ -131,7 +131,7 @@ contract ShareholdersAgreement is
 
         uint40 owner = getManager(0);
 
-        uint40 gc = _msgSender();
+        uint40 gc = getManager(1);
 
         IAccessControl(body).init(
             owner,
@@ -206,8 +206,8 @@ contract ShareholdersAgreement is
 
     function finalizeTerms() external onlyDK {
         uint8 cur = _terms[0].next;
-        
-        while (cur>0) {
+
+        while (cur > 0) {
             IAccessControl(_terms[cur].body).lockContents();
             cur = _terms[cur].next;
         }

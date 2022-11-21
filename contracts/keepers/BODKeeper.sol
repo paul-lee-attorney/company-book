@@ -25,7 +25,6 @@ contract BODKeeper is
     BOMSetting,
     BOSSetting
 {
-
     function appointDirector(
         uint40 candidate,
         uint8 title,
@@ -47,7 +46,9 @@ contract BODKeeper is
                 _bod.whoIs(title) == 0 || _bod.whoIs(title) == candidate,
                 "BODKeeper.appointDirector: current Chairman shall quit first"
             );
-        } else if (title == uint8(BookOfDirectors.TitleOfDirectors.ViceChairman)) {
+        } else if (
+            title == uint8(BookOfDirectors.TitleOfDirectors.ViceChairman)
+        ) {
             require(
                 _getSHA().appointerOfViceChairman() == appointer,
                 "BODKeeper.appointDirector: has no appointment right"
@@ -57,17 +58,19 @@ contract BODKeeper is
                 "BODKeeper.appointDirector: current ViceChairman shall quit first"
             );
         } else if (title != uint8(BookOfDirectors.TitleOfDirectors.Director)) {
-            revert("BODKeeper.appointDirector: there is not such title for candidate");
+            revert(
+                "BODKeeper.appointDirector: there is not such title for candidate"
+            );
         }
 
         _bod.appointDirector(candidate, title, appointer);
     }
 
-    function takePosition(uint40 candidate, uint256 motionId)
-        external
-        onlyDK
-    {
-        require(_bom.isPassed(motionId), "BODKeeper.takePosition: candidate not be approved");
+    function takePosition(uint40 candidate, uint256 motionId) external onlyDK {
+        require(
+            _bom.isPassed(motionId),
+            "BODKeeper.takePosition: candidate not be approved"
+        );
 
         MotionsRepo.Head memory head = _bom.headOf(motionId);
 
@@ -79,11 +82,11 @@ contract BODKeeper is
         _bod.takePosition(candidate, head.submitter);
     }
 
-    function removeDirector(uint40 director, uint40 appointer)
-        external
-        onlyDK
-    {
-        require(_bod.isDirector(director), "BODKeeper.removeDirector: appointer is not a member");
+    function removeDirector(uint40 director, uint40 appointer) external onlyDK {
+        require(
+            _bod.isDirector(director),
+            "BODKeeper.removeDirector: appointer is not a member"
+        );
         require(
             _bod.appointerOfDirector(director) == appointer,
             "BODKeeper.reoveDirector: caller is not appointer"
@@ -93,7 +96,10 @@ contract BODKeeper is
     }
 
     function quitPosition(uint40 director) external onlyDK {
-        require(_bod.isDirector(director), "BODKeeper.quitPosition: appointer is not a member");
+        require(
+            _bod.isDirector(director),
+            "BODKeeper.quitPosition: appointer is not a member"
+        );
 
         _bod.removeDirector(director);
     }
@@ -116,7 +122,14 @@ contract BODKeeper is
         bytes32 desHash,
         uint40 submitter
     ) external onlyDK directorExist(submitter) {
-        _bod.proposeAction(actionType, targets, values, params, desHash, submitter);
+        _bod.proposeAction(
+            actionType,
+            targets,
+            values,
+            params,
+            desHash,
+            submitter
+        );
     }
 
     function castVote(
@@ -144,8 +157,7 @@ contract BODKeeper is
         bytes32 desHash,
         uint40 caller
     ) external directorExist(caller) returns (uint256) {
-        require(!_rc.isContract(caller), "caller is not an EOA");
+        require(!_rc.isCOA(caller), "caller is not an EOA");
         return _bod.execAction(actionType, targets, values, params, desHash);
     }
-
 }

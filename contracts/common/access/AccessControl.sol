@@ -23,7 +23,7 @@ contract AccessControl is IAccessControl, RegCenterSetting {
         BOPKeeper, // 5
         BOSKeeper, // 6
         ROMKeeper, // 7
-        SHAKeeper  // 8
+        SHAKeeper // 8
     }
 
     enum TitleOfManagers {
@@ -56,10 +56,7 @@ contract AccessControl is IAccessControl, RegCenterSetting {
     }
 
     modifier onlyKeeper(uint8 title) {
-        require(
-            _gk.isKeeper(title, msg.sender),
-            "AC.onlyKeeper: not Keeper"
-        );
+        require(_gk.isKeeper(title, msg.sender), "AC.onlyKeeper: not Keeper");
         _;
     }
 
@@ -74,7 +71,7 @@ contract AccessControl is IAccessControl, RegCenterSetting {
     modifier attorneyOrKeeper(uint8 title) {
         require(
             _roles.hasRole(ATTORNEYS, _msgSender()) ||
-            _gk.isKeeper(title, msg.sender),
+                _gk.isKeeper(title, msg.sender),
             "not Attorney or Bookeeper"
         );
         _;
@@ -100,7 +97,6 @@ contract AccessControl is IAccessControl, RegCenterSetting {
         address regCenter,
         address generalKeeper
     ) external {
-
         _setRegCenter(regCenter);
 
         _setGeneralKeeper(generalKeeper);
@@ -110,20 +106,15 @@ contract AccessControl is IAccessControl, RegCenterSetting {
         emit Init(owner, directKeeper, regCenter, generalKeeper);
     }
 
-    function setBookeeper(
-        address keeper
-    ) external {
+    function setBookeeper(address keeper) external {
         _roles.setBookeeper(msg.sender, keeper);
     }
 
-    function setManager(
-        uint8 title,
-        uint40 acct
-    ) external onlyDK {
+    function setManager(uint8 title, uint40 acct) external onlyDK {
         _roles.setManager(title, acct);
     }
 
-    function setRoleAdmin(bytes32 role, uint40 acct) external onlyManager(0) {
+    function setRoleAdmin(bytes32 role, uint40 acct) external {
         _roles.setRoleAdmin(role, _msgSender(), acct);
     }
 
@@ -159,7 +150,7 @@ contract AccessControl is IAccessControl, RegCenterSetting {
         return _roles.getManager(title);
     }
 
-    function getBookeeper() public view returns(address) {
+    function getBookeeper() public view returns (address) {
         return _roles.getKeeper();
     }
 
@@ -171,11 +162,7 @@ contract AccessControl is IAccessControl, RegCenterSetting {
         return _roles.state == 2;
     }
 
-    function hasRole(bytes32 role, uint40 acct)
-        public
-        view
-        returns (bool)
-    {
+    function hasRole(bytes32 role, uint40 acct) public view returns (bool) {
         return _roles.hasRole(role, acct);
     }
 }

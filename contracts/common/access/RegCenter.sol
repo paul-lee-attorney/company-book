@@ -16,7 +16,7 @@ contract RegCenter is IRegCenter {
 
     struct User {
         bool isCOA;
-        uint16 qtyOfMembers;
+        uint32 qtyOfMembers;
         address primeKey;
         address backupKey;
         uint96 balance;
@@ -42,7 +42,7 @@ contract RegCenter is IRegCenter {
         uint32 coaRewards;
         uint32 queryPrice;
         uint32 maintenancePrice;
-        uint16 quotaOfMembersQty;
+        uint32 quotaOfMembersQty;
         uint40 userCounter;
     }
 
@@ -118,7 +118,7 @@ contract RegCenter is IRegCenter {
         emit SetRates(eoaRewards, coaRewards, queryPrice, maintenancePrice);
     }
 
-    function setQuotaOfMembersQty(uint16 quota) external onlyKeeper {
+    function setQuotaOfMembersQty(uint32 quota) external onlyKeeper {
         _opts.quotaOfMembersQty = quota;
 
         emit SetQuotaOfMembersQty(quota);
@@ -363,6 +363,10 @@ contract RegCenter is IRegCenter {
         maintenancePrice = _opts.maintenancePrice;
     }
 
+    function quotaOfMembersQty() external view returns (uint32) {
+        return _opts.quotaOfMembersQty;
+    }
+
     function counterOfUsers() external view returns (uint40) {
         return _opts.userCounter;
     }
@@ -385,7 +389,7 @@ contract RegCenter is IRegCenter {
         return _users[user].isCOA;
     }
 
-    function qtyOfMembers(uint40 user) external view returns (uint16) {
+    function qtyOfMembers(uint40 user) external view returns (uint32) {
         return _users[user].qtyOfMembers;
     }
 

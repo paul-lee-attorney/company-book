@@ -23,7 +23,7 @@ interface IRegCenter {
         uint32 maintenancePrice
     );
 
-    event SetQuotaOfMembersQty(uint16 quota);
+    event SetQuotaOfMembersQty(uint32 quota);
 
     event TransferOwnership(address newOwner);
 
@@ -68,7 +68,7 @@ interface IRegCenter {
         uint32 maintenancePrice
     ) external;
 
-    function setQuotaOfMembersQty(uint16 quota) external;
+    function setQuotaOfMembersQty(uint32 quota) external;
 
     // ==== Power transfer ====
 
@@ -120,6 +120,8 @@ interface IRegCenter {
             uint32 maintenancePrice
         );
 
+    function quotaOfMembersQty() external view returns (uint32);
+
     function counterOfUsers() external view returns (uint40);
 
     function isKey(address key) external view returns (bool);
@@ -130,7 +132,7 @@ interface IRegCenter {
 
     function isCOA(uint40 user) external view returns (bool);
 
-    function qtyOfMembers(uint40 user) external view returns (uint16);
+    function qtyOfMembers(uint40 user) external view returns (uint32);
 
     function userNo(address key) external returns (uint40);
 

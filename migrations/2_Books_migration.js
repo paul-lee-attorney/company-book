@@ -34,6 +34,8 @@ const BOHKeeper = artifacts.require("BOHKeeper");
 const BOMKeeper = artifacts.require("BOMKeeper");
 const BOOKeeper = artifacts.require("BOOKeeper");
 const BOPKeeper = artifacts.require("BOPKeeper");
+const BOSKeeper = artifacts.require("BOSKeeper");
+const ROMKeeper = artifacts.require("ROMKeeper");
 const SHAKeeper = artifacts.require("SHAKeeper");
 
 const GK = artifacts.require("GeneralKeeper");
@@ -51,7 +53,7 @@ module.exports = async function (deployer, network, accounts) {
     // ==== Libraries ====
 
     await deployer.deploy(LibEnumerableSet);
-    await deployer.link(LibEnumerableSet, [BOA, IA, BOD, AD, DA, FR, GU, LU, OP, TA, BOH, LibBallotsBox, LibCheckpoints, LibEnumerableSet, LibMembersRepo, LibMotionsRepo, LibOptionsRepo, LibSigsRepo]);
+    await deployer.link(LibEnumerableSet, [IA, BOD, AD, DA, FR, GU, LU, TA, BOA, BOH, LibBallotsBox, LibCheckpoints, LibMembersRepo, LibMotionsRepo, LibOptionsRepo, LibSigsRepo]);
 
     await deployer.deploy(LibBallotsBox);
     await deployer.link(LibBallotsBox, [BOD, BOM, LibMotionsRepo]);
@@ -63,39 +65,53 @@ module.exports = async function (deployer, network, accounts) {
     await deployer.link(LibDelegateMap, [BOD, BOM, LibMotionsRepo]);
 
     await deployer.deploy(LibSNParser);
-    await deployer.link(LibSNParser, [IA, MR, SHA, AD, DA, FR, GU, LU, OP, TA, BOA, BOD, BOH, BOM, BOO, BOP, BOS, BOAKeeper, BOHKeeper, BOMKeeper, BOOKeeper, BOPKeeper, SHAKeeper, LibMotionsRepo, LibOptionsRepo]);
+    await deployer.link(LibSNParser, [BOA, IA, MR, SHA, AD, DA, FR, GU, LU, TA, BOM, BOO, BOP, BOS, BOH, LibMotionsRepo, LibOptionsRepo, BOAKeeper, BOHKeeper, BOMKeeper, BOOKeeper, BOPKeeper, BOSKeeper, SHAKeeper]);
 
     await deployer.deploy(LibSNFactory);
-    await deployer.link(LibSNFactory, [DA, FR, GU, OP, BOP, BOS, BOA, BOH, BOMKeeper, SHAKeeper, LibOptionsRepo]);
+    await deployer.link(LibSNFactory, [DA, TA, FR, GU, BOP, BOS, BOA, BOH, LibOptionsRepo, BOMKeeper, SHAKeeper]);
 
     await deployer.deploy(LibTopChain);
-    await deployer.link(LibTopChain, [MR, BOS, LibMembersRepo]);
+    await deployer.link(LibTopChain, [MR, ROM, LibMembersRepo]);
 
     await deployer.deploy(LibArrayUtils);
-    await deployer.link(LibArrayUtils, [AD, FR, LU, TA]);
+    await deployer.link(LibArrayUtils, [AD, FR, LU]);
 
     await deployer.deploy(LibArrowChain);
     await deployer.link(LibArrowChain, AD);
 
     await deployer.deploy(LibMembersRepo);
-    await deployer.link(LibMembersRepo, [MR, BOS]);
+    await deployer.link(LibMembersRepo, [MR, ROM]);
 
     await deployer.deploy(LibMotionsRepo);
-    await deployer.link(LibMotionsRepo, [BOD, BOM, BODKeeper, BOMKeeper]);
+    await deployer.link(LibMotionsRepo, [BOM, BOD, BODKeeper, BOMKeeper]);
 
     await deployer.deploy(LibOptionsRepo);
     await deployer.link(LibOptionsRepo, [OP, BOO]);
 
     await deployer.deploy(LibRolesRepo);
-    await deployer.link(LibRolesRepo, RC);
+    await deployer.link(LibRolesRepo, [IA, FRD, MR, BOA, BOD, SHA, BOH, BOM, BOO, BOP, BOS, ROM, BOAKeeper, BODKeeper, BOHKeeper, BOMKeeper, BOOKeeper, BOPKeeper, BOSKeeper, ROMKeeper, SHAKeeper, GK, AD, DA, FR, GU, LU, OP, TA]);
 
     await deployer.deploy(LibSigsRepo);
     await deployer.link(LibSigsRepo, [IA, SHA]);
 
-    // ==== RegCenter & GeneralKeeper====
+    // ==== RegCenter ====
 
-    await deployer.deploy(RC, 10); // testing purpose set 10 block per hr
+    await deployer.deploy(RC, accounts[0]);
     let rc = await RC.deployed();
+
+    await rc.setBlockSpeed(10); // 10 blocks/hr only for test purpose;
+    await rc.setRates(168000000, 168000, 128000, 32000);
+    await rc.setQuotaOfMembersQty(168000);
+
+    await rc.transferOwnership(accounts[1]);
+    await rc.turnOverCenterKey(accounts[1]);
+
+    await rc.transferOwnership(accounts[0], {
+        from: accounts[1]
+    });
+    await rc.turnOverCenterKey(accounts[0], {
+        from: accounts[1]
+    });
 
     await rc.regUser({
         from: accounts[0]
@@ -105,51 +121,58 @@ module.exports = async function (deployer, network, accounts) {
         from: accounts[1]
     });
 
+    let acct0 = 1;
+
+    // ==== General Keeper ====
+
     await deployer.deploy(GK);
     let gk = await GK.deployed();
 
-    await gk.init(accounts[0], accounts[0], rc.address, gk.address);
-
-    // ==== BOS ====
-
-    await deployer.deploy(BOS, "0x38301fb0b5fcf3aaa4b97c4771bb6c75546e313b4ce7057c51a8cc6a3ace9d7e");
-    let bos = await BOS.deployed();
-    await bos.init(accounts[0], accounts[0], rc.address, gk.address);
+    await gk.init(acct0, accounts[0], rc.address, gk.address);
 
     // ==== Keepers ====
 
     await deployer.deploy(BOAKeeper);
     let boaKeeper = await BOAKeeper.deployed();
-    await boaKeeper.init(accounts[0], accounts[0], rc.address, gk.address);
+    await boaKeeper.init(acct0, accounts[0], rc.address, gk.address);
 
     await deployer.deploy(BODKeeper);
     let bodKeeper = await BODKeeper.deployed();
-    await bodKeeper.init(accounts[0], accounts[0], rc.address, gk.address);
+    await bodKeeper.init(acct0, accounts[0], rc.address, gk.address);
 
     await deployer.deploy(BOHKeeper);
     let bohKeeper = await BOHKeeper.deployed();
-    await bohKeeper.init(accounts[0], accounts[0], rc.address, gk.address);
+    await bohKeeper.init(acct0, accounts[0], rc.address, gk.address);
 
     await deployer.deploy(BOMKeeper);
     let bomKeeper = await BOMKeeper.deployed();
-    await bomKeeper.init(accounts[0], accounts[0], rc.address, gk.address);
+    await bomKeeper.init(acct0, accounts[0], rc.address, gk.address);
 
     await deployer.deploy(BOOKeeper);
     let booKeeper = await BOOKeeper.deployed();
-    await booKeeper.init(accounts[0], accounts[0], rc.address, gk.address);
+    await booKeeper.init(acct0, accounts[0], rc.address, gk.address);
 
     await deployer.deploy(BOPKeeper);
     let bopKeeper = await BOPKeeper.deployed();
-    await bopKeeper.init(accounts[0], accounts[0], rc.address, gk.address);
+    await bopKeeper.init(acct0, accounts[0], rc.address, gk.address);
+
+    await deployer.deploy(BOSKeeper);
+    let bosKeeper = await BOSKeeper.deployed();
+    await bosKeeper.init(acct0, accounts[0], rc.address, gk.address);
+
+    await deployer.deploy(ROMKeeper);
+    let romKeeper = await ROMKeeper.deployed();
+    await romKeeper.init(acct0, accounts[0], rc.address, gk.address);
 
     await deployer.deploy(SHAKeeper);
     let shaKeeper = await SHAKeeper.deployed();
-    await shaKeeper.init(accounts[0], accounts[0], rc.address, gk.address);
+    await shaKeeper.init(acct0, accounts[0], rc.address, gk.address);
 
     // ==== Books ====
+
     await deployer.deploy(BOA);
     let boa = await BOA.deployed();
-    await boa.init(accounts[0], accounts[0], rc.address, gk.address);
+    await boa.init(acct0, accounts[0], rc.address, gk.address);
 
     await deployer.deploy(IA);
     let ia = await IA.deployed();
@@ -165,7 +188,7 @@ module.exports = async function (deployer, network, accounts) {
 
     await deployer.deploy(BOH);
     let boh = await BOH.deployed();
-    await boh.init(accounts[0], accounts[0], rc.address, gk.address);
+    await boh.init(acct0, accounts[0], rc.address, gk.address);
 
     await deployer.deploy(SHA);
     let sha = await SHA.deployed();
@@ -173,72 +196,87 @@ module.exports = async function (deployer, network, accounts) {
 
     await deployer.deploy(BOD);
     let bod = await BOD.deployed();
-    await bod.init(accounts[0], accounts[0], rc.address, gk.address);
+    await bod.init(acct0, accounts[0], rc.address, gk.address);
 
     await deployer.deploy(BOM);
     let bom = await BOM.deployed();
-    await bom.init(accounts[0], accounts[0], rc.address, gk.address);
+    await bom.init(acct0, accounts[0], rc.address, gk.address);
 
     await deployer.deploy(BOO);
     let boo = await BOO.deployed();
-    await boo.init(accounts[0], accounts[0], rc.address, gk.address);
+    await boo.init(acct0, accounts[0], rc.address, gk.address);
 
     await deployer.deploy(BOP);
     let bop = await BOP.deployed();
-    await bop.init(accounts[0], accounts[0], rc.address, gk.address);
+    await bop.init(acct0, accounts[0], rc.address, gk.address);
+
+    await deployer.deploy(BOS);
+    let bos = await BOS.deployed();
+    await bos.init(acct0, accounts[0], rc.address, gk.address);
 
     await deployer.deploy(ROM);
     let rom = await ROM.deployed();
-    await rom.init(accounts[0], accounts[0], rc.address, gk.address);
+    await rom.init(acct0, accounts[0], rc.address, gk.address);
 
-    // ==== BOSSetting ====
-    await boaKeeper.setBOS(bos.address);
-    await bodKeeper.setBOS(bos.address);
-    await bohKeeper.setBOS(bos.address);
-    await bomKeeper.setBOS(bos.address);
-    await booKeeper.setBOS(bos.address);
-    await bopKeeper.setBOS(bos.address);
-    await shaKeeper.setBOS(bos.address);
+    // ==== TermsOfSHA ====
+    await deployer.deploy(LU);
+    let lu = await LU.deployed();
+    await boh.setTermTemplate(1, lu.address);
 
-    await boa.setBOS(bos.address);
-    await boo.setBOS(bos.address);
-    await rom.setBOS(bos.address);
+    await deployer.deploy(AD);
+    let ad = await AD.deployed();
+    await boh.setTermTemplate(2, ad.address);
+
+    await deployer.deploy(FR);
+    let fr = await FR.deployed();
+    await boh.setTermTemplate(3, fr.address);
+
+    await deployer.deploy(GU);
+    let gu = await GU.deployed();
+    await boh.setTermTemplate(4, gu.address);
+
+    await deployer.deploy(DA);
+    let da = await DA.deployed();
+    await boh.setTermTemplate(5, da.address);
+
+    await deployer.deploy(TA);
+    let ta = await TA.deployed();
+    await boh.setTermTemplate(6, ta.address);
+
+    await deployer.deploy(OP);
+    let op = await OP.deployed();
+    await boh.setTermTemplate(7, op.address);
 
     // ==== BOASetting ====
+    await bom.setBOA(boa.address);
+
     await boaKeeper.setBOA(boa.address);
     await bohKeeper.setBOA(boa.address);
     await bomKeeper.setBOA(boa.address);
     await shaKeeper.setBOA(boa.address);
-
-    await bom.setBOA(boa.address);
 
     // ==== BODSetting ==== 
     await bodKeeper.setBOD(bod.address);
     await bohKeeper.setBOD(bod.address);
     await bomKeeper.setBOD(bod.address);
 
-    // ==== SHASetting ==== 
+    // ==== BOHSetting ==== 
+    await boa.setBOH(boh.address);
+    await bod.setBOH(boh.address);
+    await bom.setBOH(boh.address);
+
     await boaKeeper.setBOH(boh.address);
     await bodKeeper.setBOH(boh.address);
     await bohKeeper.setBOH(boh.address);
     await bomKeeper.setBOH(boh.address);
     await shaKeeper.setBOH(boh.address);
 
-    await boa.setBOH(boh.address);
-
-    await bod.setBOH(boh.address);
-    await bom.setBOH(boh.address);
-
-    // ==== BODSetting ==== 
-    await bodKeeper.setBOD(bod.address);
-    await bohKeeper.setBOD(bod.address);
-    await bomKeeper.setBOD(bod.address);
-
     // ==== BOMSetting ==== 
     await boaKeeper.setBOM(bom.address);
     await bodKeeper.setBOM(bom.address);
     await bohKeeper.setBOM(bom.address);
     await bomKeeper.setBOM(bom.address);
+    await shaKeeper.setBOM(bom.address);
 
     // ==== BOOSetting ==== 
     await bohKeeper.setBOO(boo.address);
@@ -248,71 +286,59 @@ module.exports = async function (deployer, network, accounts) {
     // ==== BOPSetting ==== 
     await bopKeeper.setBOP(bop.address);
 
+    // ==== BOSSetting ====
+    await boo.setBOS(bos.address);
+    await rom.setBOS(bos.address);
+
+    await boaKeeper.setBOS(bos.address);
+    await bodKeeper.setBOS(bos.address);
+    await bohKeeper.setBOS(bos.address);
+    await bomKeeper.setBOS(bos.address);
+    await booKeeper.setBOS(bos.address);
+    await bopKeeper.setBOS(bos.address);
+    await bosKeeper.setBOS(bos.address);
+    await shaKeeper.setBOS(bos.address);
+
     // ==== ROMSetting ==== 
-    await boa.setROM(rom.address);
+    await bos.setROM(rom.address);
     await bod.setROM(rom.address);
     await bom.setROM(rom.address);
-    await bos.setROM(rom.address);
 
     await boaKeeper.setROM(rom.address);
     await bohKeeper.setROM(rom.address);
     await bomKeeper.setROM(rom.address);
+    await romKeeper.setROM(rom.address);
     await shaKeeper.setROM(rom.address);
 
-    // ==== DirectKeeper ====
-    await boa.setManager(1, accounts[0], boaKeeper.address);
-    await bod.setManager(1, accounts[0], bodKeeper.address);
-    await boh.setManager(1, accounts[0], bohKeeper.address);
-    await bom.setManager(1, accounts[0], bomKeeper.address);
-    await boo.setManager(1, accounts[0], booKeeper.address);
-    await bop.setManager(1, accounts[0], bopKeeper.address);
-
     // ==== Keepers Setting ====
-    await gk.setBOAKeeper(boaKeeper.address);
-    await gk.setBODKeeper(bodKeeper.address);
-    await gk.setBOHKeeper(bohKeeper.address);
-    await gk.setBOMKeeper(bomKeeper.address);
-    await gk.setBOOKeeper(booKeeper.address);
-    await gk.setBOPKeeper(bopKeeper.address);
-    await gk.setSHAKeeper(shaKeeper.address);
+    await gk.setBookeeper(0, boaKeeper.address);
+    await gk.setBookeeper(1, bodKeeper.address);
+    await gk.setBookeeper(2, bohKeeper.address);
+    await gk.setBookeeper(3, bomKeeper.address);
+    await gk.setBookeeper(4, booKeeper.address);
+    await gk.setBookeeper(5, bopKeeper.address);
+    await gk.setBookeeper(6, bosKeeper.address);
+    await gk.setBookeeper(7, romKeeper.address);
+    await gk.setBookeeper(8, shaKeeper.address);
 
-    await boaKeeper.setManager(1, accounts[0], gk.address);
-    await bodKeeper.setManager(1, accounts[0], gk.address);
-    await bohKeeper.setManager(1, accounts[0], gk.address);
-    await bomKeeper.setManager(1, accounts[0], gk.address);
-    await booKeeper.setManager(1, accounts[0], gk.address);
-    await bopKeeper.setManager(1, accounts[0], gk.address);
-    await shaKeeper.setManager(1, accounts[0], gk.address);
+    // ==== DirectKeeper ====
+    await boa.setBookeeper(boaKeeper.address);
+    await bod.setBookeeper(bodKeeper.address);
+    await boh.setBookeeper(bohKeeper.address);
+    await bom.setBookeeper(bomKeeper.address);
+    await boo.setBookeeper(booKeeper.address);
+    await bop.setBookeeper(bopKeeper.address);
+    // await bos.setBookeeper(bosKeeper.address);
+    // await rom.setBookeeper(romKeeper.address);
 
-    // ==== TermsOfSHA ====
-    await deployer.deploy(LU);
-    let lu = await LU.deployed();
-    await gk.addTermTemplate(1, lu.address);
+    await boaKeeper.setBookeeper(gk.address);
+    await bodKeeper.setBookeeper(gk.address);
+    await bohKeeper.setBookeeper(gk.address);
+    await bomKeeper.setBookeeper(gk.address);
+    await booKeeper.setBookeeper(gk.address);
+    await bopKeeper.setBookeeper(gk.address);
+    await bosKeeper.setBookeeper(gk.address);
+    await romKeeper.setBookeeper(gk.address);
 
-    await deployer.deploy(AD);
-    let ad = await AD.deployed();
-    await gk.addTermTemplate(2, ad.address);
-
-    await deployer.deploy(FR);
-    let fr = await FR.deployed();
-    await gk.addTermTemplate(3, fr.address);
-
-    await deployer.deploy(GU);
-    let gu = await GU.deployed();
-    await gk.addTermTemplate(4, gu.address);
-
-    await deployer.deploy(DA);
-    let da = await DA.deployed();
-    await gk.addTermTemplate(5, da.address);
-
-    await deployer.deploy(TA);
-    let ta = await TA.deployed();
-    await gk.addTermTemplate(6, ta.address);
-
-    await deployer.deploy(OP);
-    let op = await OP.deployed();
-    await gk.addTermTemplate(7, op.address);
-
-    gk.setManager(1, accounts[0], accounts[1]);
-
+    gk.setBookeeper(accounts[1]);
 };

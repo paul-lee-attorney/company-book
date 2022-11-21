@@ -400,20 +400,22 @@ contract RegCenter is IRegCenter {
         require(caller > 0, "RC.userNo: caller not registered");
         require(target > 0, "RC.userNo: target not registered");
 
-        require(
-            balanceOf(target) > _opts.maintenancePrice,
-            "RC.userNo: insufficient target's balance"
-        );
-        _users[target].balance -= _opts.maintenancePrice;
-
-        if (tx.origin == targetAddr) {
-            _users[caller].balance += _opts.queryPrice;
-        } else {
+        if (msg.sender != targetAddr) {
             require(
-                balanceOf(caller) > _opts.queryPrice,
-                "RC.userNo: insufficient caller's balance"
+                balanceOf(target) > _opts.maintenancePrice,
+                "RC.userNo: insufficient target's balance"
             );
-            _users[caller].balance -= _opts.queryPrice;
+            _users[target].balance -= _opts.maintenancePrice;
+
+            if (tx.origin == targetAddr) {
+                _users[caller].balance += _opts.queryPrice;
+            } else {
+                require(
+                    balanceOf(caller) > _opts.queryPrice,
+                    "RC.userNo: insufficient caller's balance"
+                );
+                _users[caller].balance -= _opts.queryPrice;
+            }
         }
 
         return _userNo[targetAddr];

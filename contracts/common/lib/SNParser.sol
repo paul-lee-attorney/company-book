@@ -324,12 +324,25 @@ library SNParser {
         return uint32(bytes4(sn << 136));
     }
 
-    // ======== AntiDilution ========
-    // function priceOfMark(bytes32 sn) internal pure returns (uint32) {
-    //     return uint32(bytes4(sn << 24));
-    // }
+    // ======== RegCenter ========
 
-    // function classOfMark(bytes32 sn) internal pure returns (uint16) {
-    //     return uint16(bytes2(sn));
-    // }
+    function fromOfRCLocker(bytes32 sn) internal pure returns (uint40) {
+        return uint40(bytes5(sn));
+    }
+
+    function toOfRCLocker(bytes32 sn) internal pure returns (uint40) {
+        return uint40(bytes5(sn << 40));
+    }
+
+    function expireDateOfRCLocker(bytes32 sn) internal pure returns (uint32) {
+        return uint32(bytes4(sn << 80));
+    }
+
+    function hashLockOfRCLocker(bytes32 sn) internal pure returns (bytes16) {
+        return bytes16(sn << 112);
+    }
+
+    function hashTrim(bytes32 hashValue) internal pure returns (bytes16) {
+        return bytes16(hashValue << 24);
+    }
 }

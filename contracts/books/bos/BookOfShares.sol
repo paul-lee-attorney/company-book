@@ -18,7 +18,6 @@ contract BookOfShares is IBookOfShares, ROMSetting {
     using SNFactory for bytes;
     using SNParser for bytes32;
 
-
     //Share 股票
     struct Share {
         bytes32 shareNumber; //出资证明书编号（股票编号）
@@ -70,18 +69,19 @@ contract BookOfShares is IBookOfShares, ROMSetting {
     }
 
     modifier keepersAllowed() {
-        require(_gk.isKeeper(uint8(TitleOfKeepers.BOAKeeper), msg.sender) ||
-            _gk.isKeeper(uint8(TitleOfKeepers.BOOKeeper), msg.sender) ||
-            _gk.isKeeper(uint8(TitleOfKeepers.BOPKeeper), msg.sender) ||
-            _gk.isKeeper(uint8(TitleOfKeepers.SHAKeeper), msg.sender), 
-            "BOS.keepersAllowed: not have access right");
+        require(
+            _gk.isKeeper(uint8(TitleOfKeepers.BOAKeeper), msg.sender) ||
+                _gk.isKeeper(uint8(TitleOfKeepers.BOOKeeper), msg.sender) ||
+                _gk.isKeeper(uint8(TitleOfKeepers.BOPKeeper), msg.sender) ||
+                _gk.isKeeper(uint8(TitleOfKeepers.SHAKeeper), msg.sender),
+            "BOS.keepersAllowed: not have access right"
+        );
         _;
     }
 
     //##################
     //##    写接口    ##
     //##################
-
 
     // ==== IssueShare ====
 
@@ -90,7 +90,13 @@ contract BookOfShares is IBookOfShares, ROMSetting {
         uint64 paid,
         uint64 par,
         uint32 paidInDeadline
-    ) external onlyDK {
+    ) external {
+        require(
+            _gk.isKeeper(uint8(TitleOfKeepers.BOAKeeper), msg.sender) ||
+                msg.sender == getBookeeper(),
+            "BOS.issueShare: caller not right keeper"
+        );
+
         require(
             shareNumber.shareholder() > 0,
             "BOS.issueShare: zero shareholder"
@@ -104,7 +110,7 @@ contract BookOfShares is IBookOfShares, ROMSetting {
             "BOS.issueShare: issueDate LATER than paidInDeadline"
         );
 
-        require(paid <= par, "paid BIGGER than par");
+        require(paid <= par, "BOS.issueShare: paid BIGGER than par");
 
         // 判断是否需要添加新股东，若添加是否会超过法定人数上限
         _rom.addMember(shareNumber.shareholder());
@@ -198,7 +204,14 @@ contract BookOfShares is IBookOfShares, ROMSetting {
         uint64 par,
         uint40 to,
         uint32 unitPrice
-    ) external onlyDK shareExist(ssn) notFreezed(ssn) {
+    ) external shareExist(ssn) notFreezed(ssn) {
+        require(
+            _gk.isKeeper(uint8(TitleOfKeepers.BOAKeeper), msg.sender) ||
+                _gk.isKeeper(uint8(TitleOfKeepers.BOOKeeper), msg.sender) ||
+                _gk.isKeeper(uint8(TitleOfKeepers.SHAKeeper), msg.sender),
+            "BOS.transferShare: caller not right keeper"
+        );
+
         bytes32 shareNumber = _shares[ssn].shareNumber;
 
         require(to > 0, "shareholder userNo is ZERO");
@@ -438,7 +451,6 @@ contract BookOfShares is IBookOfShares, ROMSetting {
     // ##   查询接口   ##
     // ##################
 
-
     function counterOfShares() public view returns (uint32) {
         return uint32(_shares[0].paid);
     }
@@ -450,8 +462,7 @@ contract BookOfShares is IBookOfShares, ROMSetting {
     // ==== SharesRepo ====
 
     function isShare(uint32 ssn) public view returns (bool) {
-        require(ssn > 0, "BOS.isShare: zero ssn");
-        return _shares[ssn].shareNumber.ssn() == ssn;
+        return _shares[ssn].shareNumber != bytes32(0);
     }
 
     function cleanPar(uint32 ssn)

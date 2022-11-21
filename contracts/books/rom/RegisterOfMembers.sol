@@ -45,8 +45,17 @@ contract RegisterOfMembers is IRegisterOfMembers, BOSSetting {
     //##    写接口    ##
     //##################
 
+    function setMaxQtyOfMembers(uint8 max) external onlyDK {
+        _gm.setMaxQtyOfMembers(max);
+        emit SetMaxQtyOfMembers(max);
+    }
+
     function setVoteBase(bool onPar) external onlyDK {
         if (_gm.setVoteBase(onPar)) emit SetVoteBase(onPar);
+    }
+
+    function setAmtBase(bool onPar) external onlyDK {
+        if (_gm.setAmtBase(onPar)) emit SetAmtBase(onPar);
     }
 
     function capIncrease(uint64 paid, uint64 par) external onlyBOS {
@@ -57,15 +66,6 @@ contract RegisterOfMembers is IRegisterOfMembers, BOSSetting {
     function capDecrease(uint64 paid, uint64 par) external onlyBOS {
         uint64 blocknumber = _gm.changeAmtOfCap(paid, par, true);
         emit CapDecrease(paid, par, blocknumber);
-    }
-
-    function setMaxQtyOfMembers(uint8 max) external onlyDK {
-        _gm.setMaxQtyOfMembers(max);
-        emit SetMaxQtyOfMembers(max);
-    }
-
-    function setAmtBase(bool onPar) external onlyDK {
-        if (_gm.setAmtBase(onPar)) emit SetAmtBase(onPar);
     }
 
     function addMember(uint40 acct) external onlyBOS {
@@ -132,7 +132,10 @@ contract RegisterOfMembers is IRegisterOfMembers, BOSSetting {
         );
     }
 
-    function addMemberToGroup(uint40 acct, uint16 group) external onlyKeeper(uint8(TitleOfKeepers.BOHKeeper)) {
+    function addMemberToGroup(uint40 acct, uint16 group)
+        external
+        onlyKeeper(uint8(TitleOfKeepers.BOHKeeper))
+    {
         require(
             _gm.groupNo(acct) == 0,
             "BOS.addMemberToGroup: remove acct from group first"

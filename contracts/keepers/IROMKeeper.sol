@@ -8,14 +8,13 @@
 pragma solidity ^0.8.8;
 
 interface IROMKeeper {
-
     // ############
     // ##  ROM   ##
     // ############
 
-    function setVoteBase(bool onPar) external;
-
     function setMaxQtyOfMembers(uint8 max) external;
+
+    function setVoteBase(bool onPar) external;
 
     function setAmtBase(bool onPar) external;
 }

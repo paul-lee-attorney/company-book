@@ -10,6 +10,8 @@ pragma solidity ^0.8.8;
 import "../common/access/AccessControl.sol";
 import "../common/access/IAccessControl.sol";
 
+import "../common/lib/RolesRepo.sol";
+
 import "./IGeneralKeeper.sol";
 import "./IBOAKeeper.sol";
 import "./IBODKeeper.sol";
@@ -22,6 +24,8 @@ import "./IROMKeeper.sol";
 import "./ISHAKeeper.sol";
 
 contract GeneralKeeper is IGeneralKeeper, AccessControl {
+    using RolesRepo for RolesRepo.Roles;
+
     IBOAKeeper private _BOAKeeper;
     IBODKeeper private _BODKeeper;
     IBOHKeeper private _BOHKeeper;
@@ -35,6 +39,14 @@ contract GeneralKeeper is IGeneralKeeper, AccessControl {
     // ######################
     // ##   AccessControl  ##
     // ######################
+
+    function setManager(uint8 title, uint40 acct)
+        external
+        override
+        onlyManager(0)
+    {
+        _roles.setManager(title, acct);
+    }
 
     function setBookeeper(uint8 title, address keeper) external onlyDK {
         if (title == uint8(TitleOfKeepers.BOAKeeper))

@@ -33,7 +33,7 @@ contract AccessControl is IAccessControl, RegCenterSetting {
 
     bytes32 constant ATTORNEYS = bytes32("Attorneys");
 
-    RolesRepo.Roles private _roles;
+    RolesRepo.Roles internal _roles;
 
     // ##################
     // ##   修饰器      ##
@@ -110,7 +110,7 @@ contract AccessControl is IAccessControl, RegCenterSetting {
         _roles.setBookeeper(msg.sender, keeper);
     }
 
-    function setManager(uint8 title, uint40 acct) external onlyDK {
+    function setManager(uint8 title, uint40 acct) external virtual onlyDK {
         _roles.setManager(title, acct);
     }
 

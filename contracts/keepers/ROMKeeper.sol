@@ -11,21 +11,17 @@ import "../common/ruting/ROMSetting.sol";
 
 import "./IROMKeeper.sol";
 
-contract ROMKeeper is
-    IROMKeeper,
-    ROMSetting
-{
-
+contract ROMKeeper is IROMKeeper, ROMSetting {
     // #############
     // ##   ROM   ##
     // #############
 
-    function setVoteBase(bool onPar) external onlyDK {
-        _rom.setVoteBase(onPar);
-    }
-
     function setMaxQtyOfMembers(uint8 max) external onlyDK {
         _rom.setMaxQtyOfMembers(max);
+    }
+
+    function setVoteBase(bool onPar) external onlyDK {
+        _rom.setVoteBase(onPar);
     }
 
     function setAmtBase(bool onPar) external onlyDK {

@@ -59,8 +59,7 @@ contract BOAKeeper is
 
     modifier onlyOwnerOf(address body, uint40 caller) {
         require(
-            caller != 0 &&
-            IAccessControl(body).getManager(0) == caller,
+            caller != 0 && IAccessControl(body).getManager(0) == caller,
             "NOT Owner of Doc"
         );
         _;
@@ -75,10 +74,7 @@ contract BOAKeeper is
     // ##   InvestmentAgreement   ##
     // #############################
 
-    function setTempOfIA(address temp, uint8 typeOfDoc)
-        external
-        onlyDK
-    {
+    function setTempOfIA(address temp, uint8 typeOfDoc) external onlyDK {
         _boa.setTemplate(temp, typeOfDoc);
     }
 
@@ -96,6 +92,8 @@ contract BOAKeeper is
 
         IBookSetting(ia).setBOS(address(_bos));
         IBookSetting(ia).setROM(address(_rom));
+
+        _bom.setBooksOfCorp(ia);
     }
 
     function removeIA(address ia, uint40 caller)
@@ -210,11 +208,7 @@ contract BOAKeeper is
             else _checkSHA(_termsForCapitalIncrease, ia, sn);
         }
 
-        IInvestmentAgreement(ia).clearDealCP(
-            seq,
-            hashLock,
-            closingDate
-        );
+        IInvestmentAgreement(ia).clearDealCP(seq, hashLock, closingDate);
     }
 
     function _checkSHA(
@@ -255,8 +249,7 @@ contract BOAKeeper is
 
         bytes32 shareNumber = IInvestmentAgreement(ia).shareNumberOfDeal(seq);
 
-        if (shareNumber > bytes32(0))
-            _shareTransfer(ia, sn, shareNumber);
+        if (shareNumber > bytes32(0)) _shareTransfer(ia, sn, shareNumber);
         else issueNewShare(ia, sn);
 
         _checkCompletionOfIA(ia);
@@ -282,13 +275,12 @@ contract BOAKeeper is
         bytes32 sn,
         bytes32 shareNumber
     ) private {
-
         uint16 seq = sn.sequence();
 
         (, uint64 paid, uint64 par, , ) = IInvestmentAgreement(ia).getDeal(seq);
 
         uint32 unitPrice = IInvestmentAgreement(ia).unitPriceOfDeal(seq);
-        
+
         _bos.increaseCleanPar(sn.ssnOfDeal(), paid);
         _bos.transferShare(
             shareNumber.ssn(),
@@ -300,7 +292,6 @@ contract BOAKeeper is
     }
 
     function issueNewShare(address ia, bytes32 sn) public onlyDK {
-
         uint16 seq = sn.sequence();
 
         (, uint64 paid, uint64 par, , ) = IInvestmentAgreement(ia).getDeal(seq);
@@ -324,14 +315,19 @@ contract BOAKeeper is
         );
     }
 
-    function transferTargetShare(address ia, bytes32 sn, uint40 caller) public onlyDK {
-
+    function transferTargetShare(
+        address ia,
+        bytes32 sn,
+        uint40 caller
+    ) public onlyDK {
         bytes32 shareNumber = IInvestmentAgreement(ia).shareNumberOfDeal(
             sn.sequence()
         );
 
-        require(caller == shareNumber.shareholder(), 
-            "BOAKeeper.transferTargetShare: caller not shareholder");
+        require(
+            caller == shareNumber.shareholder(),
+            "BOAKeeper.transferTargetShare: caller not shareholder"
+        );
 
         _shareTransfer(ia, sn, shareNumber);
     }
@@ -352,16 +348,11 @@ contract BOAKeeper is
 
         require(
             caller ==
-                IInvestmentAgreement(ia)
-                    .shareNumberOfDeal(seq)
-                    .shareholder(),
+                IInvestmentAgreement(ia).shareNumberOfDeal(seq).shareholder(),
             "NOT seller"
         );
 
-        IInvestmentAgreement(ia).revokeDeal(
-            seq,
-            hashKey
-        );
+        IInvestmentAgreement(ia).revokeDeal(seq, hashKey);
 
         (, , uint64 par, , ) = IInvestmentAgreement(ia).getDeal(seq);
 
@@ -379,6 +370,4 @@ contract BOAKeeper is
     //     if (IInvestmentAgreement(ia).releaseDealSubject(sn.sequence()))
     //         _bos.increaseCleanPar(sn.ssnOfDeal(), par);
     // }
-
-
 }

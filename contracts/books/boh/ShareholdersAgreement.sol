@@ -20,6 +20,7 @@ import "../../common/lib/SNParser.sol";
 import "../../common/ruting/IBookSetting.sol";
 import "../../common/ruting/BOASetting.sol";
 import "../../common/ruting/BOHSetting.sol";
+import "../../common/ruting/BOMSetting.sol";
 import "../../common/ruting/BOSSetting.sol";
 import "../../common/ruting/ROMSetting.sol";
 
@@ -30,6 +31,7 @@ contract ShareholdersAgreement is
     CloneFactory,
     BOASetting,
     BOHSetting,
+    BOMSetting,
     BOSSetting,
     ROMSetting,
     SigPage
@@ -141,6 +143,8 @@ contract ShareholdersAgreement is
         );
 
         IAccessControl(body).setManager(1, gc);
+
+        _bom.setBooksOfCorp(body);
 
         if (
             title == uint8(TermTitle.ANTI_DILUTION) ||

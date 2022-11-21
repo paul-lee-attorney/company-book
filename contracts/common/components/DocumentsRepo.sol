@@ -92,10 +92,7 @@ contract DocumentsRepo is IDocumentsRepo, CloneFactory, AccessControl {
     //##    写接口    ##
     //##################
 
-    function setTemplate(address body, uint8 typeOfDoc)
-        external
-        onlyDK
-    {
+    function setTemplate(address body, uint8 typeOfDoc) external onlyDK {
         require(typeOfDoc < 18, "DR.setTemplate: typeOfDoc over flow");
         _templates[typeOfDoc] = body;
         emit SetTemplate(body, typeOfDoc);
@@ -156,10 +153,12 @@ contract DocumentsRepo is IDocumentsRepo, CloneFactory, AccessControl {
         emit RemoveDoc(sn);
     }
 
-    function circulateDoc(
-        address body,
-        bytes32 rule
-    ) public onlyDK onlyRegistered(body) onlyForPending(body) {
+    function circulateDoc(address body, bytes32 rule)
+        public
+        onlyDK
+        onlyRegistered(body)
+        onlyForPending(body)
+    {
         Doc storage doc = _docs[body];
 
         doc.reviewDeadlineBN =
@@ -179,14 +178,11 @@ contract DocumentsRepo is IDocumentsRepo, CloneFactory, AccessControl {
         emit UpdateStateOfDoc(doc.sn, doc.state);
     }
 
-    function pushToNextState(address body)
-        public
-        onlyRegistered(body)
-    {
+    function pushToNextState(address body) public onlyRegistered(body) {
         require(
             _gk.isKeeper(uint8(TitleOfKeepers.BOAKeeper), msg.sender) ||
-            _gk.isKeeper(uint8(TitleOfKeepers.BOHKeeper), msg.sender) ||
-            _gk.isKeeper(uint8(TitleOfKeepers.BOMKeeper), msg.sender),
+                _gk.isKeeper(uint8(TitleOfKeepers.BOHKeeper), msg.sender) ||
+                _gk.isKeeper(uint8(TitleOfKeepers.BOMKeeper), msg.sender),
             "DR.pushToNextState: not have access right"
         );
 

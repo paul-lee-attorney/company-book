@@ -15,6 +15,7 @@ import "../common/components/ISigPage.sol";
 
 import "../common/ruting/BOASetting.sol";
 import "../common/ruting/BODSetting.sol";
+import "../common/ruting/BOMSetting.sol";
 import "../common/ruting/BOOSetting.sol";
 import "../common/ruting/BOSSetting.sol";
 import "../common/ruting/ROMSetting.sol";
@@ -31,6 +32,7 @@ contract BOHKeeper is
     IBOHKeeper,
     BOASetting,
     BODSetting,
+    BOMSetting,
     BOOSetting,
     BOSSetting,
     ROMSetting,
@@ -48,7 +50,10 @@ contract BOHKeeper is
     }
 
     modifier onlyOwnerOf(address body, uint40 caller) {
-        require(caller != 0 && IAccessControl(body).getManager(0) == caller, "not Owner");
+        require(
+            caller != 0 && IAccessControl(body).getManager(0) == caller,
+            "not Owner"
+        );
         _;
     }
 
@@ -82,8 +87,11 @@ contract BOHKeeper is
 
         IBookSetting(sha).setBOA(address(_boa));
         IBookSetting(sha).setBOH(address(_boh));
+        IBookSetting(sha).setBOM(address(_bom));
         IBookSetting(sha).setBOS(address(_bos));
         IBookSetting(sha).setROM(address(_rom));
+
+        _bom.setBooksOfCorp(sha);
     }
 
     function removeSHA(address sha, uint40 caller)

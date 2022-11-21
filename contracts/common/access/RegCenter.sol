@@ -40,8 +40,8 @@ contract RegCenter is IRegCenter {
         uint32 blocksPerHour;
         uint32 eoaRewards;
         uint32 coaRewards;
-        uint32 queryPrice;
         uint32 maintenancePrice;
+        uint32 queryPrice;
         uint32 quotaOfMembersQty;
         uint40 userCounter;
     }
@@ -107,8 +107,8 @@ contract RegCenter is IRegCenter {
     function setRates(
         uint32 eoaRewards,
         uint32 coaRewards,
-        uint32 queryPrice,
-        uint32 maintenancePrice
+        uint32 maintenancePrice,
+        uint32 queryPrice
     ) external onlyOwner {
         _opts.eoaRewards = eoaRewards;
         _opts.coaRewards = coaRewards;
@@ -393,27 +393,30 @@ contract RegCenter is IRegCenter {
         return _users[user].qtyOfMembers;
     }
 
-    function userNo(address key) external returns (uint40) {
+    function userNo(address targetAddr) external returns (uint40) {
         uint40 caller = _userNo[msg.sender];
-        uint40 target = _userNo[key];
+        uint40 target = _userNo[targetAddr];
 
         require(caller > 0, "RC.userNo: caller not registered");
         require(target > 0, "RC.userNo: target not registered");
 
         require(
-            balanceOf(caller) > _opts.queryPrice,
-            "RC.userNo: insufficient caller's balance"
-        );
-
-        require(
             balanceOf(target) > _opts.maintenancePrice,
             "RC.userNo: insufficient target's balance"
         );
-
-        _users[caller].balance -= _opts.queryPrice;
         _users[target].balance -= _opts.maintenancePrice;
 
-        return _userNo[key];
+        if (tx.origin == targetAddr) {
+            _users[caller].balance += _opts.queryPrice;
+        } else {
+            require(
+                balanceOf(caller) > _opts.queryPrice,
+                "RC.userNo: insufficient caller's balance"
+            );
+            _users[caller].balance -= _opts.queryPrice;
+        }
+
+        return _userNo[targetAddr];
     }
 
     function balanceOf(uint40 user) public view returns (uint96) {

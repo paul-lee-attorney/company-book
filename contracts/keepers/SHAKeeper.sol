@@ -24,6 +24,7 @@ import "../common/components/ISigPage.sol";
 
 import "../common/ruting/IBookSetting.sol";
 import "../common/ruting/BOASetting.sol";
+import "../common/ruting/BOMSetting.sol";
 import "../common/ruting/BOSSetting.sol";
 import "../common/ruting/ROMSetting.sol";
 import "../common/ruting/BOHSetting.sol";
@@ -36,6 +37,7 @@ import "./ISHAKeeper.sol";
 contract SHAKeeper is
     ISHAKeeper,
     BOASetting,
+    BOMSetting,
     BOSSetting,
     ROMSetting,
     BOHSetting
@@ -90,7 +92,6 @@ contract SHAKeeper is
     ) external onlyDK onlyEstablished(ia) withinReviewPeriod(ia) {
         address mock = _boa.mockResultsOfIA(ia);
         if (mock == address(0)) {
-
             mock = _boa.createMockResults(ia, caller);
 
             IAccessControl(mock).init(
@@ -102,6 +103,8 @@ contract SHAKeeper is
             IBookSetting(mock).setIA(ia);
             IBookSetting(mock).setBOS(address(_bos));
             IBookSetting(mock).setROM(address(_rom));
+
+            _bom.setBooksOfCorp(mock);
         }
 
         IBookSetting(mock).setBOH(address(_boh));
@@ -400,13 +403,7 @@ contract SHAKeeper is
 
         _bos.increaseCleanPar(ssn, paid);
 
-        _bos.transferShare(
-            ssn,
-            paid,
-            par,
-            sn.buyerOfDeal(),
-            unitPrice
-        );
+        _bos.transferShare(ssn, paid, par, sn.buyerOfDeal(), unitPrice);
     }
 
     // ======== FirstRefusal ========
@@ -443,6 +440,8 @@ contract SHAKeeper is
                 address(_gk)
             );
             IBookSetting(frd).setROM(address(_rom));
+
+            _bom.setBooksOfCorp(frd);
         }
 
         IFirstRefusalDeals(frd).execFirstRefusalRight(

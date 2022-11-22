@@ -24,7 +24,6 @@ import "../common/components/ISigPage.sol";
 
 import "../common/ruting/IBookSetting.sol";
 import "../common/ruting/BOASetting.sol";
-import "../common/ruting/BOMSetting.sol";
 import "../common/ruting/BOSSetting.sol";
 import "../common/ruting/ROMSetting.sol";
 import "../common/ruting/BOHSetting.sol";
@@ -37,10 +36,9 @@ import "./ISHAKeeper.sol";
 contract SHAKeeper is
     ISHAKeeper,
     BOASetting,
-    BOMSetting,
     BOSSetting,
-    ROMSetting,
-    BOHSetting
+    BOHSetting,
+    ROMSetting
 {
     using SNParser for bytes32;
     using SNFactory for bytes;
@@ -103,8 +101,6 @@ contract SHAKeeper is
             IBookSetting(mock).setIA(ia);
             IBookSetting(mock).setBOS(address(_bos));
             IBookSetting(mock).setROM(address(_rom));
-
-            _bom.setBooksOfCorp(mock);
         }
 
         IBookSetting(mock).setBOH(address(_boh));
@@ -440,8 +436,6 @@ contract SHAKeeper is
                 address(_gk)
             );
             IBookSetting(frd).setROM(address(_rom));
-
-            _bom.setBooksOfCorp(frd);
         }
 
         IFirstRefusalDeals(frd).execFirstRefusalRight(

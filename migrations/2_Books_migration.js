@@ -100,34 +100,20 @@ module.exports = async function (deployer, network, accounts) {
     let rc = await RC.deployed();
 
     await rc.setBlockSpeed(10); // 10 blocks/hr only for test purpose;
-    await rc.setRates(168000000, 168000, 128000, 32000);
-    await rc.setQuotaOfMembersQty(168000);
-
-    await rc.transferOwnership(accounts[1]);
-    await rc.turnOverCenterKey(accounts[1]);
-
-    await rc.transferOwnership(accounts[0], {
-        from: accounts[1]
-    });
-    await rc.turnOverCenterKey(accounts[0], {
-        from: accounts[1]
-    });
+    await rc.setRewards(168000000, 42000000, 1000, 100000);
 
     await rc.regUser({
         from: accounts[0]
     });
 
-    // await rc.regUser({
-    //     from: accounts[1]
-    // });
-
-    let acct0 = 1;
+    let acct0 = await rc.userNo.call(accounts[0]);
+    acct0 = acct0.toNumber();
+    console.log("acct0: ", acct0);
 
     // ==== General Keeper ====
 
     await deployer.deploy(GK);
     let gk = await GK.deployed();
-
     await gk.init(acct0, accounts[0], rc.address, gk.address);
 
     // ==== Keepers ====
@@ -274,9 +260,7 @@ module.exports = async function (deployer, network, accounts) {
     // ==== BOMSetting ==== 
     await boaKeeper.setBOM(bom.address);
     await bodKeeper.setBOM(bom.address);
-    await bohKeeper.setBOM(bom.address);
     await bomKeeper.setBOM(bom.address);
-    await shaKeeper.setBOM(bom.address);
 
     // ==== BOOSetting ==== 
     await bohKeeper.setBOO(boo.address);
@@ -300,6 +284,7 @@ module.exports = async function (deployer, network, accounts) {
     await shaKeeper.setBOS(bos.address);
 
     // ==== ROMSetting ==== 
+
     await bos.setROM(rom.address);
     await bod.setROM(rom.address);
     await bom.setROM(rom.address);
@@ -311,6 +296,7 @@ module.exports = async function (deployer, network, accounts) {
     await shaKeeper.setROM(rom.address);
 
     // ==== Keepers Setting ====
+
     await gk.setBookeeper(0, boaKeeper.address);
     await gk.setBookeeper(1, bodKeeper.address);
     await gk.setBookeeper(2, bohKeeper.address);
@@ -320,6 +306,11 @@ module.exports = async function (deployer, network, accounts) {
     await gk.setBookeeper(6, bosKeeper.address);
     await gk.setBookeeper(7, romKeeper.address);
     await gk.setBookeeper(8, shaKeeper.address);
+
+    // ==== RegDocs ====
+
+    await bom.createCorpSeal();
+    await bom.createBoardSeal(bod.address);
 
     // ==== DirectKeeper ====
     await boa.setBookeeper(boaKeeper.address);

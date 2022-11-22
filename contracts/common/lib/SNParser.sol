@@ -30,6 +30,10 @@ library SNParser {
         return uint32(bytes4(shareNumber << 120));
     }
 
+    function hashLockOfBOSLocker(bytes32 sn) internal pure returns (bytes16) {
+        return bytes16(sn << 120);
+    }
+
     // ======== DealSN ========
 
     function classOfDeal(bytes32 sn) internal pure returns (uint16) {

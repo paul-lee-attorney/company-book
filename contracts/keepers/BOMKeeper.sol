@@ -50,12 +50,8 @@ contract BOMKeeper is
         _bom.createCorpSeal();
     }
 
-    function createBoardSeal(address bod) external onlyDK {
-        _bom.createBoardSeal(bod);
-    }
-
-    function setBooksOfCorp(address book) external onlyDK {
-        _bom.setBooksOfCorp(book);
+    function createBoardSeal() external onlyDK {
+        _bom.createBoardSeal(address(_bod));
     }
 
     function setRegNumberHash(bytes32 numHash) external onlyDK {

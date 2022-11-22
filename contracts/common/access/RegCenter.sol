@@ -17,7 +17,7 @@ contract RegCenter is IRegCenter {
     struct User {
         bool isCOA;
         uint32 qtyOfMembers;
-        uint32 counterOfVerify;
+        uint32 counterOfV;
         address primeKey;
         address backupKey;
         uint96 balance;
@@ -41,7 +41,8 @@ contract RegCenter is IRegCenter {
         uint32 blocksPerHour;
         uint32 eoaRewards;
         uint32 coaRewards;
-        uint32 discount;
+        uint32 offAmt;
+        uint16 discRate;
         uint40 userCounter;
     }
 
@@ -106,13 +107,15 @@ contract RegCenter is IRegCenter {
     function setRewards(
         uint32 eoaRewards,
         uint32 coaRewards,
-        uint32 discount
+        uint16 discRate,
+        uint32 offAmt
     ) external onlyOwner {
         _opts.eoaRewards = eoaRewards;
         _opts.coaRewards = coaRewards;
-        _opts.discount = discount;
+        _opts.discRate = discRate;
+        _opts.offAmt = offAmt;
 
-        emit SetRewards(eoaRewards, coaRewards, discount);
+        emit SetRewards(eoaRewards, coaRewards, discRate, offAmt);
     }
 
     // ==== Power transfer ====
@@ -264,7 +267,7 @@ contract RegCenter is IRegCenter {
             user.balance = _opts.coaRewards;
         } else user.balance = _opts.eoaRewards;
 
-        emit RegUser(_opts.userCounter, msgSender, user.isCOA);
+        emit RegUser(_userNo[msgSender], msgSender, user.isCOA);
     }
 
     function _isContract(address acct) private view returns (bool) {
@@ -292,32 +295,32 @@ contract RegCenter is IRegCenter {
         emit SetBackupKey(caller, bKey);
     }
 
-    function acceptMember(address member)
-        external
-        onlyPrimeKey
-        onlyNewKey(member)
-    {
-        address _msgSender = msg.sender;
-        require(_isContract(_msgSender), "RC.acceptMember: caller not COA");
-        require(_isContract(member), "RC.acceptMember: member not COA");
+    // function acceptMember(address member)
+    //     external
+    //     onlyPrimeKey
+    //     onlyNewKey(member)
+    // {
+    //     address _msgSender = msg.sender;
+    //     require(_isContract(_msgSender), "RC.acceptMember: caller not COA");
+    //     require(_isContract(member), "RC.acceptMember: member not COA");
 
-        uint40 caller = _userNo[_msgSender];
+    //     uint40 caller = _userNo[_msgSender];
 
-        _userNo[member] = caller;
-        _users[caller].qtyOfMembers++;
+    //     _userNo[member] = caller;
+    //     _users[caller].qtyOfMembers++;
 
-        emit AcceptMember(caller, member);
-    }
+    //     emit AcceptMember(caller, member);
+    // }
 
-    function dismissMember(address member) external onlyPrimeKey {
-        uint40 caller = _userNo[msg.sender];
+    // function dismissMember(address member) external onlyPrimeKey {
+    //     uint40 caller = _userNo[msg.sender];
 
-        if (_userNo[member] == caller) {
-            delete _userNo[member];
-            _users[caller].qtyOfMembers--;
-            emit DismissMember(caller, member);
-        } else revert("RC.dismissMember: target not member");
-    }
+    //     if (_userNo[member] == caller) {
+    //         delete _userNo[member];
+    //         _users[caller].qtyOfMembers--;
+    //         emit DismissMember(caller, member);
+    //     } else revert("RC.dismissMember: target not member");
+    // }
 
     // ##################
     // ##   Read I/O   ##
@@ -343,12 +346,14 @@ contract RegCenter is IRegCenter {
         returns (
             uint32 eoaRewards,
             uint32 coaRewards,
-            uint32 discount
+            uint16 discRate,
+            uint32 offAmt
         )
     {
         eoaRewards = _opts.eoaRewards;
         coaRewards = _opts.coaRewards;
-        discount = _opts.discount;
+        discRate = _opts.discRate;
+        offAmt = _opts.offAmt;
     }
 
     function counterOfUsers() external view returns (uint40) {
@@ -382,36 +387,28 @@ contract RegCenter is IRegCenter {
     }
 
     function userNo(address targetAddr) external returns (uint40) {
-        uint40 caller = _userNo[msg.sender];
         uint40 target = _userNo[targetAddr];
 
-        if (caller != target) {
-            require(caller > 0, "RC.userNo: caller not registered");
-            require(target > 0, "RC.userNo: target not registered");
+        if (msg.sender != targetAddr) {
+            _chargeFee(target);
 
-            uint32 mFee = _maintenanceFee(target);
-            uint32 qFee = mFee / 4;
-
-            require(
-                _users[target].balance > mFee,
-                "RC.userNo: insufficient target's balance"
-            );
-            require(
-                _users[caller].balance > qFee,
-                "RC.userNo: insufficient caller's balance"
-            );
-            _users[target].balance -= mFee;
-            _users[caller].balance -= qFee;
-
-            _users[target].counterOfVerify++;
+            if (tx.origin != targetAddr) _chargeFee(_userNo[tx.origin]);
         }
 
         return target;
     }
 
-    function _maintenanceFee(uint40 target) private view returns (uint32 fee) {
-        uint32 para = _users[target].counterOfVerify * 18 + _opts.discount;
+    function _chargeFee(uint40 user) private {
+        User storage u = _users[user];
 
-        fee = (para < 256000) ? (256168 - para) : 168;
+        uint32 coupon = u.counterOfV * _opts.discRate + _opts.offAmt;
+        uint32 fee = (coupon < 256000) ? (256168 - coupon) : 168;
+
+        if (u.balance >= fee) {
+            u.balance -= fee;
+            u.counterOfV++;
+
+            emit ChargeFee(user, fee);
+        } else revert("RC.chargeFee: insufficient balance");
     }
 }

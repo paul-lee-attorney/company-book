@@ -44,7 +44,9 @@ interface IBookOfShares {
 
     event IncreaseCleanPar(bytes32 indexed shareNumber, uint64 paid);
 
-    event SetPayInAmount(bytes32 indexed ssn, uint64 amount, bytes32 hashLock);
+    event SetPayInAmount(bytes32 indexed sn, uint64 amount);
+
+    event WithdrawPayInAmount(bytes32 indexed sn);
 
     //##################
     //##    写接口    ##
@@ -57,13 +59,11 @@ interface IBookOfShares {
         uint32 paidInDeadline
     ) external;
 
-    function setPayInAmount(
-        uint32 ssn,
-        uint64 amount,
-        bytes32 hashLock
-    ) external;
+    function setPayInAmount(bytes32 sn, uint64 amount) external;
 
-    function requestPaidInCapital(uint32 ssn, string memory hashKey) external;
+    function requestPaidInCapital(bytes32 sn, string memory hashKey) external;
+
+    function withdrawPayInAmount(bytes32 sn) external;
 
     function transferShare(
         uint32 ssn,
@@ -106,7 +106,6 @@ interface IBookOfShares {
 
     // ==== BookOfShares ====
 
-
     function counterOfShares() external view returns (uint32);
 
     function counterOfClasses() external view returns (uint16);
@@ -126,8 +125,5 @@ interface IBookOfShares {
             uint8 state
         );
 
-    function getLocker(uint32 ssn)
-        external
-        view
-        returns (uint64 amount, bytes32 hashLock);
+    function getLocker(bytes32 sn) external view returns (uint64 amount);
 }

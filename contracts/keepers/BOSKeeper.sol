@@ -11,35 +11,26 @@ import "../common/ruting/BOSSetting.sol";
 import "../common/lib/SNParser.sol";
 import "./IBOSKeeper.sol";
 
-contract BOSKeeper is
-    IBOSKeeper,
-    BOSSetting
-{
+contract BOSKeeper is IBOSKeeper, BOSSetting {
     using SNParser for bytes32;
 
     // #############
     // ##   BOS   ##
     // #############
 
-    function setPayInAmount(
-        uint32 ssn,
-        uint64 amount,
-        bytes32 hashLock
-    ) external onlyDK {
-        _bos.setPayInAmount(ssn, amount, hashLock);
+    function setPayInAmount(bytes32 sn, uint64 amount) external onlyDK {
+        _bos.setPayInAmount(sn, amount);
     }
 
-    function requestPaidInCapital(
-        uint32 ssn,
-        string memory hashKey,
-        uint40 caller
-    ) external onlyDK {
-        (bytes32 shareNumber, , , , ) = _bos.getShare(ssn);
-        require(
-            caller == shareNumber.shareholder(),
-            "caller is not shareholder"
-        );
-        _bos.requestPaidInCapital(ssn, hashKey);
+    function requestPaidInCapital(bytes32 sn, string memory hashKey)
+        external
+        onlyDK
+    {
+        _bos.requestPaidInCapital(sn, hashKey);
+    }
+
+    function withdrawPayInAmount(bytes32 sn) external onlyDK {
+        _bos.withdrawPayInAmount(sn);
     }
 
     function decreaseCapital(
@@ -50,10 +41,7 @@ contract BOSKeeper is
         _bos.decreaseCapital(ssn, paid, par);
     }
 
-    function updatePaidInDeadline(uint32 ssn, uint32 line)
-        external
-        onlyDK
-    {
+    function updatePaidInDeadline(uint32 ssn, uint32 line) external onlyDK {
         _bos.updatePaidInDeadline(ssn, line);
     }
 }

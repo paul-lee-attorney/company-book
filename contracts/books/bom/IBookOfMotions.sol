@@ -34,8 +34,6 @@ interface IBookOfMotions is IMeetingMinutes {
 
     function createBoardSeal(address bod) external;
 
-    function setBooksOfCorp(address book) external;
-
     function setRegNumberHash(bytes32 numHash) external;
 
     function nominateDirector(uint40 candidate, uint40 nominator) external;

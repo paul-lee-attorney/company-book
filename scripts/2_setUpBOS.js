@@ -2,6 +2,7 @@ const BOS = artifacts.require("BookOfShares");
 const ROM = artifacts.require("RegisterOfMembers");
 const GK = artifacts.require("GeneralKeeper");
 const BOSKeeper = artifacts.require("BOSKeeper");
+const ROMKeeper = artifacts.require("ROMKeeper");
 const RC = artifacts.require("RegCenter");
 
 module.exports = async function (callback) {
@@ -29,15 +30,26 @@ module.exports = async function (callback) {
     const accounts = await web3.eth.getAccounts();
     console.log("accts: ", accounts);
 
-    let acct2 = await rc.userNo(accounts[2]);
+    let acct2 = await rc.userNo.call(accounts[2], {
+        from: accounts[2]
+    });
     acct2 = acct2.toNumber();
-    let acct3 = await rc.userNo(accounts[3]);
+    let acct3 = await rc.userNo.call(accounts[3], {
+        from: accounts[3]
+    });
     acct3 = acct3.toNumber();
-    let acct4 = await rc.userNo(accounts[4]);
+    let acct4 = await rc.userNo.call(accounts[4], {
+        from: accounts[4]
+    });
     acct4 = acct4.toNumber();
 
     console.log("acct2: ", acct2);
 
+    // ==== config setting ====
+
+    await rom.setMaxQtyOfMembers(50);
+    events = await rom.getPastEvents("SetMaxQtyOfMembers");
+    console.log("Event 'SetMaxQtyOfMembers': ", events[0].returnValues);
 
     // ==== IssueShare ====
 
@@ -49,14 +61,10 @@ module.exports = async function (callback) {
     let shareholder = web3.utils.numberToHex(acct2);
 
     shareholder = web3.utils.padLeft(shareholder.slice(2, ), 10);
-
     console.log("shareholder: ", shareholder);
 
-
     let shareNumber = '0x' + classOfShare + ssn + issueDate + shareholder;
-
     shareNumber = web3.utils.padRight(shareNumber, 64);
-
     console.log("shareNumber: ", shareNumber);
 
     await bos.issueShare(shareNumber, 500000000, 500000000, cur + 86400);
@@ -161,24 +169,6 @@ module.exports = async function (callback) {
     events = await rom.getPastEvents("CapDecrease");
     console.log("Event 'CapDecrease': ", events[0].returnValues);
 
-    // ==== CleanPar ====
-
-    await bos.decreaseCleanPar(1, 100000000);
-
-    events = await bos.getPastEvents("DecreaseCleanPar");
-    console.log("Event 'DecreaseCleanPar': ", events[0].returnValues);
-
-    res = await bos.cleanPar(1);
-    console.log("cleanPar of share_1: ", res.toNumber());
-
-    await bos.increaseCleanPar(1, 100000000);
-
-    events = await bos.getPastEvents("IncreaseCleanPar");
-    console.log("Event 'IncreaseCleanPar': ", events[0].returnValues);
-
-    res = await bos.cleanPar(1);
-    console.log("cleanPar of share_1: ", res.toNumber());
-
     // ==== UpdateShareState ====
 
     await bos.updateStateOfShare(1, 4);
@@ -233,6 +223,8 @@ module.exports = async function (callback) {
     res = await bos.getShare(3);
     console.log("details of share_3: ShareNumber: ", res.shareNumber, "Par: ", res.par.toNumber(), "Paid: ", res.paid.toNumber(), "PaidInDeadline: ", res.paidInDeadline.toNumber(), "State: ", res.state.toNumber());
 
+    // ==== ROM ====
+
     res = await rom.maxQtyOfMembers();
     console.log("maxQtyOfMembers: ", res.toNumber());
 
@@ -254,7 +246,9 @@ module.exports = async function (callback) {
     res = await rom.sharenumberExist("0x000000000001636cf10a00000000140000000000000000000000000000000000");
     console.log("sharenumberExist: ", res);
 
-    let acct5 = await rc.userNo(accounts[5]);
+    let acct5 = await rc.userNo.call(accounts[5], {
+        from: accounts[5]
+    });
 
     res = await rom.isMember(acct5.toNumber());
     console.log("isMember: ", res);
@@ -271,14 +265,14 @@ module.exports = async function (callback) {
     res = await rom.votesInHand(acct2);
     console.log("votesInHand of acct2: ", res.toNumber());
 
-    // res = await rom.votesAtBlock(acct2, bn);
-    // console.log("votesAtBlock of acct2: ", res);
+    res = await rom.votesAtBlock(acct2, bn);
+    console.log("votesAtBlock of acct2: ", res);
 
     res = await rom.sharesInHand(acct2);
     console.log("sharesInHand of acct2: ", res);
 
-    // res = await rom.groupNo(acct2);
-    // console.log("groupNo of acct2: ", res.toNumber());
+    res = await rom.groupNo(acct2);
+    console.log("groupNo of acct2: ", res.toNumber());
 
     res = await rom.qtyOfMembers();
     console.log("qtyOfMembers: ", res.toNumber());
@@ -288,12 +282,11 @@ module.exports = async function (callback) {
 
     // ==== HandOver keeper rights ====
 
-    // const bosKeeper = await BOSKeeper.deployed();
-    // await bos.setManager(1, accounts[0], bosKeeper.address);
+    const bosKeeper = await BOSKeeper.deployed();
+    await bos.setBookeeper(bosKeeper.address);
 
-    // events = await rc.getPastEvents("SetManager");
-
-    // console.log("Event 'SetManager': ", events[0].returnValues);
+    const romKeeper = await ROMKeeper.deployed();
+    await rom.setBookeeper(romKeeper.address);
 
     callback();
 }

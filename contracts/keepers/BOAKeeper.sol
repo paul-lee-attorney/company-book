@@ -92,8 +92,6 @@ contract BOAKeeper is
 
         IBookSetting(ia).setBOS(address(_bos));
         IBookSetting(ia).setROM(address(_rom));
-
-        _bom.setBooksOfCorp(ia);
     }
 
     function removeIA(address ia, uint40 caller)

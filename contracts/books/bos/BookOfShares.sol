@@ -46,13 +46,8 @@ contract BookOfShares is IBookOfShares, ROMSetting {
     // ssn => Share
     mapping(uint256 => Share) private _shares;
 
-    // ---- PayInCap Locker ----
-    struct Locker {
-        uint64 amount; //实缴金额
-        bytes32 hashLock; //哈希锁
-    }
-    // ssn => Locker
-    mapping(uint256 => Locker) private _lockers;
+    // zero(16b) & ssn & expireDate & shareholder & hashLock (128b) => amount
+    mapping(bytes32 => uint64) private _lockers;
 
     //##################
     //##   Modifier   ##
@@ -147,53 +142,51 @@ contract BookOfShares is IBookOfShares, ROMSetting {
 
     // ==== PayInCapital ====
 
-    function setPayInAmount(
-        uint32 ssn,
-        uint64 amount,
-        bytes32 hashLock
-    ) external shareExist(ssn) onlyDK {
-        require(amount > 0, "BOS.setPayInAmount: zero payIn amount");
-        require(
-            hashLock > bytes32(0),
-            "BOS.setPayInAmount: zero payIn hashLock"
-        );
+    function setPayInAmount(bytes32 sn, uint64 amount) external onlyDK {
+        require(_lockers[sn] == 0, "BOS.setPayInAmount: locker occupied");
 
-        Locker storage locker = _lockers[ssn];
-        locker.amount = amount;
-        locker.hashLock = hashLock;
+        _lockers[sn] = amount;
 
-        emit SetPayInAmount(_shares[ssn].shareNumber, amount, hashLock);
+        emit SetPayInAmount(sn, amount);
     }
 
-    function requestPaidInCapital(uint32 ssn, string memory hashKey)
+    function requestPaidInCapital(bytes32 sn, string memory hashKey)
         external
-        shareExist(ssn)
         onlyDK
     {
         require(
-            _lockers[ssn].hashLock == keccak256(bytes(hashKey)),
+            sn.issueDate() >= block.timestamp,
+            "BOS.requestPaidInCapital: missed expireDate"
+        );
+
+        require(
+            sn.hashLockOfBOSLocker() == keccak256(bytes(hashKey)).hashTrim(),
             "BOS.requestPaidInCapital: wrong key"
         );
 
-        uint64 amount = _lockers[ssn].amount;
-
-        require(amount > 0, "BOS.requestPaidInCapital: zero payIn amount");
+        uint64 amount = _lockers[sn];
 
         // 增加“股票”项下实缴出资金额
-        _payInCapital(ssn, amount);
+        _payInCapital(sn.ssn(), amount);
 
-        _rom.changeAmtOfMember(
-            _shares[ssn].shareNumber.shareholder(),
-            amount,
-            0,
-            false
-        );
+        _rom.changeAmtOfMember(sn.shareholder(), amount, 0, false);
 
         // 增加公司的“实缴出资”总额
         _rom.capIncrease(amount, 0);
 
         // remove payInAmount;
-        _lockers[ssn].amount = 0;
+        delete _lockers[sn];
+    }
+
+    function withdrawPayInAmount(bytes32 sn) external onlyDK {
+        require(
+            sn.issueDate() < block.timestamp - 15 minutes,
+            "BOS.withdrawPayInAmount: still within effective period"
+        );
+
+        delete _lockers[sn];
+
+        emit WithdrawPayInAmount(sn);
     }
 
     // ==== TransferShare ====
@@ -497,15 +490,7 @@ contract BookOfShares is IBookOfShares, ROMSetting {
 
     // ==== PayInCapital ====
 
-    function getLocker(uint32 ssn)
-        external
-        view
-        shareExist(ssn)
-        returns (uint64 amount, bytes32 hashLock)
-    {
-        Locker storage locker = _lockers[ssn];
-
-        amount = locker.amount;
-        hashLock = locker.hashLock;
+    function getLocker(bytes32 sn) external view returns (uint64 amount) {
+        amount = _lockers[sn];
     }
 }

@@ -12,7 +12,7 @@ module.exports = async function (callback) {
     const accounts = await web3.eth.getAccounts();
     console.log("accts: ", accounts);
 
-    const acct0 = await rc.userNo(accounts[0]);
+    const acct0 = await rc.userNo.call(accounts[0]);
     console.log("acct0: ", acct0.toNumber());
 
     await rc.regUser({
@@ -20,7 +20,7 @@ module.exports = async function (callback) {
     });
     console.log("acct1 registered ");
 
-    const acct1 = await rc.userNo(accounts[1], {
+    const acct1 = await rc.userNo.call(accounts[1], {
         from: accounts[1]
     });
     console.log("acct1: ", acct1.toNumber());
@@ -30,7 +30,7 @@ module.exports = async function (callback) {
     });
     console.log("acct2 registered ");
 
-    const acct2 = await rc.userNo(accounts[2], {
+    const acct2 = await rc.userNo.call(accounts[2], {
         from: accounts[2]
     });
     console.log("acct2: ", acct2.toNumber());
@@ -40,7 +40,7 @@ module.exports = async function (callback) {
     });
     console.log("acct3 registered.");
 
-    const acct3 = await rc.userNo(accounts[3], {
+    const acct3 = await rc.userNo.call(accounts[3], {
         from: accounts[3]
     });
     console.log("acct3: ", acct3.toNumber());
@@ -50,7 +50,7 @@ module.exports = async function (callback) {
     });
     console.log("acct4 registered.");
 
-    const acct4 = await rc.userNo(accounts[4], {
+    const acct4 = await rc.userNo.call(accounts[4], {
         from: accounts[4]
     });
     console.log("acct4: ", acct4.toNumber());
@@ -60,7 +60,7 @@ module.exports = async function (callback) {
     });
     console.log("acct5 registered.");
 
-    const acct5 = await rc.userNo(accounts[5], {
+    const acct5 = await rc.userNo.call(accounts[5], {
         from: accounts[5]
     });
     console.log("acct5: ", acct5.toNumber());
@@ -70,7 +70,7 @@ module.exports = async function (callback) {
     });
     console.log("acct6 registered.");
 
-    const acct6 = await rc.userNo(accounts[6], {
+    const acct6 = await rc.userNo.call(accounts[6], {
         from: accounts[6]
     });
     console.log("acct6: ", acct6.toNumber());
@@ -80,7 +80,7 @@ module.exports = async function (callback) {
     });
     console.log("acct7 registered.");
 
-    const acct7 = await rc.userNo(accounts[7], {
+    const acct7 = await rc.userNo.call(accounts[7], {
         from: accounts[7]
     });
     console.log("acct7: ", acct7.toNumber());
@@ -90,7 +90,7 @@ module.exports = async function (callback) {
     });
     console.log("acct8 registered.");
 
-    const acct8 = await rc.userNo(accounts[8], {
+    const acct8 = await rc.userNo.call(accounts[8], {
         from: accounts[8]
     });
     console.log("acct8: ", acct8.toNumber());
@@ -100,7 +100,7 @@ module.exports = async function (callback) {
     });
     console.log("acct9 registered.");
 
-    const acct9 = await rc.userNo(accounts[9], {
+    const acct9 = await rc.userNo.call(accounts[9], {
         from: accounts[9]
     });
     console.log("acct9: ", acct9.toNumber());

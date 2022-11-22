@@ -291,12 +291,8 @@ contract GeneralKeeper is IGeneralKeeper, AccessControl {
         _BOMKeeper.createCorpSeal();
     }
 
-    function createBoardSeal(address bod) external onlyDK {
-        _BOMKeeper.createBoardSeal(bod);
-    }
-
-    function setBooksOfCorp(address book) external onlyDK {
-        _BOMKeeper.setBooksOfCorp(book);
+    function createBoardSeal() external onlyDK {
+        _BOMKeeper.createBoardSeal();
     }
 
     function setRegNumberHash(bytes32 numHash) external onlyDK {
@@ -479,16 +475,16 @@ contract GeneralKeeper is IGeneralKeeper, AccessControl {
     // ##   BOSKeeper   ##
     // ###################
 
-    function setPayInAmount(
-        uint32 ssn,
-        uint64 amount,
-        bytes32 hashLock
-    ) external onlyDK {
-        _BOSKeeper.setPayInAmount(ssn, amount, hashLock);
+    function setPayInAmount(bytes32 sn, uint64 amount) external onlyDK {
+        _BOSKeeper.setPayInAmount(sn, amount);
     }
 
-    function requestPaidInCapital(uint32 ssn, string memory hashKey) external {
-        _BOSKeeper.requestPaidInCapital(ssn, hashKey, _msgSender());
+    function requestPaidInCapital(bytes32 sn, string memory hashKey) external {
+        _BOSKeeper.requestPaidInCapital(sn, hashKey);
+    }
+
+    function withdrawPayInAmount(bytes32 sn) external onlyDK {
+        _BOSKeeper.withdrawPayInAmount(sn);
     }
 
     function decreaseCapital(

@@ -16,7 +16,12 @@ interface IRegCenter {
 
     event SetBlockSpeed(uint32 speed);
 
-    event SetRewards(uint32 eoaRewards, uint32 coaRewards, uint32 discount);
+    event SetRewards(
+        uint32 eoaRewards,
+        uint32 coaRewards,
+        uint16 discRate,
+        uint32 offAmt
+    );
 
     event TransferOwnership(address newOwner);
 
@@ -36,15 +41,17 @@ interface IRegCenter {
 
     event TakePoints(bytes32 indexed sn, uint96 amt);
 
+    event ChargeFee(uint40 indexed userNo, uint32 fee);
+
     // ==== User ====
 
     event RegUser(uint40 indexed userNo, address primeKey, bool isCOA);
 
     event SetBackupKey(uint40 indexed userNo, address backupKey);
 
-    event AcceptMember(uint40 indexed userNo, address member);
+    // event AcceptMember(uint40 indexed userNo, address member);
 
-    event DismissMember(uint40 indexed userNo, address member);
+    // event DismissMember(uint40 indexed userNo, address member);
 
     // ##################
     // ##    写端口    ##
@@ -57,7 +64,8 @@ interface IRegCenter {
     function setRewards(
         uint32 eoaRewards,
         uint32 coaRewards,
-        uint32 discount
+        uint16 discRate,
+        uint32 offAmt
     ) external;
 
     // ==== Power transfer ====
@@ -86,9 +94,9 @@ interface IRegCenter {
 
     function setBackupKey(address bKey) external;
 
-    function acceptMember(address member) external;
+    // function acceptMember(address member) external;
 
-    function dismissMember(address member) external;
+    // function dismissMember(address member) external;
 
     // ##################
     // ##   查询端口   ##
@@ -106,7 +114,8 @@ interface IRegCenter {
         returns (
             uint32 eoaRewards,
             uint32 coaRewards,
-            uint32 discount
+            uint16 discRate,
+            uint32 offAmt
         );
 
     function counterOfUsers() external view returns (uint40);

@@ -14,9 +14,7 @@ interface IBOMKeeper {
 
     function createCorpSeal() external;
 
-    function createBoardSeal(address bod) external;
-
-    function setBooksOfCorp(address book) external;
+    function createBoardSeal() external;
 
     function setRegNumberHash(bytes32 numHash) external;
 

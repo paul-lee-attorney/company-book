@@ -55,19 +55,6 @@ contract BookOfMotions is IBookOfMotions, MeetingMinutes, BOASetting {
         _rc.setBackupKey(bod);
     }
 
-    function setBooksOfCorp(address book) external {
-        require(
-            msg.sender == getBookeeper() ||
-                _gk.isKeeper(uint8(TitleOfKeepers.BOAKeeper), msg.sender) ||
-                _gk.isKeeper(uint8(TitleOfKeepers.BOHKeeper), msg.sender) ||
-                _gk.isKeeper(uint8(TitleOfKeepers.SHAKeeper), msg.sender) ||
-                _boh.isRegistered(msg.sender),
-            "BOM.setBooksOfCorp: not allowed keeper"
-        );
-
-        _rc.acceptMember(book);
-    }
-
     function setRegNumberHash(bytes32 numHash) external onlyDK {
         _regNumHash = numHash;
         emit SetRegNumberHash(numHash);

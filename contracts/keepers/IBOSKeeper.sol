@@ -14,17 +14,11 @@ interface IBOSKeeper {
 
     // ==== BOS funcs ====
 
-    function setPayInAmount(
-        uint32 ssn,
-        uint64 amount,
-        bytes32 hashLock
-    ) external;
+    function setPayInAmount(bytes32 sn, uint64 amount) external;
 
-    function requestPaidInCapital(
-        uint32 ssn,
-        string memory hashKey,
-        uint40 caller
-    ) external;
+    function requestPaidInCapital(bytes32 sn, string memory hashKey) external;
+
+    function withdrawPayInAmount(bytes32 sn) external;
 
     function decreaseCapital(
         uint32 ssn,
@@ -32,8 +26,5 @@ interface IBOSKeeper {
         uint64 par
     ) external;
 
-    function updatePaidInDeadline(
-        uint32 ssn, 
-        uint32 line
-    ) external;
+    function updatePaidInDeadline(uint32 ssn, uint32 line) external;
 }

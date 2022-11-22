@@ -16,14 +16,7 @@ interface IRegCenter {
 
     event SetBlockSpeed(uint32 speed);
 
-    event SetRates(
-        uint32 eoaRewards,
-        uint32 coaRewards,
-        uint32 queryPrice,
-        uint32 maintenancePrice
-    );
-
-    event SetQuotaOfMembersQty(uint32 quota);
+    event SetRewards(uint32 eoaRewards, uint32 coaRewards, uint32 discount);
 
     event TransferOwnership(address newOwner);
 
@@ -61,14 +54,11 @@ interface IRegCenter {
 
     function setBlockSpeed(uint32 speed) external;
 
-    function setRates(
+    function setRewards(
         uint32 eoaRewards,
         uint32 coaRewards,
-        uint32 queryPrice,
-        uint32 maintenancePrice
+        uint32 discount
     ) external;
-
-    function setQuotaOfMembersQty(uint32 quota) external;
 
     // ==== Power transfer ====
 
@@ -110,17 +100,14 @@ interface IRegCenter {
 
     function blocksPerHour() external view returns (uint32);
 
-    function getRates()
+    function getRewards()
         external
         view
         returns (
             uint32 eoaRewards,
             uint32 coaRewards,
-            uint32 queryPrice,
-            uint32 maintenancePrice
+            uint32 discount
         );
-
-    function quotaOfMembersQty() external view returns (uint32);
 
     function counterOfUsers() external view returns (uint40);
 
@@ -134,7 +121,7 @@ interface IRegCenter {
 
     function qtyOfMembers(uint40 user) external view returns (uint32);
 
-    function userNo(address key) external returns (uint40);
+    function userNo(address targetAddr) external returns (uint40 target);
 
     function balanceOf(uint40 user) external view returns (uint96);
 }

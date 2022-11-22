@@ -117,9 +117,9 @@ module.exports = async function (deployer, network, accounts) {
         from: accounts[0]
     });
 
-    await rc.regUser({
-        from: accounts[1]
-    });
+    // await rc.regUser({
+    //     from: accounts[1]
+    // });
 
     let acct0 = 1;
 

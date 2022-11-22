@@ -15,7 +15,14 @@ module.exports = async function (callback) {
     const acct0 = await rc.userNo(accounts[0]);
     console.log("acct0: ", acct0.toNumber());
 
-    const acct1 = await rc.userNo(accounts[1]);
+    await rc.regUser({
+        from: accounts[1]
+    });
+    console.log("acct1 registered ");
+
+    const acct1 = await rc.userNo(accounts[1], {
+        from: accounts[1]
+    });
     console.log("acct1: ", acct1.toNumber());
 
     await rc.regUser({

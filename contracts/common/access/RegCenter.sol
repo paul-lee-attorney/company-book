@@ -17,6 +17,7 @@ contract RegCenter is IRegCenter {
     struct User {
         bool isCOA;
         uint32 qtyOfMembers;
+        uint32 counterOfVerify;
         address primeKey;
         address backupKey;
         uint96 balance;
@@ -40,9 +41,7 @@ contract RegCenter is IRegCenter {
         uint32 blocksPerHour;
         uint32 eoaRewards;
         uint32 coaRewards;
-        uint32 maintenancePrice;
-        uint32 queryPrice;
-        uint32 quotaOfMembersQty;
+        uint32 discount;
         uint40 userCounter;
     }
 
@@ -104,24 +103,16 @@ contract RegCenter is IRegCenter {
         emit SetBlockSpeed(speed);
     }
 
-    function setRates(
+    function setRewards(
         uint32 eoaRewards,
         uint32 coaRewards,
-        uint32 maintenancePrice,
-        uint32 queryPrice
+        uint32 discount
     ) external onlyOwner {
         _opts.eoaRewards = eoaRewards;
         _opts.coaRewards = coaRewards;
-        _opts.queryPrice = queryPrice;
-        _opts.maintenancePrice = maintenancePrice;
+        _opts.discount = discount;
 
-        emit SetRates(eoaRewards, coaRewards, queryPrice, maintenancePrice);
-    }
-
-    function setQuotaOfMembersQty(uint32 quota) external onlyKeeper {
-        _opts.quotaOfMembersQty = quota;
-
-        emit SetQuotaOfMembersQty(quota);
+        emit SetRewards(eoaRewards, coaRewards, discount);
     }
 
     // ==== Power transfer ====
@@ -312,11 +303,10 @@ contract RegCenter is IRegCenter {
 
         uint40 caller = _userNo[_msgSender];
 
-        if (_users[caller].qtyOfMembers < _opts.quotaOfMembersQty) {
-            _userNo[member] = caller;
-            _users[caller].qtyOfMembers++;
-            emit AcceptMember(caller, member);
-        } else revert("RC.accetMember: qtyOfMembers overflow");
+        _userNo[member] = caller;
+        _users[caller].qtyOfMembers++;
+
+        emit AcceptMember(caller, member);
     }
 
     function dismissMember(address member) external onlyPrimeKey {
@@ -347,24 +337,18 @@ contract RegCenter is IRegCenter {
         return _opts.blocksPerHour;
     }
 
-    function getRates()
+    function getRewards()
         external
         view
         returns (
             uint32 eoaRewards,
             uint32 coaRewards,
-            uint32 queryPrice,
-            uint32 maintenancePrice
+            uint32 discount
         )
     {
         eoaRewards = _opts.eoaRewards;
         coaRewards = _opts.coaRewards;
-        queryPrice = _opts.queryPrice;
-        maintenancePrice = _opts.maintenancePrice;
-    }
-
-    function quotaOfMembersQty() external view returns (uint32) {
-        return _opts.quotaOfMembersQty;
+        discount = _opts.discount;
     }
 
     function counterOfUsers() external view returns (uint40) {
@@ -393,35 +377,41 @@ contract RegCenter is IRegCenter {
         return _users[user].qtyOfMembers;
     }
 
+    function balanceOf(uint40 user) external view returns (uint96) {
+        return _users[user].balance;
+    }
+
     function userNo(address targetAddr) external returns (uint40) {
         uint40 caller = _userNo[msg.sender];
         uint40 target = _userNo[targetAddr];
 
-        require(caller > 0, "RC.userNo: caller not registered");
-        require(target > 0, "RC.userNo: target not registered");
+        if (caller != target) {
+            require(caller > 0, "RC.userNo: caller not registered");
+            require(target > 0, "RC.userNo: target not registered");
 
-        if (msg.sender != targetAddr) {
+            uint32 mFee = _maintenanceFee(target);
+            uint32 qFee = mFee / 4;
+
             require(
-                balanceOf(target) > _opts.maintenancePrice,
+                _users[target].balance > mFee,
                 "RC.userNo: insufficient target's balance"
             );
-            _users[target].balance -= _opts.maintenancePrice;
+            require(
+                _users[caller].balance > qFee,
+                "RC.userNo: insufficient caller's balance"
+            );
+            _users[target].balance -= mFee;
+            _users[caller].balance -= qFee;
 
-            if (tx.origin == targetAddr) {
-                _users[caller].balance += _opts.queryPrice;
-            } else {
-                require(
-                    balanceOf(caller) > _opts.queryPrice,
-                    "RC.userNo: insufficient caller's balance"
-                );
-                _users[caller].balance -= _opts.queryPrice;
-            }
+            _users[target].counterOfVerify++;
         }
 
-        return _userNo[targetAddr];
+        return target;
     }
 
-    function balanceOf(uint40 user) public view returns (uint96) {
-        return _users[user].balance;
+    function _maintenanceFee(uint40 target) private view returns (uint32 fee) {
+        uint32 para = _users[target].counterOfVerify * 18 + _opts.discount;
+
+        fee = (para < 256000) ? (256168 - para) : 168;
     }
 }

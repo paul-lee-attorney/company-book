@@ -9,14 +9,12 @@ pragma solidity ^0.8.8;
 
 import "./ITerm.sol";
 
-interface ILockUp is ITerm{
+interface ILockUp is ITerm {
     // ################
     // ##   Event   ##
     // ################
 
     event SetLocker(uint32 indexed ssn, uint32 dueDate);
-
-    event UpdateLocker(uint32 indexed ssn, uint32 dueDate);
 
     event AddKeyholder(uint32 indexed ssn, uint40 keyholder);
 
@@ -29,8 +27,6 @@ interface ILockUp is ITerm{
     // ################
 
     function setLocker(uint32 ssn, uint32 dueDate) external;
-
-    function updateLocker(uint32 ssn, uint32 dueDate) external;
 
     function delLocker(uint32 ssn) external;
 

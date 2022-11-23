@@ -4,7 +4,6 @@
 pragma solidity ^0.8.8;
 
 library EnumerableSet {
-
     struct Set {
         bytes32[] _values;
         mapping(bytes32 => uint256) _indexes;
@@ -215,7 +214,11 @@ library EnumerableSet {
         return uint256(_at(set._inner, index));
     }
 
-    function values(UintSet storage set) internal view returns (uint256[] memory) {
+    function values(UintSet storage set)
+        internal
+        view
+        returns (uint256[] memory)
+    {
         bytes32[] memory store = _values(set._inner);
         uint256[] memory result;
 
@@ -250,13 +253,13 @@ library EnumerableSet {
     }
 
     // shall be checked at front-end so as to avoid overflow
-    function valuesToUint16(UintSet storage set)
+    function valuesToUint32(UintSet storage set)
         internal
         view
-        returns (uint16[] memory)
+        returns (uint32[] memory)
     {
         bytes32[] memory store = _values(set._inner);
-        uint16[] memory result;
+        uint32[] memory result;
 
         assembly {
             result := store

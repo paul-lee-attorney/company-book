@@ -18,6 +18,7 @@ import "../../../common/lib/EnumerableSet.sol";
 import "../../../common/components/ISigPage.sol";
 
 import "./ILockUp.sol";
+import "./ITerm.sol";
 
 contract LockUp is ILockUp, BOMSetting {
     using ArrayUtils for uint40[];
@@ -26,93 +27,39 @@ contract LockUp is ILockUp, BOMSetting {
 
     // 股票锁定柜
     struct Locker {
-        uint32 ssn; // short share number
         uint32 dueDate;
-        uint32 prev;
-        uint32 next;
         EnumerableSet.UintSet keyHolders;
     }
-
-    /*
-    lockers[0] {
-        ssn: qtyOfLockers;
-        uint32 (null);
-        uint32 tail;
-        uint32 head;
-        keyHolders: (null);
-    }
-*/
 
     // 基准日条件未成就时，按“2105-09-19”设定到期日
     uint32 constant REMOTE_FUTURE = 4282732800;
 
+    // lockers[0].keyHolders: ssnList;
+
     // ssn => Locker
     mapping(uint256 => Locker) private _lockers;
-
-    // ################
-    // ##  Modifier  ##
-    // ################
-
-    modifier beLocked(uint32 ssn) {
-        require(isLocked(ssn), "share NOT locked");
-        _;
-    }
 
     // ################
     // ##   写接口   ##
     // ################
 
     function setLocker(uint32 ssn, uint32 dueDate) external onlyAttorney {
-        _lockers[ssn].ssn = ssn;
         _lockers[ssn].dueDate = dueDate == 0 ? REMOTE_FUTURE : dueDate;
 
-        uint32 tail = _lockers[0].prev;
-
-        _lockers[tail].next = ssn;
-        _lockers[ssn].prev = tail;
-
-        _lockers[0].prev = ssn;
-
-        _lockers[0].ssn++;
-
+        _lockers[0].keyHolders.add(ssn);
         emit SetLocker(ssn, _lockers[ssn].dueDate);
     }
 
-    function updateLocker(uint32 ssn, uint32 dueDate)
-        external
-        onlyAttorney
-        beLocked(ssn)
-    {
-        Locker storage l = _lockers[ssn];
-
-        require(
-            l.dueDate == REMOTE_FUTURE,
-            "LU.updateLocker: not a REMOTE_FUTURE Locker"
-        );
-
-        l.dueDate = dueDate;
-
-        emit UpdateLocker(ssn, dueDate);
+    function delLocker(uint32 ssn) external onlyAttorney {
+        if (_lockers[0].keyHolders.remove(ssn)) {
+            delete _lockers[ssn];
+            emit DelLocker(ssn);
+        }
     }
 
-    function delLocker(uint32 ssn) external onlyAttorney beLocked(ssn) {
-        Locker storage l = _lockers[ssn];
+    function addKeyholder(uint32 ssn, uint40 keyholder) external onlyAttorney {
+        require(ssn != 0, "LU.addKeyholder: zero ssn");
 
-        _lockers[l.prev].next = l.next;
-        _lockers[l.next].prev = l.prev;
-
-        delete _lockers[ssn];
-
-        _lockers[0].ssn--;
-
-        emit DelLocker(ssn);
-    }
-
-    function addKeyholder(uint32 ssn, uint40 keyholder)
-        external
-        onlyAttorney
-        beLocked(ssn)
-    {
         if (_lockers[ssn].keyHolders.add(keyholder)) {
             emit AddKeyholder(ssn, keyholder);
         }
@@ -121,8 +68,9 @@ contract LockUp is ILockUp, BOMSetting {
     function removeKeyholder(uint32 ssn, uint40 keyholder)
         external
         onlyAttorney
-        beLocked(ssn)
     {
+        require(ssn != 0, "LU.removeKeyholder: zero ssn");
+
         if (_lockers[ssn].keyHolders.remove(keyholder)) {
             emit RemoveKeyholder(ssn, keyholder);
         }
@@ -133,13 +81,12 @@ contract LockUp is ILockUp, BOMSetting {
     // ################
 
     function isLocked(uint32 ssn) public view returns (bool) {
-        return ssn > 0 && _lockers[ssn].ssn == ssn;
+        return _lockers[0].keyHolders.contains(ssn);
     }
 
     function getLocker(uint32 ssn)
         external
         view
-        beLocked(ssn)
         returns (uint32 dueDate, uint40[] memory keyHolders)
     {
         dueDate = _lockers[ssn].dueDate;
@@ -147,17 +94,7 @@ contract LockUp is ILockUp, BOMSetting {
     }
 
     function lockedShares() external view returns (uint32[] memory) {
-        uint32[] memory list = new uint32[](_lockers[0].ssn);
-
-        uint256 i = 0;
-        uint32 cur = _lockers[0].next;
-        while (cur > 0) {
-            list[i] = _lockers[cur].ssn;
-            cur = _lockers[cur].next;
-            i++;
-        }
-
-        return list;
+        return _lockers[0].keyHolders.valuesToUint32();
     }
 
     // ################

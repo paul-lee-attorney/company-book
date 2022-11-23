@@ -208,7 +208,7 @@ contract BookOfShares is IBookOfShares, ROMSetting {
         bytes32 shareNumber = _shares[ssn].shareNumber;
 
         require(to != 0, "shareholder userNo is ZERO");
-        require(to <= _rc.counterOfUsers(), "shareholder userNo overflow");
+        // require(to <= _rc.counterOfUsers(), "shareholder userNo overflow");
 
         // 判断是否需要新增股东，若需要判断是否超过法定人数上限
         _rom.addMember(to);
@@ -274,7 +274,7 @@ contract BookOfShares is IBookOfShares, ROMSetting {
         shareExist(ssn)
         notFreezed(ssn)
     {
-        require(paid != 0, "ZERO paid");
+        // require(paid != 0, "ZERO paid");
 
         Share storage share = _shares[ssn];
 
@@ -291,7 +291,7 @@ contract BookOfShares is IBookOfShares, ROMSetting {
         shareExist(ssn)
         notFreezed(ssn)
     {
-        require(paid != 0, "ZERO paid");
+        // require(paid != 0, "ZERO paid");
 
         Share storage share = _shares[ssn];
         require(share.paid >= (share.cleanPar + paid), "paid overflow");
@@ -404,7 +404,7 @@ contract BookOfShares is IBookOfShares, ROMSetting {
         Share storage share = _shares[ssn];
 
         require(par != 0, "par is ZERO");
-        require(share.par >= par, "par OVERFLOW");
+        // require(share.par >= par, "par OVERFLOW");
         require(share.cleanPar >= par, "cleanPar OVERFLOW");
         // require(share.state < 4, "FREEZED share");
         require(paid <= par, "paid BIGGER than par");

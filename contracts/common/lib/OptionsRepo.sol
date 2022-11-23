@@ -140,15 +140,13 @@ library OptionsRepo {
     function _updateSequence(bytes32 sn, uint32 seq)
         private
         pure
-        returns (bytes32 output)
+        returns (bytes32)
     {
         bytes memory _sn = abi.encodePacked(sn);
-        for (uint256 i = 0; i < 4; i++) {
-            _sn[i + 1] = bytes1(uint8(seq >> (8 * i)));
-        }
-        assembly {
-            output := mload(add(_sn, 0x20))
-        }
+
+        _sn = _sn.dateToSN(1, seq);
+
+        return _sn.bytesToBytes32();
     }
 
     function addObligorIntoOption(

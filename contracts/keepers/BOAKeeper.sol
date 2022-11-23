@@ -59,7 +59,7 @@ contract BOAKeeper is
 
     modifier onlyOwnerOf(address body, uint40 caller) {
         require(
-            caller != 0 && IAccessControl(body).getManager(0) == caller,
+            IAccessControl(body).getManager(0) == caller,
             "NOT Owner of Doc"
         );
         _;

@@ -64,20 +64,6 @@ library SNParser {
         return uint16(bytes2(sn << 128));
     }
 
-    // ======== DocSN ========
-
-    function typeOfDoc(bytes32 sn) internal pure returns (uint8) {
-        return uint8(sn[0]);
-    }
-
-    function createDateOfDoc(bytes32 sn) internal pure returns (uint32) {
-        return uint32(bytes4(sn << 40));
-    }
-
-    function creatorOfDoc(bytes32 sn) internal pure returns (uint32) {
-        return uint32(bytes4(sn << 72));
-    }
-
     // ======== FirstRefusalRule ========
 
     function typeOfFR(bytes32 sn) internal pure returns (uint8) {

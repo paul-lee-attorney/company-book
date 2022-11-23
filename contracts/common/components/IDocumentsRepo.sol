@@ -14,9 +14,9 @@ interface IDocumentsRepo {
 
     event SetTemplate(address temp, uint8 typeOfDoc);
 
-    event UpdateStateOfDoc(bytes32 indexed sn, uint8 state);
+    event UpdateStateOfDoc(address indexed body, uint8 state);
 
-    event RemoveDoc(bytes32 indexed sn);
+    event RemoveDoc(address indexed body);
 
     //##################
     //##    写接口    ##
@@ -30,10 +30,7 @@ interface IDocumentsRepo {
 
     function removeDoc(address body) external;
 
-    function circulateDoc(
-        address body,
-        bytes32 rule
-    ) external;
+    function circulateDoc(address body, bytes32 rule) external;
 
     function pushToNextState(address body) external;
 
@@ -53,12 +50,18 @@ interface IDocumentsRepo {
 
     function qtyOfDocs() external view returns (uint256);
 
-    function docsList() external view returns (bytes32[] memory);
+    function docsList() external view returns (address[] memory);
 
     function getDoc(address body)
         external
         view
-        returns (bytes32 sn, bytes32 docHash);
+        returns (
+            uint8 docType,
+            uint32 sequence,
+            uint40 creator,
+            uint32 createDate,
+            bytes32 docHash
+        );
 
     function currentState(address body) external view returns (uint8);
 

@@ -9,7 +9,6 @@ pragma solidity ^0.8.8;
 
 import "./IDocumentsRepo.sol";
 
-import "../lib/SNFactory.sol";
 import "../lib/SNParser.sol";
 import "../lib/EnumerableSet.sol";
 
@@ -18,11 +17,8 @@ import "../access/AccessControl.sol";
 import "../utils/CloneFactory.sol";
 
 contract DocumentsRepo is IDocumentsRepo, CloneFactory, AccessControl {
-    using SNFactory for bytes;
     using SNParser for bytes32;
-    using EnumerableSet for EnumerableSet.Bytes32Set;
-
-    address[18] private _templates;
+    using EnumerableSet for EnumerableSet.AddressSet;
 
     enum BODStates {
         ZeroPoint,
@@ -36,24 +32,25 @@ contract DocumentsRepo is IDocumentsRepo, CloneFactory, AccessControl {
     }
 
     struct Doc {
-        bytes32 sn;
-        bytes32 docHash;
+        uint8 docType;
+        uint32 sequence;
+        uint40 creator;
+        uint32 createDate;
         uint32 reviewDeadlineBN;
         uint32 votingDeadlineBN;
         uint8 state;
+        bytes32 docHash;
     }
 
-    // struct snInfo {
-    //     uint8 docType;           1
-    //     uint32 sequence;         4
-    //     uint32 createDate;       4
-    //     uint40 creator;          5
-    // }
+    // docType => address
+    mapping(uint256 => address) private _templates;
+
+    // _docs[0].sequence: counterOfDoc;
 
     // addrOfBody => Doc
     mapping(address => Doc) internal _docs;
 
-    EnumerableSet.Bytes32Set private _docsList;
+    EnumerableSet.AddressSet private _docsList;
 
     //####################
     //##    modifier    ##
@@ -66,7 +63,7 @@ contract DocumentsRepo is IDocumentsRepo, CloneFactory, AccessControl {
 
     modifier onlyRegistered(address body) {
         require(
-            _docs[body].sn != bytes32(0),
+            _docsList.contains(body),
             "DR.md.onlyRegistered: doc NOT registered"
         );
         _;
@@ -93,25 +90,8 @@ contract DocumentsRepo is IDocumentsRepo, CloneFactory, AccessControl {
     //##################
 
     function setTemplate(address body, uint8 typeOfDoc) external onlyDK {
-        require(typeOfDoc < 18, "DR.setTemplate: typeOfDoc over flow");
         _templates[typeOfDoc] = body;
         emit SetTemplate(body, typeOfDoc);
-    }
-
-    function _createSN(
-        uint8 docType,
-        uint32 ssn,
-        uint32 createDate,
-        uint40 creator
-    ) private pure returns (bytes32 sn) {
-        bytes memory _sn = new bytes(32);
-
-        _sn[0] = bytes1(docType);
-        _sn = _sn.dateToSN(1, ssn);
-        _sn = _sn.dateToSN(5, createDate);
-        _sn = _sn.acctToSN(9, creator);
-
-        sn = _sn.bytesToBytes32();
     }
 
     function createDoc(uint8 docType, uint40 creator)
@@ -124,33 +104,24 @@ contract DocumentsRepo is IDocumentsRepo, CloneFactory, AccessControl {
 
         _docs[address(0)].reviewDeadlineBN++;
 
-        uint32 seq = _docs[address(0)].reviewDeadlineBN;
-
-        bytes32 sn = _createSN(docType, seq, uint32(block.timestamp), creator);
-
         Doc storage doc = _docs[body];
 
-        doc.sn = sn;
+        doc.docType = docType;
+        doc.sequence = _docs[address(0)].reviewDeadlineBN;
+        doc.creator = creator;
+        doc.createDate = uint32(block.timestamp);
         doc.state = uint8(BODStates.Created);
 
-        _docsList.add(sn);
+        _docsList.add(body);
 
-        emit UpdateStateOfDoc(sn, doc.state);
+        emit UpdateStateOfDoc(body, doc.state);
     }
 
-    function removeDoc(address body)
-        external
-        onlyDK
-        onlyRegistered(body)
-        onlyForPending(body)
-    {
-        bytes32 sn = _docs[body].sn;
-
-        _docsList.remove(sn);
-
-        delete _docs[body];
-
-        emit RemoveDoc(sn);
+    function removeDoc(address body) external onlyDK onlyForPending(body) {
+        if (_docsList.remove(body)) {
+            delete _docs[body];
+            emit RemoveDoc(body);
+        }
     }
 
     function circulateDoc(address body, bytes32 rule)
@@ -175,7 +146,7 @@ contract DocumentsRepo is IDocumentsRepo, CloneFactory, AccessControl {
 
         doc.state = uint8(BODStates.Circulated);
 
-        emit UpdateStateOfDoc(doc.sn, doc.state);
+        emit UpdateStateOfDoc(body, doc.state);
     }
 
     function pushToNextState(address body) public onlyRegistered(body) {
@@ -186,9 +157,9 @@ contract DocumentsRepo is IDocumentsRepo, CloneFactory, AccessControl {
             "DR.pushToNextState: not have access right"
         );
 
-        Doc storage doc = _docs[body];
-        doc.state++;
-        emit UpdateStateOfDoc(doc.sn, doc.state);
+        _docs[body].state++;
+
+        emit UpdateStateOfDoc(body, _docs[body].state);
     }
 
     //##################
@@ -200,11 +171,11 @@ contract DocumentsRepo is IDocumentsRepo, CloneFactory, AccessControl {
     }
 
     function isRegistered(address body) external view returns (bool) {
-        return _docs[body].sn != bytes32(0);
+        return _docsList.contains(body);
     }
 
     function counterOfDocs() external view returns (uint32) {
-        return _docs[address(0)].reviewDeadlineBN;
+        return _docs[address(0)].sequence;
     }
 
     function passedReview(address body)
@@ -234,7 +205,7 @@ contract DocumentsRepo is IDocumentsRepo, CloneFactory, AccessControl {
         return _docsList.length();
     }
 
-    function docsList() external view returns (bytes32[] memory) {
+    function docsList() external view returns (address[] memory) {
         return _docsList.values();
     }
 
@@ -242,11 +213,20 @@ contract DocumentsRepo is IDocumentsRepo, CloneFactory, AccessControl {
         external
         view
         onlyRegistered(body)
-        returns (bytes32 sn, bytes32 docHash)
+        returns (
+            uint8 docType,
+            uint32 sequence,
+            uint40 creator,
+            uint32 createDate,
+            bytes32 docHash
+        )
     {
         Doc storage doc = _docs[body];
 
-        sn = doc.sn;
+        docType = doc.docType;
+        sequence = doc.sequence;
+        creator = doc.creator;
+        createDate = doc.createDate;
         docHash = doc.docHash;
     }
 

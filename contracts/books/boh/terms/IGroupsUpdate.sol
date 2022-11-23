@@ -11,9 +11,7 @@ interface IGroupsUpdate {
     //##################
     //##    Event     ##
     //##################
-    event AddMemberOrder(uint40 acct, uint16 groupNo);
-
-    event RemoveMemberOrder(uint40 acct, uint16 groupNo);
+    event AddOrder(bytes32 order);
 
     event DelOrder(bytes32 order);
 
@@ -21,11 +19,13 @@ interface IGroupsUpdate {
     //##    Write     ##
     //##################
 
-    function addMemberOrder(uint40 acct, uint16 groupNo) external;
-
-    function removeMemberOrder(uint40 acct, uint16 groupNo) external;
+    function addOrder(bytes32 order) external;
 
     function delOrder(bytes32 order) external;
+
+    //##################
+    //##    Write     ##
+    //##################
 
     function orders() external view returns (bytes32[] memory);
 }

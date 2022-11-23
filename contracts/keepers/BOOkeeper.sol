@@ -32,8 +32,7 @@ contract BOOKeeper is IBOOKeeper, BOOSetting, BOSSetting {
         if (sn.typeOfOpt() % 2 == 1) {
             (uint40 rightholder, , , , ) = _boo.getOption(sn);
             require(caller == rightholder, "msgSender NOT rightholder");
-        } else
-            require(_boo.isObligor(sn, caller), "msgSender NOT seller");
+        } else require(_boo.isObligor(sn, caller), "msgSender NOT seller");
         _;
     }
 
@@ -59,23 +58,13 @@ contract BOOKeeper is IBOOKeeper, BOOSetting, BOSSetting {
         uint64 par,
         uint40 caller
     ) external onlyDK {
-
         uint40[] memory obligors = new uint40[](1);
         obligors[0] = caller;
 
-        _boo.createOption(
-            sn,
-            rightholder,
-            obligors,
-            paid,
-            par
-        );
+        _boo.createOption(sn, rightholder, obligors, paid, par);
     }
 
-    function joinOptionAsObligor(bytes32 sn, uint40 caller)
-        external
-        onlyDK
-    {
+    function joinOptionAsObligor(bytes32 sn, uint40 caller) external onlyDK {
         _boo.addObligorIntoOption(sn, caller);
     }
 
@@ -87,13 +76,13 @@ contract BOOKeeper is IBOOKeeper, BOOSetting, BOSSetting {
         _boo.removeObligorFromOption(sn, obligor);
     }
 
-    function updateOracle(bytes32 sn, uint32 d1, uint32 d2)
-        external
-        onlyDK
-    {
+    function updateOracle(
+        bytes32 sn,
+        uint32 d1,
+        uint32 d2
+    ) external onlyDK {
         _boo.updateOracle(sn, d1, d2);
     }
-
 
     function execOption(bytes32 sn, uint40 caller)
         external
@@ -143,7 +132,7 @@ contract BOOKeeper is IBOOKeeper, BOOSetting, BOSSetting {
     function _recoverCleanPar(bytes32[] memory plds) private {
         uint256 len = plds.length;
 
-        while (len > 0) {
+        while (len != 0) {
             _bos.increaseCleanPar(
                 plds[len - 1].shortShareNumberOfFt(),
                 plds[len - 1].paidOfFt()
@@ -186,7 +175,7 @@ contract BOOKeeper is IBOOKeeper, BOOSetting, BOSSetting {
     {
         _boo.revokeOption(sn);
 
-        if (sn.typeOfOpt() > 0) _recoverCleanPar(_boo.futures(sn));
+        if (sn.typeOfOpt() != 0) _recoverCleanPar(_boo.futures(sn));
         else _recoverCleanPar(_boo.pledges(sn));
     }
 
@@ -197,7 +186,7 @@ contract BOOKeeper is IBOOKeeper, BOOSetting, BOSSetting {
     {
         require(_boo.stateOfOption(sn) == 6, "option NOT revoked");
 
-        if (sn.typeOfOpt() > 0) _recoverCleanPar(_boo.pledges(sn));
+        if (sn.typeOfOpt() != 0) _recoverCleanPar(_boo.pledges(sn));
         else _recoverCleanPar(_boo.futures(sn));
     }
 }

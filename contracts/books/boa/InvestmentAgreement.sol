@@ -101,7 +101,7 @@ contract InvestmentAgreement is
         returns (bytes32)
     {
         require(sn.buyerOfDeal() != 0, "IA.createDeal: ZERO buyer");
-        require(sn.groupOfBuyer() > 0, "IA.createDeal: ZERO group");
+        require(sn.groupOfBuyer() != 0, "IA.createDeal: ZERO group");
 
         if (shareNumber != bytes32(0)) {
             require(
@@ -179,8 +179,12 @@ contract InvestmentAgreement is
         uint64 paid,
         uint64 par,
         uint32 closingDate
-    ) external dealExist(seq) attorneyOrKeeper(uint8(TitleOfKeepers.SHAKeeper)) {
-        require(par > 0, "par is ZERO");
+    )
+        external
+        dealExist(seq)
+        attorneyOrKeeper(uint8(TitleOfKeepers.SHAKeeper))
+    {
+        require(par != 0, "par is ZERO");
         require(par >= paid, "paid overflow");
         require(closingDate > block.number, "closingDate shall be future");
 
@@ -204,7 +208,7 @@ contract InvestmentAgreement is
 
         bytes32 sn = deal.sn;
 
-        if (sn.ssnOfDeal() > 0) {
+        if (sn.ssnOfDeal() != 0) {
             removeBlank(deal.shareNumber.shareholder(), seq);
         }
 
@@ -221,9 +225,11 @@ contract InvestmentAgreement is
         dealExist(seq)
         returns (bool flag)
     {
-        require(_gk.isKeeper(uint8(TitleOfKeepers.BOAKeeper), msg.sender) ||
-            _gk.isKeeper(uint8(TitleOfKeepers.SHAKeeper), msg.sender), 
-            "IA.lockDealSubject: caller has no access right");
+        require(
+            _gk.isKeeper(uint8(TitleOfKeepers.BOAKeeper), msg.sender) ||
+                _gk.isKeeper(uint8(TitleOfKeepers.SHAKeeper), msg.sender),
+            "IA.lockDealSubject: caller has no access right"
+        );
 
         Deal storage deal = _deals[seq];
         if (deal.state == uint8(StateOfDeal.Drafting)) {
@@ -270,7 +276,7 @@ contract InvestmentAgreement is
 
         deal.hashLock = hashLock;
 
-        if (closingDate > 0) deal.closingDate = closingDate;
+        if (closingDate != 0) deal.closingDate = closingDate;
 
         emit ClearDealCP(deal.sn, deal.state, hashLock, deal.closingDate);
     }
@@ -329,7 +335,10 @@ contract InvestmentAgreement is
         emit RevokeDeal(deal.sn, hashKey);
     }
 
-    function takeGift(uint16 seq) external onlyKeeper(uint8(TitleOfKeepers.SHAKeeper)) {
+    function takeGift(uint16 seq)
+        external
+        onlyKeeper(uint8(TitleOfKeepers.SHAKeeper))
+    {
         Deal storage deal = _deals[seq];
 
         require(

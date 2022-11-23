@@ -187,8 +187,14 @@ contract ShareholdersAgreement is
     }
 
     function setVotingRule(bytes32 rule) external onlyAttorney {
-        require(rule.typeOfVoteOfVR() > 0, "SA.setVotingRule: ZERO typeOfVote");
-        require(rule.votingDaysOfVR() > 0, "SA.setVotingRule: ZERO votingDays");
+        require(
+            rule.typeOfVoteOfVR() != 0,
+            "SA.setVotingRule: ZERO typeOfVote"
+        );
+        require(
+            rule.votingDaysOfVR() != 0,
+            "SA.setVotingRule: ZERO votingDays"
+        );
 
         _rules[rule.typeOfVoteOfVR()] = rule;
 
@@ -258,7 +264,7 @@ contract ShareholdersAgreement is
     // ==== VotingRules ====
 
     function votingRules(uint8 typeOfVote) external view returns (bytes32) {
-        require(typeOfVote > 0, "SA.votingRules: zero typeOfVote");
+        require(typeOfVote != 0, "SA.votingRules: zero typeOfVote");
         return _rules[typeOfVote];
     }
 

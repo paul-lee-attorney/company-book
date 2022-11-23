@@ -37,10 +37,10 @@ library ArrayUtils {
 
         uint256 pointer;
 
-        while (lenA > 0) {
+        while (lenA != 0) {
             bool flag = false;
             lenB = arrB.length;
-            while (lenB > 0) {
+            while (lenB != 0) {
                 if (arrB[lenB - 1] == arrA[lenA - 1]) {
                     flag = true;
                     break;

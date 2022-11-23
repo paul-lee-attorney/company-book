@@ -45,7 +45,7 @@ contract TagAlong is DragAlong, BOMSetting {
     function _inputArray(uint40[] memory arr) private {
         uint256 len = arr.length;
 
-        while (len > 0) {
+        while (len != 0) {
             _supporters.add(arr[len - 1]);
             len--;
         }
@@ -76,7 +76,7 @@ contract TagAlong is DragAlong, BOMSetting {
 
         uint256 len = rightholders.length;
 
-        while (len > 0) {
+        while (len != 0) {
             if (!_supporters.contains(rightholders[len - 1])) return false;
             len--;
         }

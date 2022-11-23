@@ -36,7 +36,7 @@ contract FirstRefusalDeals is IFirstRefusalDeals, ROMSetting {
         uint40 acct
     ) external onlyDK {
         uint64 weight = _rom.votesInHand(acct);
-        require(weight > 0, "first refusal request has ZERO weight");
+        require(weight != 0, "first refusal request has ZERO weight");
 
         if (_frDeals[seqOfOD].claims[seqOfFR].weight == 0) {
             _frDeals[seqOfOD].sumOfWeight += weight;
@@ -52,10 +52,10 @@ contract FirstRefusalDeals is IFirstRefusalDeals, ROMSetting {
         returns (uint64 ratio)
     {
         uint64 _sumOfWeight = _frDeals[seqOfOD].sumOfWeight;
-        require(_sumOfWeight > 0, "FRDeals not found");
+        require(_sumOfWeight != 0, "FRDeals not found");
 
         uint64 weight = _frDeals[seqOfOD].claims[seqOfFR].weight;
-        require(weight > 0, "FRClaim not found");
+        require(weight != 0, "FRClaim not found");
 
         ratio = _frDeals[seqOfOD].claims[seqOfFR].ratio;
 
@@ -76,7 +76,7 @@ contract FirstRefusalDeals is IFirstRefusalDeals, ROMSetting {
     }
 
     function isTargetDeal(uint16 seqOfOD) external view returns (bool) {
-        return _frDeals[seqOfOD].sumOfWeight > 0;
+        return _frDeals[seqOfOD].sumOfWeight != 0;
     }
 
     function isFRDeal(uint16 seqOfOD, uint16 seqOfFR)
@@ -84,7 +84,7 @@ contract FirstRefusalDeals is IFirstRefusalDeals, ROMSetting {
         view
         returns (bool)
     {
-        return _frDeals[seqOfOD].claims[seqOfFR].weight > 0;
+        return _frDeals[seqOfOD].claims[seqOfFR].weight != 0;
     }
 
     function weightOfFR(uint16 seqOfOD, uint16 seqOfFR)

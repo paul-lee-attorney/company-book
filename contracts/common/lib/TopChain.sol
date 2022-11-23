@@ -59,7 +59,7 @@ library TopChain {
     {
         uint256 len = snapshot.length - 1;
 
-        while (len > 0) {
+        while (len != 0) {
             chain.nodes[snapshot[len].acct] = snapshot[len];
             len--;
         }
@@ -75,7 +75,7 @@ library TopChain {
     {
         Node storage n = chain.nodes[acct];
 
-        if (acct > 0 && n.acct == 0) {
+        if (acct != 0 && n.acct == 0) {
             n.acct = acct;
             n.deep = 1;
 
@@ -114,7 +114,7 @@ library TopChain {
 
             uint40 top;
 
-            if (up > 0) {
+            if (up != 0) {
                 top = updateSumOfLeader(chain, n.amt, up, true);
                 chain.nodes[top].deep--;
 
@@ -125,7 +125,7 @@ library TopChain {
                 hCarveOut(chain, acct);
             }
 
-            if (down > 0) {
+            if (down != 0) {
                 Node storage d = chain.nodes[down];
 
                 if (up == 0) {
@@ -150,7 +150,7 @@ library TopChain {
                 n.down = 0;
             }
 
-            if (top > 0) {
+            if (top != 0) {
                 hMove(chain, top, true);
             }
 
@@ -189,7 +189,7 @@ library TopChain {
     ) internal returns (uint40 top) {
         Node storage n = chain.nodes[acct];
 
-        if (up > 0) {
+        if (up != 0) {
             Node storage u = chain.nodes[up];
 
             u.down = acct;
@@ -200,7 +200,7 @@ library TopChain {
 
             n.group = u.group;
         } else {
-            require(down > 0, "MC._vInsert: zero down & up");
+            require(down != 0, "MC._vInsert: zero down & up");
 
             Node storage d = chain.nodes[down];
 
@@ -226,7 +226,7 @@ library TopChain {
             n.group = d.group;
         }
 
-        if (down > 0) {
+        if (down != 0) {
             chain.nodes[down].up = acct;
             n.down = down;
         }
@@ -326,15 +326,15 @@ library TopChain {
             }
         }
 
-        if (n.amt > 0) {
-            if (n.group > 0) {
+        if (n.amt != 0) {
+            if (n.group != 0) {
                 updateSumOfLeader(chain, deltaAmt, acct, decrease);
                 vMove(chain, acct, decrease);
             } else {
                 hMove(chain, acct, decrease);
             }
         } else {
-            if (n.group > 0) vCarveOut(chain, acct);
+            if (n.group != 0) vCarveOut(chain, acct);
             else hCarveOut(chain, acct);
         }
     }
@@ -495,12 +495,12 @@ library TopChain {
         bool decrease
     ) internal view returns (uint40, uint40) {
         if (decrease)
-            while (next > 0 && chain.nodes[next].sum > amount) {
+            while (next != 0 && chain.nodes[next].sum > amount) {
                 prev = next;
                 next = chain.nodes[next].next;
             }
         else
-            while (prev > 0 && chain.nodes[prev].sum < amount) {
+            while (prev != 0 && chain.nodes[prev].sum < amount) {
                 next = prev;
                 prev = chain.nodes[prev].prev;
             }
@@ -516,12 +516,12 @@ library TopChain {
         bool decrease
     ) internal view returns (uint40, uint40) {
         if (decrease)
-            while (down > 0 && chain.nodes[down].amt > amount) {
+            while (down != 0 && chain.nodes[down].amt > amount) {
                 up = down;
                 down = chain.nodes[down].down;
             }
         else
-            while (up > 0 && chain.nodes[up].amt < amount) {
+            while (up != 0 && chain.nodes[up].amt < amount) {
                 down = up;
                 up = chain.nodes[up].up;
             }
@@ -536,9 +536,9 @@ library TopChain {
     {
         Node storage n = chain.nodes[acct];
 
-        if (n.down > 0) next = n.down;
-        else if (n.next > 0) next = n.next;
-        else if (n.up > 0) {
+        if (n.down != 0) next = n.down;
+        else if (n.next != 0) next = n.next;
+        else if (n.up != 0) {
             next = topOfBranch(chain, acct);
             next = chain.nodes[next].next;
         }
@@ -560,7 +560,7 @@ library TopChain {
         view
         returns (uint40 top)
     {
-        while (acct > 0) {
+        while (acct != 0) {
             top = acct;
             acct = chain.nodes[top].up;
         }
@@ -572,7 +572,7 @@ library TopChain {
         returns (uint40 next)
     {
         next = chain.nodes[0].next;
-        while (next > 0) {
+        while (next != 0) {
             if (chain.nodes[next].group == group) {
                 break;
             }
@@ -585,7 +585,7 @@ library TopChain {
         view
         returns (uint16)
     {
-        if (top > 0 && chain.nodes[top].acct == top)
+        if (top != 0 && chain.nodes[top].acct == top)
             return chain.nodes[top].deep;
         else revert("TC.deepOfBranch: top is not a member");
     }
@@ -624,9 +624,9 @@ library TopChain {
         uint40 acct2
     ) internal view returns (bool) {
         if (
-            acct1 > 0 &&
+            acct1 != 0 &&
             chain.nodes[acct1].acct == acct1 &&
-            acct2 > 0 &&
+            acct2 != 0 &&
             chain.nodes[acct2].acct == acct2
         ) return chain.nodes[acct1].group == chain.nodes[acct2].group;
         else revert("TC.affiliated: not all accts are members");
@@ -638,7 +638,7 @@ library TopChain {
         view
         returns (bool)
     {
-        return acct > 0 && chain.nodes[acct].acct == acct;
+        return acct != 0 && chain.nodes[acct].acct == acct;
     }
 
     function membersList(Chain storage chain)

@@ -116,7 +116,7 @@ contract MeetingMinutes is IMeetingMinutes, BOHSetting, ROMSetting {
         uint256 len = principals.length;
         uint64 weight = _rom.votesInHand(acct);
 
-        while (len > 0) {
+        while (len != 0) {
             weight += _rom.votesInHand(principals[len - 1]);
             len--;
         }
@@ -154,17 +154,12 @@ contract MeetingMinutes is IMeetingMinutes, BOHSetting, ROMSetting {
         uint256 len = principals.length;
         uint64 weight = _rom.votesAtBlock(acct, blocknumber);
 
-        while (len > 0) {
+        while (len != 0) {
             weight += _rom.votesAtBlock(principals[len - 1], blocknumber);
             len--;
         }
 
-        uint64 votes;
-
-        if (_rom.basedOnPar()) (, votes) = _rom.capAtBlock(blocknumber);
-        else (votes, ) = _rom.capAtBlock(blocknumber);
-
-        return (weight * 10000) / votes;
+        return weight;
     }
 
     // ==== counting ====

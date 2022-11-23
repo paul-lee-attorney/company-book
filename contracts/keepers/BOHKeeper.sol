@@ -140,7 +140,7 @@ contract BOHKeeper is
 
         uint40[] memory members = _rom.membersList();
         uint256 len = members.length;
-        while (len > 0) {
+        while (len != 0) {
             require(
                 ISigPage(sha).isParty(members[len - 1]),
                 "left member for SHA"
@@ -180,7 +180,7 @@ contract BOHKeeper is
                 )
             ).orders();
             len = guo.length;
-            while (len > 0) {
+            while (len != 0) {
                 if (guo[len - 1].addMemberOfGUO())
                     _rom.addMemberToGroup(
                         guo[len - 1].memberOfGUO(),

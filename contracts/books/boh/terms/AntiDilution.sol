@@ -21,12 +21,7 @@ import "../../../common/lib/ArrowChain.sol";
 
 import "./IAntiDilution.sol";
 
-contract AntiDilution is
-    IAntiDilution,
-    BOSSetting,
-    ROMSetting,
-    BOMSetting
-{
+contract AntiDilution is IAntiDilution, BOSSetting, ROMSetting, BOMSetting {
     using SNParser for bytes32;
     using EnumerableSet for EnumerableSet.UintSet;
     using ArrowChain for ArrowChain.MarkChain;
@@ -151,13 +146,13 @@ contract AntiDilution is
         returns (bool)
     {
         require(
-            consentParties.length > 0,
+            consentParties.length != 0,
             "AD.isExempted: zero consentParties"
         );
 
         uint16 cur = uint16(_benchmarks.topKey());
 
-        while (cur > 0) {
+        while (cur != 0) {
             if (_benchmarks.markedValue(cur) <= price) break;
 
             uint40[] memory classMember = _membersOfClass(cur);
@@ -186,10 +181,10 @@ contract AntiDilution is
         uint256 numOfMembers;
         len = list.length;
 
-        while (len > 0) {
+        while (len != 0) {
             if (list[len - 1].class() == class) {
                 uint256 lenOfM = numOfMembers;
-                while (lenOfM > 0) {
+                while (lenOfM != 0) {
                     if (members[lenOfM - 1] == list[len - 1].shareholder())
                         break;
                     lenOfM--;

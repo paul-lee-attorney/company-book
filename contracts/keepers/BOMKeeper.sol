@@ -108,7 +108,7 @@ contract BOMKeeper is
 
         bytes32 vr = _getSHA().votingRules(IInvestmentAgreement(ia).typeOfIA());
 
-        if (vr.ratioHeadOfVR() > 0 || vr.ratioAmountOfVR() > 0)
+        if (vr.ratioHeadOfVR() != 0 || vr.ratioAmountOfVR() != 0)
             _bom.proposeIA(ia, caller);
 
         _boa.pushToNextState(ia);
@@ -120,7 +120,7 @@ contract BOMKeeper is
         bytes32[] memory dealsList = IInvestmentAgreement(ia).dealsList();
         uint256 len = dealsList.length;
 
-        while (len > 0) {
+        while (len != 0) {
             bytes32 sn = dealsList[len - 1];
             len--;
 
@@ -197,7 +197,7 @@ contract BOMKeeper is
     }
 
     function _isIA(uint256 motionId) private pure returns (bool) {
-        return motionId > 0 && ((motionId >> 160) == 0);
+        return motionId != 0 && ((motionId >> 160) == 0);
     }
 
     function voteCounting(uint256 motionId, uint40 caller)

@@ -82,7 +82,7 @@ library MembersRepo {
         if (basedOnPar(gm) != _basedOnPar) {
             uint40 cur = gm.chain.head();
 
-            while (cur > 0) {
+            while (cur != 0) {
                 (uint64 paid, uint64 par) = gm
                     .members[cur]
                     .votesInHand
@@ -150,7 +150,7 @@ library MembersRepo {
         uint40 _counterOfGroups = gm.chain.counterOfGroups();
 
         require(
-            group > 0 && group <= _counterOfGroups + 1,
+            group != 0 && group <= _counterOfGroups + 1,
             "MC.addMemberToGroup: group overflow"
         );
 
@@ -158,7 +158,7 @@ library MembersRepo {
 
         uint40 top = gm.chain.leaderOfGroup(group);
 
-        if (top > 0) {
+        if (top != 0) {
             (uint40 up, uint40 down) = gm.chain.getVPos(n.amt, 0, top, true);
 
             gm.chain.vInsert(acct, up, down);
@@ -448,7 +448,7 @@ library MembersRepo {
         view
         returns (bool)
     {
-        return gm.chain.leaderOfGroup(group) > 0;
+        return gm.chain.leaderOfGroup(group) != 0;
     }
 
     function leaderOfGroup(GeneralMeeting storage gm, uint16 group)
@@ -490,7 +490,7 @@ library MembersRepo {
     {
         uint40 top = gm.chain.leaderOfGroup(group);
 
-        if (top > 0) {
+        if (top != 0) {
             return gm.chain.deepOfBranch(top);
         } else {
             return 0;

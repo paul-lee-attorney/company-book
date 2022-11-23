@@ -140,16 +140,16 @@ library MotionsRepo {
             uint40 vetoHolder = motion.votingRule.vetoHolderOfVR();
 
             if (vetoHolder == 0 || motion.box.votedYea(vetoHolder)) {
-                flag1 = motion.votingRule.ratioHeadOfVR() > 0
-                    ? totalHead > 0
+                flag1 = motion.votingRule.ratioHeadOfVR() != 0
+                    ? totalHead != 0
                         ? ((motion.box.qtyOfYea() + consentHead) * 10000) /
                             totalHead >=
                             motion.votingRule.ratioHeadOfVR()
                         : false
                     : true;
 
-                flag2 = motion.votingRule.ratioAmountOfVR() > 0
-                    ? totalAmt > 0
+                flag2 = motion.votingRule.ratioAmountOfVR() != 0
+                    ? totalAmt != 0
                         ? ((motion.box.sumOfYea + consentAmt) * 10000) /
                             totalAmt >=
                             motion.votingRule.ratioAmountOfVR()
@@ -199,14 +199,14 @@ library MotionsRepo {
                     .partiesOfDoc();
                 uint256 len = parties.length;
 
-                while (len > 0) {
+                while (len != 0) {
                     uint64 voteAmt = _rom.votesAtBlock(
                         parties[len - 1],
                         motion.head.weightRegBN
                     );
 
                     // party has voting right at block
-                    if (voteAmt > 0) {
+                    if (voteAmt != 0) {
                         if (motion.votingRule.partyAsConsentOfVR()) {
                             consentHead++;
                             consentAmt += voteAmt;

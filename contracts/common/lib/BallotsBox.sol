@@ -51,9 +51,7 @@ library BallotsBox {
         uint64 weight,
         bytes32 sigHash
     ) internal returns (bool flag) {
-
         if (box.ballots[acct].sigDate == 0) {
-
             box.ballots[acct] = Ballot({
                 voter: acct,
                 weight: weight,
@@ -119,11 +117,7 @@ library BallotsBox {
         weights = box.sumOfYea;
     }
 
-    function qtyOfYea(Box storage box)
-        internal
-        view
-        returns (uint)
-    {
+    function qtyOfYea(Box storage box) internal view returns (uint256) {
         return box.supportVoters.length();
     }
 
@@ -136,11 +130,7 @@ library BallotsBox {
         weights = box.sumOfNay;
     }
 
-    function qtyOfNay(Box storage box)
-        internal
-        view
-        returns (uint)
-    {
+    function qtyOfNay(Box storage box) internal view returns (uint256) {
         return box.againstVoters.length();
     }
 
@@ -153,11 +143,7 @@ library BallotsBox {
         weight = box.sumOfAbs;
     }
 
-    function qtyOfAbs(Box storage box)
-        internal
-        view
-        returns (uint)
-    {
+    function qtyOfAbs(Box storage box) internal view returns (uint256) {
         return box.abstainVoters.length();
     }
 
@@ -169,11 +155,7 @@ library BallotsBox {
         return box.voters;
     }
 
-    function qtyOfAllVoters(Box storage box)
-        internal
-        view
-        returns (uint)
-    {
+    function qtyOfAllVoters(Box storage box) internal view returns (uint256) {
         return box.voters.length;
     }
 
@@ -182,7 +164,7 @@ library BallotsBox {
         view
         returns (bool)
     {
-        return box.ballots[acct].sigDate > 0;
+        return box.ballots[acct].sigDate != 0;
     }
 
     function getVote(Box storage box, uint40 acct)

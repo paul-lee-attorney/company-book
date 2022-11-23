@@ -61,7 +61,10 @@ contract BookOfDirectors is IBookOfDirectors, MeetingMinutes {
 
     // ======== Directors ========
 
-    function setMaxQtyOfDirectors(uint8 max) external onlyKeeper(uint8(TitleOfKeepers.BOHKeeper)) {
+    function setMaxQtyOfDirectors(uint8 max)
+        external
+        onlyKeeper(uint8(TitleOfKeepers.BOHKeeper))
+    {
         _directors[0].title = max;
         emit SetMaxQtyOfDirectors(max);
     }
@@ -113,10 +116,7 @@ contract BookOfDirectors is IBookOfDirectors, MeetingMinutes {
             emit AddDirector(title, candidate, appointer, startBN, endBN);
     }
 
-    function takePosition(uint40 candidate, uint40 nominator)
-        external
-        onlyDK
-    {
+    function takePosition(uint40 candidate, uint40 nominator) external onlyDK {
         _addDirector(candidate, uint8(TitleOfDirectors.Director), nominator);
     }
 
@@ -158,7 +158,7 @@ contract BookOfDirectors is IBookOfDirectors, MeetingMinutes {
         uint40[] memory list = _board.valuesToUint40();
         uint256 len = list.length;
 
-        while (len > 0) {
+        while (len != 0) {
             if (_directors[len - 1].appointer == appointer) qty++;
             len--;
         }

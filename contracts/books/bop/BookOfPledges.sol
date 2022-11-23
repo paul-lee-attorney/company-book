@@ -62,7 +62,7 @@ contract BookOfPledges is IBookOfPledges, AccessControl {
         uint32 ssn = sn.ssnOfPledge();
         uint32 seq = sn.sequenceOfPledge();
 
-        require(pledgedPar > 0, "BOP.createPledge: ZERO pledgedPar");
+        require(pledgedPar != 0, "BOP.createPledge: ZERO pledgedPar");
 
         require(
             _increaseCounterOfPledges(ssn) == seq,
@@ -98,7 +98,7 @@ contract BookOfPledges is IBookOfPledges, AccessControl {
         uint64 pledgedPar,
         uint64 guaranteedAmt
     ) external onlyDK pledgeExist(sn) {
-        require(pledgedPar > 0, "ZERO pledged parvalue");
+        require(pledgedPar != 0, "ZERO pledged parvalue");
 
         Pledge storage pld = _pledges[sn.ssnOfPledge()][sn.sequenceOfPledge()];
 
@@ -116,11 +116,11 @@ contract BookOfPledges is IBookOfPledges, AccessControl {
     function pledgesOf(uint32 ssn) external view returns (bytes32[] memory) {
         uint40 seq = _pledges[ssn][0].creditor;
 
-        require(seq > 0, "BOP.pledgesOf: no pledges found");
+        require(seq != 0, "BOP.pledgesOf: no pledges found");
 
         bytes32[] memory output = new bytes32[](seq);
 
-        while (seq > 0) {
+        while (seq != 0) {
             output[seq - 1] = _pledges[ssn][seq].sn;
             seq--;
         }
@@ -136,7 +136,7 @@ contract BookOfPledges is IBookOfPledges, AccessControl {
         uint32 ssn = sn.ssnOfPledge();
         uint32 seq = sn.sequenceOfPledge();
 
-        return ssn > 0 && _pledges[ssn][seq].sn.sequenceOfPledge() == seq;
+        return ssn != 0 && _pledges[ssn][seq].sn.sequenceOfPledge() == seq;
     }
 
     function getPledge(bytes32 sn)

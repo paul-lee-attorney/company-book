@@ -275,7 +275,7 @@ contract RegCenter is IRegCenter {
         assembly {
             size := extcodesize(acct)
         }
-        return size > 0;
+        return size != 0;
     }
 
     function setBackupKey(address bKey) external onlyPrimeKey onlyNewKey(bKey) {

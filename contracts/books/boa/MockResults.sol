@@ -44,7 +44,7 @@ contract MockResults is IMockResults, IASetting, BOSSetting, ROMSetting {
 
         uint256 len = dealsList.length;
 
-        while (len > 0) {
+        while (len != 0) {
             bytes32 sn = dealsList[len - 1];
             uint64 amount;
 
@@ -53,7 +53,7 @@ contract MockResults is IMockResults, IASetting, BOSSetting, ROMSetting {
             else (, amount, , , ) = _ia.getDeal(sn.sequence());
 
             uint32 short = sn.ssnOfDeal();
-            if (short > 0) mockDealOfSell(short, amount);
+            if (short != 0) mockDealOfSell(short, amount);
 
             mockDealOfBuy(sn, amount);
 
@@ -83,7 +83,7 @@ contract MockResults is IMockResults, IASetting, BOSSetting, ROMSetting {
         _mgm.chain.changeAmt(buyer, amount, false);
 
         uint16 group = sn.groupOfBuyer();
-        if (group > 0) {
+        if (group != 0) {
             _mgm.addMemberToGroup(buyer, group);
         }
 

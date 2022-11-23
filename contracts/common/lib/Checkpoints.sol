@@ -33,7 +33,7 @@ library Checkpoints {
     ) internal returns (uint64) {
         uint256 pos = self.checkpoints.length;
         if (
-            pos > 0 &&
+            pos != 0 &&
             self.checkpoints[pos - 1].blockNumber == uint64(block.number)
         ) {
             self.checkpoints[pos - 1].paid = paid;

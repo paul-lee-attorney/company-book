@@ -303,7 +303,7 @@ library EnumerableSet {
     function emptyItems(UintSet storage set) internal {
         uint256 len = set._inner._values.length;
 
-        while (len > 0) {
+        while (len != 0) {
             _remove(set._inner, set._inner._values[len - 1]);
             len--;
         }

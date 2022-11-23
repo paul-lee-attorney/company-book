@@ -143,7 +143,7 @@ contract BOAKeeper is
     function _lockDealsOfParty(address ia, uint40 caller) private {
         bytes32[] memory snList = IInvestmentAgreement(ia).dealsList();
         uint256 len = snList.length;
-        while (len > 0) {
+        while (len != 0) {
             bytes32 sn = snList[len - 1];
             len--;
 
@@ -185,7 +185,7 @@ contract BOAKeeper is
 
         uint16 seq = sn.sequence();
 
-        bool isST = sn.ssnOfDeal() > 0;
+        bool isST = sn.ssnOfDeal() != 0;
 
         if (isST)
             require(
@@ -199,7 +199,7 @@ contract BOAKeeper is
 
         bytes32 vr = _getSHA().votingRules(IInvestmentAgreement(ia).typeOfIA());
 
-        if (vr.ratioAmountOfVR() > 0 || vr.ratioHeadOfVR() > 0) {
+        if (vr.ratioAmountOfVR() != 0 || vr.ratioHeadOfVR() != 0) {
             require(_bom.isPassed(uint256(uint160(ia))), "Motion NOT passed");
 
             if (isST) _checkSHA(_termsForShareTransfer, ia, sn);
@@ -216,7 +216,7 @@ contract BOAKeeper is
     ) private view {
         uint256 len = terms.length;
 
-        while (len > 0) {
+        while (len != 0) {
             if (_getSHA().hasTitle(uint8(terms[len - 1])))
                 require(
                     _getSHA().termIsExempted(uint8(terms[len - 1]), ia, sn),
@@ -257,7 +257,7 @@ contract BOAKeeper is
         bytes32[] memory snList = IInvestmentAgreement(ia).dealsList();
 
         uint256 len = snList.length;
-        while (len > 0) {
+        while (len != 0) {
             (, , , uint8 state, ) = IInvestmentAgreement(ia).getDeal(
                 snList[len - 1].sequence()
             );

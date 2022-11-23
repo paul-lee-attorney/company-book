@@ -330,7 +330,7 @@ contract SHAKeeper is
 
         uint64 lockAmount;
 
-        if (targetCleanPar > 0) {
+        if (targetCleanPar != 0) {
             snOfGiftDeal = _createDealSN(
                 shareNumber.class(),
                 IInvestmentAgreement(ia).counterOfDeals() + 1,
@@ -451,7 +451,7 @@ contract SHAKeeper is
 
         bytes32 shareNumber;
 
-        if (ssnOfOD > 0) (shareNumber, , , , ) = _bos.getShare(ssnOfOD);
+        if (ssnOfOD != 0) (shareNumber, , , , ) = _bos.getShare(ssnOfOD);
 
         uint16 seq = IInvestmentAgreement(ia).counterOfDeals() + 1;
 

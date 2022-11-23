@@ -30,17 +30,15 @@ contract BOPKeeper is IBOPKeeper, BOPSetting, BOSSetting {
         uint64 guaranteedAmt,
         uint40 caller
     ) external onlyDK {
-        require(sn.ssnOfPledge() == shareNumber.ssn(), "BOPKeeper.createPledge: wrong shareNumber");
+        require(
+            sn.ssnOfPledge() == shareNumber.ssn(),
+            "BOPKeeper.createPledge: wrong shareNumber"
+        );
         require(shareNumber.shareholder() == caller, "NOT shareholder");
 
         _bos.decreaseCleanPar(shareNumber.ssn(), pledgedPar);
 
-        _bop.createPledge(
-            sn,
-            creditor,
-            pledgedPar,
-            guaranteedAmt
-        );
+        _bop.createPledge(sn, creditor, pledgedPar, guaranteedAmt);
     }
 
     function updatePledge(
@@ -50,22 +48,31 @@ contract BOPKeeper is IBOPKeeper, BOPSetting, BOSSetting {
         uint64 guaranteedAmt,
         uint40 caller
     ) external onlyDK {
-        require(pledgedPar > 0, "BOPKeeper.updatePledge: ZERO pledgedPar");
+        require(pledgedPar != 0, "BOPKeeper.updatePledge: ZERO pledgedPar");
 
         uint32 shortShareNumber = sn.ssnOfPledge();
 
         (uint40 orgCreditor, uint64 orgPledgedPar, ) = _bop.getPledge(sn);
 
         if (pledgedPar < orgPledgedPar) {
-            require(caller == orgCreditor, "BOPKeeper.updatePledge: NOT creditor");
+            require(
+                caller == orgCreditor,
+                "BOPKeeper.updatePledge: NOT creditor"
+            );
             _bos.increaseCleanPar(shortShareNumber, orgPledgedPar - pledgedPar);
         } else if (pledgedPar > orgPledgedPar) {
-            require(caller == sn.pledgorOfPledge(), "BOPKeeper.updatePledge: NOT pledgor");
+            require(
+                caller == sn.pledgorOfPledge(),
+                "BOPKeeper.updatePledge: NOT pledgor"
+            );
             _bos.decreaseCleanPar(shortShareNumber, pledgedPar - orgPledgedPar);
         }
 
         if (creditor != orgCreditor) {
-            require(caller == orgCreditor, "BOPKeeper.updatePledge: NOT creditor");
+            require(
+                caller == orgCreditor,
+                "BOPKeeper.updatePledge: NOT creditor"
+            );
         }
 
         _bop.updatePledge(sn, creditor, pledgedPar, guaranteedAmt);

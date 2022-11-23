@@ -45,11 +45,13 @@ contract BookOfOptions is IBookOfOptions, BOSSetting {
     OptionsRepo.Repo private _options;
 
     modifier BOM_Or_BOO_Keeper() {
-        require(_gk.isKeeper(uint8(TitleOfKeepers.BOMKeeper), msg.sender) ||
-            _gk.isKeeper(uint8(TitleOfKeepers.BOOKeeper), msg.sender), 
-            "BOO.createOption: caller not have access right");
+        require(
+            _gk.isKeeper(uint8(TitleOfKeepers.BOMKeeper), msg.sender) ||
+                _gk.isKeeper(uint8(TitleOfKeepers.BOOKeeper), msg.sender),
+            "BOO.createOption: caller not have access right"
+        );
         _;
-    } 
+    }
 
     // ################
     // ##   写接口   ##
@@ -66,11 +68,14 @@ contract BookOfOptions is IBookOfOptions, BOSSetting {
         emit CreateOpt(_sn, rightholder, paid, par);
     }
 
-    function registerOption(address opts) external onlyKeeper(uint8(TitleOfKeepers.BOHKeeper)) {
+    function registerOption(address opts)
+        external
+        onlyKeeper(uint8(TitleOfKeepers.BOHKeeper))
+    {
         bytes32[] memory list = IOptions(opts).snList();
         uint256 len = list.length;
 
-        while (len > 0) {
+        while (len != 0) {
             bytes32 sn = list[len - 1];
 
             len--;
@@ -97,7 +102,10 @@ contract BookOfOptions is IBookOfOptions, BOSSetting {
             emit AddObligorIntoOpt(sn, obligor);
     }
 
-    function removeObligorFromOption(bytes32 sn, uint40 obligor) external onlyDK {
+    function removeObligorFromOption(bytes32 sn, uint40 obligor)
+        external
+        onlyDK
+    {
         if (_options.removeObligorFromOption(sn, obligor))
             emit RemoveObligorFromOpt(sn, obligor);
     }
@@ -147,10 +155,7 @@ contract BookOfOptions is IBookOfOptions, BOSSetting {
         emit LockOpt(sn, hashLock);
     }
 
-    function closeOption(bytes32 sn, string memory hashKey)
-        external
-        onlyDK
-    {
+    function closeOption(bytes32 sn, string memory hashKey) external onlyDK {
         _options.closeOption(sn, hashKey);
         emit CloseOpt(sn, hashKey);
     }

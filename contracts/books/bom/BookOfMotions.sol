@@ -127,7 +127,7 @@ contract BookOfMotions is IBookOfMotions, MeetingMinutes, BOASetting {
         returns (uint64 paid, uint64 par)
     {
         require(
-            block.timestamp <
+            block.timestamp + 15 minutes <
                 IInvestmentAgreement(ia).closingDateOfDeal(sn.sequence()),
             "MISSED closing date"
         );

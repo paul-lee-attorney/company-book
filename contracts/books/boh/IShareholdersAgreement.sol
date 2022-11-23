@@ -16,7 +16,7 @@ interface IShareholdersAgreement is ISigPage {
 
     event SetTemplate(uint8 indexed title, address tempAdd);
 
-    event CreateTerm(uint8 indexed title, address indexed body, uint40 creator);
+    event CreateTerm(uint8 indexed title, address indexed body);
 
     event RemoveTerm(uint8 indexed title);
 
@@ -37,11 +37,11 @@ interface IShareholdersAgreement is ISigPage {
     function removeTerm(uint8 title) external;
 
     function finalizeTerms() external;
-    
-    // ======== Rules ========
-    function setGovernanceRule(bytes32 sn) external;
 
-    function setVotingRule(bytes32 sn) external;
+    // ======== Rules ========
+    function setGovernanceRule(bytes32 rule) external;
+
+    function setVotingRule(bytes32 rule) external;
 
     function setBoardSeatsOf(uint40 nominator, uint8 quota) external;
 
@@ -51,13 +51,13 @@ interface IShareholdersAgreement is ISigPage {
 
     function hasTitle(uint8 title) external view returns (bool);
 
-    function qtyOfTerms() external view returns (uint8 qty);
+    function qtyOfTerms() external view returns (uint8);
 
     function titles() external view returns (uint8[] memory);
 
     function bodies() external view returns (address[] memory);
 
-    function getTerm(uint8 title) external view returns (address body);
+    function getTerm(uint8 title) external view returns (address);
 
     function termIsTriggered(
         uint8 title,
@@ -86,8 +86,6 @@ interface IShareholdersAgreement is ISigPage {
     function appointerOfChairman() external view returns (uint40);
 
     function appointerOfViceChairman() external view returns (uint40);
-
-    function sumOfBoardSeats() external view returns (uint8);
 
     function boardSeatsOf(uint40 acct) external view returns (uint8);
 }

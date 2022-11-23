@@ -16,6 +16,7 @@ import "../../common/access/IAccessControl.sol";
 import "../../common/components/SigPage.sol";
 
 import "../../common/lib/SNParser.sol";
+import "../../common/lib/EnumerableSet.sol";
 
 import "../../common/ruting/IBookSetting.sol";
 import "../../common/ruting/BOASetting.sol";
@@ -36,6 +37,7 @@ contract ShareholdersAgreement is
     SigPage
 {
     using SNParser for bytes32;
+    using EnumerableSet for EnumerableSet.UintSet;
 
     enum TermTitle {
         ZeroPoint, //            0
@@ -48,22 +50,10 @@ contract ShareholdersAgreement is
         OPTIONS //               7
     }
 
-    struct Term {
-        uint8 title;
-        uint8 prev;
-        uint8 next;
-        address body;
-    }
+    // title => body
+    mapping(uint256 => address) private _terms;
 
-    /*
-    terms[0] {
-        title: qtyOfTerms;
-        prev: tail;
-        next: head;
-        body: (null);
-*/
-
-    mapping(uint256 => Term) private _terms;
+    EnumerableSet.UintSet private _titles;
 
     // ==== VotingRules ========
 
@@ -92,8 +82,6 @@ contract ShareholdersAgreement is
 
     // typeOfVote => Rule: 1-CI 2-ST(to 3rd Party) 3-ST(to otherMember) 4-(1&3) 5-(2&3) 6-(1&2&3) 7-(1&2)
     mapping(uint256 => bytes32) private _rules;
-
-    // _boardSeatsOf[0]: sumOfBoardSeats;
 
     // userNo => qty of directors can be appointed/nominated by the member;
     mapping(uint256 => uint8) private _boardSeatsOf;
@@ -169,48 +157,24 @@ contract ShareholdersAgreement is
             title == uint8(TermTitle.TAG_ALONG)
         ) IBookSetting(body).setBOA(address(_boa));
 
-        Term storage t = _terms[title];
-        t.title = title;
-        t.body = body;
+        _terms[title] = body;
+        _titles.add(title);
 
-        _increaseQtyOfTerms();
-
-        uint8 tail = _terms[0].prev;
-
-        t.prev = tail;
-        _terms[tail].next = title;
-        _terms[0].prev = title;
-
-        emit CreateTerm(title, body, gc);
-    }
-
-    function _increaseQtyOfTerms() private {
-        _terms[0].title++;
+        emit CreateTerm(title, body);
     }
 
     function removeTerm(uint8 title) external onlyAttorney {
-        Term storage t = _terms[title];
-
-        _terms[t.prev].next = t.next;
-        _terms[t.next].prev = t.prev;
-
-        delete _terms[title];
-
-        _decreaseQtyOfTerms();
-
-        emit RemoveTerm(title);
-    }
-
-    function _decreaseQtyOfTerms() private {
-        _terms[0].title--;
+        if (_titles.remove(title)) {
+            delete _terms[title];
+            emit RemoveTerm(title);
+        }
     }
 
     function finalizeTerms() external onlyDK {
-        uint8 cur = _terms[0].next;
+        uint256 len = _titles.length();
 
-        while (cur > 0) {
-            IAccessControl(_terms[cur].body).lockContents();
-            cur = _terms[cur].next;
+        for (uint256 i = 0; i < len; i++) {
+            IAccessControl(_terms[_titles.at(i)]).lockContents();
         }
 
         lockContents();
@@ -225,7 +189,9 @@ contract ShareholdersAgreement is
     function setVotingRule(bytes32 rule) external onlyAttorney {
         require(rule.typeOfVoteOfVR() > 0, "SA.setVotingRule: ZERO typeOfVote");
         require(rule.votingDaysOfVR() > 0, "SA.setVotingRule: ZERO votingDays");
+
         _rules[rule.typeOfVoteOfVR()] = rule;
+
         emit SetVotingRule(rule.typeOfVoteOfVR(), rule);
     }
 
@@ -233,25 +199,7 @@ contract ShareholdersAgreement is
         external
         onlyAttorney
     {
-        require(nominator > 0, "SA.setBoardSeatsOf: zero nominator");
-
-        uint8 orgQuota = _boardSeatsOf[nominator];
-
-        if (orgQuota > 0) {
-            require(
-                _boardSeatsOf[0] - orgQuota + quota <= maxNumOfDirectors(),
-                "board seats quota overflow"
-            );
-            _boardSeatsOf[0] -= orgQuota;
-        } else {
-            require(
-                _boardSeatsOf[0] + quota <= maxNumOfDirectors(),
-                "board seats quota overflow"
-            );
-        }
-
         _boardSeatsOf[nominator] = quota;
-        _boardSeatsOf[0] += quota;
 
         emit SetBoardSeatsOf(nominator, quota);
     }
@@ -261,50 +209,32 @@ contract ShareholdersAgreement is
     //##################
 
     function hasTitle(uint8 title) public view returns (bool) {
-        return _terms[title].body > address(0);
+        return _titles.contains(title);
     }
 
-    function qtyOfTerms() public view returns (uint8 qty) {
-        qty = _terms[0].title;
+    function qtyOfTerms() public view returns (uint8) {
+        return uint8(_titles.length());
     }
 
     function titles() external view returns (uint8[] memory) {
-        uint8[] memory list = new uint8[](qtyOfTerms());
-
-        uint8 cur = _terms[0].next;
-        uint256 i = 0;
-
-        while (cur > 0) {
-            list[i] = _terms[cur].title;
-            cur = _terms[cur].next;
-            i++;
-        }
-
-        return list;
+        return _titles.valuesToUint8();
     }
 
     function bodies() external view returns (address[] memory) {
-        address[] memory list = new address[](qtyOfTerms());
+        uint256 len = _titles.length();
 
-        uint8 cur = _terms[0].next;
-        uint256 i = 0;
+        address[] memory list = new address[](len);
 
-        while (cur > 0) {
-            list[i] = _terms[cur].body;
-            cur = _terms[cur].next;
-            i++;
+        while (len != 0) {
+            list[len - 1] = _terms[_titles.at(len - 1)];
+            len--;
         }
 
         return list;
     }
 
-    function getTerm(uint8 title)
-        external
-        view
-        titleExist(title)
-        returns (address body)
-    {
-        body = _terms[title].body;
+    function getTerm(uint8 title) external view returns (address) {
+        return _terms[title];
     }
 
     function termIsTriggered(
@@ -312,7 +242,7 @@ contract ShareholdersAgreement is
         address ia,
         bytes32 snOfDeal
     ) public view titleExist(title) returns (bool) {
-        return ITerm(_terms[title].body).isTriggered(ia, snOfDeal);
+        return ITerm(_terms[title]).isTriggered(ia, snOfDeal);
     }
 
     function termIsExempted(
@@ -322,7 +252,7 @@ contract ShareholdersAgreement is
     ) external view titleExist(title) returns (bool) {
         if (!termIsTriggered(title, ia, snOfDeal)) return true;
 
-        return ITerm(_terms[title].body).isExempted(ia, snOfDeal);
+        return ITerm(_terms[title]).isExempted(ia, snOfDeal);
     }
 
     // ==== VotingRules ====
@@ -356,12 +286,7 @@ contract ShareholdersAgreement is
         return uint40(bytes5(_rules[0] << 80));
     }
 
-    function sumOfBoardSeats() external view returns (uint8) {
-        return _boardSeatsOf[0];
-    }
-
     function boardSeatsOf(uint40 acct) external view returns (uint8) {
-        require(acct > 0, "SA.boardSeatsOf: zero acct");
         return _boardSeatsOf[acct];
     }
 }

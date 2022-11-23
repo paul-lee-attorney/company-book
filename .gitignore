@@ -4,3 +4,4 @@ scripts/doxity/package-lock.json
 *.bin
 *.json
 *.abi
+bin/

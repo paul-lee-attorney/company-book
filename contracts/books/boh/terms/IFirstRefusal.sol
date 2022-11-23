@@ -9,7 +9,7 @@ pragma solidity ^0.8.8;
 
 import "./ITerm.sol";
 
-interface IFirstRefusal is ITerm{
+interface IFirstRefusal is ITerm {
     // ###############
     // ##   Event   ##
     // ###############
@@ -26,12 +26,7 @@ interface IFirstRefusal is ITerm{
     // ##   Write   ##
     // ###############
 
-    function setFirstRefusal(
-        uint8 typeOfDeal,
-        bool membersEqualOfFR,
-        bool proRata,
-        bool basedOnPar
-    ) external;
+    function setFirstRefusal(uint8 typeOfDeal, bytes32 rule) external;
 
     function delFirstRefusal(uint8 typeOfDeal) external;
 
@@ -52,5 +47,8 @@ interface IFirstRefusal is ITerm{
         view
         returns (bool);
 
-    function rightholders(uint8 typeOfDeal) external view returns (uint40[] memory);
+    function rightholders(uint8 typeOfDeal)
+        external
+        view
+        returns (uint40[] memory);
 }

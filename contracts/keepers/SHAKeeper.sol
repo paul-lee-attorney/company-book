@@ -101,6 +101,8 @@ contract SHAKeeper is
             IBookSetting(mock).setIA(ia);
             IBookSetting(mock).setBOS(address(_bos));
             IBookSetting(mock).setROM(address(_rom));
+
+            IMockResults(mock).createMockGM();
         }
 
         IBookSetting(mock).setBOH(address(_boh));
@@ -354,10 +356,7 @@ contract SHAKeeper is
                 )
             ) {
                 _bos.decreaseCleanPar(shareNumber.ssn(), lockAmount);
-                // _boa.mockDealOfSell(ia, caller, lockAmount);
             }
-
-            // _boa.mockDealOfBuy(ia, snOfGiftDeal.sequence(), caller, lockAmount);
         }
         result = giftPar - lockAmount;
     }
@@ -393,13 +392,11 @@ contract SHAKeeper is
 
         (, uint64 paid, uint64 par, , ) = IInvestmentAgreement(ia).getDeal(seq);
 
-        uint32 unitPrice = IInvestmentAgreement(ia).unitPriceOfDeal(seq);
-
         uint32 ssn = sn.ssnOfDeal();
 
         _bos.increaseCleanPar(ssn, paid);
 
-        _bos.transferShare(ssn, paid, par, sn.buyerOfDeal(), unitPrice);
+        _bos.transferShare(ssn, paid, par, sn.buyerOfDeal(), 0);
     }
 
     // ======== FirstRefusal ========

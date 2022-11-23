@@ -16,7 +16,6 @@ import "../../../common/ruting/BOSSetting.sol";
 import "../../../common/ruting/BOASetting.sol";
 
 import "../../../common/lib/SNParser.sol";
-import "../../../common/lib/SNFactory.sol";
 import "../../../common/lib/EnumerableSet.sol";
 import "../../../common/components/DocumentsRepo.sol";
 
@@ -24,7 +23,7 @@ import "./IAlongs.sol";
 
 contract DragAlong is IAlongs, ROMSetting, BOSSetting, BOASetting {
     using SNParser for bytes32;
-    using SNFactory for bytes;
+    using EnumerableSet for EnumerableSet.Bytes32Set;
     using EnumerableSet for EnumerableSet.UintSet;
 
     enum TriggerTypeOfAlongs {
@@ -32,11 +31,6 @@ contract DragAlong is IAlongs, ROMSetting, BOSSetting, BOASetting {
         ControlChanged,
         ControlChangedWithHigherPrice,
         ControlChangedWithHigherROE
-    }
-
-    struct Link {
-        EnumerableSet.UintSet followers;
-        bytes32 rule;
     }
 
     // struct linkRule {
@@ -53,12 +47,13 @@ contract DragAlong is IAlongs, ROMSetting, BOSSetting, BOASetting {
     // }
 
     EnumerableSet.UintSet private _dragers;
+    EnumerableSet.Bytes32Set private _rules;
 
-    // rep => Link
-    mapping(uint256 => Link) internal _links;
+    // rule => followers
+    mapping(bytes32 => EnumerableSet.UintSet) internal _followers;
 
-    // drager => rep
-    mapping(uint256 => uint256) internal _reps;
+    // drager => rule
+    mapping(uint256 => bytes32) internal _links;
 
     // ################
     // ##  modifier  ##
@@ -73,161 +68,70 @@ contract DragAlong is IAlongs, ROMSetting, BOSSetting, BOASetting {
     // ##   写接口   ##
     // ################
 
-    function _createLinkRule(
-        uint40 drager,
-        uint16 group,
-        uint8 triggerType,
-        uint32 threshold,
-        bool proRata,
-        uint32 unitPrice,
-        uint32 roe
-    ) private pure returns (bytes32 sn) {
-        bytes memory _sn = new bytes(32);
+    function createLink(bytes32 rule, uint40 drager) external onlyAttorney {
+        if (_dragers.add(drager)) {
+            if (_rules.add(rule)) {
+                emit CreateRule(rule);
+            }
 
-        _sn = _sn.acctToSN(0, drager);
-        _sn = _sn.sequenceToSN(5, group);
-        _sn[7] = bytes1(triggerType);
-        _sn = _sn.dateToSN(8, threshold);
-        _sn[12] = (proRata) ? bytes1(uint8(1)) : bytes1(0);
-        _sn = _sn.dateToSN(13, unitPrice);
-        _sn = _sn.dateToSN(17, roe);
-
-        return _sn.bytesToBytes32();
-    }
-
-    function createLink(
-        uint40 drager,
-        uint8 triggerType,
-        uint32 threshold,
-        bool proRata,
-        uint32 unitPrice,
-        uint32 roe
-    ) external onlyAttorney {
-        require(triggerType < 4, "WRONG trigger type");
-        require(threshold <= 5000, "WRONG ratio of threshold");
-
-        require(
-            _links[_reps[drager]].rule == bytes32(0),
-            "DA.createLink: tag rule ALREADY EXIST"
-        );
-
-        uint16 group = _rom.groupNo(drager);
-
-        if (group == 0) {
-            _dragers.add(drager);
-            _reps[drager] = drager;
-        } else {
-            _addGroupMemberAsDrager(group, drager);
-        }
-
-        bytes32 rule = _createLinkRule(
-            drager,
-            group,
-            triggerType,
-            threshold,
-            proRata,
-            unitPrice,
-            roe
-        );
-
-        _links[drager].rule = rule;
-
-        emit SetLink(drager, rule);
-    }
-
-    function _addGroupMemberAsDrager(uint16 group, uint40 drager) private {
-        uint40[] memory members = _rom.membersOfGroup(group);
-        uint256 len = members.length;
-
-        while (len > 0) {
-            _dragers.add(members[len - 1]);
-            _reps[members[len - 1]] = drager;
-            len--;
+            _links[drager] = rule;
+            emit SetLink(drager, rule);
         }
     }
 
-    function addFollower(uint40 drager, uint40 follower)
-        external
-        onlyAttorney
-        dragerExist(drager)
-    {
-        if (_links[_reps[drager]].followers.add(follower))
+    function addFollower(uint40 drager, uint40 follower) external onlyAttorney {
+        if (_followers[_links[drager]].add(follower))
             emit AddFollower(drager, follower);
     }
 
     function removeFollower(uint40 drager, uint40 follower)
         external
         onlyAttorney
-        dragerExist(drager)
     {
-        if (_links[drager].followers.remove(follower))
+        if (_followers[_links[drager]].remove(follower))
             emit RemoveFollower(drager, follower);
     }
 
-    function delLink(uint40 drager) external onlyAttorney dragerExist(drager) {
-        delete _links[drager];
+    function removeDrager(uint40 drager) external onlyAttorney {
+        if (_dragers.remove(drager)) {
+            delete _links[drager];
+            emit RemoveDrager(drager);
+        }
+    }
 
-        uint16 group = _rom.groupNo(drager);
-        if (group > 0) {
-            uint40[] memory members = _rom.membersOfGroup(group);
-            uint256 len = members.length;
-
-            while (len > 0) {
-                _dragers.remove(members[len - 1]);
-                delete _reps[members[len - 1]];
-                len--;
-            }
-        } else _dragers.remove(drager);
-
-        emit DelLink(drager);
+    function delLink(bytes32 rule) external onlyAttorney {
+        if (_rules.remove(rule)) {
+            delete _followers[rule];
+            emit DelLink(rule);
+        }
     }
 
     // ################
     // ##  查询接口  ##
     // ################
 
-    function linkRule(uint40 drager)
-        external
-        view
-        dragerExist(drager)
-        returns (bytes32)
-    {
-        return _links[drager].rule;
+    function linkRule(uint40 drager) external view returns (bytes32) {
+        return _links[drager];
     }
 
     function isDrager(uint40 drager) external view returns (bool) {
         return _dragers.contains(drager);
     }
 
-    function repOf(uint40 drager)
-        external
-        view
-        dragerExist(drager)
-        returns (uint40)
-    {
-        return uint40(_reps[drager]);
-    }
-
     function isLinked(uint40 drager, uint40 follower)
         public
         view
-        dragerExist(drager)
         returns (bool)
     {
-        return _links[_reps[drager]].followers.contains(follower);
+        return _followers[_links[drager]].contains(follower);
     }
 
     function dragers() external view returns (uint40[] memory) {
         return _dragers.valuesToUint40();
     }
 
-    function followers(uint40 drager)
-        external
-        view
-        dragerExist(drager)
-        returns (uint40[] memory)
-    {
-        return _links[_reps[drager]].followers.valuesToUint40();
+    function followers(uint40 drager) external view returns (uint40[] memory) {
+        return _followers[_links[drager]].valuesToUint40();
     }
 
     function priceCheck(
@@ -236,7 +140,7 @@ contract DragAlong is IAlongs, ROMSetting, BOSSetting, BOASetting {
         bytes32 shareNumber,
         uint40 caller
     ) external view returns (bool) {
-        require(isTriggered(ia, sn), "not triggered");
+        if (!isTriggered(ia, sn)) return false;
 
         uint40 drager = IInvestmentAgreement(ia)
             .shareNumberOfDeal(sn.sequence())
@@ -259,7 +163,7 @@ contract DragAlong is IAlongs, ROMSetting, BOSSetting, BOASetting {
             sn.sequence()
         );
 
-        bytes32 rule = _links[_reps[caller]].rule;
+        bytes32 rule = _links[caller];
 
         if (
             rule.triggerTypeOfLink() <
@@ -305,7 +209,7 @@ contract DragAlong is IAlongs, ROMSetting, BOSSetting, BOASetting {
 
         if (!_dragers.contains(seller)) return false;
 
-        bytes32 rule = _links[_reps[seller]].rule;
+        bytes32 rule = _links[seller];
 
         if (rule.triggerTypeOfLink() == uint8(TriggerTypeOfAlongs.NoConditions))
             return true;

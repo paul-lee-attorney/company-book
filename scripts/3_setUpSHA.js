@@ -38,17 +38,16 @@ module.exports = async function (callback) {
     console.log("BookOfSHA: ", boh.address)
 
     let sha = await SHA.deployed();
-    let fr = await FR.deployed();
+    console.log("SHA: ", sha.address)
+
+
+    // let fr = await FR.deployed();
 
     // ==== set template of SHA ====
 
-    gk.setTempOfSHA(sha.address, 0, {from: accounts[1]});
+    await gk.setTempOfSHA(sha.address, 0, {from: accounts[1]});
     let events = await boh.getPastEvents("SetTemplate");
     console.log("Event 'SetTemplate': ", events[0].returnValues);
-
-    gk.setTermTemplate(2, fr.address, {from: accounts[1]});
-    events = await boh.getPastEvents("SetTermTemplate");
-    console.log("Event 'SetTermTemplate': ", events[0].returnValues);
 
     // ==== 创建SHA ====
 
@@ -64,6 +63,12 @@ module.exports = async function (callback) {
 
     sha = await SHA.at(addr);
     console.log("get SHA: ", sha.address);
+
+    events = await sha.getPastEvents("SetRegCenter");
+    console.log("Event 'SetRegCenter': ", events[0].returnValues);
+
+    events = await sha.getPastEvents("SetGeneralKeeper");
+    console.log("Event 'SetGeneralKeeper': ", events[0].returnValues);
 
     events = await sha.getPastEvents("Init");
     console.log("Event 'Init': ", events[0].returnValues);

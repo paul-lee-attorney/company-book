@@ -37,10 +37,10 @@ library SigsRepo {
     //##    modifier    ##
     //####################
 
-    modifier onlyParty(Page storage p, uint40 caller) {
-        require(isParty(p, caller), "SP.onlyParty: caller NOT a party");
-        _;
-    }
+    // modifier onlyParty(Page storage p, uint40 caller) {
+    //     require(isParty(p, caller), "SP.onlyParty: caller NOT a party");
+    //     _;
+    // }
 
     modifier onlyFutureTime(uint32 date) {
         require(uint256(date) > block.timestamp + 15 minutes, "SP.onlyFutureTime: NOT FUTURE time");
@@ -124,7 +124,6 @@ library SigsRepo {
     function blankExist(Page storage p, uint40 acct, uint16 ssn) 
         internal 
         view 
-        onlyParty(p, acct)
         returns(bool) 
     {
         return p.signatures[acct][ssn].signer == acct;
@@ -133,7 +132,6 @@ library SigsRepo {
     function dealIsSigned(Page storage p, uint40 acct, uint16 ssn) 
         internal 
         view 
-        onlyParty(p, acct) 
         returns(bool) 
     {
         return p.signatures[acct][ssn].sigDate != 0;
@@ -193,7 +191,7 @@ library SigsRepo {
             bytes32 sigHash
         )
     {
-        require(dealIsSigned(p, acct, ssn), "SP.sigDateOfDeal: deal not signed");
+        // require(dealIsSigned(p, acct, ssn), "SP.sigDateOfDeal: deal not signed");
 
         Signature storage sig = p.signatures[acct][ssn];
 
@@ -208,7 +206,7 @@ library SigsRepo {
         uint16 ssn,
         string memory src
     ) internal view returns (bool) {
-        require(dealIsSigned(p, acct, ssn), "SP.sigDateOfDeal: deal not signed");        
+        // require(dealIsSigned(p, acct, ssn), "SP.sigDateOfDeal: deal not signed");        
         return p.signatures[acct][ssn].sigHash == keccak256(bytes(src));
     }
 }

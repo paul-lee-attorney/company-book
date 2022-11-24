@@ -304,10 +304,10 @@ module.exports = async function (callback) {
     // ==== HandOver keeper rights ====
 
     const bosKeeper = await BOSKeeper.deployed();
-    await bos.setBookeeper(bosKeeper.address);
+    await bos.setDirectKeeper(bosKeeper.address);
 
     const romKeeper = await ROMKeeper.deployed();
-    await rom.setBookeeper(romKeeper.address);
+    await rom.setDirectKeeper(romKeeper.address);
 
     callback();
 }

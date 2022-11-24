@@ -13,7 +13,7 @@ library Checkpoints {
     using EnumerableSet for EnumerableSet.UintSet;
 
     struct Checkpoint {
-        uint64 blockNumber;
+        uint64 blocknumber;
         uint64 paid;
         uint64 par;
     }
@@ -34,14 +34,14 @@ library Checkpoints {
         uint256 pos = self.checkpoints.length;
         if (
             pos != 0 &&
-            self.checkpoints[pos - 1].blockNumber == uint64(block.number)
+            self.checkpoints[pos - 1].blocknumber == uint64(block.number)
         ) {
             self.checkpoints[pos - 1].paid = paid;
             self.checkpoints[pos - 1].par = par;
         } else {
             self.checkpoints.push(
                 Checkpoint({
-                    blockNumber: uint64(block.number),
+                    blocknumber: uint64(block.number),
                     paid: paid,
                     par: par
                 })
@@ -68,13 +68,13 @@ library Checkpoints {
         return (a & b) + ((a ^ b) >> 1);
     }
 
-    function getAtBlock(History storage self, uint64 blockNumber)
+    function getAtBlock(History storage self, uint64 blocknumber)
         internal
         view
         returns (uint64 paid, uint64 par)
     {
         require(
-            blockNumber <= block.number,
+            blocknumber <= block.number,
             "Checkpoints: block not yet mined"
         );
 
@@ -82,7 +82,7 @@ library Checkpoints {
         uint256 low = 0;
         while (low < high) {
             uint256 mid = _average(low, high);
-            if (self.checkpoints[mid].blockNumber > blockNumber) {
+            if (self.checkpoints[mid].blocknumber > blocknumber) {
                 high = mid;
             } else {
                 low = mid + 1;

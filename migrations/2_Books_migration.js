@@ -68,7 +68,7 @@ module.exports = async function (deployer, network, accounts) {
     await deployer.link(LibSNParser, [BOA, IA, MR, SHA, AD, DA, FR, GU, LU, TA, BOM, BOO, BOP, BOS, BOH, LibMotionsRepo, LibOptionsRepo, BOAKeeper, BOHKeeper, BOMKeeper, BOOKeeper, BOPKeeper, BOSKeeper, SHAKeeper]);
 
     await deployer.deploy(LibSNFactory);
-    await deployer.link(LibSNFactory, [DA, TA, FR, GU, BOP, BOS, BOA, BOH, LibOptionsRepo, BOMKeeper, SHAKeeper]);
+    await deployer.link(LibSNFactory, [BOP, BOS, LibOptionsRepo, BOMKeeper, SHAKeeper]);
 
     await deployer.deploy(LibTopChain);
     await deployer.link(LibTopChain, [MR, ROM, LibMembersRepo]);

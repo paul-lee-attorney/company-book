@@ -468,10 +468,10 @@ library OptionsRepo {
     function oracle(
         Repo storage repo,
         bytes32 sn,
-        uint64 blockNumber
+        uint64 blocknumber
     ) internal view returns (uint32, uint32) {
         (uint64 d1, uint64 d2) = repo.options[sn].oracles.getAtBlock(
-            blockNumber
+            blocknumber
         );
         return (uint32(d1), uint32(d2));
     }

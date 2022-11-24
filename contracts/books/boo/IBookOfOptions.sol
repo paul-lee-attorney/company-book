@@ -124,7 +124,7 @@ interface IBookOfOptions {
 
     function pledges(bytes32 sn) external view returns (bytes32[] memory);
 
-    function oracle(bytes32 sn, uint64 blockNumber) external view returns (uint32 d1, uint32 d2);
+    function oracle(bytes32 sn, uint64 blocknumber) external view returns (uint32 d1, uint32 d2);
 
     function optsList() external view returns(bytes32[] memory);
 }

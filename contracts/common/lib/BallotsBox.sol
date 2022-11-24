@@ -23,7 +23,7 @@ library BallotsBox {
         uint40 voter;
         uint64 weight;
         uint8 attitude;
-        uint32 blockNumber;
+        uint64 blocknumber;
         uint32 sigDate;
         bytes32 sigHash;
     }
@@ -56,7 +56,7 @@ library BallotsBox {
                 voter: acct,
                 weight: weight,
                 attitude: attitude,
-                blockNumber: uint32(block.number),
+                blocknumber: uint64(block.number),
                 sigDate: uint32(block.timestamp),
                 sigHash: sigHash
             });
@@ -174,7 +174,7 @@ library BallotsBox {
             uint40 voter,
             uint64 weight,
             uint8 attitude,
-            uint32 blockNumber,
+            uint64 blocknumber,
             uint32 sigDate,
             bytes32 sigHash
         )
@@ -184,7 +184,7 @@ library BallotsBox {
         voter = b.voter;
         weight = b.weight;
         attitude = b.attitude;
-        blockNumber = b.blockNumber;
+        blocknumber = b.blocknumber;
         sigDate = b.sigDate;
         sigHash = b.sigHash;
     }

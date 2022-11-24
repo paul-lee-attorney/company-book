@@ -14,14 +14,14 @@ library SigsRepo {
 
     struct Signature {
         uint40 signer;
-        uint32 blockNumber;
+        uint64 blocknumber;
         uint32 sigDate;
         bytes32 sigHash;
     }
 
     // signatures[0][0] {
     //     signer: sigCounter;
-    //     blockNumber: sigDeadline;
+    //     blocknumber: sigDeadline;
     //     sigDate: closingDeadline;
     //     sigHash: established;
     // }
@@ -55,7 +55,7 @@ library SigsRepo {
         internal
         onlyFutureTime(deadline)
     {
-        p.signatures[0][0].blockNumber = deadline;
+        p.signatures[0][0].blocknumber = deadline;
     }
 
     function setClosingDeadline(Page storage p, uint32 deadline)
@@ -64,10 +64,6 @@ library SigsRepo {
     {
         p.signatures[0][0].sigDate = deadline;
     }
-
-    // function finalizeDoc(Page storage p) internal {
-    //     p.signatures[0][0].sigHash = bytes32('true');
-    // }
 
     function addBlank(Page storage p, uint40 acct, uint16 ssn) internal returns (bool flag) {
         if (p.signatures[0][0].sigHash != bytes32(0)) p.signatures[0][0].sigHash = bytes32(0);
@@ -108,7 +104,7 @@ library SigsRepo {
             
             p.signatures[caller][ssn] = Signature({
                 signer: caller,
-                blockNumber: uint32(block.number),
+                blocknumber: uint64(block.number),
                 sigDate: uint32(block.timestamp),
                 sigHash: sigHash
             });
@@ -148,7 +144,7 @@ library SigsRepo {
     }
 
     function sigDeadline(Page storage p) internal view returns (uint32) {
-        return p.signatures[0][0].blockNumber;
+        return uint32(p.signatures[0][0].blocknumber);
     }
 
     function closingDeadline(Page storage p) internal view returns (uint32) {
@@ -192,7 +188,7 @@ library SigsRepo {
         internal
         view
         returns (
-            uint32 blockNumber,
+            uint64 blocknumber,
             uint32 sigDate,
             bytes32 sigHash
         )
@@ -201,7 +197,7 @@ library SigsRepo {
 
         Signature storage sig = p.signatures[acct][ssn];
 
-        blockNumber = sig.blockNumber;
+        blocknumber = sig.blocknumber;
         sigDate = sig.sigDate;
         sigHash = sig.sigHash;
     }

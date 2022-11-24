@@ -77,7 +77,7 @@ interface ISigPage {
     function sigOfDeal(uint40 acct, uint16 ssn)
         external view
         returns (
-            uint32 blockNumber,
+            uint64 blocknumber,
             uint32 sigDate,
             bytes32 sigHash
         );

@@ -215,12 +215,12 @@ contract BookOfOptions is IBookOfOptions, BOSSetting {
         return _options.pledges(sn);
     }
 
-    function oracle(bytes32 sn, uint64 blockNumber)
+    function oracle(bytes32 sn, uint64 blocknumber)
         external
         view
         returns (uint32, uint32)
     {
-        return _options.oracle(sn, blockNumber);
+        return _options.oracle(sn, blocknumber);
     }
 
     function optsList() external view returns (bytes32[] memory) {

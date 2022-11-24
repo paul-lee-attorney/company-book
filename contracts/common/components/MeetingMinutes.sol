@@ -368,7 +368,7 @@ contract MeetingMinutes is IMeetingMinutes, BOHSetting, ROMSetting {
             uint40 voter,
             uint64 weight,
             uint8 attitude,
-            uint32 blockNumber,
+            uint64 blocknumber,
             uint32 sigDate,
             bytes32 sigHash
         )

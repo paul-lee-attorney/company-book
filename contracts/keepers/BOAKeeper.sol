@@ -158,14 +158,12 @@ contract BOAKeeper is
             if (shareNumber.shareholder() == caller) {
                 if (IInvestmentAgreement(ia).lockDealSubject(seq)) {
                     _bos.decreaseCleanPar(sn.ssnOfDeal(), paid);
-                    // _boa.mockDealOfSell(ia, caller, amount);
                 }
             } else if (
                 sn.buyerOfDeal() == caller &&
                 sn.typeOfDeal() ==
                 uint8(InvestmentAgreement.TypeOfDeal.CapitalIncrease)
             ) IInvestmentAgreement(ia).lockDealSubject(seq);
-            // _boa.mockDealOfBuy(ia, seq, caller, amount);
         }
     }
 

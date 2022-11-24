@@ -143,12 +143,33 @@ module.exports = async function (callback) {
 
     // ==== PayInCapital ====
 
-    await bos.setPayInAmount(3, 100000000, "0x6fab4ee53719b2a733996d8b9ce1b89a04d2b877e7f006f90bb73a454e2fdaee");
+    cur = Date.parse(new Date()) / 1000;
+
+    ssn = '00000003';
+
+    let expireDate = cur + 86400;
+    expireDate = web3.utils.numberToHex(expireDate);
+    expireDate = web3.utils.padLeft(expireDate.slice(2,), 8);
+
+    shareholder = web3.utils.numberToHex(acct4);
+    shareholder = web3.utils.padLeft(shareholder.slice(2, ), 10);
+    console.log("shareholder: ", shareholder);
+
+    let hashLock = '0x6fab4ee53719b2a733996d8b9ce1b89a04d2b877e7f006f90bb73a454e2fdaee';
+
+    hashLock = hashLock.slice(8,40);
+
+    let sn = '0x0000' + ssn + expireDate + shareholder + hashLock;
+    sn = web3.utils.padRight(sn, 64);
+
+    console.log("sn: ", sn);
+
+    await bos.setPayInAmount(sn, 100000000);
 
     events = await bos.getPastEvents("SetPayInAmount");
     console.log("Event 'SetPayInAmount': ", events[0].returnValues);
 
-    await bos.requestPaidInCapital(3, "Paul is an attorney.");
+    await bos.requestPaidInCapital(sn, "Paul is an attorney.");
 
     events = await bos.getPastEvents("PayInCapital");
     console.log("Event 'PayInCapital': ", events[0].returnValues);

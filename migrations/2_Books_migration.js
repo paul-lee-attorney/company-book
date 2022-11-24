@@ -313,23 +313,23 @@ module.exports = async function (deployer, network, accounts) {
     await bom.createBoardSeal(bod.address);
 
     // ==== DirectKeeper ====
-    await boa.setBookeeper(boaKeeper.address);
-    await bod.setBookeeper(bodKeeper.address);
-    await boh.setBookeeper(bohKeeper.address);
-    await bom.setBookeeper(bomKeeper.address);
-    await boo.setBookeeper(booKeeper.address);
-    await bop.setBookeeper(bopKeeper.address);
+    await boa.setDirectKeeper(boaKeeper.address);
+    await bod.setDirectKeeper(bodKeeper.address);
+    await boh.setDirectKeeper(bohKeeper.address);
+    await bom.setDirectKeeper(bomKeeper.address);
+    await boo.setDirectKeeper(booKeeper.address);
+    await bop.setDirectKeeper(bopKeeper.address);
     // await bos.setBookeeper(bosKeeper.address);
     // await rom.setBookeeper(romKeeper.address);
 
-    await boaKeeper.setBookeeper(gk.address);
-    await bodKeeper.setBookeeper(gk.address);
-    await bohKeeper.setBookeeper(gk.address);
-    await bomKeeper.setBookeeper(gk.address);
-    await booKeeper.setBookeeper(gk.address);
-    await bopKeeper.setBookeeper(gk.address);
-    await bosKeeper.setBookeeper(gk.address);
-    await romKeeper.setBookeeper(gk.address);
+    await boaKeeper.setDirectKeeper(gk.address);
+    await bodKeeper.setDirectKeeper(gk.address);
+    await bohKeeper.setDirectKeeper(gk.address);
+    await bomKeeper.setDirectKeeper(gk.address);
+    await booKeeper.setDirectKeeper(gk.address);
+    await bopKeeper.setDirectKeeper(gk.address);
+    await bosKeeper.setDirectKeeper(gk.address);
+    await romKeeper.setDirectKeeper(gk.address);
 
-    gk.setBookeeper(accounts[1]);
+    gk.setDirectKeeper(accounts[1]);
 };

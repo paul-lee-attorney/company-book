@@ -19,6 +19,20 @@ interface IAccessControl {
         address generalKeeper
     );
 
+    event SetDirectKeeper (address keeper);
+
+    event SetManager(uint8 title, uint40 acct);
+
+    event SetRoleAdmin(bytes32 role, uint40 acct);
+
+    event GrantRole(bytes32 role, uint40 acct);
+
+    event RevokeRole(bytes32 role, uint40 acct);
+
+    event RenounceRole(bytes32 role, uint40 acct);
+
+    event AbandonRole(bytes32 role);
+
     event LockContents();
 
     // ##################
@@ -32,7 +46,7 @@ interface IAccessControl {
         address generalKeeper
     ) external;
 
-    function setBookeeper(address keeper) external;
+    function setDirectKeeper(address keeper) external;
 
     function setManager(
         uint8 title,

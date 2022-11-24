@@ -16,18 +16,28 @@ module.exports = async function (callback) {
     let accounts = await web3.eth.getAccounts();
     console.log(accounts);
 
-    let acct2 = await rc.userNo.call(accounts[2], {from: accounts[2]});
-    let acct3 = await rc.userNo.call(accounts[3], {from: accounts[3]});
-    let acct4 = await rc.userNo.call(accounts[4], {from: accounts[4]});
-    let acct5 = await rc.userNo.call(accounts[5], {from: accounts[5]});
-    let acct7 = await rc.userNo.call(accounts[7], {from: accounts[7]});
+    let acct2 = await rc.userNo.call(accounts[2], {
+        from: accounts[2]
+    });
+    let acct3 = await rc.userNo.call(accounts[3], {
+        from: accounts[3]
+    });
+    let acct4 = await rc.userNo.call(accounts[4], {
+        from: accounts[4]
+    });
+    let acct5 = await rc.userNo.call(accounts[5], {
+        from: accounts[5]
+    });
+    let acct7 = await rc.userNo.call(accounts[7], {
+        from: accounts[7]
+    });
 
     acct2 = acct2.toNumber();
     acct3 = acct3.toNumber();
-    acct4 = acct4.toNumber();    
+    acct4 = acct4.toNumber();
     acct5 = acct5.toNumber();
-    acct7 = acct7.toNumber();    
-    
+    acct7 = acct7.toNumber();
+
     let gk = await GK.deployed();
     console.log("GeneralKeeper: ", gk.address);
 
@@ -45,7 +55,9 @@ module.exports = async function (callback) {
 
     // ==== set template of SHA ====
 
-    await gk.setTempOfSHA(sha.address, 0, {from: accounts[1]});
+    await gk.setTempOfSHA(sha.address, 0, {
+        from: accounts[1]
+    });
     let events = await boh.getPastEvents("SetTemplate");
     console.log("Event 'SetTemplate': ", events[0].returnValues);
 
@@ -133,42 +145,22 @@ module.exports = async function (callback) {
     events = await sha.getPastEvents("RemoveBlank");
     console.log("Event 'RemoveBlank': ", events[0].returnValues);
 
-    // ==== VotingRules ====
-    // await sha.setVotingBaseOnPar(1, {
-    //     from: accounts[7]
-    // });
-    // events = await sha.getPastEvents("SetVotingBaseOnPar");
-    // console.log("Event 'SetVotingBaseOnPar': ", events[0].returnValues);
+    // ==== GoverningRules ====
 
-    // await sha.setProposalThreshold(1000, {
-    //     from: accounts[7]
-    // });
-    // events = await sha.getPastEvents("SetProposalThreshold");
-    // console.log("Event 'SetProposalThreshold': ", events[0].returnValues);
+    let basedOnPar = '00';
+    let proposalThreshold = '03e8';
+    let maxNumOfDirectors = '03';
+    let tenureOfBoard = '03';
+    let rule = '0x' + basedOnPar + proposalThreshold + maxNumOfDirectors + tenureOfBoard + '0000000004' + '0000000005';
 
-    // await sha.setMaxNumOfDirectors(3, {
-    //     from: accounts[7]
-    // });
-    // events = await sha.getPastEvents("SetMaxNumOfDirectors");
-    // console.log("Event 'SetMaxNumOfDirectors': ", events[0].returnValues);
+    rule = web3.utils.padRight(rule, 64);
 
-    // await sha.setTenureOfBoard(3, {
-    //     from: accounts[7]
-    // });
-    // events = await sha.getPastEvents("SetTenureOfBoard");
-    // console.log("Event 'SetTenureOfBoard': ", events[0].returnValues);
+    await sha.setGovernanceRule(rule, {
+        from: accounts[7]
+    });
+    events = await sha.getPastEvents("SetGovernanceRule");
+    console.log("Event 'SetGovernanceRule': ", events[0].returnValues);
 
-    // await sha.setAppointerOfChairman(acct2.toNumber(), {
-    //     from: accounts[7]
-    // });
-    // events = await sha.getPastEvents("SetAppointerOfChairman");
-    // console.log("Event 'SetAppointerOfChairman': ", events[0].returnValues);
-
-    // await sha.setAppointerOfViceChairman(acct3.toNumber(), {
-    //     from: accounts[7]
-    // });
-    // events = await sha.getPastEvents("SetAppointerOfViceChairman");
-    // console.log("Event 'SetAppointerOfViceChairman': ", events[0].returnValues);
 
     // // ==== CI ====
     // await sha.setRule(1, 0, 0, 6666, 0, 0, 1, 0, 1, 1, 0, {

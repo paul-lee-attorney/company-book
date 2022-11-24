@@ -21,7 +21,6 @@ import "../../common/lib/EnumerableSet.sol";
 import "../../common/ruting/IBookSetting.sol";
 import "../../common/ruting/BOASetting.sol";
 import "../../common/ruting/BOHSetting.sol";
-
 import "../../common/ruting/BOSSetting.sol";
 import "../../common/ruting/ROMSetting.sol";
 

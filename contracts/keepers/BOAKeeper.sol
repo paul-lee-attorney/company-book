@@ -37,13 +37,11 @@ contract BOAKeeper is
     using SNParser for bytes32;
 
     ShareholdersAgreement.TermTitle[] private _termsForCapitalIncrease = [
-        ShareholdersAgreement.TermTitle.ANTI_DILUTION,
-        ShareholdersAgreement.TermTitle.FIRST_REFUSAL
+        ShareholdersAgreement.TermTitle.ANTI_DILUTION
     ];
 
     ShareholdersAgreement.TermTitle[] private _termsForShareTransfer = [
         ShareholdersAgreement.TermTitle.LOCK_UP,
-        ShareholdersAgreement.TermTitle.FIRST_REFUSAL,
         ShareholdersAgreement.TermTitle.TAG_ALONG,
         ShareholdersAgreement.TermTitle.DRAG_ALONG
     ];

@@ -10,7 +10,6 @@ pragma solidity ^0.8.8;
 import "../books/boh/terms/IAntiDilution.sol";
 import "../books/boh/terms/ITerm.sol";
 import "../books/boh/terms/IAlongs.sol";
-import "../books/boh/terms/IFirstRefusal.sol";
 
 import "../books/boh/ShareholdersAgreement.sol";
 
@@ -409,11 +408,8 @@ contract SHAKeeper is
     ) external onlyDK onlyEstablished(ia) withinReviewPeriod(ia) {
         require(!ISigPage(ia).isInitSigner(caller), "caller is an init signer");
 
-        address term = _getSHA().getTerm(
-            uint8(ShareholdersAgreement.TermTitle.FIRST_REFUSAL)
-        );
         require(
-            IFirstRefusal(term).isRightholder(snOfOD.typeOfDeal(), caller),
+            _getSHA().isRightholderOfFR(snOfOD.typeOfDeal(), caller),
             "NOT first refusal rightholder"
         );
 

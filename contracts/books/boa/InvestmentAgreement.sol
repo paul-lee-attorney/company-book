@@ -83,14 +83,6 @@ contract InvestmentAgreement is
         _;
     }
 
-    modifier dealExist(uint16 seq) {
-        require(
-            _dealsList.contains(_deals[seq].sn),
-            "IA.dealExist: deal not exist"
-        );
-        _;
-    }
-
     //#################
     //##    写接口    ##
     //#################
@@ -100,45 +92,6 @@ contract InvestmentAgreement is
         attorneyOrKeeper(uint8(TitleOfKeepers.SHAKeeper))
         returns (bytes32)
     {
-        require(sn.buyerOfDeal() != 0, "IA.createDeal: ZERO buyer");
-        require(sn.groupOfBuyer() != 0, "IA.createDeal: ZERO group");
-
-        if (shareNumber != bytes32(0)) {
-            require(
-                _bos.isShare(shareNumber.ssn()),
-                "IA.createDeal: shareNumber not exist"
-            );
-            require(
-                shareNumber.class() == sn.class(),
-                "IA.createDeal: class NOT correct"
-            );
-
-            if (_rom.isMember(sn.buyerOfDeal()))
-                require(
-                    sn.typeOfDeal() == uint8(TypeOfDeal.ShareTransferInt) ||
-                        sn.typeOfDeal() == uint8(TypeOfDeal.FirstRefusal) ||
-                        sn.typeOfDeal() == uint8(TypeOfDeal.FreeGift),
-                    "IA.createDeal: wrong typeOfDeal"
-                );
-            else
-                require(
-                    sn.typeOfDeal() == uint8(TypeOfDeal.ShareTransferExt) ||
-                        sn.typeOfDeal() == uint8(TypeOfDeal.TagAlong) ||
-                        sn.typeOfDeal() == uint8(TypeOfDeal.DragAlong),
-                    "IA.createDeal: wrong typeOfDeal"
-                );
-        } else {
-            require(
-                sn.classOfDeal() <= _bos.counterOfClasses(),
-                "IA.createDeal: class overflow"
-            );
-            require(
-                sn.typeOfDeal() == uint8(TypeOfDeal.CapitalIncrease) ||
-                    sn.typeOfDeal() == uint8(TypeOfDeal.PreEmptive),
-                "IA.createDeal: wrong typeOfDeal"
-            );
-        }
-
         _deals[0].unitPrice++;
 
         uint16 seq = uint16(_deals[0].unitPrice);
@@ -170,7 +123,7 @@ contract InvestmentAgreement is
 
     function setTypeOfIA(uint8 t) external onlyPending onlyAttorney {
         _deals[0].state = t;
-        emit SetTypeOfIA(t);
+        // emit SetTypeOfIA(t);
     }
 
     function updateDeal(
@@ -179,14 +132,13 @@ contract InvestmentAgreement is
         uint64 paid,
         uint64 par,
         uint32 closingDate
-    )
-        external
-        dealExist(seq)
-        attorneyOrKeeper(uint8(TitleOfKeepers.SHAKeeper))
-    {
+    ) external attorneyOrKeeper(uint8(TitleOfKeepers.SHAKeeper)) {
         require(par != 0, "par is ZERO");
         require(par >= paid, "paid overflow");
-        require(closingDate > block.number, "closingDate shall be future");
+        // require(
+        //     closingDate > block.timestamp + 15 minutes,
+        //     "closingDate shall be future"
+        // );
 
         Deal storage deal = _deals[seq];
 
@@ -198,12 +150,7 @@ contract InvestmentAgreement is
         emit UpdateDeal(deal.sn, unitPrice, paid, par, closingDate);
     }
 
-    function delDeal(uint16 seq)
-        external
-        onlyPending
-        dealExist(seq)
-        onlyAttorney
-    {
+    function delDeal(uint16 seq) external onlyPending onlyAttorney {
         Deal storage deal = _deals[seq];
 
         bytes32 sn = deal.sn;
@@ -217,14 +164,10 @@ contract InvestmentAgreement is
         delete _deals[seq];
         _dealsList.remove(sn);
 
-        emit DelDeal(sn);
+        // emit DelDeal(sn);
     }
 
-    function lockDealSubject(uint16 seq)
-        external
-        dealExist(seq)
-        returns (bool flag)
-    {
+    function lockDealSubject(uint16 seq) external returns (bool flag) {
         require(
             _gk.isKeeper(uint8(TitleOfKeepers.BOAKeeper), msg.sender) ||
                 _gk.isKeeper(uint8(TitleOfKeepers.SHAKeeper), msg.sender),
@@ -242,7 +185,6 @@ contract InvestmentAgreement is
     function releaseDealSubject(uint16 seq)
         external
         onlyDK
-        dealExist(seq)
         returns (bool flag)
     {
         Deal storage deal = _deals[seq];
@@ -257,11 +199,11 @@ contract InvestmentAgreement is
         uint16 seq,
         bytes32 hashLock,
         uint32 closingDate
-    ) external onlyDK dealExist(seq) {
+    ) external onlyDK {
         Deal storage deal = _deals[seq];
 
         require(
-            uint32(block.timestamp) < closingDate,
+            block.timestamp + 15 minutes < closingDate,
             "closingDate shall be FUTURE time"
         );
 
@@ -351,8 +293,6 @@ contract InvestmentAgreement is
             "Capital Increase not closed"
         );
 
-        require(deal.unitPrice == 0, "unitPrice is not zero");
-
         require(deal.state == uint8(StateOfDeal.Locked), "wrong state");
 
         deal.state = uint8(StateOfDeal.Closed);
@@ -379,7 +319,6 @@ contract InvestmentAgreement is
     function getDeal(uint16 seq)
         external
         view
-        dealExist(seq)
         returns (
             bytes32 sn,
             uint64 paid,
@@ -397,30 +336,15 @@ contract InvestmentAgreement is
         hashLock = deal.hashLock;
     }
 
-    function unitPriceOfDeal(uint16 seq)
-        external
-        view
-        dealExist(seq)
-        returns (uint32)
-    {
+    function unitPriceOfDeal(uint16 seq) external view returns (uint32) {
         return _deals[seq].unitPrice;
     }
 
-    function closingDateOfDeal(uint16 seq)
-        external
-        view
-        dealExist(seq)
-        returns (uint32)
-    {
+    function closingDateOfDeal(uint16 seq) external view returns (uint32) {
         return _deals[seq].closingDate;
     }
 
-    function shareNumberOfDeal(uint16 seq)
-        external
-        view
-        dealExist(seq)
-        returns (bytes32)
-    {
+    function shareNumberOfDeal(uint16 seq) external view returns (bytes32) {
         return _deals[seq].shareNumber;
     }
 

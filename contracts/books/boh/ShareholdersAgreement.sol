@@ -39,6 +39,7 @@ contract ShareholdersAgreement is
 {
     using SNParser for bytes32;
     using EnumerableSet for EnumerableSet.UintSet;
+    using EnumerableSet for EnumerableSet.Bytes32Set;
 
     enum TermTitle {
         ZeroPoint, //            0
@@ -55,23 +56,6 @@ contract ShareholdersAgreement is
 
     // ==== Rules ========
 
-    // VotingRule {
-    //     uint16 seqOfRule;
-    //     uint16 ratioHeadOfVR;
-    //     uint16 ratioAmountOfVR;
-    //     bool onlyAttendanceOfVR;
-    //     bool impliedConsentOfVR;
-    //     bool partyAsConsentOfVR;
-    //     bool againstShallBuyOfVR;
-    //     uint8 reviewDaysOfVR; //default: 15 natural days
-    //     uint8 votingDaysOfVR; //default: 30 natrual days
-    //     uint8 execDaysForPutOptOfVR; //default: 7 natrual days
-    //     uint40 vetoHolder1OfVR;
-    //     uint40 vetoHolder2OfVR;
-    //     uint40 vetoHolder3OfVR;
-    //     uint40 vetoHolder4OfVR;
-    // }
-
     // governanceRule {
     //     uint16 seqOfRule;
     //     bool basedOnPar;
@@ -84,14 +68,7 @@ contract ShareholdersAgreement is
     //     uint40 appointerOfCFO;
     // }
 
-    // FirstRefusalRule {
-    //     uint16 seqOfRule;
-    //     bool membersEqualOfFR;
-    //     bool proRataOfFR;
-    //     bool basedOnParOfFR;
-    // }
-
-/*
+    /*
     | Seq |        Type       |    Abb       |            Description                     |       
     |  0  |  GovernanceRule   |     GR       | Board Constitution and General Rules of GM | 
     |  1  |  VotingRule       |     CI       | VR for Capital Increase                    |
@@ -120,7 +97,7 @@ contract ShareholdersAgreement is
     // userNo => qty of directors can be appointed/nominated by the member;
     mapping(uint256 => uint8) private _boardSeatsOf;
 
-    EnumerableSet.Bytes32Set private _groupingOrders;
+    EnumerableSet.Bytes32Set private _groupOrders;
 
     //####################
     //##    modifier    ##
@@ -169,7 +146,6 @@ contract ShareholdersAgreement is
 
         if (
             title == uint8(TermTitle.ANTI_DILUTION) ||
-            title == uint8(TermTitle.FIRST_REFUSAL) ||
             title == uint8(TermTitle.LOCK_UP) ||
             title == uint8(TermTitle.TAG_ALONG)
         ) IBookSetting(body).setBOM(address(_bom));
@@ -182,8 +158,6 @@ contract ShareholdersAgreement is
 
         if (
             title == uint8(TermTitle.ANTI_DILUTION) ||
-            title == uint8(TermTitle.FIRST_REFUSAL) ||
-            title == uint8(TermTitle.GROUPS_UPDATE) ||
             title == uint8(TermTitle.DRAG_ALONG) ||
             title == uint8(TermTitle.TAG_ALONG)
         ) IBookSetting(body).setROM(address(_rom));
@@ -219,7 +193,7 @@ contract ShareholdersAgreement is
         _seqOfRules.add(rule.seqOfRule());
     }
 
-    function removeRule(uint16 seq) external onlyAttorney {    
+    function removeRule(uint16 seq) external onlyAttorney {
         if (_seqOfRules.remove(seq)) {
             delete _rules[seq];
         }
@@ -235,11 +209,11 @@ contract ShareholdersAgreement is
     // ==== GroupUpdateOrders ====
 
     function addOrder(bytes32 order) external onlyAttorney {
-        _groupingOrders.add(order);
+        _groupOrders.add(order);
     }
 
     function delOrder(bytes32 order) external onlyAttorney {
-        _groupingOrders.remove(order);
+        _groupOrders.remove(order);
     }
 
     //##################
@@ -360,7 +334,7 @@ contract ShareholdersAgreement is
         if (rule.membersEqualOfFR()) return _rom.isMember(acct);
         else return _rightholders[rule].contains(acct);
     }
-    
+
     function rightholdersOfFR(uint8 typeOfDeal)
         external
         view
@@ -371,11 +345,14 @@ contract ShareholdersAgreement is
         if (rule.membersEqualOfFR()) return _rom.membersList();
         else return _rightholders[rule].valuesToUint40();
     }
-    
+
     // ==== GroupUpdateOrders ====
-    
-    function orders() external view returns (bytes32[] memory) {
-        return _orders.values();
+
+    function groupOrders() external view returns (bytes32[] memory) {
+        return _groupOrders.values();
     }
 
+    function lengthOfOrders() external view returns (uint256) {
+        return _groupOrders.length();
+    }
 }

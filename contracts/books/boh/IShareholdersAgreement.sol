@@ -10,26 +10,6 @@ pragma solidity ^0.8.8;
 import "../../common/components/ISigPage.sol";
 
 interface IShareholdersAgreement is ISigPage {
-    //##############
-    //##  Event   ##
-    //##############
-
-    event SetTemplate(uint8 indexed title, address tempAdd);
-
-    event CreateTerm(uint8 indexed title, address indexed body);
-
-    event RemoveTerm(uint8 indexed title);
-
-    // ==== VotingRules ====
-
-    event SetGovernanceRule(bytes32 rule);
-
-    event SetVotingRule(uint8 indexed typeOfVote, bytes32 rule);
-
-    event SetBoardSeatsOf(uint40 indexed nominator, uint8 quota);
-
-    event RemoveRule(uint256 seq);
-
     //##################
     //##    写接口    ##
     //##################
@@ -41,13 +21,17 @@ interface IShareholdersAgreement is ISigPage {
     function finalizeTerms() external;
 
     // ======== Rules ========
-    function setGovernanceRule(bytes32 rule) external;
+    function addRule(bytes32 rule) external;
 
-    function setVotingRule(bytes32 rule) external;
-
-    function removeRule(uint256 seq) external;
+    function removeRule(uint16 seq) external;
 
     function setBoardSeatsOf(uint40 nominator, uint8 quota) external;
+
+    // ==== GroupUpdateOrders ====
+
+    function addOrder(bytes32 order) external;
+
+    function delOrder(bytes32 order) external;
 
     //##################
     //##    读接口    ##
@@ -75,9 +59,7 @@ interface IShareholdersAgreement is ISigPage {
         bytes32 snOfDeal
     ) external view returns (bool);
 
-    // ======== VotingRule ========
-
-    function votingRules(uint8 typeOfVote) external view returns (bytes32);
+    // ======== Rules ========
 
     function basedOnPar() external view returns (bool);
 
@@ -91,5 +73,33 @@ interface IShareholdersAgreement is ISigPage {
 
     function appointerOfViceChairman() external view returns (uint40);
 
+    function appointerOfCEO() external view returns (uint40);
+
+    function appointerOfCFO() external view returns (uint40);
+
     function boardSeatsOf(uint40 acct) external view returns (uint8);
+
+    function votingRules(uint8 typeOfVote) external view returns (bytes32);
+
+    // ==== FirstRefusal ====
+
+    function isSubjectToFR(uint8 typeOfDeal) external view returns (bool);
+
+    function ruleOfFR(uint8 typeOfDeal) external view returns (bytes32);
+
+    function isRightholderOfFR(uint8 typeOfDeal, uint40 acct)
+        external
+        view
+        returns (bool);
+
+    function rightholdersOfFR(uint8 typeOfDeal)
+        external
+        view
+        returns (uint40[] memory);
+
+    // ==== GroupUpdateOrders ====
+
+    function groupOrders() external view returns (bytes32[] memory);
+
+    function lengthOfOrders() external view returns (uint256);
 }

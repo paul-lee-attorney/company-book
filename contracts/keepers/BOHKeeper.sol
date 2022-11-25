@@ -9,7 +9,6 @@ pragma solidity ^0.8.8;
 
 import "../books/boh/ShareholdersAgreement.sol";
 import "../books/boh/IShareholdersAgreement.sol";
-import "../books/boh/terms/IGroupsUpdate.sol";
 
 import "../common/components/ISigPage.sol";
 
@@ -165,23 +164,16 @@ contract BOHKeeper is
             IShareholdersAgreement(sha).hasTitle(
                 uint8(ShareholdersAgreement.TermTitle.OPTIONS)
             )
-        )
+        ) {
             _boo.registerOption(
                 IShareholdersAgreement(sha).getTerm(
                     uint8(ShareholdersAgreement.TermTitle.OPTIONS)
                 )
             );
+        }
 
-        if (
-            IShareholdersAgreement(sha).hasTitle(
-                uint8(ShareholdersAgreement.TermTitle.GROUPS_UPDATE)
-            )
-        ) {
-            bytes32[] memory guo = IGroupsUpdate(
-                IShareholdersAgreement(sha).getTerm(
-                    uint8(ShareholdersAgreement.TermTitle.GROUPS_UPDATE)
-                )
-            ).orders();
+        if (IShareholdersAgreement(sha).lengthOfOrders() > 0) {
+            bytes32[] memory guo = IShareholdersAgreement(sha).groupOrders();
             len = guo.length;
             while (len != 0) {
                 if (guo[len - 1].addMemberOfGUO())

@@ -42,8 +42,6 @@ const GK = artifacts.require("GeneralKeeper");
 
 const AD = artifacts.require("AntiDilution");
 const DA = artifacts.require("DragAlong");
-const FR = artifacts.require("FirstRefusal");
-const GU = artifacts.require("GroupsUpdate");
 const LU = artifacts.require("LockUp");
 const OP = artifacts.require("Options");
 const TA = artifacts.require("TagAlong");
@@ -53,7 +51,7 @@ module.exports = async function (deployer, network, accounts) {
     // ==== Libraries ====
 
     await deployer.deploy(LibEnumerableSet);
-    await deployer.link(LibEnumerableSet, [IA, BOD, AD, DA, FR, GU, LU, TA, BOA, BOH, LibBallotsBox, LibCheckpoints, LibMembersRepo, LibMotionsRepo, LibOptionsRepo, LibSigsRepo]);
+    await deployer.link(LibEnumerableSet, [IA, BOD, AD, DA, LU, TA, BOA, BOH, LibBallotsBox, LibCheckpoints, LibMembersRepo, LibMotionsRepo, LibOptionsRepo, LibSigsRepo]);
 
     await deployer.deploy(LibBallotsBox);
     await deployer.link(LibBallotsBox, [BOD, BOM, LibMotionsRepo]);
@@ -65,7 +63,7 @@ module.exports = async function (deployer, network, accounts) {
     await deployer.link(LibDelegateMap, [BOD, BOM, LibMotionsRepo]);
 
     await deployer.deploy(LibSNParser);
-    await deployer.link(LibSNParser, [BOA, IA, MR, SHA, AD, DA, FR, GU, LU, TA, BOM, BOO, BOP, BOS, BOH, LibMotionsRepo, LibOptionsRepo, BOAKeeper, BOHKeeper, BOMKeeper, BOOKeeper, BOPKeeper, BOSKeeper, SHAKeeper]);
+    await deployer.link(LibSNParser, [BOA, IA, MR, SHA, AD, DA, LU, TA, BOM, BOO, BOP, BOS, BOH, LibMotionsRepo, LibOptionsRepo, BOAKeeper, BOHKeeper, BOMKeeper, BOOKeeper, BOPKeeper, BOSKeeper, SHAKeeper]);
 
     await deployer.deploy(LibSNFactory);
     await deployer.link(LibSNFactory, [BOP, BOS, LibOptionsRepo, BOMKeeper, SHAKeeper]);
@@ -74,7 +72,7 @@ module.exports = async function (deployer, network, accounts) {
     await deployer.link(LibTopChain, [MR, ROM, LibMembersRepo]);
 
     await deployer.deploy(LibArrayUtils);
-    await deployer.link(LibArrayUtils, [AD, FR, LU]);
+    await deployer.link(LibArrayUtils, [AD, LU]);
 
     await deployer.deploy(LibArrowChain);
     await deployer.link(LibArrowChain, AD);
@@ -89,7 +87,7 @@ module.exports = async function (deployer, network, accounts) {
     await deployer.link(LibOptionsRepo, [OP, BOO]);
 
     await deployer.deploy(LibRolesRepo);
-    await deployer.link(LibRolesRepo, [IA, FRD, MR, BOA, BOD, SHA, BOH, BOM, BOO, BOP, BOS, ROM, BOAKeeper, BODKeeper, BOHKeeper, BOMKeeper, BOOKeeper, BOPKeeper, BOSKeeper, ROMKeeper, SHAKeeper, GK, AD, DA, FR, GU, LU, OP, TA]);
+    await deployer.link(LibRolesRepo, [IA, FRD, MR, BOA, BOD, SHA, BOH, BOM, BOO, BOP, BOS, ROM, BOAKeeper, BODKeeper, BOHKeeper, BOMKeeper, BOOKeeper, BOPKeeper, BOSKeeper, ROMKeeper, SHAKeeper, GK, AD, DA, LU, OP, TA]);
 
     await deployer.deploy(LibSigsRepo);
     await deployer.link(LibSigsRepo, [IA, SHA]);
@@ -212,14 +210,6 @@ module.exports = async function (deployer, network, accounts) {
     await deployer.deploy(AD);
     let ad = await AD.deployed();
     await boh.setTermTemplate(2, ad.address);
-
-    await deployer.deploy(FR);
-    let fr = await FR.deployed();
-    await boh.setTermTemplate(3, fr.address);
-
-    await deployer.deploy(GU);
-    let gu = await GU.deployed();
-    await boh.setTermTemplate(4, gu.address);
 
     await deployer.deploy(DA);
     let da = await DA.deployed();

@@ -124,16 +124,7 @@ contract BOMKeeper is
             bytes32 sn = dealsList[len - 1];
             len--;
 
-            if (
-                _getSHA().hasTitle(
-                    uint8(ShareholdersAgreement.TermTitle.FIRST_REFUSAL)
-                ) &&
-                _getSHA().termIsTriggered(
-                    uint8(ShareholdersAgreement.TermTitle.FIRST_REFUSAL),
-                    ia,
-                    sn
-                )
-            ) return true;
+            if (_getSHA().isSubjectToFR(sn.typeOfDeal())) return true;
 
             if (
                 _getSHA().hasTitle(

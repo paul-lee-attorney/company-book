@@ -14,7 +14,7 @@ interface IFirstRefusal is ITerm {
     // ##   Event   ##
     // ###############
 
-    event SetFirstRefusal(uint8 indexed typeOfDeal, bytes32 rule);
+    event SetFirstRefusal(bytes32 rule);
 
     event AddRightholder(uint8 indexed typeOfDeal, uint40 rightholder);
 
@@ -26,7 +26,7 @@ interface IFirstRefusal is ITerm {
     // ##   Write   ##
     // ###############
 
-    function setFirstRefusal(uint8 typeOfDeal, bytes32 rule) external;
+    function setFirstRefusal(bytes32 rule) external;
 
     function delFirstRefusal(uint8 typeOfDeal) external;
 

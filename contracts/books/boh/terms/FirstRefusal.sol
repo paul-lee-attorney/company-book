@@ -7,7 +7,7 @@
 
 pragma solidity ^0.8.8;
 
-import "../../boa//IInvestmentAgreement.sol";
+import "../../boa/IInvestmentAgreement.sol";
 
 import "../../../common/ruting/BOMSetting.sol";
 import "../../../common/ruting/ROMSetting.sol";
@@ -32,7 +32,7 @@ contract FirstRefusal is IFirstRefusal, BOMSetting, ROMSetting {
     }
 
     // struct ruleInfo {
-    //     uint8 typeOfDeal; 1-CI; 2-ST(ext); 3-ST(int); (4-1&3; 5-2&3; 6-1&2&3; 7-1&2)
+    //     uint8 typeOfDeal; 1-CI; 2-ST(ext); 3-ST(int);
     //     bool membersEqual;
     //     bool proRata;
     //     bool basedOnPar;
@@ -70,19 +70,19 @@ contract FirstRefusal is IFirstRefusal, BOMSetting, ROMSetting {
     //     return _sn.bytesToBytes32();
     // }
 
-    function setFirstRefusal(uint8 typeOfDeal, bytes32 rule)
+    function setFirstRefusal(bytes32 rule)
         external
         onlyAttorney
     {
-        _firstRefusals[typeOfDeal].rule = rule;
+        _firstRefusals[rule.typeOfFR()].rule = rule;
 
-        emit SetFirstRefusal(typeOfDeal, rule);
+        emit SetFirstRefusal(rule);
     }
 
-    function delFirstRefusal(uint8 typeOfDeal) external onlyAttorney {
-        delete _firstRefusals[typeOfDeal];
+    function delFirstRefusal(uint8 typeOfFR) external onlyAttorney {
+        delete _firstRefusals[typeOfFR];
 
-        emit DelFirstRefusal(typeOfDeal);
+        emit DelFirstRefusal(typeOfFR);
     }
 
     function addRightholder(uint8 typeOfDeal, uint40 rightholder)

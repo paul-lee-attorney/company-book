@@ -28,6 +28,8 @@ interface IShareholdersAgreement is ISigPage {
 
     event SetBoardSeatsOf(uint40 indexed nominator, uint8 quota);
 
+    event RemoveRule(uint256 seq);
+
     //##################
     //##    写接口    ##
     //##################
@@ -42,6 +44,8 @@ interface IShareholdersAgreement is ISigPage {
     function setGovernanceRule(bytes32 rule) external;
 
     function setVotingRule(bytes32 rule) external;
+
+    function removeRule(uint256 seq) external;
 
     function setBoardSeatsOf(uint40 nominator, uint8 quota) external;
 

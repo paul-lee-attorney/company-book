@@ -50,9 +50,6 @@ module.exports = async function (callback) {
     let sha = await SHA.deployed();
     console.log("SHA: ", sha.address)
 
-
-    // let fr = await FR.deployed();
-
     // ==== set template of SHA ====
 
     await gk.setTempOfSHA(sha.address, 0, {
@@ -161,112 +158,302 @@ module.exports = async function (callback) {
     events = await sha.getPastEvents("SetGovernanceRule");
     console.log("Event 'SetGovernanceRule': ", events[0].returnValues);
 
+    ret = await sha.basedOnPar();
+    console.log("Event 'basedOnPar': ", ret.toNumber());
 
-    // // ==== CI ====
-    // await sha.setRule(1, 0, 0, 6666, 0, 0, 1, 0, 1, 1, 0, {
-    //     from: accounts[7]
-    // });
-    // events = await sha.getPastEvents("SetRule");
-    // console.log("Event 'SetRule' for CI: ", events[0].returnValues);
+    ret = await sha.proposalThreshold();
+    console.log("Event 'proposalThreshold': ", ret.toNumber());
 
-    // // ==== ST_Ext ====
-    // await sha.setRule(2, 0, 0, 5000, 1, 1, 1, 1, 1, 1, 0, {
-    //     from: accounts[7]
-    // });
-    // events = await sha.getPastEvents("SetRule");
-    // console.log("Event 'SetRule' for ST_Ext: ", events[0].returnValues);
+    ret = await sha.maxNumOfDirectors();
+    console.log("Event 'maxNumOfDirectors': ", ret.toNumber());
 
-    // // ==== CI & ST_Ext ====
-    // await sha.setRule(7, 0, 0, 6666, 0, 0, 1, 0, 1, 1, 0, {
-    //     from: accounts[7]
-    // });
-    // events = await sha.getPastEvents("SetRule");
-    // console.log("Event 'SetRule' for CI & TS_Ext: ", events[0].returnValues);
+    ret = await sha.tenureOfBoard();
+    console.log("Event 'tenureOfBoard': ", ret.toNumber());
 
-    // // ==== CI & ST_Int ====
-    // await sha.setRule(4, 0, 0, 6666, 0, 0, 1, 0, 1, 1, 0, {
-    //     from: accounts[7]
-    // });
-    // events = await sha.getPastEvents("SetRule");
-    // console.log("Event 'SetRule' for CI & TS_Int: ", events[0].returnValues);
+    ret = await sha.appointerOfChairman();
+    console.log("Event 'appointerOfChairman': ", ret.toNumber());
 
-    // // ==== ST_Ext & ST_Int ====
-    // await sha.setRule(5, 0, 0, 5000, 1, 1, 1, 1, 1, 1, 0, {
-    //     from: accounts[7]
-    // });
-    // events = await sha.getPastEvents("SetRule");
-    // console.log("Event 'SetRule' for ST_Ext & ST_Int: ", events[0].returnValues);
+    ret = await sha.appointerOfViceChairman();
+    console.log("Event 'appointerOfViceChairman': ", ret.toNumber());
 
-    // // ==== CI & ST_Ext & ST_Int ====
-    // await sha.setRule(6, 0, 0, 6666, 0, 0, 1, 0, 1, 1, 0, {
-    //     from: accounts[7]
-    // });
-    // events = await sha.getPastEvents("SetRule");
-    // console.log("Event 'SetRule' for CI & ST_Ext & ST_Int: ", events[0].returnValues);
+    // ==== CI VotingRule ====
 
-    // // ==== FR ====
-    // ret = await sha.createTerm(3, {
-    //     from: accounts[7]
-    // });
+    let ratioHead = '0000';
+    let ratioAmount = '1a0a';
+    let onlyAttendance = '00';
+    let impliedConsent = '00';
+    let partyAsConsent = '01';
+    let againstShallBuy = '00';
+    let reviewDays = '0f';
+    let votingDays = '1e';
+    let execDaysForPutOpt = '07';
+    let typeOfVote = '01';
+    let vetoHolder = '0000000000';
 
-    // addr = ret.logs[0].address;
+    rule = '0x' + ratioHead + ratioAmount + onlyAttendance + impliedConsent + partyAsConsent + againstShallBuy + reviewDays + votingDays + execDaysForPutOpt + typeOfVote + vetoHolder;
 
-    // fr = await FR.at(addr);
-    // console.log("get FR: ", fr.address);
+    rule = web3.utils.padRight(rule, 64);
 
-    // events = await fr.getPastEvents("Init");
-    // console.log("Event 'Init': ", events[0].returnValues);
+    await sha.setVotingRule(rule, {
+        from: accounts[7]
+    });
+    events = await sha.getPastEvents("SetVotingRule");
+    console.log("Event 'SetVotingRule' for CI: ", events[0].returnValues);
 
-    // events = await rc.getPastEvents("SetManager");
-    // console.log("Event 'SetManager': ", events[0].returnValues);
+    ret = await sha.votingRules(1);
+    console.log("VotingRules for typeOfVote: ", typeOfVote, " rule: ", rule);
 
-    // events = await fr.getPastEvents("SetBOS");
-    // console.log("Event 'SetBOS': ", events[0].returnValues);
+    // ==== SText VotingRule ====
 
-    // events = await fr.getPastEvents("SetBOM");
-    // console.log("Event 'SetBOM': ", events[0].returnValues);
+    ratioHead = '0000';
+    ratioAmount = '1388';
+    onlyAttendance = '00';
+    impliedConsent = '01';
+    partyAsConsent = '01';
+    againstShallBuy = '01';
+    reviewDays = '0f';
+    votingDays = '1e';
+    execDaysForPutOpt = '07';
+    typeOfVote = '02';
+    vetoHolder = '0000000000';
 
-    // events = await sha.getPastEvents("CreateTerm");
-    // console.log("Event 'CreateTerm': ", events[0].returnValues);
+    rule = '0x' + ratioHead + ratioAmount + onlyAttendance + impliedConsent + partyAsConsent + againstShallBuy + reviewDays + votingDays + execDaysForPutOpt + typeOfVote + vetoHolder;
 
-    // // ==== remove FR ====
-    // await sha.removeTerm(3, {
-    //     from: accounts[7]
-    // });
+    rule = web3.utils.padRight(rule, 64);
 
-    // events = await sha.getPastEvents("RemoveTerm");
-    // console.log("Event 'RemoveTerm': ", events[0].returnValues);
+    await sha.setVotingRule(rule, {
+        from: accounts[7]
+    });
+    events = await sha.getPastEvents("SetVotingRule");
+    console.log("Event 'SetVotingRule' for SText: ", events[0].returnValues);
 
-    // // ==== FR ====
-    // ret = await sha.createTerm(3, {
-    //     from: accounts[7]
-    // });
+    ret = await sha.votingRules(2);
+    console.log("VotingRules for typeOfVote: ", typeOfVote, " rule: ", rule);
 
-    // addr = ret.logs[0].address;
+    // ==== STint ====
 
-    // fr = await FR.at(addr);
-    // console.log("get FR: ", fr.address);
+    ratioHead = '0000';
+    ratioAmount = '0000';
+    onlyAttendance = '00';
+    impliedConsent = '01';
+    partyAsConsent = '01';
+    againstShallBuy = '01';
+    reviewDays = '0f';
+    votingDays = '1e';
+    execDaysForPutOpt = '07';
+    typeOfVote = '03';
+    vetoHolder = '0000000000';
 
-    // events = await fr.getPastEvents("Init");
-    // console.log("Event 'Init': ", events[0].returnValues);
+    rule = '0x' + ratioHead + ratioAmount + onlyAttendance + impliedConsent + partyAsConsent + againstShallBuy + reviewDays + votingDays + execDaysForPutOpt + typeOfVote + vetoHolder;
 
-    // events = await rc.getPastEvents("SetManager");
-    // console.log("Event 'SetManager': ", events[0].returnValues);
+    rule = web3.utils.padRight(rule, 64);
 
-    // events = await fr.getPastEvents("SetBOS");
-    // console.log("Event 'SetBOS': ", events[0].returnValues);
+    await sha.setVotingRule(rule, {
+        from: accounts[7]
+    });
+    events = await sha.getPastEvents("SetVotingRule");
+    console.log("Event 'SetVotingRule' for STint: ", events[0].returnValues);
 
-    // events = await fr.getPastEvents("SetBOM");
-    // console.log("Event 'SetBOM': ", events[0].returnValues);
+    ret = await sha.votingRules(3);
+    console.log("VotingRules for typeOfVote: ", typeOfVote, " rule: ", rule);
 
-    // events = await sha.getPastEvents("CreateTerm");
-    // console.log("Event 'CreateTerm': ", events[0].returnValues);
+    // ==== CI & STint ====
 
-    // // ==== Set FR as per company law of China ====
+    ratioHead = '0000';
+    ratioAmount = '1a0a';
+    onlyAttendance = '00';
+    impliedConsent = '00';
+    partyAsConsent = '01';
+    againstShallBuy = '00';
+    reviewDays = '0f';
+    votingDays = '1e';
+    execDaysForPutOpt = '07';
+    typeOfVote = '04';
+    vetoHolder = '0000000000';
 
-    // await fr.setFirstRefusal(2, 1, 1, 0, {
-    //     from: accounts[7]
-    // });
+    rule = '0x' + ratioHead + ratioAmount + onlyAttendance + impliedConsent + partyAsConsent + againstShallBuy + reviewDays + votingDays + execDaysForPutOpt + typeOfVote + vetoHolder;
+
+    rule = web3.utils.padRight(rule, 64);
+
+    await sha.setVotingRule(rule, {
+        from: accounts[7]
+    });
+    events = await sha.getPastEvents("SetVotingRule");
+    console.log("Event 'SetVotingRule' for STint: ", events[0].returnValues);
+
+    ret = await sha.votingRules(4);
+    console.log("VotingRules for typeOfVote: ", typeOfVote, " rule: ", rule);
+
+    // ==== SText & STint ====
+
+    ratioHead = '0000';
+    ratioAmount = '1388';
+    onlyAttendance = '00';
+    impliedConsent = '01';
+    partyAsConsent = '01';
+    againstShallBuy = '01';
+    reviewDays = '0f';
+    votingDays = '1e';
+    execDaysForPutOpt = '07';
+    typeOfVote = '05';
+    vetoHolder = '0000000000';
+
+    rule = '0x' + ratioHead + ratioAmount + onlyAttendance + impliedConsent + partyAsConsent + againstShallBuy + reviewDays + votingDays + execDaysForPutOpt + typeOfVote + vetoHolder;
+
+    rule = web3.utils.padRight(rule, 64);
+
+    await sha.setVotingRule(rule, {
+        from: accounts[7]
+    });
+    events = await sha.getPastEvents("SetVotingRule");
+    console.log("Event 'SetVotingRule' for STint: ", events[0].returnValues);
+
+    ret = await sha.votingRules(5);
+    console.log("VotingRules for typeOfVote: ", typeOfVote, " rule: ", rule);
+
+    // ==== CI & SText & STint ====
+
+    ratioHead = '0000';
+    ratioAmount = '1a0a';
+    onlyAttendance = '00';
+    impliedConsent = '00';
+    partyAsConsent = '01';
+    againstShallBuy = '00';
+    reviewDays = '0f';
+    votingDays = '1e';
+    execDaysForPutOpt = '07';
+    typeOfVote = '06';
+    vetoHolder = '0000000000';
+
+    rule = '0x' + ratioHead + ratioAmount + onlyAttendance + impliedConsent + partyAsConsent + againstShallBuy + reviewDays + votingDays + execDaysForPutOpt + typeOfVote + vetoHolder;
+
+    rule = web3.utils.padRight(rule, 64);
+
+    await sha.setVotingRule(rule, {
+        from: accounts[7]
+    });
+    events = await sha.getPastEvents("SetVotingRule");
+    console.log("Event 'SetVotingRule' for STint: ", events[0].returnValues);
+
+    ret = await sha.votingRules(6);
+    console.log("VotingRules for typeOfVote: ", typeOfVote, " rule: ", rule);
+
+    // ==== CI & SText ====
+
+    ratioHead = '0000';
+    ratioAmount = '1a0a';
+    onlyAttendance = '00';
+    impliedConsent = '00';
+    partyAsConsent = '01';
+    againstShallBuy = '00';
+    reviewDays = '0f';
+    votingDays = '1e';
+    execDaysForPutOpt = '07';
+    typeOfVote = '07';
+    vetoHolder = '0000000000';
+
+    rule = '0x' + ratioHead + ratioAmount + onlyAttendance + impliedConsent + partyAsConsent + againstShallBuy + reviewDays + votingDays + execDaysForPutOpt + typeOfVote + vetoHolder;
+
+    rule = web3.utils.padRight(rule, 64);
+
+    await sha.setVotingRule(rule, {
+        from: accounts[7]
+    });
+    events = await sha.getPastEvents("SetVotingRule");
+    console.log("Event 'SetVotingRule' for STint: ", events[0].returnValues);
+
+    ret = await sha.votingRules(7);
+    console.log("VotingRules for typeOfVote: ", typeOfVote, " rule: ", rule);
+
+    // ==== FR ====
+    addr = await sha.createTerm.call(3, {
+        from: accounts[7]
+    });
+
+    let fr = await FR.at(addr);
+    console.log("get FR: ", fr.address);
+
+    events = await fr.getPastEvents("Init");
+    console.log("Event 'Init': ", events[0].returnValues);
+
+    events = await rc.getPastEvents("SetManager");
+    console.log("Event 'SetManager': ", events[0].returnValues);
+
+    events = await fr.getPastEvents("SetBOM");
+    console.log("Event 'SetBOM': ", events[0].returnValues);
+
+    events = await fr.getPastEvents("SetROM");
+    console.log("Event 'SetROM': ", events[0].returnValues);
+
+    events = await sha.getPastEvents("CreateTerm");
+    console.log("Event 'CreateTerm': ", events[0].returnValues);
+
+    // ==== remove FR ====
+    await sha.removeTerm(3, {
+        from: accounts[7]
+    });
+
+    events = await sha.getPastEvents("RemoveTerm");
+    console.log("Event 'RemoveTerm': ", events[0].returnValues);
+
+    // ==== Set FR as per company law of China ====
+
+    addr = await sha.createTerm.call(3, {
+        from: accounts[7]
+    });
+
+    fr = await FR.at(addr);
+    console.log("get FR: ", fr.address);
+
+    events = await fr.getPastEvents("Init");
+    console.log("Event 'Init': ", events[0].returnValues);
+
+    // ==== FR rule for CI ====
+
+        // struct ruleInfo {
+        //     uint8 typeOfDeal; 1-CI; 2-ST(ext); 3-ST(int);
+        //     bool membersEqual;
+        //     bool proRata;
+        //     bool basedOnPar;
+        // }
+
+    rule = '0x' + '01' + '01' + '01' + '00';
+    rule = web3.utils.padRight(rule, 64);
+
+    await fr.setFirstRefusal(rule, {
+        from: accounts[7]
+    });
+
+    events = await fr.getPastEvents("SetFirstRefusal");
+    console.log("Event 'SetFirstRefusal': ", events[0].returnValues);
+
+    // ==== FR rule for SText ====
+
+        // struct ruleInfo {
+        //     uint8 typeOfDeal; 1-CI; 2-ST(ext); 3-ST(int);
+        //     bool membersEqual;
+        //     bool proRata;
+        //     bool basedOnPar;
+        // }
+
+    rule = '0x' + '02' + '01' + '01' + '00';
+    rule = web3.utils.padRight(rule, 64);
+
+    await fr.setFirstRefusal(rule, {
+        from: accounts[7]
+    });
+
+    events = await fr.getPastEvents("SetFirstRefusal");
+    console.log("Event 'SetFirstRefusal': ", events[0].returnValues);
+
+    await fr.delFirstRefusal(2, {
+        from: accounts[7]
+    });
+
+    events = await fr.getPastEvents("DelFirstRefusal");
+    console.log("Event 'DelFirstRefusal': ", events[0].returnValues);
+
+
 
     // events = await fr.getPastEvents("SetFirstRefusal");
     // console.log("Event 'SetFirstRefusal' for ST_Ext: ", events[0].returnValues);

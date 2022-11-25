@@ -64,37 +64,6 @@ library SNParser {
         return uint16(bytes2(sn << 128));
     }
 
-    // ======== FirstRefusalRule ========
-
-    function typeOfFR(bytes32 sn) internal pure returns (uint8) {
-        return uint8(sn[0]);
-    }
-
-    function membersEqualOfFR(bytes32 sn) internal pure returns (bool) {
-        return uint8(sn[1]) == 1;
-    }
-
-    function proRataOfFR(bytes32 sn) internal pure returns (bool) {
-        return uint8(sn[2]) == 1;
-    }
-
-    function basedOnParOfFR(bytes32 sn) internal pure returns (bool) {
-        return uint8(sn[3]) == 1;
-    }
-
-    // ======== GroupUpdateOrder ========
-
-    function addMemberOfGUO(bytes32 sn) internal pure returns (bool) {
-        return uint8(sn[0]) == 1;
-    }
-
-    function groupNoOfGUO(bytes32 sn) internal pure returns (uint16) {
-        return uint16(bytes2(sn << 8));
-    }
-
-    function memberOfGUO(bytes32 sn) internal pure returns (uint32) {
-        return uint32(bytes4(sn << 24));
-    }
 
     // ======== LinkRule ========
 
@@ -238,50 +207,84 @@ library SNParser {
         return uint32(bytes4(sn << 112));
     }
 
-    // ========= VotingRule ========
+    // ========= Rules ========
 
-    function ratioHeadOfVR(bytes32 sn) internal pure returns (uint16) {
-        return uint16(bytes2(sn));
+    // ==== Voting Rule ====
+
+    function seqOfRule(bytes32 rule) internal pure returns (uint16) {
+        return uint16(bytes2(rule));
     }
 
-    function ratioAmountOfVR(bytes32 sn) internal pure returns (uint16) {
+    function ratioHeadOfVR(bytes32 sn) internal pure returns (uint16) {
         return uint16(bytes2(sn << 16));
     }
 
+    function ratioAmountOfVR(bytes32 sn) internal pure returns (uint16) {
+        return uint16(bytes2(sn << 32));
+    }
+
     function onlyAttendanceOfVR(bytes32 sn) internal pure returns (bool) {
-        return uint8(sn[4]) == 1;
-    }
-
-    function impliedConsentOfVR(bytes32 sn) internal pure returns (bool) {
-        return uint8(sn[5]) == 1;
-    }
-
-    function partyAsConsentOfVR(bytes32 sn) internal pure returns (bool) {
         return uint8(sn[6]) == 1;
     }
 
-    function againstShallBuyOfVR(bytes32 sn) internal pure returns (bool) {
+    function impliedConsentOfVR(bytes32 sn) internal pure returns (bool) {
         return uint8(sn[7]) == 1;
     }
 
+    function partyAsConsentOfVR(bytes32 sn) internal pure returns (bool) {
+        return uint8(sn[8]) == 1;
+    }
+
+    function againstShallBuyOfVR(bytes32 sn) internal pure returns (bool) {
+        return uint8(sn[9]) == 1;
+    }
+
     function reviewDaysOfVR(bytes32 sn) internal pure returns (uint8) {
-        return uint8(sn[8]);
-    }
-
-    function votingDaysOfVR(bytes32 sn) internal pure returns (uint8) {
-        return uint8(sn[9]);
-    }
-
-    function execDaysForPutOptOfVR(bytes32 sn) internal pure returns (uint8) {
         return uint8(sn[10]);
     }
 
-    function typeOfVoteOfVR(bytes32 sn) internal pure returns (uint8) {
+    function votingDaysOfVR(bytes32 sn) internal pure returns (uint8) {
         return uint8(sn[11]);
     }
 
-    function vetoHolderOfVR(bytes32 sn) internal pure returns (uint32) {
-        return uint32(bytes4(sn << 96));
+    function execDaysForPutOptOfVR(bytes32 sn) internal pure returns (uint8) {
+        return uint8(sn[12]);
+    }
+
+    function vetoHolderOfVR(bytes32 sn) internal pure returns (uint40) {
+        return uint40(bytes5(sn << 104));
+    }
+
+    // ==== FirstRefusal Rule ====
+
+    function typeOfFR(bytes32 sn) internal pure returns (uint8) {
+        return uint8(sn[2]);
+    }
+
+    function membersEqualOfFR(bytes32 sn) internal pure returns (bool) {
+        return uint8(sn[3]) == 1;
+    }
+
+    function proRataOfFR(bytes32 sn) internal pure returns (bool) {
+        return uint8(sn[4]) == 1;
+    }
+
+    function basedOnParOfFR(bytes32 sn) internal pure returns (bool) {
+        return uint8(sn[5]) == 1;
+    }
+
+    // ======== GroupUpdateOrder ========
+
+    function addMemberOfGUO(bytes32 sn) internal pure returns (bool) {
+        return uint8(sn[0]) == 1;
+    }
+
+    function groupNoOfGUO(bytes32 sn) internal pure returns (uint16) {
+        return uint16(bytes2(sn << 8));
+    }
+
+    function memberOfGUO(bytes32 sn) internal pure returns (uint32) {
+        return uint32(bytes4(sn << 24));
     }
 
     // ======== MotionSN ========

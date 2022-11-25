@@ -260,6 +260,7 @@ module.exports = async function (deployer, network, accounts) {
     // ==== BOMSetting ==== 
     await boaKeeper.setBOM(bom.address);
     await bodKeeper.setBOM(bom.address);
+    await bohKeeper.setBOM(bom.address);
     await bomKeeper.setBOM(bom.address);
 
     // ==== BOOSetting ==== 

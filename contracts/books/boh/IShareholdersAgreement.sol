@@ -27,6 +27,12 @@ interface IShareholdersAgreement is ISigPage {
 
     function setBoardSeatsOf(uint40 nominator, uint8 quota) external;
 
+    function addRightholderOfRule(uint16 seqOfRule, uint40 rightholder)
+        external;
+
+    function removeRightholderOfRule(uint16 seqOfRule, uint40 rightholder)
+        external;
+
     // ==== GroupUpdateOrders ====
 
     function addOrder(bytes32 order) external;
@@ -69,13 +75,7 @@ interface IShareholdersAgreement is ISigPage {
 
     function tenureOfBoard() external view returns (uint8);
 
-    function appointerOfChairman() external view returns (uint40);
-
-    function appointerOfViceChairman() external view returns (uint40);
-
-    function appointerOfCEO() external view returns (uint40);
-
-    function appointerOfCFO() external view returns (uint40);
+    function appointerOfOfficer(uint16 title) external view returns (uint40);
 
     function boardSeatsOf(uint40 acct) external view returns (uint8);
 

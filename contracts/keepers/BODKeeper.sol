@@ -38,7 +38,7 @@ contract BODKeeper is
 
         if (title == uint8(BookOfDirectors.TitleOfDirectors.Chairman)) {
             require(
-                _getSHA().appointerOfChairman() == appointer,
+                _getSHA().appointerOfOfficer(0) == appointer,
                 "BODKeeper.appointDirector: has no appointment right"
             );
 
@@ -50,7 +50,7 @@ contract BODKeeper is
             title == uint8(BookOfDirectors.TitleOfDirectors.ViceChairman)
         ) {
             require(
-                _getSHA().appointerOfViceChairman() == appointer,
+                _getSHA().appointerOfOfficer(1) == appointer,
                 "BODKeeper.appointDirector: has no appointment right"
             );
             require(

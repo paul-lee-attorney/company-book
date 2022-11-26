@@ -62,10 +62,6 @@ contract ShareholdersAgreement is
     //     uint16 proposalThreshold;
     //     uint8 maxNumOfDirectors;
     //     uint8 tenureOfBoard;
-    //     uint40 appointerOfChairman;
-    //     uint40 appointerOfViceChairman;
-    //     uint40 appointerOfCEO;
-    //     uint40 appointerOfCFO;
     // }
 
     /*
@@ -91,8 +87,8 @@ contract ShareholdersAgreement is
     mapping(uint256 => bytes32) private _rules;
     EnumerableSet.UintSet private _seqOfRules;
 
-    // rule => userNo
-    mapping(bytes32 => EnumerableSet.UintSet) private _rightholders;
+    // seqOfRule => userNo
+    mapping(uint256 => EnumerableSet.UintSet) private _rightholders;
 
     // userNo => qty of directors can be appointed/nominated by the member;
     mapping(uint256 => uint8) private _boardSeatsOf;
@@ -199,6 +195,20 @@ contract ShareholdersAgreement is
         }
     }
 
+    function addRightholderOfRule(uint16 seqOfRule, uint40 rightholder)
+        external
+        onlyAttorney
+    {
+        _rightholders[seqOfRule].add(rightholder);
+    }
+
+    function removeRightholderOfRule(uint16 seqOfRule, uint40 rightholder)
+        external
+        onlyAttorney
+    {
+        _rightholders[seqOfRule].remove(rightholder);
+    }
+
     function setBoardSeatsOf(uint40 nominator, uint8 quota)
         external
         onlyAttorney
@@ -285,20 +295,8 @@ contract ShareholdersAgreement is
         return uint8(_rules[0][6]);
     }
 
-    function appointerOfChairman() external view returns (uint40) {
-        return uint40(bytes5(_rules[0] << 56));
-    }
-
-    function appointerOfViceChairman() external view returns (uint40) {
-        return uint40(bytes5(_rules[0] << 96));
-    }
-
-    function appointerOfCEO() external view returns (uint40) {
-        return uint40(bytes5(_rules[0] << 136));
-    }
-
-    function appointerOfCFO() external view returns (uint40) {
-        return uint40(bytes5(_rules[0] << 176));
+    function appointerOfOfficer(uint16 title) external view returns (uint40) {
+        return uint40(_rightholders[0].at(title));
     }
 
     function boardSeatsOf(uint40 acct) external view returns (uint8) {
@@ -332,7 +330,7 @@ contract ShareholdersAgreement is
         bytes32 rule = _rules[typeOfDeal + 20];
 
         if (rule.membersEqualOfFR()) return _rom.isMember(acct);
-        else return _rightholders[rule].contains(acct);
+        else return _rightholders[typeOfDeal + 20].contains(acct);
     }
 
     function rightholdersOfFR(uint8 typeOfDeal)
@@ -343,7 +341,7 @@ contract ShareholdersAgreement is
         bytes32 rule = _rules[typeOfDeal + 20];
 
         if (rule.membersEqualOfFR()) return _rom.membersList();
-        else return _rightholders[rule].valuesToUint40();
+        else return _rightholders[typeOfDeal + 20].valuesToUint40();
     }
 
     // ==== GroupUpdateOrders ====

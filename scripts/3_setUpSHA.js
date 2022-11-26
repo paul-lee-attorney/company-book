@@ -151,6 +151,7 @@ module.exports = async function (callback) {
     let rule = '0x' + basedOnPar + proposalThreshold + maxNumOfDirectors + tenureOfBoard + '0000000004' + '0000000005';
 
     rule = web3.utils.padRight(rule, 64);
+    console.log("GovernanceRule: ", rule);
 
     await sha.setGovernanceRule(rule, {
         from: accounts[7]
@@ -410,12 +411,12 @@ module.exports = async function (callback) {
 
     // ==== FR rule for CI ====
 
-        // struct ruleInfo {
-        //     uint8 typeOfDeal; 1-CI; 2-ST(ext); 3-ST(int);
-        //     bool membersEqual;
-        //     bool proRata;
-        //     bool basedOnPar;
-        // }
+    // struct ruleInfo {
+    //     uint8 typeOfDeal; 1-CI; 2-ST(ext); 3-ST(int);
+    //     bool membersEqual;
+    //     bool proRata;
+    //     bool basedOnPar;
+    // }
 
     rule = '0x' + '01' + '01' + '01' + '00';
     rule = web3.utils.padRight(rule, 64);
@@ -429,12 +430,12 @@ module.exports = async function (callback) {
 
     // ==== FR rule for SText ====
 
-        // struct ruleInfo {
-        //     uint8 typeOfDeal; 1-CI; 2-ST(ext); 3-ST(int);
-        //     bool membersEqual;
-        //     bool proRata;
-        //     bool basedOnPar;
-        // }
+    // struct ruleInfo {
+    //     uint8 typeOfDeal; 1-CI; 2-ST(ext); 3-ST(int);
+    //     bool membersEqual;
+    //     bool proRata;
+    //     bool basedOnPar;
+    // }
 
     rule = '0x' + '02' + '01' + '01' + '00';
     rule = web3.utils.padRight(rule, 64);

@@ -64,7 +64,6 @@ library SNParser {
         return uint16(bytes2(sn << 128));
     }
 
-
     // ======== LinkRule ========
 
     function dragerOfLink(bytes32 sn) internal pure returns (uint32) {
@@ -251,8 +250,20 @@ library SNParser {
         return uint8(sn[12]);
     }
 
-    function vetoHolderOfVR(bytes32 sn) internal pure returns (uint40) {
+    function vetoerOfVR(bytes32 sn) internal pure returns (uint40) {
         return uint40(bytes5(sn << 104));
+    }
+
+    function vetoer2OfVR(bytes32 sn) internal pure returns (uint40) {
+        return uint40(bytes5(sn << 144));
+    }
+
+    function vetoer3OfVR(bytes32 sn) internal pure returns (uint40) {
+        return uint40(bytes5(sn << 184));
+    }
+
+    function vetoer4OfVR(bytes32 sn) internal pure returns (uint40) {
+        return uint40(bytes5(sn << 224));
     }
 
     // ==== FirstRefusal Rule ====

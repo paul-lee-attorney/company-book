@@ -22,23 +22,19 @@ contract SigPage is ISigPage, AccessControl {
     //##    设置接口    ##
     //####################
 
-    function setSigDeadline(uint32 deadline)
-        external
-        onlyAttorney
-    {
+    function setSigDeadline(uint32 deadline) external onlyAttorney {
         _sigPage.setSigDeadline(deadline);
-        emit SetSigDeadline(deadline);
     }
 
-    function setClosingDeadline(uint32 deadline)
-        external
-        onlyAttorney
-    {
+    function setClosingDeadline(uint32 deadline) external onlyAttorney {
         _sigPage.setClosingDeadline(deadline);
-        emit SetClosingDeadline(deadline);
     }
 
-    function signDoc(uint40 caller, bytes32 sigHash) external onlyDK onlyFinalized {
+    function signDoc(uint40 caller, bytes32 sigHash)
+        external
+        onlyDK
+        onlyFinalized
+    {
         signDeal(0, caller, sigHash);
     }
 
@@ -48,16 +44,11 @@ contract SigPage is ISigPage, AccessControl {
     }
 
     function addBlank(uint40 acct, uint16 ssn) public {
-        if (_sigPage.addBlank(acct, ssn))
-            emit AddBlank(acct, ssn);
+        _sigPage.addBlank(acct, ssn);
     }
 
-    function removeBlank(uint40 acct, uint16 ssn)
-        public
-        onlyAttorney
-    {
-        if (_sigPage.removeBlank(acct, ssn))
-            emit RemoveBlank(acct, ssn);  
+    function removeBlank(uint40 acct, uint16 ssn) public onlyAttorney {
+        _sigPage.removeBlank(acct, ssn);
     }
 
     function addParty(uint40 acct) external onlyAttorney {
@@ -70,7 +61,6 @@ contract SigPage is ISigPage, AccessControl {
         bytes32 sigHash
     ) public onlyDK {
         _sigPage.signDeal(caller, ssn, sigHash);
-        emit SignDeal(caller, ssn, sigHash);
     }
 
     //####################
@@ -114,30 +104,23 @@ contract SigPage is ISigPage, AccessControl {
     }
 
     function sigOfDeal(uint40 acct, uint16 ssn)
-        external view
+        external
+        view
         returns (
             uint64 blocknumber,
             uint32 sigDate,
             bytes32 sigHash
-        ) 
+        )
     {
-        return _sigPage.sigOfDeal(acct, ssn);        
+        return _sigPage.sigOfDeal(acct, ssn);
     }
 
-    function sigDateOfDoc(uint40 acct)
-        external
-        view
-        returns (uint32 sigDate)
-    {
-        ( , sigDate, ) = _sigPage.sigOfDeal(acct, 0);
+    function sigDateOfDoc(uint40 acct) external view returns (uint32 sigDate) {
+        (, sigDate, ) = _sigPage.sigOfDeal(acct, 0);
     }
 
-    function sigHashOfDoc(uint40 acct)
-        external
-        view
-        returns (bytes32 sigHash)
-    {
-        ( , , sigHash) = _sigPage.sigOfDeal(acct, 0);
+    function sigHashOfDoc(uint40 acct) external view returns (bytes32 sigHash) {
+        (, , sigHash) = _sigPage.sigOfDeal(acct, 0);
     }
 
     function dealSigVerify(

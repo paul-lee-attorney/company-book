@@ -108,59 +108,50 @@ module.exports = async function (callback) {
 
     // ==== 增加当事方 ====
 
-    await sha.addParty(acct2, {
+    ret = await sha.addParty(acct2, {
         from: accounts[7]
     });
+    console.log("Tx return of AddBlank : ", ret);
 
-    events = await sha.getPastEvents("AddBlank");
-    console.log("Event 'AddBlank' : ", events[0].returnValues);
-
-    await sha.addParty(acct3, {
+    ret = await sha.addParty(acct3, {
         from: accounts[7]
     });
-    events = await sha.getPastEvents("AddBlank");
-    console.log("Event 'AddBlank' : ", events[0].returnValues);
+    console.log("Tx return of AddBlank : ", ret);
 
-    await sha.addParty(acct4, {
+    ret = await sha.addParty(acct4, {
         from: accounts[7]
     });
+    console.log("Tx return of AddBlank : ", ret);
 
-    events = await sha.getPastEvents("AddBlank");
-    console.log("Event AddBlank", events[0].returnValues);
-
-    await sha.addParty(acct5, {
+    ret = await sha.addParty(acct5, {
         from: accounts[7]
     });
+    console.log("Tx return of AddBlank : ", ret);
 
-    events = await sha.getPastEvents("AddBlank");
-    console.log("Event 'AddBlank' : ", events[0].returnValues);
-
-    await sha.removeBlank(acct5, 0, {
+    ret = await sha.removeBlank(acct5, 0, {
         from: accounts[7]
     });
-
-    events = await sha.getPastEvents("RemoveBlank");
-    console.log("Event 'RemoveBlank': ", events[0].returnValues);
+    console.log("Tx return of RemoveBlank : ", ret);
 
     // ==== GoverningRules ====
-
+    let seqOfRule = '00';
     let basedOnPar = '00';
     let proposalThreshold = '03e8';
     let maxNumOfDirectors = '03';
     let tenureOfBoard = '03';
-    let rule = '0x' + basedOnPar + proposalThreshold + maxNumOfDirectors + tenureOfBoard + '0000000004' + '0000000005';
+
+    let rule = '0x' + seqOfRule + basedOnPar + proposalThreshold + maxNumOfDirectors + tenureOfBoard;
 
     rule = web3.utils.padRight(rule, 64);
     console.log("GovernanceRule: ", rule);
 
-    await sha.setGovernanceRule(rule, {
+    ret = await sha.addRule(rule, {
         from: accounts[7]
     });
-    events = await sha.getPastEvents("SetGovernanceRule");
-    console.log("Event 'SetGovernanceRule': ", events[0].returnValues);
+    console.log("Tx return of AddRule : ", ret);
 
     ret = await sha.basedOnPar();
-    console.log("Event 'basedOnPar': ", ret.toNumber());
+    console.log("Event 'basedOnPar': ", ret);
 
     ret = await sha.proposalThreshold();
     console.log("Event 'proposalThreshold': ", ret.toNumber());
@@ -171,14 +162,9 @@ module.exports = async function (callback) {
     ret = await sha.tenureOfBoard();
     console.log("Event 'tenureOfBoard': ", ret.toNumber());
 
-    ret = await sha.appointerOfChairman();
-    console.log("Event 'appointerOfChairman': ", ret.toNumber());
-
-    ret = await sha.appointerOfViceChairman();
-    console.log("Event 'appointerOfViceChairman': ", ret.toNumber());
-
     // ==== CI VotingRule ====
 
+    seqOfRule = '01';
     let ratioHead = '0000';
     let ratioAmount = '1a0a';
     let onlyAttendance = '00';
@@ -188,24 +174,23 @@ module.exports = async function (callback) {
     let reviewDays = '0f';
     let votingDays = '1e';
     let execDaysForPutOpt = '07';
-    let typeOfVote = '01';
-    let vetoHolder = '0000000000';
 
-    rule = '0x' + ratioHead + ratioAmount + onlyAttendance + impliedConsent + partyAsConsent + againstShallBuy + reviewDays + votingDays + execDaysForPutOpt + typeOfVote + vetoHolder;
+    rule = '0x' + seqOfRule + ratioHead + ratioAmount + onlyAttendance + impliedConsent + partyAsConsent + againstShallBuy + reviewDays + votingDays + execDaysForPutOpt;
 
     rule = web3.utils.padRight(rule, 64);
+    console.log("rule: ", rule);
 
-    await sha.setVotingRule(rule, {
+    ret = await sha.addRule(rule, {
         from: accounts[7]
     });
-    events = await sha.getPastEvents("SetVotingRule");
-    console.log("Event 'SetVotingRule' for CI: ", events[0].returnValues);
+    console.log("ret of AddRule: ", ret);
 
     ret = await sha.votingRules(1);
-    console.log("VotingRules for typeOfVote: ", typeOfVote, " rule: ", rule);
+    console.log("VotingRules for typeOfVote: ", seqOfRule, " rule: ", rule);
 
     // ==== SText VotingRule ====
 
+    seqOfRule = '02';
     ratioHead = '0000';
     ratioAmount = '1388';
     onlyAttendance = '00';
@@ -215,24 +200,23 @@ module.exports = async function (callback) {
     reviewDays = '0f';
     votingDays = '1e';
     execDaysForPutOpt = '07';
-    typeOfVote = '02';
-    vetoHolder = '0000000000';
 
-    rule = '0x' + ratioHead + ratioAmount + onlyAttendance + impliedConsent + partyAsConsent + againstShallBuy + reviewDays + votingDays + execDaysForPutOpt + typeOfVote + vetoHolder;
+    rule = '0x' + seqOfRule + ratioHead + ratioAmount + onlyAttendance + impliedConsent + partyAsConsent + againstShallBuy + reviewDays + votingDays + execDaysForPutOpt;
 
     rule = web3.utils.padRight(rule, 64);
+    console.log("rule: ", rule);
 
-    await sha.setVotingRule(rule, {
+    ret = await sha.addRule(rule, {
         from: accounts[7]
     });
-    events = await sha.getPastEvents("SetVotingRule");
-    console.log("Event 'SetVotingRule' for SText: ", events[0].returnValues);
+    console.log("ret of AddRule: ", ret);
 
-    ret = await sha.votingRules(2);
-    console.log("VotingRules for typeOfVote: ", typeOfVote, " rule: ", rule);
+    ret = await sha.votingRules(seqOfRule.toNumber());
+    console.log("VotingRules for typeOfVote: ", seqOfRule, " rule: ", rule);
 
     // ==== STint ====
 
+    seqOfRule = '03';
     ratioHead = '0000';
     ratioAmount = '0000';
     onlyAttendance = '00';
@@ -242,24 +226,23 @@ module.exports = async function (callback) {
     reviewDays = '0f';
     votingDays = '1e';
     execDaysForPutOpt = '07';
-    typeOfVote = '03';
-    vetoHolder = '0000000000';
 
-    rule = '0x' + ratioHead + ratioAmount + onlyAttendance + impliedConsent + partyAsConsent + againstShallBuy + reviewDays + votingDays + execDaysForPutOpt + typeOfVote + vetoHolder;
+    rule = '0x' + seqOfRule + ratioHead + ratioAmount + onlyAttendance + impliedConsent + partyAsConsent + againstShallBuy + reviewDays + votingDays + execDaysForPutOpt;
 
     rule = web3.utils.padRight(rule, 64);
+    console.log("rule: ", rule);
 
-    await sha.setVotingRule(rule, {
+    ret = await sha.addRule(rule, {
         from: accounts[7]
     });
-    events = await sha.getPastEvents("SetVotingRule");
-    console.log("Event 'SetVotingRule' for STint: ", events[0].returnValues);
+    console.log("ret of AddRule: ", ret);
 
-    ret = await sha.votingRules(3);
-    console.log("VotingRules for typeOfVote: ", typeOfVote, " rule: ", rule);
+    ret = await sha.votingRules(seqOfRule.toNumber());
+    console.log("VotingRules for typeOfVote: ", seqOfRule, " rule: ", rule);
 
     // ==== CI & STint ====
 
+    seqOfRule = '04';
     ratioHead = '0000';
     ratioAmount = '1a0a';
     onlyAttendance = '00';
@@ -269,24 +252,22 @@ module.exports = async function (callback) {
     reviewDays = '0f';
     votingDays = '1e';
     execDaysForPutOpt = '07';
-    typeOfVote = '04';
-    vetoHolder = '0000000000';
 
-    rule = '0x' + ratioHead + ratioAmount + onlyAttendance + impliedConsent + partyAsConsent + againstShallBuy + reviewDays + votingDays + execDaysForPutOpt + typeOfVote + vetoHolder;
+    rule = '0x' + seqOfRule + ratioHead + ratioAmount + onlyAttendance + impliedConsent + partyAsConsent + againstShallBuy + reviewDays + votingDays + execDaysForPutOpt;
 
     rule = web3.utils.padRight(rule, 64);
+    console.log("rule: ", rule);
 
-    await sha.setVotingRule(rule, {
+    ret = await sha.addRule(rule, {
         from: accounts[7]
     });
-    events = await sha.getPastEvents("SetVotingRule");
-    console.log("Event 'SetVotingRule' for STint: ", events[0].returnValues);
+    console.log("ret of AddRule: ", ret);
 
-    ret = await sha.votingRules(4);
-    console.log("VotingRules for typeOfVote: ", typeOfVote, " rule: ", rule);
-
+    ret = await sha.votingRules(seqOfRule.toNumber());
+    console.log("VotingRules for typeOfVote: ", seqOfRule, " rule: ", rule);
     // ==== SText & STint ====
 
+    seqOfRule = '05';
     ratioHead = '0000';
     ratioAmount = '1388';
     onlyAttendance = '00';
@@ -296,24 +277,23 @@ module.exports = async function (callback) {
     reviewDays = '0f';
     votingDays = '1e';
     execDaysForPutOpt = '07';
-    typeOfVote = '05';
-    vetoHolder = '0000000000';
 
-    rule = '0x' + ratioHead + ratioAmount + onlyAttendance + impliedConsent + partyAsConsent + againstShallBuy + reviewDays + votingDays + execDaysForPutOpt + typeOfVote + vetoHolder;
+    rule = '0x' + seqOfRule + ratioHead + ratioAmount + onlyAttendance + impliedConsent + partyAsConsent + againstShallBuy + reviewDays + votingDays + execDaysForPutOpt;
 
     rule = web3.utils.padRight(rule, 64);
+    console.log("rule: ", rule);
 
-    await sha.setVotingRule(rule, {
+    ret = await sha.addRule(rule, {
         from: accounts[7]
     });
-    events = await sha.getPastEvents("SetVotingRule");
-    console.log("Event 'SetVotingRule' for STint: ", events[0].returnValues);
+    console.log("ret of AddRule: ", ret);
 
-    ret = await sha.votingRules(5);
-    console.log("VotingRules for typeOfVote: ", typeOfVote, " rule: ", rule);
+    ret = await sha.votingRules(seqOfRule.toNumber());
+    console.log("VotingRules for typeOfVote: ", seqOfRule, " rule: ", rule);
 
     // ==== CI & SText & STint ====
 
+    seqOfRule = '06';
     ratioHead = '0000';
     ratioAmount = '1a0a';
     onlyAttendance = '00';
@@ -323,24 +303,23 @@ module.exports = async function (callback) {
     reviewDays = '0f';
     votingDays = '1e';
     execDaysForPutOpt = '07';
-    typeOfVote = '06';
-    vetoHolder = '0000000000';
 
-    rule = '0x' + ratioHead + ratioAmount + onlyAttendance + impliedConsent + partyAsConsent + againstShallBuy + reviewDays + votingDays + execDaysForPutOpt + typeOfVote + vetoHolder;
+    rule = '0x' + seqOfRule + ratioHead + ratioAmount + onlyAttendance + impliedConsent + partyAsConsent + againstShallBuy + reviewDays + votingDays + execDaysForPutOpt;
 
     rule = web3.utils.padRight(rule, 64);
+    console.log("rule: ", rule);
 
-    await sha.setVotingRule(rule, {
+    ret = await sha.addRule(rule, {
         from: accounts[7]
     });
-    events = await sha.getPastEvents("SetVotingRule");
-    console.log("Event 'SetVotingRule' for STint: ", events[0].returnValues);
+    console.log("ret of AddRule: ", ret);
 
-    ret = await sha.votingRules(6);
-    console.log("VotingRules for typeOfVote: ", typeOfVote, " rule: ", rule);
+    ret = await sha.votingRules(seqOfRule.toNumber());
+    console.log("VotingRules for typeOfVote: ", seqOfRule, " rule: ", rule);
 
     // ==== CI & SText ====
 
+    seqOfRule = '07';
     ratioHead = '0000';
     ratioAmount = '1a0a';
     onlyAttendance = '00';
@@ -349,110 +328,76 @@ module.exports = async function (callback) {
     againstShallBuy = '00';
     reviewDays = '0f';
     votingDays = '1e';
-    execDaysForPutOpt = '07';
-    typeOfVote = '07';
-    vetoHolder = '0000000000';
 
-    rule = '0x' + ratioHead + ratioAmount + onlyAttendance + impliedConsent + partyAsConsent + againstShallBuy + reviewDays + votingDays + execDaysForPutOpt + typeOfVote + vetoHolder;
+    rule = '0x' + seqOfRule + ratioHead + ratioAmount + onlyAttendance + impliedConsent + partyAsConsent + againstShallBuy + reviewDays + votingDays + execDaysForPutOpt;
 
     rule = web3.utils.padRight(rule, 64);
+    console.log("rule: ", rule);
 
-    await sha.setVotingRule(rule, {
+    ret = await sha.addRule(rule, {
         from: accounts[7]
     });
-    events = await sha.getPastEvents("SetVotingRule");
-    console.log("Event 'SetVotingRule' for STint: ", events[0].returnValues);
+    console.log("ret of AddRule: ", ret);
 
-    ret = await sha.votingRules(7);
-    console.log("VotingRules for typeOfVote: ", typeOfVote, " rule: ", rule);
-
-    // ==== FR ====
-    addr = await sha.createTerm.call(3, {
-        from: accounts[7]
-    });
-
-    let fr = await FR.at(addr);
-    console.log("get FR: ", fr.address);
-
-    events = await fr.getPastEvents("Init");
-    console.log("Event 'Init': ", events[0].returnValues);
-
-    events = await rc.getPastEvents("SetManager");
-    console.log("Event 'SetManager': ", events[0].returnValues);
-
-    events = await fr.getPastEvents("SetBOM");
-    console.log("Event 'SetBOM': ", events[0].returnValues);
-
-    events = await fr.getPastEvents("SetROM");
-    console.log("Event 'SetROM': ", events[0].returnValues);
-
-    events = await sha.getPastEvents("CreateTerm");
-    console.log("Event 'CreateTerm': ", events[0].returnValues);
-
-    // ==== remove FR ====
-    await sha.removeTerm(3, {
-        from: accounts[7]
-    });
-
-    events = await sha.getPastEvents("RemoveTerm");
-    console.log("Event 'RemoveTerm': ", events[0].returnValues);
-
-    // ==== Set FR as per company law of China ====
-
-    addr = await sha.createTerm.call(3, {
-        from: accounts[7]
-    });
-
-    fr = await FR.at(addr);
-    console.log("get FR: ", fr.address);
-
-    events = await fr.getPastEvents("Init");
-    console.log("Event 'Init': ", events[0].returnValues);
+    ret = await sha.votingRules(seqOfRule.toNumber());
+    console.log("VotingRules for typeOfVote: ", seqOfRule, " rule: ", rule);
 
     // ==== FR rule for CI ====
 
     // struct ruleInfo {
-    //     uint8 typeOfDeal; 1-CI; 2-ST(ext); 3-ST(int);
+    //     uint8 seqOfRule;
+    //     uint8 typeOfDeal;
     //     bool membersEqual;
     //     bool proRata;
     //     bool basedOnPar;
     // }
+    let typeOfDeal = '01';
 
-    rule = '0x' + '01' + '01' + '01' + '00';
+    rule = '0x' + '21' + typeOfDeal + '01' + '01' + '00';
     rule = web3.utils.padRight(rule, 64);
+    console.log("FR : ", rule);
 
-    await fr.setFirstRefusal(rule, {
+    ret = await sha.addRule(rule, {
         from: accounts[7]
     });
+    console.log("return of AddRule: ", ret);
 
-    events = await fr.getPastEvents("SetFirstRefusal");
-    console.log("Event 'SetFirstRefusal': ", events[0].returnValues);
+    ret = await sha.ruleOfFR(typeOfDeal.toNumber());
+    console.log("return of ruleOfFR: ", ret);
 
     // ==== FR rule for SText ====
 
-    // struct ruleInfo {
-    //     uint8 typeOfDeal; 1-CI; 2-ST(ext); 3-ST(int);
-    //     bool membersEqual;
-    //     bool proRata;
-    //     bool basedOnPar;
-    // }
+    typeOfDeal = '02';
 
-    rule = '0x' + '02' + '01' + '01' + '00';
+    rule = '0x' + '22' + typeOfDeal + '01' + '01' + '00';
     rule = web3.utils.padRight(rule, 64);
+    console.log("FR : ", rule);
 
-    await fr.setFirstRefusal(rule, {
+    ret = await sha.addRule(rule, {
         from: accounts[7]
     });
+    console.log("return of AddRule: ", ret);
 
-    events = await fr.getPastEvents("SetFirstRefusal");
-    console.log("Event 'SetFirstRefusal': ", events[0].returnValues);
+    ret = await sha.ruleOfFR(typeOfDeal.toNumber());
+    console.log("return of ruleOfFR: ", ret);
 
-    await fr.delFirstRefusal(2, {
+    // ==== FR rule for STint ====
+
+    typeOfDeal = '03';
+
+    rule = '0x' + '23' + typeOfDeal + '01' + '01' + '00';
+    rule = web3.utils.padRight(rule, 64);
+    console.log("FR : ", rule);
+
+    ret = await sha.addRule(rule, {
         from: accounts[7]
     });
+    console.log("return of AddRule: ", ret);
 
-    events = await fr.getPastEvents("DelFirstRefusal");
-    console.log("Event 'DelFirstRefusal': ", events[0].returnValues);
+    ret = await sha.ruleOfFR(typeOfDeal.toNumber());
+    console.log("return of ruleOfFR: ", ret);
+
+
 
 
 

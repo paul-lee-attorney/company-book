@@ -137,9 +137,12 @@ library MotionsRepo {
 
             Motion storage motion = repo.motions[motionId];
 
-            uint40 vetoHolder = motion.votingRule.vetoHolderOfVR();
-
-            if (vetoHolder == 0 || motion.box.votedYea(vetoHolder)) {
+            if (
+                !_isVetoed(motion, motion.votingRule.vetoerOfVR()) &&
+                !_isVetoed(motion, motion.votingRule.vetoer2OfVR()) &&
+                !_isVetoed(motion, motion.votingRule.vetoer3OfVR()) &&
+                !_isVetoed(motion, motion.votingRule.vetoer4OfVR())
+            ) {
                 flag1 = motion.votingRule.ratioHeadOfVR() != 0
                     ? totalHead != 0
                         ? ((motion.box.qtyOfYea() + consentHead) * 10000) /
@@ -165,6 +168,14 @@ library MotionsRepo {
 
             flag = true;
         }
+    }
+
+    function _isVetoed(Motion storage motion, uint40 vetoer)
+        internal
+        view
+        returns (bool)
+    {
+        return vetoer != 0 && motion.box.votedNay(vetoer);
     }
 
     function _getParas(

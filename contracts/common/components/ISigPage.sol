@@ -16,20 +16,6 @@ interface ISigPage {
 
     event DocEstablished();
 
-    event SetSigDeadline(uint32 deadline);
-
-    event SetClosingDeadline(uint32 deadline);
-
-    event AddParty(uint40 indexed acct);
-
-    event AddBlank(uint40 indexed acct, uint16 indexed sn);
-
-    event RemoveBlank(uint40 indexed acct, uint16 indexed sn);
-
-    event SignDeal(uint40 indexed acct, uint16 indexed sn, bytes32 sigHash);
-
-    // event SignDoc(uint40 acct, bytes32 sigHash);
-
     //####################
     //##    设置接口    ##
     //####################
@@ -75,7 +61,8 @@ interface ISigPage {
     function sigCounter() external view returns (uint16);
 
     function sigOfDeal(uint40 acct, uint16 ssn)
-        external view
+        external
+        view
         returns (
             uint64 blocknumber,
             uint32 sigDate,

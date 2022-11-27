@@ -50,11 +50,23 @@ contract RegisterOfMembers is IRegisterOfMembers, BOSSetting {
         emit SetMaxQtyOfMembers(max);
     }
 
-    function setVoteBase(bool onPar) external onlyDK {
+    function setVoteBase(bool onPar) external {
+        require(
+            _gk.isKeeper(uint8(TitleOfKeepers.BOHKeeper), msg.sender) ||
+                _gk.isKeeper(uint8(TitleOfKeepers.ROMKeeper), msg.sender),
+            "ROM.SetVoteBase: have no access right"
+        );
+
         if (_gm.setVoteBase(onPar)) emit SetVoteBase(onPar);
     }
 
-    function setAmtBase(bool onPar) external onlyDK {
+    function setAmtBase(bool onPar) external {
+        require(
+            _gk.isKeeper(uint8(TitleOfKeepers.BOHKeeper), msg.sender) ||
+                _gk.isKeeper(uint8(TitleOfKeepers.ROMKeeper), msg.sender),
+            "ROM.SetAmtBase: have no access right"
+        );
+
         if (_gm.setAmtBase(onPar)) emit SetAmtBase(onPar);
     }
 

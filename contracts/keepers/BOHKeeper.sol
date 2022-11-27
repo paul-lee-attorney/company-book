@@ -176,15 +176,16 @@ contract BOHKeeper is
             bytes32[] memory guo = IShareholdersAgreement(sha).groupOrders();
             len = guo.length;
             while (len != 0) {
-                if (guo[len - 1].addMemberOfGUO())
+                bytes32 order = guo[len - 1];
+                if (order.addMemberOfGUO())
                     _rom.addMemberToGroup(
-                        guo[len - 1].memberOfGUO(),
-                        guo[len - 1].groupNoOfGUO()
+                        order.memberOfGUO(),
+                        order.groupNoOfGUO()
                     );
                 else
                     _rom.removeMemberFromGroup(
-                        guo[len - 1].memberOfGUO(),
-                        guo[len - 1].groupNoOfGUO()
+                        order.memberOfGUO(),
+                        order.groupNoOfGUO()
                     );
                 len--;
             }

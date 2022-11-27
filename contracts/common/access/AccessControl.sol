@@ -56,7 +56,6 @@ contract AccessControl is IAccessControl, RegCenterSetting {
         _;
     }
 
-
     modifier onlyManager(uint8 title) {
         require(
             _roles.isManager(title, _msgSender()),
@@ -121,35 +120,39 @@ contract AccessControl is IAccessControl, RegCenterSetting {
         emit SetDirectKeeper(keeper);
     }
 
-    function setManager(uint8 title, uint40 acct) external virtual ownerOrBookeeper {
+    function setManager(uint8 title, uint40 acct)
+        external
+        virtual
+        ownerOrBookeeper
+    {
         _roles.setManager(title, acct);
         emit SetManager(title, acct);
     }
 
     function setRoleAdmin(bytes32 role, uint40 acct) external {
         _roles.setRoleAdmin(role, _msgSender(), acct);
-        emit SetRoleAdmin(role, acct);
+        // emit SetRoleAdmin(role, acct);
     }
 
     function grantRole(bytes32 role, uint40 acct) external {
         _roles.grantRole(role, _msgSender(), acct);
-        emit GrantRole(role, acct);
+        // emit GrantRole(role, acct);
     }
 
     function revokeRole(bytes32 role, uint40 acct) external {
         _roles.revokeRole(role, _msgSender(), acct);
-        emit RevokeRole(role, acct);
+        // emit RevokeRole(role, acct);
     }
 
     function renounceRole(bytes32 role) external {
         uint40 msgSender = _msgSender();
         _roles.renounceRole(role, msgSender);
-        emit RenounceRole(role, msgSender);
+        // emit RenounceRole(role, msgSender);
     }
 
     function abandonRole(bytes32 role) external onlyDK {
         _roles.abandonRole(role);
-        emit AbandonRole(role);
+        // emit AbandonRole(role);
     }
 
     function lockContents() public onlyPending onlyDK {

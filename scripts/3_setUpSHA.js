@@ -108,33 +108,31 @@ module.exports = async function (callback) {
 
     // ==== 增加当事方 ====
 
-    ret = await sha.addParty(acct2, {
+    await sha.addParty(acct2, {
         from: accounts[7]
     });
-    console.log("Tx return of AddBlank : ", ret);
 
-    ret = await sha.addParty(acct3, {
+    await sha.addParty(acct3, {
         from: accounts[7]
     });
-    console.log("Tx return of AddBlank : ", ret);
 
-    ret = await sha.addParty(acct4, {
+    await sha.addParty(acct4, {
         from: accounts[7]
     });
-    console.log("Tx return of AddBlank : ", ret);
 
-    ret = await sha.addParty(acct5, {
+    await sha.addParty(acct5, {
         from: accounts[7]
     });
-    console.log("Tx return of AddBlank : ", ret);
 
-    ret = await sha.removeBlank(acct5, 0, {
+    await sha.removeBlank(acct5, 0, {
         from: accounts[7]
     });
-    console.log("Tx return of RemoveBlank : ", ret);
+
+    ret = await sha.partiesOfDoc();
+    console.log("Parties of SHA: ", ret.map(v => v.toNumber()));
 
     // ==== GoverningRules ====
-    let seqOfRule = '00';
+    let seqOfRule = '0000';
     let basedOnPar = '00';
     let proposalThreshold = '03e8';
     let maxNumOfDirectors = '03';
@@ -145,10 +143,9 @@ module.exports = async function (callback) {
     rule = web3.utils.padRight(rule, 64);
     console.log("GovernanceRule: ", rule);
 
-    ret = await sha.addRule(rule, {
+    await sha.addRule(rule, {
         from: accounts[7]
     });
-    console.log("Tx return of AddRule : ", ret);
 
     ret = await sha.basedOnPar();
     console.log("Event 'basedOnPar': ", ret);
@@ -164,7 +161,7 @@ module.exports = async function (callback) {
 
     // ==== CI VotingRule ====
 
-    seqOfRule = '01';
+    seqOfRule = '0001';
     let ratioHead = '0000';
     let ratioAmount = '1a0a';
     let onlyAttendance = '00';
@@ -180,17 +177,16 @@ module.exports = async function (callback) {
     rule = web3.utils.padRight(rule, 64);
     console.log("rule: ", rule);
 
-    ret = await sha.addRule(rule, {
+    await sha.addRule(rule, {
         from: accounts[7]
     });
-    console.log("ret of AddRule: ", ret);
 
     ret = await sha.votingRules(1);
-    console.log("VotingRules for typeOfVote: ", seqOfRule, " rule: ", rule);
+    console.log("VotingRules for typeOfVote: ", seqOfRule, " rule: ", ret);
 
     // ==== SText VotingRule ====
 
-    seqOfRule = '02';
+    seqOfRule = '0002';
     ratioHead = '0000';
     ratioAmount = '1388';
     onlyAttendance = '00';
@@ -206,17 +202,16 @@ module.exports = async function (callback) {
     rule = web3.utils.padRight(rule, 64);
     console.log("rule: ", rule);
 
-    ret = await sha.addRule(rule, {
+    await sha.addRule(rule, {
         from: accounts[7]
     });
-    console.log("ret of AddRule: ", ret);
 
-    ret = await sha.votingRules(seqOfRule.toNumber());
-    console.log("VotingRules for typeOfVote: ", seqOfRule, " rule: ", rule);
+    ret = await sha.votingRules(seqOfRule);
+    console.log("VotingRules for typeOfVote: ", seqOfRule, " rule: ", ret);
 
     // ==== STint ====
 
-    seqOfRule = '03';
+    seqOfRule = '0003';
     ratioHead = '0000';
     ratioAmount = '0000';
     onlyAttendance = '00';
@@ -232,17 +227,16 @@ module.exports = async function (callback) {
     rule = web3.utils.padRight(rule, 64);
     console.log("rule: ", rule);
 
-    ret = await sha.addRule(rule, {
+    await sha.addRule(rule, {
         from: accounts[7]
     });
-    console.log("ret of AddRule: ", ret);
 
-    ret = await sha.votingRules(seqOfRule.toNumber());
-    console.log("VotingRules for typeOfVote: ", seqOfRule, " rule: ", rule);
+    ret = await sha.votingRules(seqOfRule);
+    console.log("VotingRules for typeOfVote: ", seqOfRule, " rule: ", ret);
 
     // ==== CI & STint ====
 
-    seqOfRule = '04';
+    seqOfRule = '0004';
     ratioHead = '0000';
     ratioAmount = '1a0a';
     onlyAttendance = '00';
@@ -258,16 +252,15 @@ module.exports = async function (callback) {
     rule = web3.utils.padRight(rule, 64);
     console.log("rule: ", rule);
 
-    ret = await sha.addRule(rule, {
+    await sha.addRule(rule, {
         from: accounts[7]
     });
-    console.log("ret of AddRule: ", ret);
 
-    ret = await sha.votingRules(seqOfRule.toNumber());
-    console.log("VotingRules for typeOfVote: ", seqOfRule, " rule: ", rule);
+    ret = await sha.votingRules(seqOfRule);
+    console.log("VotingRules for typeOfVote: ", seqOfRule, " rule: ", ret);
     // ==== SText & STint ====
 
-    seqOfRule = '05';
+    seqOfRule = '0005';
     ratioHead = '0000';
     ratioAmount = '1388';
     onlyAttendance = '00';
@@ -286,14 +279,13 @@ module.exports = async function (callback) {
     ret = await sha.addRule(rule, {
         from: accounts[7]
     });
-    console.log("ret of AddRule: ", ret);
 
-    ret = await sha.votingRules(seqOfRule.toNumber());
-    console.log("VotingRules for typeOfVote: ", seqOfRule, " rule: ", rule);
+    ret = await sha.votingRules(seqOfRule);
+    console.log("VotingRules for typeOfVote: ", seqOfRule, " rule: ", ret);
 
     // ==== CI & SText & STint ====
 
-    seqOfRule = '06';
+    seqOfRule = '0006';
     ratioHead = '0000';
     ratioAmount = '1a0a';
     onlyAttendance = '00';
@@ -309,17 +301,16 @@ module.exports = async function (callback) {
     rule = web3.utils.padRight(rule, 64);
     console.log("rule: ", rule);
 
-    ret = await sha.addRule(rule, {
+    await sha.addRule(rule, {
         from: accounts[7]
     });
-    console.log("ret of AddRule: ", ret);
 
-    ret = await sha.votingRules(seqOfRule.toNumber());
-    console.log("VotingRules for typeOfVote: ", seqOfRule, " rule: ", rule);
+    ret = await sha.votingRules(seqOfRule);
+    console.log("VotingRules for typeOfVote: ", seqOfRule, " rule: ", ret);
 
     // ==== CI & SText ====
 
-    seqOfRule = '07';
+    seqOfRule = '0007';
     ratioHead = '0000';
     ratioAmount = '1a0a';
     onlyAttendance = '00';
@@ -334,13 +325,12 @@ module.exports = async function (callback) {
     rule = web3.utils.padRight(rule, 64);
     console.log("rule: ", rule);
 
-    ret = await sha.addRule(rule, {
+    await sha.addRule(rule, {
         from: accounts[7]
     });
-    console.log("ret of AddRule: ", ret);
 
-    ret = await sha.votingRules(seqOfRule.toNumber());
-    console.log("VotingRules for typeOfVote: ", seqOfRule, " rule: ", rule);
+    ret = await sha.votingRules(seqOfRule);
+    console.log("VotingRules for typeOfVote: ", seqOfRule, " rule: ", ret);
 
     // ==== FR rule for CI ====
 
@@ -353,240 +343,119 @@ module.exports = async function (callback) {
     // }
     let typeOfDeal = '01';
 
-    rule = '0x' + '21' + typeOfDeal + '01' + '01' + '00';
+    rule = '0x' + '0015' + typeOfDeal + '01' + '01' + '00';
     rule = web3.utils.padRight(rule, 64);
     console.log("FR : ", rule);
 
-    ret = await sha.addRule(rule, {
+    await sha.addRule(rule, {
         from: accounts[7]
     });
-    console.log("return of AddRule: ", ret);
 
-    ret = await sha.ruleOfFR(typeOfDeal.toNumber());
+    ret = await sha.ruleOfFR(typeOfDeal);
     console.log("return of ruleOfFR: ", ret);
 
     // ==== FR rule for SText ====
 
     typeOfDeal = '02';
 
-    rule = '0x' + '22' + typeOfDeal + '01' + '01' + '00';
+    rule = '0x' + '0016' + typeOfDeal + '01' + '01' + '00';
     rule = web3.utils.padRight(rule, 64);
     console.log("FR : ", rule);
 
-    ret = await sha.addRule(rule, {
+    await sha.addRule(rule, {
         from: accounts[7]
     });
-    console.log("return of AddRule: ", ret);
 
-    ret = await sha.ruleOfFR(typeOfDeal.toNumber());
+    ret = await sha.ruleOfFR(typeOfDeal);
     console.log("return of ruleOfFR: ", ret);
 
     // ==== FR rule for STint ====
 
     typeOfDeal = '03';
 
-    rule = '0x' + '23' + typeOfDeal + '01' + '01' + '00';
+    rule = '0x' + '0017' + typeOfDeal + '01' + '01' + '00';
     rule = web3.utils.padRight(rule, 64);
     console.log("FR : ", rule);
 
-    ret = await sha.addRule(rule, {
+    await sha.addRule(rule, {
         from: accounts[7]
     });
-    console.log("return of AddRule: ", ret);
 
-    ret = await sha.ruleOfFR(typeOfDeal.toNumber());
+    ret = await sha.ruleOfFR(typeOfDeal);
     console.log("return of ruleOfFR: ", ret);
 
+    // ==== 设定签署和生效截止期 =====
+    let cur = null;
 
+    // cur = Date.parse(new Date()) / 1000;
+    cur = await web3.eth.getBlock("latest");
 
+    await sha.setSigDeadline(cur.timestamp + 86400, {
+        from: accounts[7]
+    });
 
+    await sha.setClosingDeadline(cur.timestamp + 86400, {
+        from: accounts[7]
+    });
 
-    // events = await fr.getPastEvents("SetFirstRefusal");
-    // console.log("Event 'SetFirstRefusal' for ST_Ext: ", events[0].returnValues);
+    let closingDeadline = await sha.closingDeadline({
+        from: accounts[7]
+    });
+    console.log("closingDeadline of SHA: ", closingDeadline.toNumber());
 
-    // await fr.delFirstRefusal(2, {
-    //     from: accounts[7]
-    // });
+    let sigDeadline = await sha.sigDeadline({
+        from: accounts[7]
+    });
+    console.log("sigDeadline :", sigDeadline.toNumber());
 
-    // events = await fr.getPastEvents("DelFirstRefusal");
-    // console.log("Event 'DelFirstRefusal' for ST_Ext: ", events[0].returnValues);
+    // ==== circulate SHA ====
 
-    // await fr.setFirstRefusal(2, 1, 1, 0, {
-    //     from: accounts[7]
-    // });
+    await gk.circulateSHA(sha.address, {
+        from: accounts[2]
+    });
 
-    // events = await fr.getPastEvents("SetFirstRefusal");
-    // console.log("Event 'SetFirstRefusal' for ST_Ext: ", events[0].returnValues);
+    events = await sha.getPastEvents("LockContents");
+    console.log("Event SHA 'LockContents': ", events[0].returnValues);
 
-    // await fr.setFirstRefusal(1, 1, 1, 0, {
-    //     from: accounts[7]
-    // });
+    events = await sha.getPastEvents("SetManager");
+    console.log("Event SHA 'SetManager': ", events[0].returnValues);
 
-    // events = await fr.getPastEvents("SetFirstRefusal");
-    // console.log("Event 'SetFirstRefusal' for CI: ", events[0].returnValues);
+    events = await boh.getPastEvents("UpdateStateOfDoc");
+    console.log("Event SHA 'UpdateStateOfDoc': ", events[0].returnValues);
 
+    // ==== Signe SHA ====
 
-    // rule = await fr.ruleOfFR(1)
-    // console.log("FR for CI: ", rule);
+    await gk.signSHA(sha.address, "0x49893d3f1021aa92c3103b3901e47aeb766de80f8c731731424df8f70ecc0d85", {
+        from: accounts[2]
+    });
 
-    // await fr.lockContents({
-    //     from: accounts[7]
-    // });
+    ret = await sha.sigOfDeal(acct2, 0);
+    console.log("sigOfDeal: ", ret);
 
-    // events = await rc.getPastEvents("AbandonRole");
-    // console.log("Event 'AbandonRole': ", events[0].returnValues);
+    await gk.signSHA(sha.address, "0x49893d3f1021aa92c3103b3901e47aeb766de80f8c731731424df8f70ecc0d85", {
+        from: accounts[3]
+    });
 
-    // events = await rc.getPastEvents("SetManager");
-    // console.log("Event 'SetManager': ", events[0].returnValues);
+    ret = await sha.sigOfDeal(acct3, 0);
+    console.log("sigOfDeal: ", ret);
 
-    // events = await fr.getPastEvents("LockContents");
-    // console.log("Event 'LockContents': ", events[0].returnValues);
+    await gk.signSHA(sha.address, "0x49893d3f1021aa92c3103b3901e47aeb766de80f8c731731424df8f70ecc0d85", {
+        from: accounts[4]
+    });
 
+    ret = await sha.sigOfDeal(acct4, 0);
+    console.log("sigOfDeal: ", ret);
 
 
-    // // ==== 设定签署和生效截止期 =====
-    // let cur = null;
+    ret = await sha.established();
+    console.log("SHA established: ", ret);
 
-    // // cur = Date.parse(new Date()) / 1000;
-    // cur = await web3.eth.getBlock("latest");
+    await gk.effectiveSHA(sha.address, {
+        from: accounts[2]
+    });
 
-    // await sha.setSigDeadline(cur.timestamp + 86400, {
-    //     from: accounts[7]
-    // });
-
-    // events = await sha.getPastEvents("SetSigDeadline");
-    // console.log("Event 'SetSigDeadline': ", events[0].returnValues);
-
-    // await sha.setClosingDeadline(cur.timestamp + 86400, {
-    //     from: accounts[7]
-    // });
-
-    // events = await sha.getPastEvents("SetClosingDeadline");
-    // console.log("Event 'SetClosingDeadline': ", events[0].returnValues);
-
-    // let closingDeadline = await sha.closingDeadline({
-    //     from: accounts[7]
-    // });
-    // console.log("closingDeadline of SHA: ", closingDeadline);
-
-    // let sigDeadline = await sha.sigDeadline({
-    //     from: accounts[7]
-    // });
-    // console.log("sigDeadline :", sigDeadline);
-
-    // // ==== SHA finalizeDoc ====
-
-    // await sha.finalizeDoc({
-    //     from: accounts[7]
-    // });
-
-    // events = await rc.getPastEvents("AbandonRole");
-    // console.log("Event 'AbandonRole': ", events[0].returnValues);
-
-    // events = await rc.getPastEvents("SetManager");
-    // console.log("Event 'SetManager': ", events[0].returnValues);
-
-    // events = await sha.getPastEvents("LockContents");
-    // console.log("Event 'LockContents': ", events[0].returnValues);
-
-    // events = await sha.getPastEvents("DocFinalized");
-    // console.log("Event 'DocFinalized': ", events[0].returnValues);
-
-    // // ==== CirculateSHA ====
-
-    // await gk.circulateSHA(sha.address, {
-    //     from: accounts[2]
-    // });
-
-    // events = await rc.getPastEvents("SetManager");
-    // console.log("Event 'SetManager': ", events[0].returnValues);
-
-    // events = await boh.getPastEvents("UpdateStateOfDoc");
-    // console.log("Event 'UpdateStateOfDoc': ", events[0].returnValues);
-
-
-
-    // // ==== Signe SHA ====
-
-    // await gk.signSHA(sha.address, "0x49893d3f1021aa92c3103b3901e47aeb766de80f8c731731424df8f70ecc0d85", {
-    //     from: accounts[2]
-    // });
-
-    // events = await sha.getPastEvents("SignDeal");
-    // console.log("Event 'SignDeal': ", events[0].returnValues);
-
-    // // events = await sha.getPastEvents("DocEstablished");
-    // // console.log("Event 'DocEstablished': ", events[0].returnValues);
-
-    // await gk.signSHA(sha.address, "0x49893d3f1021aa92c3103b3901e47aeb766de80f8c731731424df8f70ecc0d85", {
-    //     from: accounts[3]
-    // });
-
-    // events = await sha.getPastEvents("SignDeal");
-    // console.log("Event 'SignDeal': ", events[0].returnValues);
-
-    // await gk.signSHA(sha.address, "0x49893d3f1021aa92c3103b3901e47aeb766de80f8c731731424df8f70ecc0d85", {
-    //     from: accounts[4]
-    // });
-
-    // events = await sha.getPastEvents("SignDeal");
-    // console.log("Event 'SignDeal': ", events[0].returnValues);
-
-    // events = await sha.getPastEvents("DocEstablished");
-    // console.log("Event 'DocEstablished': ", events[0].returnValues);
-
-
-    // await gk.effectiveSHA(sha.address, {
-    //     from: accounts[2]
-    // });
-
-    // events = await boh.getPastEvents("UpdateStateOfDoc");
-    // console.log("Event 'UpdateStateOfDoc': ", events[0].returnValues);
-
-    // events = await boh.getPastEvents("ChangePointer");
-    // console.log("Event 'ChangePointer': ", events[0].returnValues);
-
-    // console.log("SHA effectivated.");
-
-    // // ==== Query ====
-
-    // let res = null;
-
-    // res = await sha.tempOfTitle(3);
-    // console.log("FirstRefusal Template: ", res);
-
-    // res = await sha.hasTitle(3);
-    // console.log("Has FR term? ", res);
-
-    // res = await sha.isTitle(3);
-    // console.log("isTitle: ", res);
-
-    // res = await sha.isBody(fr.address);
-    // console.log("isBody: ", res);
-
-    // res = await sha.titles();
-    // console.log("titles: ", res.map(v => v.toNumber()));
-
-    // res = await sha.bodies();
-    // console.log("bodies: ", res);
-
-    // res = await sha.getTerm(3);
-    // console.log("getTerm FR: ", res);
-
-    // res = await sha.votingRules(2);
-    // console.log("votingRules: ", res);
-
-    // res = await sha.basedOnPar();
-    // console.log("basedOnPar: ", res);
-
-    // res = await sha.proposalThreshold();
-    // console.log("proposalThreshold: ", res.toNumber());
-
-    // res = await sha.maxNumOfDirectors();
-    // console.log("maxNumOfDirectors: ", res.toNumber());
-
-    // res = await sha.tenureOfBoard();
-    // console.log("tenureOfBoard: ", res.toNumber());
+    events = await boh.getPastEvents("ChangePointer");
+    console.log("Event 'ChangePointer': ", events[0].returnValues);
 
     callback();
 }

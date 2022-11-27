@@ -401,12 +401,12 @@ module.exports = async function (callback) {
     let closingDeadline = await sha.closingDeadline({
         from: accounts[7]
     });
-    console.log("closingDeadline of SHA: ", closingDeadline.toNumber());
+    console.log("closingDeadline of SHA: ", closingDeadline);
 
     let sigDeadline = await sha.sigDeadline({
         from: accounts[7]
     });
-    console.log("sigDeadline :", sigDeadline.toNumber());
+    console.log("sigDeadline :", sigDeadline);
 
     // ==== circulate SHA ====
 
@@ -450,9 +450,13 @@ module.exports = async function (callback) {
     ret = await sha.established();
     console.log("SHA established: ", ret);
 
+
     await gk.effectiveSHA(sha.address, {
         from: accounts[2]
     });
+
+    events = await boh.getPastEvents("UpdateStateOfDoc");
+    console.log("Event 'UpdateStateOfDoc': ", events[0].returnValues);
 
     events = await boh.getPastEvents("ChangePointer");
     console.log("Event 'ChangePointer': ", events[0].returnValues);

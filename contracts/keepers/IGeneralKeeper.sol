@@ -8,7 +8,6 @@
 pragma solidity ^0.8.8;
 
 interface IGeneralKeeper {
-
     // ###############
     // ##   Event   ##
     // ###############
@@ -19,5 +18,5 @@ interface IGeneralKeeper {
     // ##   AccessControl  ##
     // ######################
 
-    function isKeeper(uint8 title, address caller) external returns(bool flag);
+    function isKeeper(uint8 title, address caller) external returns (bool flag);
 }

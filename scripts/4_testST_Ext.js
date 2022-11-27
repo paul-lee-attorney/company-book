@@ -31,32 +31,30 @@ module.exports = async function (callback) {
     const bos = await BOS.deployed();
     console.log("BookOfShares: ", bos.address);
 
-    let addr = null;
-    let events = null;
-    let cur = null;
-    let receipt = null;
+    let ret = null;
+    // let addr = null;
+    // let events = null;
+    // let cur = null;
+    // let receipt = null;
 
     // ==== 创建IA ====
-    receipt = await gk.createIA("0", {
+    ret = await gk.createIA.call("0", {
         from: accounts[2]
     });
 
-    addr = receipt.logs[0].address;
-    console.log("IA address: ", addr);
-
-    const ia = await IA.at(addr);
+    const ia = await IA.at(ret);
     console.log("get ia: ", ia.address);
 
     // ==== 设定 GeneralCounsel ====
-    await ia.setManager(2, accounts[2], accounts[7], {
+    await ia.setManager(1, accounts[7], {
         from: accounts[2]
     });
 
-    events = await rc.getPastEvents("SetManager");
+    events = await ia.getPastEvents("SetManager");
     console.log("Event 'SetManager': ", events[0].returnValues);
 
-    let attorney = await ia.getManager("2");
-    console.log("GC to IA is: ", attorney.toNumber());
+    let gc = await ia.getManager("1");
+    console.log("GC to IA is: ", gc.toNumber());
 
     // ==== 设定签署和生效截止期 ====
     // cur = Date.parse(new Date()) / 1000;

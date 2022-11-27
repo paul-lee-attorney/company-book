@@ -43,7 +43,11 @@ interface IBOAKeeper {
         uint40 caller
     ) external;
 
-    function transferTargetShare(address ia, bytes32 sn, uint40 caller) external; 
+    function transferTargetShare(
+        address ia,
+        bytes32 sn,
+        uint40 caller
+    ) external;
 
     function issueNewShare(address ia, bytes32 sn) external;
 

@@ -107,10 +107,7 @@ contract BOAKeeper is
         onlyDK
         onlyOwnerOf(ia, caller)
     {
-        require(
-            IAccessControl(ia).finalized(),
-            "BOAKeeper.circualteIA: IA not finalized"
-        );
+        IAccessControl(ia).lockContents();
 
         IAccessControl(ia).setManager(0, 0);
 

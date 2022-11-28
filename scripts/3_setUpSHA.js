@@ -169,7 +169,7 @@ module.exports = async function (callback) {
     let partyAsConsent = '01';
     let againstShallBuy = '00';
     let reviewDays = '0f';
-    let votingDays = '1e';
+    let votingDays = '07';
     let execDaysForPutOpt = '07';
 
     rule = '0x' + seqOfRule + ratioHead + ratioAmount + onlyAttendance + impliedConsent + partyAsConsent + againstShallBuy + reviewDays + votingDays + execDaysForPutOpt;
@@ -194,7 +194,7 @@ module.exports = async function (callback) {
     partyAsConsent = '01';
     againstShallBuy = '01';
     reviewDays = '0f';
-    votingDays = '1e';
+    votingDays = '07';
     execDaysForPutOpt = '07';
 
     rule = '0x' + seqOfRule + ratioHead + ratioAmount + onlyAttendance + impliedConsent + partyAsConsent + againstShallBuy + reviewDays + votingDays + execDaysForPutOpt;
@@ -219,7 +219,7 @@ module.exports = async function (callback) {
     partyAsConsent = '01';
     againstShallBuy = '01';
     reviewDays = '0f';
-    votingDays = '1e';
+    votingDays = '07';
     execDaysForPutOpt = '07';
 
     rule = '0x' + seqOfRule + ratioHead + ratioAmount + onlyAttendance + impliedConsent + partyAsConsent + againstShallBuy + reviewDays + votingDays + execDaysForPutOpt;
@@ -244,7 +244,7 @@ module.exports = async function (callback) {
     partyAsConsent = '01';
     againstShallBuy = '00';
     reviewDays = '0f';
-    votingDays = '1e';
+    votingDays = '07';
     execDaysForPutOpt = '07';
 
     rule = '0x' + seqOfRule + ratioHead + ratioAmount + onlyAttendance + impliedConsent + partyAsConsent + againstShallBuy + reviewDays + votingDays + execDaysForPutOpt;
@@ -268,7 +268,7 @@ module.exports = async function (callback) {
     partyAsConsent = '01';
     againstShallBuy = '01';
     reviewDays = '0f';
-    votingDays = '1e';
+    votingDays = '07';
     execDaysForPutOpt = '07';
 
     rule = '0x' + seqOfRule + ratioHead + ratioAmount + onlyAttendance + impliedConsent + partyAsConsent + againstShallBuy + reviewDays + votingDays + execDaysForPutOpt;
@@ -293,7 +293,7 @@ module.exports = async function (callback) {
     partyAsConsent = '01';
     againstShallBuy = '00';
     reviewDays = '0f';
-    votingDays = '1e';
+    votingDays = '07';
     execDaysForPutOpt = '07';
 
     rule = '0x' + seqOfRule + ratioHead + ratioAmount + onlyAttendance + impliedConsent + partyAsConsent + againstShallBuy + reviewDays + votingDays + execDaysForPutOpt;
@@ -318,7 +318,7 @@ module.exports = async function (callback) {
     partyAsConsent = '01';
     againstShallBuy = '00';
     reviewDays = '0f';
-    votingDays = '1e';
+    votingDays = '07';
 
     rule = '0x' + seqOfRule + ratioHead + ratioAmount + onlyAttendance + impliedConsent + partyAsConsent + againstShallBuy + reviewDays + votingDays + execDaysForPutOpt;
 

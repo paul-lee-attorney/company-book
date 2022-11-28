@@ -98,7 +98,7 @@ contract BOMKeeper is
         if (_subjectToReview(ia))
             require(
                 _boa.reviewDeadlineBNOf(ia) < block.number,
-                "BOMKeeper.proposeMotion: IA not passed review procesedure"
+                "BOMKeeper.proposeMotion: IA not passed review procedure"
             );
 
         require(

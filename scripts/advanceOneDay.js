@@ -8,22 +8,25 @@ module.exports = async function (callback) {
     // web3.setProvider();
 
     let bn = await web3.eth.getBlockNumber();
-    console.log("current BN: ", bn);
+    console.log("start BN: ", bn);
 
     let cur = await web3.eth.getBlock("latest");
-    console.log("current timestamp: ", cur.timestamp);
+    console.log("start timestamp: ", cur.timestamp);
 
-    for (let i = 0; i < 24; i++) {
-        await web3.currentProvider.send({
-            method: "evm_mine"
-        }, () => console.log(i));
-    }
+    // for (let i = 0; i < 24; i++) {
+    web3.currentProvider.send({
+        method: "evm_mine",
+        params: [{
+            blocks: 10
+        }]
+    }, () => console.log("t"));
+    // }
 
     bn = await web3.eth.getBlockNumber();
-    console.log("current BN: ", bn);
+    console.log("end BN: ", bn);
 
     cur = await web3.eth.getBlock("latest");
-    console.log("current timestamp: ", cur.timestamp);
+    console.log("end timestamp: ", cur.timestamp);
 
     callback();
 }

@@ -188,7 +188,7 @@ contract BOMKeeper is
     }
 
     function _isIA(uint256 motionId) private pure returns (bool) {
-        return motionId != 0 && ((motionId >> 160) == 0);
+        return motionId != 0 && (uint256(motionId >> 160) == 0);
     }
 
     function voteCounting(uint256 motionId, uint40 caller)

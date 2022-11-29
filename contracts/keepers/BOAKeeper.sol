@@ -240,7 +240,7 @@ contract BOAKeeper is
 
         bytes32 shareNumber = IInvestmentAgreement(ia).shareNumberOfDeal(seq);
 
-        if (shareNumber > bytes32(0)) _shareTransfer(ia, sn, shareNumber);
+        if (shareNumber != bytes32(0)) _shareTransfer(ia, sn, shareNumber);
         else issueNewShare(ia, sn);
 
         _checkCompletionOfIA(ia);

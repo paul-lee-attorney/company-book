@@ -97,7 +97,7 @@ contract BookOfShares is IBookOfShares, ROMSetting {
             "BOS.issueShare: zero shareholder"
         );
         require(
-            shareNumber.issueDate() < block.timestamp,
+            shareNumber.issueDate() <= block.timestamp,
             "BOS.issueShare: future issueDate"
         );
         require(

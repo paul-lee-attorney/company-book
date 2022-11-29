@@ -46,11 +46,14 @@ module.exports = async function (callback) {
 
 
     // ==== 创建IA ====
-    ret = await gk.createIA(0, {
+    await gk.createIA(0, {
         from: accounts[2]
     });
 
-    addr = ret.logs[0].address;
+    let list = await boa.docsList();
+    let len = await boa.qtyOfDocs();
+
+    addr = list[len - 1];
 
     let ia = await IA.at(addr);
     console.log("get ia: ", ia.address);
@@ -91,7 +94,7 @@ module.exports = async function (callback) {
     let shareNumber = '0x0';
     shareNumber = await web3.utils.padRight(shareNumber, 64);
 
-    sn = '0x' + '0001' + '0001' + '01' + '0000000007' + '0000' + '00000000';
+    sn = '0x' + '0000' + '0001' + '01' + '0000000007' + '0000' + '00000000';
     sn = await web3.utils.padRight(sn, 64);
     console.log("sn: ", sn);
 
@@ -99,7 +102,7 @@ module.exports = async function (callback) {
         from: accounts[7]
     });
 
-    await ia.updateDeal(1, 200, 600000000, 600000000, timestamp, {
+    await ia.updateDeal(1, 200, 600000000, 600000000, (timestamp - 86400), {
         from: accounts[7]
     });
 

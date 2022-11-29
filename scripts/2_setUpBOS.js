@@ -54,6 +54,8 @@ module.exports = async function (callback) {
     // ==== IssueShare ====
 
     cur = Date.parse(new Date()) / 1000;
+    // let block = web3.eth.getBlock("latest");
+    // cur = block.timestamp;
 
     let classOfShare = '0000';
     let ssn = '00000001';
@@ -149,7 +151,7 @@ module.exports = async function (callback) {
 
     let expireDate = cur + 86400;
     expireDate = web3.utils.numberToHex(expireDate);
-    expireDate = web3.utils.padLeft(expireDate.slice(2,), 8);
+    expireDate = web3.utils.padLeft(expireDate.slice(2, ), 8);
 
     shareholder = web3.utils.numberToHex(acct4);
     shareholder = web3.utils.padLeft(shareholder.slice(2, ), 10);
@@ -157,7 +159,7 @@ module.exports = async function (callback) {
 
     let hashLock = '0x6fab4ee53719b2a733996d8b9ce1b89a04d2b877e7f006f90bb73a454e2fdaee';
 
-    hashLock = hashLock.slice(8,40);
+    hashLock = hashLock.slice(8, 40);
 
     let sn = '0x0000' + ssn + expireDate + shareholder + hashLock;
     sn = web3.utils.padRight(sn, 64);

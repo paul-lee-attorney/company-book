@@ -178,7 +178,7 @@ contract BOAKeeper is
 
         uint16 seq = sn.sequence();
 
-        bool isST = sn.ssnOfDeal() != 0;
+        bool isST = (sn.ssnOfDeal() != 0);
 
         if (isST)
             require(
@@ -289,12 +289,18 @@ contract BOAKeeper is
 
         uint32 unitPrice = IInvestmentAgreement(ia).unitPriceOfDeal(seq);
 
+        uint32 ssn = _bos.counterOfShares() + 1;
+
+        uint16 class = sn.classOfDeal();
+
+        uint40 buyer = sn.buyerOfDeal();
+
         bytes32 shareNumber = _bos.createShareNumber(
-            sn.classOfDeal(),
-            _bos.counterOfShares() + 1,
+            class,
+            ssn,
             uint32(block.timestamp),
             unitPrice,
-            sn.buyerOfDeal(),
+            buyer,
             0
         );
 
@@ -302,7 +308,7 @@ contract BOAKeeper is
             shareNumber,
             paid,
             par,
-            uint32(block.timestamp) //paidInDeadline
+            uint32(block.timestamp) + 86400
         );
     }
 

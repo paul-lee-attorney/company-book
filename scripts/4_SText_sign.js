@@ -57,11 +57,14 @@ module.exports = async function (callback) {
     console.log("SetTemplate: ", events[0].returnValues);
 
     // ==== 创建IA ====
-    ret = await gk.createIA(0, {
+    await gk.createIA(0, {
         from: accounts[2]
     });
 
-    addr = ret.logs[0].address;
+    let list = await boa.docsList();
+    let len = await boa.qtyOfDocs();
+
+    addr = list[len - 1];
 
     ia = await IA.at(addr);
     console.log("get ia: ", ia.address);

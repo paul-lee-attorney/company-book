@@ -105,7 +105,7 @@ contract InvestmentAgreement is
 
         if (finalized()) {
             if (
-                shareNumber > bytes32(0) &&
+                shareNumber != bytes32(0) &&
                 sn.typeOfDeal() != uint8(TypeOfDeal.DragAlong) &&
                 sn.typeOfDeal() != uint8(TypeOfDeal.FreeGift)
             ) addBlank(shareNumber.shareholder(), seq);

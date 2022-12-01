@@ -60,7 +60,7 @@ module.exports = async function (callback) {
     let classOfShare = '0000';
     let ssn = '00000000';
     let issueDate = '00000000';
-    let unitPrice = '00000064';
+    let unitPrice = '0000000000000064';
     let shareholder = web3.utils.numberToHex(acct2);
 
     shareholder = web3.utils.padLeft(shareholder.slice(2, ), 10);
@@ -88,9 +88,7 @@ module.exports = async function (callback) {
 
     cur = Date.parse(new Date()) / 1000;
 
-    classOfShare = '0000';
     ssn = '00000002';
-    issueDate = '00000000';
 
     shareholder = web3.utils.numberToHex(acct3);
     shareholder = web3.utils.padLeft(shareholder.slice(2, ), 10);
@@ -118,9 +116,7 @@ module.exports = async function (callback) {
 
     cur = Date.parse(new Date()) / 1000;
 
-    classOfShare = '0000';
     ssn = '00000003';
-    issueDate = '00000000';
 
     shareholder = web3.utils.numberToHex(acct4);
     shareholder = web3.utils.padLeft(shareholder.slice(2, ), 10);

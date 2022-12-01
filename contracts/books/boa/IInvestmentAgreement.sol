@@ -9,24 +9,28 @@ pragma solidity ^0.8.8;
 
 import "../../common/components/ISigPage.sol";
 
-interface IInvestmentAgreement is ISigPage{
+interface IInvestmentAgreement is ISigPage {
     //##################
     //##    Event     ##
     //##################
 
     // ======== normalDeal ========
 
-    event CreateDeal(bytes32 indexed sn, bytes32 shareNumber);
-
-    event SetTypeOfIA(uint8 t);
+    event CreateDeal(
+        bytes32 indexed sn,
+        uint64 paid,
+        uint64 par,
+        uint32 closingDate
+    );
 
     event UpdateDeal(
         bytes32 indexed sn,
-        uint32 unitPrice,
-        uint64 parValue,
-        uint64 paidPar,
+        uint64 paid,
+        uint64 par,
         uint32 closingDate
     );
+
+    event SetTypeOfIA(uint8 t);
 
     event DelDeal(bytes32 indexed sn);
 
@@ -53,18 +57,19 @@ interface IInvestmentAgreement is ISigPage{
 
     function createDeal(
         bytes32 sn,
-        bytes32 shareNumber
-    ) external returns (bytes32);
-
-    function setTypeOfIA(uint8 t) external;
-
-    function updateDeal(
-        uint16 seq,
-        uint32 unitPrice,
         uint64 paid,
         uint64 par,
         uint32 closingDate
     ) external;
+
+    function updateDeal(
+        uint16 seq,
+        uint64 paid,
+        uint64 par,
+        uint32 closingDate
+    ) external;
+
+    function setTypeOfIA(uint8 t) external;
 
     function delDeal(uint16 seq) external;
 
@@ -80,10 +85,7 @@ interface IInvestmentAgreement is ISigPage{
 
     function closeDeal(uint16 seq, string memory hashKey) external;
 
-    function revokeDeal(
-        uint16 seq,
-        string memory hashKey
-    ) external;
+    function revokeDeal(uint16 seq, string memory hashKey) external;
 
     function takeGift(uint16 seq) external;
 
@@ -109,11 +111,7 @@ interface IInvestmentAgreement is ISigPage{
             bytes32 hashLock
         );
 
-    function unitPriceOfDeal(uint16 seq) external view returns (uint32);
-
     function closingDateOfDeal(uint16 seq) external view returns (uint32);
-
-    function shareNumberOfDeal(uint16 seq) external view returns (bytes32);
 
     function dealsList() external view returns (bytes32[] memory);
 }

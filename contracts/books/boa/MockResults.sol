@@ -49,8 +49,8 @@ contract MockResults is IMockResults, IASetting, BOSSetting, ROMSetting {
             uint64 amount;
 
             if (_rom.basedOnPar())
-                (, , amount, , ) = _ia.getDeal(sn.sequence());
-            else (, amount, , , ) = _ia.getDeal(sn.sequence());
+                (, , amount, , ) = _ia.getDeal(sn.seqOfDeal());
+            else (, amount, , , ) = _ia.getDeal(sn.seqOfDeal());
 
             uint32 short = sn.ssnOfDeal();
             if (short != 0) mockDealOfSell(short, amount);

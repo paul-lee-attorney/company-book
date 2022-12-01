@@ -103,7 +103,7 @@ contract LockUp is ILockUp, BOMSetting {
 
     function isTriggered(address ia, bytes32 sn) external view returns (bool) {
         uint32 closingDate = IInvestmentAgreement(ia).closingDateOfDeal(
-            sn.sequence()
+            sn.seqOfDeal()
         );
 
         uint8 typeOfDeal = sn.typeOfDeal();

@@ -112,20 +112,16 @@ module.exports = async function (callback) {
 
     let share1 = await bos.getShare(1);
 
-    sn = '0x' + '0000' + '0001' + '02' + '0000000007' + '0000' + '00000001';
+    sn = '0x' + '0000' + '0001' + '02' + '0000000004' + '0000000007' + '0000' + '00000001' + '00000000000000c8';
     sn = web3.utils.padRight(sn, 64);
     console.log("sn: ", sn);
 
-    await ia.createDeal(sn, share1.shareNumber, {
+    await ia.createDeal(sn, 100000000, 100000000, timestamp, {
         from: accounts[7]
     });
 
-    await ia.updateDeal(1, 150, 100000000, 100000000, timestamp, {
-        from: accounts[7]
-    });
-
-    events = await ia.getPastEvents("UpdateDeal");
-    console.log("Event 'UpdateDeal': ", events[0].returnValues);
+    events = await ia.getPastEvents("CreateDeal");
+    console.log("Event 'CreateDeal': ", events[0].returnValues);
 
     let parties = await ia.partiesOfDoc();
     console.log("parties: ", parties.map(v => v.toNumber()));

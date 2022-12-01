@@ -8,6 +8,18 @@
 pragma solidity ^0.8.8;
 
 interface ISHAKeeper {
+    function createDealSN(
+        uint16 class,
+        uint16 seq,
+        uint8 typeOfDeal,
+        uint40 seller,
+        uint40 buyer,
+        uint16 group,
+        uint32 ssn,
+        uint64 unitPrice,
+        uint16 preSeq
+    ) external pure returns (bytes32 sn);
+
     // ======== TagAlong & DragAlong ========
 
     function execAlongRight(

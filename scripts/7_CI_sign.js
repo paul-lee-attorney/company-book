@@ -82,7 +82,7 @@ module.exports = async function (callback) {
     });
     console.log("sigDeadline: ", timestamp);
 
-    timestamp = timestamp + 86400 * 23;
+    timestamp += 86400 * 23;
 
     await ia.setClosingDeadline(timestamp, {
         from: accounts[7]
@@ -91,23 +91,20 @@ module.exports = async function (callback) {
 
     // ==== Capital Increase ====
 
-    let shareNumber = '0x0';
-    shareNumber = await web3.utils.padRight(shareNumber, 64);
+    // let shareNumber = '0x' + '0001' + '00000000' + '00000000' + '0000000007' + '00000128';
+    // shareNumber = await web3.utils.padRight(shareNumber, 64);
+    // console.log("shareNumber: ", shareNumber);
 
-    sn = '0x' + '0000' + '0001' + '01' + '0000000007' + '0000' + '00000000';
+    sn = '0x' + '0000' + '0001' + '01' + '0000000000' + '0000000007' + '0000' + '00000000' + '00000000000000c8';
     sn = await web3.utils.padRight(sn, 64);
     console.log("sn: ", sn);
 
-    await ia.createDeal(sn, shareNumber, {
+    await ia.createDeal(sn, 100000000, 100000000, timestamp, {
         from: accounts[7]
     });
 
-    await ia.updateDeal(1, 200, 600000000, 600000000, (timestamp - 86400), {
-        from: accounts[7]
-    });
-
-    events = await ia.getPastEvents("UpdateDeal");
-    console.log("Event 'UpdateDeal': ", events[0].returnValues);
+    events = await ia.getPastEvents("CreateDeal");
+    console.log("Event 'CreateDeal': ", events[0].returnValues);
 
     let parties = await ia.partiesOfDoc();
     console.log("parties: ", parties.map(v => v.toNumber()));
@@ -149,18 +146,21 @@ module.exports = async function (callback) {
     events = await boa.getPastEvents("UpdateStateOfDoc");
     console.log("Event 'UpdateStateOfDoc': ", events[0].returnValues);
 
-    // ==== 签署IA ====
+    // ==== 签署IA === =
     await gk.signIA(ia.address, "0xd3cbe222ebe6a7fa1dc87ecc76555c40943e8ec1f6a91c5cf479509accb1ef5a", {
         from: accounts[2]
     });
+    console.log("acct2 signed.")
 
     await gk.signIA(ia.address, "0xd3cbe222ebe6a7fa1dc87ecc76555c40943e8ec1f6a91c5cf479509accb1ef5a", {
         from: accounts[3]
     });
+    console.log("acct3 signed.")
 
     await gk.signIA(ia.address, "0xe5b0e7ffcb90dc5ee09f49282b47da64e12e0b36c689866cb8363f0be8027ffb", {
         from: accounts[5]
     });
+    console.log("acct5 signed.")
 
     ret = await ia.established();
     console.log("ia established: ", ret);
@@ -171,6 +171,7 @@ module.exports = async function (callback) {
     await gk.signIA(ia.address, "0xe5b0e7ffcb90dc5ee09f49282b47da64e12e0b36c689866cb8363f0be8027ffb", {
         from: accounts[4]
     });
+    console.log("acct4 signed.")
 
     ret = await ia.established();
     console.log("ia established: ", ret);

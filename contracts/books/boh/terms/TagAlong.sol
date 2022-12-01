@@ -66,13 +66,8 @@ contract TagAlong is DragAlong, BOMSetting {
 
         _inputArray(signers);
 
-        uint40[] memory rightholders = _followers[
-            _links[
-                IInvestmentAgreement(ia)
-                    .shareNumberOfDeal(sn.sequence())
-                    .shareholder()
-            ]
-        ].valuesToUint40();
+        uint40[] memory rightholders = _followers[_links[sn.sellerOfDeal()]]
+            .valuesToUint40();
 
         uint256 len = rightholders.length;
 

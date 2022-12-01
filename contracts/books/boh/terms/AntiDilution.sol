@@ -109,9 +109,7 @@ contract AntiDilution is IAntiDilution, BOSSetting, ROMSetting, BOMSetting {
     ) external view onlyMarked(shareNumber.class()) returns (uint64 gift) {
         uint64 markPrice = _benchmarks.markedValue(shareNumber.class());
 
-        uint64 dealPrice = IInvestmentAgreement(ia).unitPriceOfDeal(
-            snOfDeal.sequence()
-        );
+        uint64 dealPrice = snOfDeal.priceOfDeal();
 
         require(markPrice > dealPrice, "AntiDilution not triggered");
 
@@ -125,9 +123,7 @@ contract AntiDilution is IAntiDilution, BOSSetting, ROMSetting, BOMSetting {
     // ################
 
     function isTriggered(address ia, bytes32 sn) public view returns (bool) {
-        uint64 unitPrice = IInvestmentAgreement(ia).unitPriceOfDeal(
-            sn.sequence()
-        );
+        uint64 unitPrice = sn.priceOfDeal();
 
         if (
             sn.typeOfDeal() !=
@@ -140,7 +136,7 @@ contract AntiDilution is IAntiDilution, BOSSetting, ROMSetting, BOMSetting {
         return false;
     }
 
-    function _isExempted(uint32 price, uint40[] memory consentParties)
+    function _isExempted(uint64 price, uint40[] memory consentParties)
         private
         view
         returns (bool)
@@ -211,9 +207,7 @@ contract AntiDilution is IAntiDilution, BOSSetting, ROMSetting, BOMSetting {
 
         (uint40[] memory consentParties, ) = _bom.getYea(uint256(uint160(ia)));
 
-        uint32 unitPrice = IInvestmentAgreement(ia).unitPriceOfDeal(
-            sn.sequence()
-        );
+        uint64 unitPrice = sn.priceOfDeal();
 
         return _isExempted(unitPrice, consentParties);
     }

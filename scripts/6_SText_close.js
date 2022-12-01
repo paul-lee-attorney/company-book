@@ -75,5 +75,16 @@ module.exports = async function (callback) {
     events = await ia.getPastEvents("CloseDeal");
     console.log("Event 'CloseDeal': ", events[0].returnValues);
 
+    let bos = await BOS.deployed();
+
+    events = await bos.getPastEvents("IncreaseCleanPar");
+    console.log("Event 'IncreaseCleanPar': ", events[0].returnValues);
+
+    events = await bos.getPastEvents("IssueShare");
+    console.log("Event 'IssueShare': ", events[0].returnValues);
+
+    events = await boa.getPastEvents("UpdateStateOfDoc");
+    console.log("Event 'UpdateStateOfDoc': ", events[0].returnValues);
+
     callback();
 }

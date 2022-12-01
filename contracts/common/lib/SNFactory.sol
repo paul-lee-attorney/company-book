@@ -20,39 +20,21 @@ library SNFactory {
 
     function intToSN(
         bytes memory sn,
-        uint8 pointer,
+        uint256 pointer,
         uint256 input,
         uint256 len
     ) internal pure returns (bytes memory) {
-        for (uint256 i = 0; i < len; i++)
-            sn[i + pointer] = bytes1(uint8(input >> ((len - 1 - i) * 8)));
+        for (uint256 i = 0; i < len; i++) {
+            uint256 bits = (len - i - 1) << 3;
+            uint256 temp = input >> bits;
+
+            sn[pointer + i] = bytes1(uint8(temp));
+        }
 
         return sn;
     }
 
-    function dateToSN(
-        bytes memory sn,
-        uint256 pointer,
-        uint32 input
-    ) internal pure returns (bytes memory) {
-        for (uint256 i = 0; i < 4; i++)
-            sn[i + pointer] = bytes1(uint8(input >> ((3 - i) * 8)));
-
-        return sn;
-    }
-
-    function acctToSN(
-        bytes memory sn,
-        uint256 pointer,
-        uint40 input
-    ) internal pure returns (bytes memory) {
-        for (uint256 i = 0; i < 5; i++)
-            sn[i + pointer] = bytes1(uint8(input >> ((4 - i) * 8)));
-
-        return sn;
-    }
-
-    function sequenceToSN(
+    function seqToSN(
         bytes memory sn,
         uint256 pointer,
         uint16 input
@@ -63,16 +45,41 @@ library SNFactory {
         return sn;
     }
 
+    function dateToSN(
+        bytes memory sn,
+        uint256 pointer,
+        uint32 input
+    ) internal pure returns (bytes memory) {
+        uint256 len = 4;
+        return intToSN(sn, pointer, input, len);
+    }
+
+    function acctToSN(
+        bytes memory sn,
+        uint256 pointer,
+        uint40 input
+    ) internal pure returns (bytes memory) {
+        uint256 len = 5;
+        return intToSN(sn, pointer, input, len);
+    }
+
+    function amtToSN(
+        bytes memory sn,
+        uint256 pointer,
+        uint64 input
+    ) internal pure returns (bytes memory) {
+        uint256 len = 8;
+        return intToSN(sn, pointer, input, len);
+    }
+
     function addrToSN(
         bytes memory sn,
         uint256 pointer,
         address acct
     ) internal pure returns (bytes memory) {
-        uint160 temp = uint160(acct);
-        for (uint256 i = 0; i < 20; i++)
-            sn[i + pointer] = bytes1(uint8(temp >> ((19 - i) * 8)));
-
-        return sn;
+        uint160 input = uint160(acct);
+        uint256 len = 20;
+        return intToSN(sn, pointer, input, len);
     }
 
     function boolToSN(
@@ -81,19 +88,6 @@ library SNFactory {
         bool input
     ) internal pure returns (bytes memory) {
         sn[pointer] = input ? bytes1(uint8(1)) : bytes1(uint8(0));
-
-        return sn;
-    }
-
-    function bytes32ToSN(
-        bytes memory sn,
-        uint256 pointer,
-        bytes32 input,
-        uint256 inputStartPoint,
-        uint256 len
-    ) internal pure returns (bytes memory) {
-        for (uint256 i = 0; i < len; i++)
-            sn[pointer + i] = input[inputStartPoint + i];
 
         return sn;
     }

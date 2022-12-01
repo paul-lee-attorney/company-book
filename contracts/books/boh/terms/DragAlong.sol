@@ -142,9 +142,7 @@ contract DragAlong is IAlongs, ROMSetting, BOSSetting, BOASetting {
     ) external view returns (bool) {
         if (!isTriggered(ia, sn)) return false;
 
-        uint40 drager = IInvestmentAgreement(ia)
-            .shareNumberOfDeal(sn.sequence())
-            .shareholder();
+        uint40 drager = sn.sellerOfDeal();
 
         require(
             caller == drager,
@@ -156,11 +154,9 @@ contract DragAlong is IAlongs, ROMSetting, BOSSetting, BOASetting {
             "DA.PriceCheck: caller and target shareholder NOT linked"
         );
 
-        uint32 dealPrice = IInvestmentAgreement(ia).unitPriceOfDeal(
-            sn.sequence()
-        );
+        uint64 dealPrice = sn.priceOfDeal();
         uint32 closingDate = IInvestmentAgreement(ia).closingDateOfDeal(
-            sn.sequence()
+            sn.seqOfDeal()
         );
 
         bytes32 rule = _links[caller];
@@ -178,7 +174,7 @@ contract DragAlong is IAlongs, ROMSetting, BOSSetting, BOASetting {
             else return false;
         }
 
-        (, , , , uint32 issuePrice) = _bos.getShare(shareNumber.ssn());
+        uint64 issuePrice = shareNumber.issuePrice();
         uint32 issueDate = shareNumber.issueDate();
 
         if (
@@ -203,9 +199,7 @@ contract DragAlong is IAlongs, ROMSetting, BOSSetting, BOASetting {
             sn.typeOfDeal() == uint8(InvestmentAgreement.TypeOfDeal.PreEmptive)
         ) return false;
 
-        uint40 seller = IInvestmentAgreement(ia)
-            .shareNumberOfDeal(sn.sequence())
-            .shareholder();
+        uint40 seller = sn.sellerOfDeal();
 
         if (!_dragers.contains(seller)) return false;
 
@@ -237,15 +231,15 @@ contract DragAlong is IAlongs, ROMSetting, BOSSetting, BOASetting {
     }
 
     function _roeOfDeal(
-        uint32 dealPrice,
-        uint32 issuePrice,
+        uint64 dealPrice,
+        uint64 issuePrice,
         uint32 closingDate,
         uint32 issueDateOfShare
     ) internal pure returns (uint16 roe) {
         require(dealPrice > issuePrice, "NEGATIVE selling price");
         require(closingDate > issueDateOfShare, "NEGATIVE holding period");
 
-        uint32 deltaPrice = dealPrice - issuePrice;
+        uint64 deltaPrice = dealPrice - issuePrice;
         uint32 deltaDate = closingDate - issueDateOfShare;
 
         roe = uint16(

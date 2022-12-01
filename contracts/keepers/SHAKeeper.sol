@@ -108,14 +108,14 @@ contract SHAKeeper is
 
         _addAlongDeal(dragAlong, ia, mock, sn, shareNumber, paid, par, caller);
 
-        bytes32 alongSN = _createAlongDeal(ia, sn, dragAlong, shareNumber);
+        bytes32 alongSN = _createAlongDealSN(ia, sn, dragAlong, shareNumber);
 
-        _updateAlongDeal(ia, sn, alongSN, paid, par);
+        _createAlongDeal(ia, sn, alongSN, paid, par);
 
         _lockDealSubject(ia, alongSN, par);
 
         if (!dragAlong)
-            ISigPage(ia).signDeal(alongSN.sequence(), caller, sigHash);
+            ISigPage(ia).signDeal(alongSN.seqOfDeal(), caller, sigHash);
     }
 
     function _addAlongDeal(
@@ -128,9 +128,7 @@ contract SHAKeeper is
         uint64 par,
         uint40 caller
     ) private {
-        uint40 drager = IInvestmentAgreement(ia)
-            .shareNumberOfDeal(sn.sequence())
-            .shareholder();
+        uint40 drager = sn.sellerOfDeal();
 
         address term = dragAlong
             ? _getSHA().getTerm(
@@ -172,53 +170,44 @@ contract SHAKeeper is
         );
     }
 
-    function _createAlongDeal(
+    function _createAlongDealSN(
         address ia,
         bytes32 sn,
         bool dragAlong,
         bytes32 shareNumber
-    ) private returns (bytes32 aSN) {
+    ) private view returns (bytes32) {
         uint8 typeOfDeal = (dragAlong)
             ? uint8(InvestmentAgreement.TypeOfDeal.DragAlong)
             : uint8(InvestmentAgreement.TypeOfDeal.TagAlong);
 
         uint40 buyer = sn.buyerOfDeal();
 
-        bytes32 snOfAlong = _createDealSN(
-            shareNumber.class(),
-            IInvestmentAgreement(ia).counterOfDeals() + 1,
-            typeOfDeal,
-            buyer,
-            _rom.groupNo(buyer),
-            shareNumber.ssn(),
-            sn.sequence()
-        );
-
-        aSN = IInvestmentAgreement(ia).createDeal(snOfAlong, shareNumber);
+        return
+            createDealSN(
+                shareNumber.class(),
+                IInvestmentAgreement(ia).counterOfDeals() + 1,
+                typeOfDeal,
+                shareNumber.shareholder(),
+                buyer,
+                _rom.groupNo(buyer),
+                shareNumber.ssn(),
+                sn.priceOfDeal(),
+                sn.seqOfDeal()
+            );
     }
 
-    function _updateAlongDeal(
+    function _createAlongDeal(
         address ia,
         bytes32 sn,
-        bytes32 alongSN,
+        bytes32 snOfAlong,
         uint64 paid,
         uint64 par
     ) private {
-        uint32 unitPrice = IInvestmentAgreement(ia).unitPriceOfDeal(
-            sn.sequence()
-        );
-
         uint32 closingDate = IInvestmentAgreement(ia).closingDateOfDeal(
-            sn.sequence()
+            sn.seqOfDeal()
         );
 
-        IInvestmentAgreement(ia).updateDeal(
-            alongSN.sequence(),
-            unitPrice,
-            paid,
-            par,
-            closingDate
-        );
+        IInvestmentAgreement(ia).createDeal(snOfAlong, paid, par, closingDate);
     }
 
     function _lockDealSubject(
@@ -226,7 +215,7 @@ contract SHAKeeper is
         bytes32 alongSN,
         uint64 par
     ) private returns (bool flag) {
-        if (IInvestmentAgreement(ia).lockDealSubject(alongSN.sequence())) {
+        if (IInvestmentAgreement(ia).lockDealSubject(alongSN.seqOfDeal())) {
             _bos.decreaseCleanPar(alongSN.ssnOfDeal(), par);
             flag = true;
         }
@@ -243,7 +232,7 @@ contract SHAKeeper is
         address mock = _boa.mockResultsOfIA(ia);
         require(mock > address(0), "no MockResults are found for IA");
 
-        uint16 seq = sn.sequence();
+        uint16 seq = sn.seqOfDeal();
         uint64 amount;
 
         if (_rom.basedOnPar()) {
@@ -254,7 +243,7 @@ contract SHAKeeper is
 
         IMockResults(mock).mockDealOfBuy(sn, amount);
 
-        ISigPage(ia).signDeal(sn.sequence(), caller, sigHash);
+        ISigPage(ia).signDeal(sn.seqOfDeal(), caller, sigHash);
     }
 
     // ======== AntiDilution ========
@@ -308,7 +297,11 @@ contract SHAKeeper is
                     caller
                 );
 
-                ISigPage(ia).signDeal(snOfGiftDeal.sequence(), caller, sigHash);
+                ISigPage(ia).signDeal(
+                    snOfGiftDeal.seqOfDeal(),
+                    caller,
+                    sigHash
+                );
 
                 giftPar = result;
                 if (giftPar == 0) break;
@@ -330,28 +323,24 @@ contract SHAKeeper is
         uint64 lockAmount;
 
         if (targetCleanPar != 0) {
-            snOfGiftDeal = _createDealSN(
-                shareNumber.class(),
-                IInvestmentAgreement(ia).counterOfDeals() + 1,
-                uint8(InvestmentAgreement.TypeOfDeal.FreeGift),
-                caller,
-                _rom.groupNo(caller),
-                shareNumber.ssn(),
-                sn.sequence()
-            );
+            snOfGiftDeal = _createGiftDealSN(ia, sn, shareNumber, caller);
 
-            snOfGiftDeal = IInvestmentAgreement(ia).createDeal(
-                snOfGiftDeal,
-                shareNumber
+            uint32 closingDate = IInvestmentAgreement(ia).closingDateOfDeal(
+                sn.seqOfDeal()
             );
 
             lockAmount = (targetCleanPar < giftPar) ? targetCleanPar : giftPar;
 
-            _updateGiftDeal(ia, snOfGiftDeal, lockAmount);
+            IInvestmentAgreement(ia).createDeal(
+                snOfGiftDeal,
+                lockAmount,
+                lockAmount,
+                closingDate
+            );
 
             if (
                 IInvestmentAgreement(ia).lockDealSubject(
-                    snOfGiftDeal.sequence()
+                    snOfGiftDeal.seqOfDeal()
                 )
             ) {
                 _bos.decreaseCleanPar(shareNumber.ssn(), lockAmount);
@@ -360,22 +349,24 @@ contract SHAKeeper is
         result = giftPar - lockAmount;
     }
 
-    function _updateGiftDeal(
+    function _createGiftDealSN(
         address ia,
-        bytes32 snOfGiftDeal,
-        uint64 lockAmount
-    ) private {
-        uint32 closingDate = IInvestmentAgreement(ia).closingDateOfDeal(
-            snOfGiftDeal.preSeqOfDeal()
-        );
-
-        IInvestmentAgreement(ia).updateDeal(
-            snOfGiftDeal.sequence(),
-            0,
-            lockAmount,
-            lockAmount,
-            closingDate
-        );
+        bytes32 sn,
+        bytes32 shareNumber,
+        uint40 caller
+    ) private view returns (bytes32) {
+        return
+            createDealSN(
+                shareNumber.class(),
+                IInvestmentAgreement(ia).counterOfDeals() + 1,
+                uint8(InvestmentAgreement.TypeOfDeal.FreeGift),
+                shareNumber.shareholder(),
+                caller,
+                _rom.groupNo(caller),
+                shareNumber.ssn(),
+                0,
+                sn.seqOfDeal()
+            );
     }
 
     function takeGiftShares(
@@ -385,7 +376,7 @@ contract SHAKeeper is
     ) external onlyDK {
         require(caller == sn.buyerOfDeal(), "caller is not buyer");
 
-        uint16 seq = sn.sequence();
+        uint16 seq = sn.seqOfDeal();
 
         IInvestmentAgreement(ia).takeGift(seq);
 
@@ -416,7 +407,7 @@ contract SHAKeeper is
         // ==== create FR deal in IA ====
         bytes32 snOfFR = _createFRDeal(ia, snOfOD, caller);
 
-        ISigPage(ia).signDeal(snOfFR.sequence(), caller, sigHash);
+        ISigPage(ia).signDeal(snOfFR.seqOfDeal(), caller, sigHash);
 
         // ==== record FR deal in frDeals ====
         address frd = _boa.frDealsOfIA(ia);
@@ -432,8 +423,8 @@ contract SHAKeeper is
         }
 
         IFirstRefusalDeals(frd).execFirstRefusalRight(
-            snOfOD.sequence(),
-            snOfFR.sequence(),
+            snOfOD.seqOfDeal(),
+            snOfFR.seqOfDeal(),
             caller
         );
     }
@@ -450,40 +441,55 @@ contract SHAKeeper is
         if (ssnOfOD != 0) (shareNumber, , , , ) = _bos.getShare(ssnOfOD);
 
         uint16 seq = IInvestmentAgreement(ia).counterOfDeals() + 1;
+        uint16 seqOfOD = snOfOD.seqOfDeal();
 
-        snOfFR = _createDealSN(
+        snOfFR = createDealSN(
             snOfOD.class(),
             seq,
             ssnOfOD == 0
                 ? uint8(InvestmentAgreement.TypeOfDeal.PreEmptive)
                 : uint8(InvestmentAgreement.TypeOfDeal.FirstRefusal),
+            shareNumber.shareholder(),
             caller,
             _rom.groupNo(caller),
             shareNumber.ssn(),
-            snOfOD.sequence()
+            snOfOD.priceOfDeal(),
+            seqOfOD
         );
 
-        snOfFR = IInvestmentAgreement(ia).createDeal(snOfFR, shareNumber);
+        (, uint64 paid, uint64 par, , ) = IInvestmentAgreement(ia).getDeal(
+            seqOfOD
+        );
+
+        uint32 closingDate = IInvestmentAgreement(ia).closingDateOfDeal(
+            seqOfOD
+        );
+
+        IInvestmentAgreement(ia).createDeal(snOfFR, paid, par, closingDate);
     }
 
-    function _createDealSN(
+    function createDealSN(
         uint16 class,
         uint16 seq,
         uint8 typeOfDeal,
+        uint40 seller,
         uint40 buyer,
         uint16 group,
         uint32 ssn,
+        uint64 unitPrice,
         uint16 preSeq
-    ) private pure returns (bytes32 sn) {
+    ) public pure returns (bytes32 sn) {
         bytes memory _sn = new bytes(32);
 
-        _sn = _sn.sequenceToSN(0, class);
-        _sn = _sn.sequenceToSN(2, seq);
+        _sn = _sn.seqToSN(0, class);
+        _sn = _sn.seqToSN(2, seq);
         _sn[4] = bytes1(typeOfDeal);
-        _sn = _sn.acctToSN(5, buyer);
-        _sn = _sn.sequenceToSN(10, group);
-        _sn = _sn.dateToSN(12, ssn);
-        _sn = _sn.sequenceToSN(16, preSeq);
+        _sn = _sn.acctToSN(5, seller);
+        _sn = _sn.acctToSN(10, buyer);
+        _sn = _sn.seqToSN(15, group);
+        _sn = _sn.dateToSN(17, ssn);
+        _sn = _sn.amtToSN(21, unitPrice);
+        _sn = _sn.seqToSN(29, preSeq);
 
         sn = _sn.bytesToBytes32();
     }
@@ -495,7 +501,7 @@ contract SHAKeeper is
         uint40 caller,
         bytes32 sigHash
     ) external onlyDK onlyEstablished(ia) afterReviewPeriod(ia) {
-        uint16 ssnOfOD = snOfOD.sequence();
+        uint16 ssnOfOD = snOfOD.seqOfDeal();
 
         if (
             snOfOD.typeOfDeal() ==
@@ -505,14 +511,7 @@ contract SHAKeeper is
                 _rom.groupNo(caller) == _rom.controllor(),
                 "caller not belong to controller group"
             );
-        else
-            require(
-                caller ==
-                    IInvestmentAgreement(ia)
-                        .shareNumberOfDeal(ssnOfOD)
-                        .shareholder(),
-                "not seller of Deal"
-            );
+        else require(caller == snOfOD.sellerOfDeal(), "not seller of Deal");
 
         uint64 ratio = _acceptFR(ia, ssnOfOD, ssnOfFR);
 
@@ -545,7 +544,6 @@ contract SHAKeeper is
         (, uint64 paid, uint64 par, , ) = IInvestmentAgreement(ia).getDeal(
             ssnOfOD
         );
-        uint32 unitPrice = IInvestmentAgreement(ia).unitPriceOfDeal(ssnOfOD);
         uint32 closingDate = IInvestmentAgreement(ia).closingDateOfDeal(
             ssnOfOD
         );
@@ -553,12 +551,6 @@ contract SHAKeeper is
         par = (par * ratio) / 10000;
         paid = (paid * ratio) / 10000;
 
-        IInvestmentAgreement(ia).updateDeal(
-            ssnOfFR,
-            unitPrice,
-            paid,
-            par,
-            closingDate
-        );
+        IInvestmentAgreement(ia).updateDeal(ssnOfFR, paid, par, closingDate);
     }
 }

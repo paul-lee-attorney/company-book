@@ -53,19 +53,20 @@ module.exports = async function (callback) {
 
     // ==== IssueShare ====
 
-    cur = Date.parse(new Date()) / 1000;
-    // let block = web3.eth.getBlock("latest");
-    // cur = block.timestamp;
+    // cur = Date.parse(new Date()) / 1000;
+    let block = await web3.eth.getBlock("latest");
+    cur = block.timestamp;
 
     let classOfShare = '0000';
-    let ssn = '00000001';
+    let ssn = '00000000';
     let issueDate = '00000000';
+    let unitPrice = '00000064';
     let shareholder = web3.utils.numberToHex(acct2);
 
     shareholder = web3.utils.padLeft(shareholder.slice(2, ), 10);
     console.log("shareholder: ", shareholder);
 
-    let shareNumber = '0x' + classOfShare + ssn + issueDate + shareholder;
+    let shareNumber = '0x' + classOfShare + ssn + issueDate + shareholder + unitPrice;
     shareNumber = web3.utils.padRight(shareNumber, 64);
     console.log("shareNumber: ", shareNumber);
 
@@ -95,7 +96,7 @@ module.exports = async function (callback) {
     shareholder = web3.utils.padLeft(shareholder.slice(2, ), 10);
     console.log("shareholder: ", shareholder);
 
-    shareNumber = '0x' + classOfShare + ssn + issueDate + shareholder;
+    shareNumber = '0x' + classOfShare + ssn + issueDate + shareholder + unitPrice;
     shareNumber = web3.utils.padRight(shareNumber, 64);
     console.log("shareNumber: ", shareNumber);
 
@@ -125,7 +126,7 @@ module.exports = async function (callback) {
     shareholder = web3.utils.padLeft(shareholder.slice(2, ), 10);
     console.log("shareholder: ", shareholder);
 
-    shareNumber = '0x' + classOfShare + ssn + issueDate + shareholder;
+    shareNumber = '0x' + classOfShare + ssn + issueDate + shareholder + unitPrice;
     shareNumber = web3.utils.padRight(shareNumber, 64);
     console.log("shareNumber: ", shareNumber);
 
@@ -214,6 +215,9 @@ module.exports = async function (callback) {
 
     cur = Date.parse(new Date()) / 1000;
 
+    // let block = web3.eth.getblock("latest");
+    // cur = block.timestamp;
+
     await bos.updatePaidInDeadline(1, cur + 172800);
 
     events = await bos.getPastEvents("UpdatePaidInDeadline");
@@ -266,7 +270,7 @@ module.exports = async function (callback) {
     res = await rom.sharesList();
     console.log("sharesList: ", res);
 
-    res = await rom.sharenumberExist("0x000000000001636cf10a00000000140000000000000000000000000000000000");
+    res = await rom.sharenumberExist(shareNumber);
     console.log("sharenumberExist: ", res);
 
     let acct5 = await rc.userNo.call(accounts[5], {

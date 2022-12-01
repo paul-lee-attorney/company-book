@@ -26,8 +26,12 @@ library SNParser {
         return uint40(bytes5(shareNumber << 80));
     }
 
+    function issuePrice(bytes32 shareNumber) internal pure returns (uint64) {
+        return uint64(bytes8(shareNumber << 120));
+    }
+
     function preSSN(bytes32 shareNumber) internal pure returns (uint32) {
-        return uint32(bytes4(shareNumber << 120));
+        return uint32(bytes4(shareNumber << 184));
     }
 
     function hashLockOfBOSLocker(bytes32 sn) internal pure returns (bytes16) {
@@ -40,7 +44,7 @@ library SNParser {
         return uint16(bytes2(sn));
     }
 
-    function sequence(bytes32 sn) internal pure returns (uint16) {
+    function seqOfDeal(bytes32 sn) internal pure returns (uint16) {
         return uint16(bytes2(sn << 16));
     }
 
@@ -48,20 +52,28 @@ library SNParser {
         return uint8(sn[4]);
     }
 
-    function buyerOfDeal(bytes32 sn) internal pure returns (uint40) {
+    function sellerOfDeal(bytes32 sn) internal pure returns (uint40) {
         return uint40(bytes5(sn << 40));
     }
 
+    function buyerOfDeal(bytes32 sn) internal pure returns (uint40) {
+        return uint40(bytes5(sn << 80));
+    }
+
     function groupOfBuyer(bytes32 sn) internal pure returns (uint16) {
-        return uint16(bytes2(sn << 80));
+        return uint16(bytes2(sn << 120));
     }
 
     function ssnOfDeal(bytes32 sn) internal pure returns (uint32) {
-        return uint32(bytes4(sn << 96));
+        return uint32(bytes4(sn << 136));
+    }
+
+    function priceOfDeal(bytes32 sn) internal pure returns (uint64) {
+        return uint64(bytes8(sn << 168));
     }
 
     function preSeqOfDeal(bytes32 sn) internal pure returns (uint16) {
-        return uint16(bytes2(sn << 128));
+        return uint16(bytes2(sn << 232));
     }
 
     // ======== LinkRule ========
@@ -120,28 +132,28 @@ library SNParser {
         return uint16(bytes2(sn << 88));
     }
 
-    function rateOfOpt(bytes32 sn) internal pure returns (uint32) {
-        return uint32(bytes4(sn << 104));
+    function rateOfOpt(bytes32 sn) internal pure returns (uint64) {
+        return uint64(bytes8(sn << 104));
     }
 
     function logOperator(bytes32 sn) internal pure returns (uint8) {
-        return uint8(sn[17]);
+        return uint8(sn[21]);
     }
 
     function compOperator_1(bytes32 sn) internal pure returns (uint8) {
-        return uint8(sn[18]);
+        return uint8(sn[22]);
     }
 
     function para_1(bytes32 sn) internal pure returns (uint32) {
-        return uint32(bytes4(sn << 152));
+        return uint32(bytes4(sn << 184));
     }
 
     function compOperator_2(bytes32 sn) internal pure returns (uint8) {
-        return uint8(sn[23]);
+        return uint8(sn[27]);
     }
 
     function para_2(bytes32 sn) internal pure returns (uint32) {
-        return uint32(bytes4(sn << 192));
+        return uint32(bytes4(sn << 224));
     }
 
     function checkConditions(

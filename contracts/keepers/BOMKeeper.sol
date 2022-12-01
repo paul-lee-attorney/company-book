@@ -228,13 +228,11 @@ contract BOMKeeper is
             "agianst NO need to buy"
         );
 
-        uint16 seq = sn.sequence();
+        uint16 seq = sn.seqOfDeal();
 
-        bytes32 shareNumber = IInvestmentAgreement(ia).shareNumberOfDeal(seq);
+        require(caller == sn.sellerOfDeal(), "NOT Seller of the Deal");
 
-        require(caller == shareNumber.shareholder(), "NOT Seller of the Deal");
-
-        uint32 unitPrice = IInvestmentAgreement(ia).unitPriceOfDeal(seq);
+        uint64 unitPrice = sn.priceOfDeal();
         uint32 closingDate = IInvestmentAgreement(ia).closingDateOfDeal(seq);
 
         (uint64 paid, uint64 par) = _bom.requestToBuy(ia, sn);
@@ -249,7 +247,7 @@ contract BOMKeeper is
             uint32(block.number),
             1,
             closingDays,
-            shareNumber.class(),
+            sn.classOfDeal(),
             unitPrice
         );
 
@@ -257,6 +255,8 @@ contract BOMKeeper is
         obligors[0] = againstVoter;
 
         snOfOpt = _boo.createOption(snOfOpt, caller, obligors, paid, par);
+
+        (bytes32 shareNumber, , , , ) = _bos.getShare(sn.ssnOfDeal());
 
         _boo.execOption(snOfOpt);
         _boo.addFuture(snOfOpt, shareNumber, paid, par);
@@ -268,7 +268,7 @@ contract BOMKeeper is
         uint8 execDays,
         uint8 closingDays,
         uint16 classOfOpt,
-        uint32 rateOfOpt
+        uint64 rateOfOpt
     ) private pure returns (bytes32 sn) {
         bytes memory _sn = new bytes(32);
 
@@ -276,8 +276,8 @@ contract BOMKeeper is
         _sn = _sn.dateToSN(5, triggerBN);
         _sn[9] = bytes1(execDays);
         _sn[10] = bytes1(closingDays);
-        _sn = _sn.sequenceToSN(11, classOfOpt);
-        _sn = _sn.dateToSN(13, rateOfOpt);
+        _sn = _sn.seqToSN(11, classOfOpt);
+        _sn = _sn.amtToSN(13, rateOfOpt);
 
         sn = _sn.bytesToBytes32();
     }

@@ -33,7 +33,7 @@ contract BookOfShares is IBookOfShares, ROMSetting {
     //     uint16 class; //股份类别（投资轮次）
     //     uint32 sequence; //顺序编码
     //     uint32 issueDate; //发行日期
-    //     uint32 unitPrice; //取得价格
+    //     uint64 unitPrice; //取得价格
     //     uint40 shareholder; //股东编号
     //     uint32 preSN; //来源股票编号索引
     // }
@@ -59,7 +59,7 @@ contract BookOfShares is IBookOfShares, ROMSetting {
     }
 
     modifier notFreezed(uint32 ssn) {
-        require(_shares[ssn].state == 0, "BOS.shareExist: share is freezed");
+        require(_shares[ssn].state == 0, "BOS.notFreezed: share is freezed");
         _;
     }
 
@@ -96,12 +96,17 @@ contract BookOfShares is IBookOfShares, ROMSetting {
             shareNumber.shareholder() != 0,
             "BOS.issueShare: zero shareholder"
         );
+
+        uint32 issueDate = shareNumber.issueDate();
+        if (issueDate == 0) issueDate = uint32(block.timestamp);
+        else
+            require(
+                issueDate <= block.timestamp,
+                "BOS.issueShare: future issueDate"
+            );
+
         require(
-            shareNumber.issueDate() <= block.timestamp,
-            "BOS.issueShare: future issueDate"
-        );
-        require(
-            shareNumber.issueDate() <= paidInDeadline,
+            issueDate <= paidInDeadline,
             "BOS.issueShare: issueDate LATER than paidInDeadline"
         );
 
@@ -110,31 +115,13 @@ contract BookOfShares is IBookOfShares, ROMSetting {
         // 判断是否需要添加新股东，若添加是否会超过法定人数上限
         _rom.addMember(shareNumber.shareholder());
 
-        _increaseCounterOfShares();
-
-        require(
-            shareNumber.ssn() == counterOfShares(),
-            "BOS.issueShare: sequence OVER FLOW"
-        );
-
-        require(
-            shareNumber.class() <= counterOfClasses() + 1,
-            "BOS.issueShare: class OVER FLOW"
-        );
-        if (shareNumber.class() > counterOfClasses())
-            _increaseCounterOfClasses();
-
-        if (shareNumber.issueDate() == 0)
-            shareNumber = _updateIssueDate(
-                shareNumber,
-                uint32(block.timestamp)
-            );
+        shareNumber = _assignSSN(shareNumber, issueDate);
 
         // 在《股权簿》中添加新股票（签发新的《出资证明书》）
         _issueShare(shareNumber, paid, par, paidInDeadline);
 
         // 将股票编号加入《股东名册》记载的股东名下
-        _rom.addShareToMember(shareNumber.ssn(), shareNumber.shareholder());
+        _rom.addShareToMember(counterOfShares(), shareNumber.shareholder());
 
         // 增加“认缴出资”和“实缴出资”金额
         _rom.capIncrease(paid, par);
@@ -196,7 +183,7 @@ contract BookOfShares is IBookOfShares, ROMSetting {
         uint64 paid,
         uint64 par,
         uint40 to,
-        uint32 unitPrice
+        uint64 unitPrice
     ) external shareExist(ssn) notFreezed(ssn) {
         require(
             _gk.isKeeper(uint8(TitleOfKeepers.BOAKeeper), msg.sender) ||
@@ -222,8 +209,8 @@ contract BookOfShares is IBookOfShares, ROMSetting {
             shareNumber.class(),
             counterOfShares(),
             uint32(block.timestamp),
-            unitPrice,
             to,
+            unitPrice,
             shareNumber.ssn()
         );
 
@@ -236,20 +223,20 @@ contract BookOfShares is IBookOfShares, ROMSetting {
         uint16 class,
         uint32 ssn,
         uint32 issueDate,
-        uint32 unitPrice,
         uint40 shareholder,
+        uint64 unitPrice,
         uint32 preSSN
-    ) public pure returns (bytes32 sn) {
+    ) public pure returns (bytes32 shareNumber) {
         bytes memory _sn = new bytes(32);
 
-        _sn = _sn.sequenceToSN(0, class);
+        _sn = _sn.seqToSN(0, class);
         _sn = _sn.dateToSN(2, ssn);
         _sn = _sn.dateToSN(6, issueDate);
-        _sn = _sn.dateToSN(10, unitPrice);
-        _sn = _sn.acctToSN(14, shareholder);
-        _sn = _sn.dateToSN(19, preSSN);
+        _sn = _sn.acctToSN(10, shareholder);
+        _sn = _sn.amtToSN(15, unitPrice);
+        _sn = _sn.dateToSN(23, preSSN);
 
-        sn = _sn.bytesToBytes32();
+        shareNumber = _sn.bytesToBytes32();
     }
 
     // ==== DecreaseCapital ====
@@ -337,16 +324,25 @@ contract BookOfShares is IBookOfShares, ROMSetting {
         _shares[0].par++;
     }
 
-    function _updateIssueDate(bytes32 shareNumber, uint32 issueDate)
+    function _assignSSN(bytes32 shareNumber, uint32 issueDate)
         private
-        pure
-        returns (bytes32 sn)
+        returns (bytes32)
     {
         bytes memory _sn = abi.encodePacked(shareNumber);
 
+        uint16 class = shareNumber.class();
+
+        if (class > counterOfClasses()) {
+            _increaseCounterOfClasses();
+            _sn = _sn.seqToSN(0, counterOfClasses());
+        }
+
+        _increaseCounterOfShares();
+
+        _sn = _sn.dateToSN(2, counterOfShares());
         _sn = _sn.dateToSN(6, issueDate);
 
-        sn = _sn.bytesToBytes32();
+        return _sn.bytesToBytes32();
     }
 
     function _issueShare(

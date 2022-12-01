@@ -52,17 +52,15 @@ contract InvestmentAgreement is
 
     struct Deal {
         bytes32 sn;
-        bytes32 shareNumber;
         uint64 paid;
         uint64 par;
-        uint32 unitPrice;
         uint32 closingDate;
         uint8 state;
         bytes32 hashLock;
     }
 
     // _deals[0] {
-    //     unitPrice: counterOfDeal;
+    //     paid: counterOfDeal;
     //     state: typeOfIA;
     // }
 
@@ -87,38 +85,60 @@ contract InvestmentAgreement is
     //##    写接口    ##
     //#################
 
-    function createDeal(bytes32 sn, bytes32 shareNumber)
-        external
-        attorneyOrKeeper(uint8(TitleOfKeepers.SHAKeeper))
-        returns (bytes32)
-    {
-        _deals[0].unitPrice++;
+    function createDeal(
+        bytes32 sn,
+        uint64 paid,
+        uint64 par,
+        uint32 closingDate
+    ) external attorneyOrKeeper(uint8(TitleOfKeepers.SHAKeeper)) {
+        require(par != 0, "IA.createDeal: par is ZERO");
+        require(par >= paid, "IA.createDeal: paid overflow");
 
-        uint16 seq = uint16(_deals[0].unitPrice);
+        _deals[0].paid++;
+
+        uint16 seq = uint16(_deals[0].paid);
 
         Deal storage deal = _deals[seq];
 
         deal.sn = sn;
-        deal.shareNumber = shareNumber;
+        deal.paid = paid;
+        deal.par = par;
+        deal.closingDate = closingDate;
 
         _dealsList.add(sn);
 
+        uint40 seller = sn.sellerOfDeal();
+        uint40 buyer = sn.buyerOfDeal();
+
         if (finalized()) {
             if (
-                shareNumber != bytes32(0) &&
+                seller != 0 &&
                 sn.typeOfDeal() != uint8(TypeOfDeal.DragAlong) &&
                 sn.typeOfDeal() != uint8(TypeOfDeal.FreeGift)
-            ) addBlank(shareNumber.shareholder(), seq);
-            addBlank(sn.buyerOfDeal(), seq);
+            ) addBlank(seller, seq);
+            addBlank(buyer, seq);
         } else {
-            if (shareNumber > bytes32(0))
-                addBlank(shareNumber.shareholder(), 0);
-            addBlank(sn.buyerOfDeal(), 0);
+            if (seller != 0) addBlank(seller, 0);
+            addBlank(buyer, 0);
         }
 
-        emit CreateDeal(sn, shareNumber);
+        emit CreateDeal(sn, paid, par, closingDate);
+    }
 
-        return sn;
+    function updateDeal(
+        uint16 seq,
+        uint64 paid,
+        uint64 par,
+        uint32 closingDate
+    ) external attorneyOrKeeper(uint8(TitleOfKeepers.SHAKeeper)) {
+        require(isDeal(seq), "IA.updateDeal: deal not exist");
+
+        Deal storage deal = _deals[seq];
+        deal.paid = paid;
+        deal.par = par;
+        deal.closingDate = closingDate;
+
+        emit UpdateDeal(deal.sn, paid, par, closingDate);
     }
 
     function setTypeOfIA(uint8 t) external onlyPending onlyAttorney {
@@ -126,45 +146,18 @@ contract InvestmentAgreement is
         // emit SetTypeOfIA(t);
     }
 
-    function updateDeal(
-        uint16 seq,
-        uint32 unitPrice,
-        uint64 paid,
-        uint64 par,
-        uint32 closingDate
-    ) external attorneyOrKeeper(uint8(TitleOfKeepers.SHAKeeper)) {
-        require(par != 0, "par is ZERO");
-        require(par >= paid, "paid overflow");
-        // require(
-        //     closingDate > block.timestamp + 15 minutes,
-        //     "closingDate shall be future"
-        // );
-
-        Deal storage deal = _deals[seq];
-
-        deal.unitPrice = unitPrice;
-        deal.par = par;
-        deal.paid = paid;
-        deal.closingDate = closingDate;
-
-        emit UpdateDeal(deal.sn, unitPrice, paid, par, closingDate);
-    }
-
     function delDeal(uint16 seq) external onlyPending onlyAttorney {
-        Deal storage deal = _deals[seq];
+        bytes32 sn = _deals[seq].sn;
+        uint40 seller = sn.sellerOfDeal();
 
-        bytes32 sn = deal.sn;
-
-        if (sn.ssnOfDeal() != 0) {
-            removeBlank(deal.shareNumber.shareholder(), seq);
+        if (seller != 0) {
+            removeBlank(seller, seq);
         }
 
         removeBlank(sn.buyerOfDeal(), seq);
 
         delete _deals[seq];
         _dealsList.remove(sn);
-
-        // emit DelDeal(sn);
     }
 
     function lockDealSubject(uint16 seq) external returns (bool flag) {
@@ -232,12 +225,12 @@ contract InvestmentAgreement is
 
         require(
             deal.hashLock == keccak256(bytes(hashKey)),
-            "hashKey NOT correct"
+            "IA.closeDeal: hashKey NOT correct"
         );
 
         require(
             block.timestamp + 15 minutes <= deal.closingDate,
-            "MISSED closing date"
+            "IA.closeDeal: MISSED closing date"
         );
 
         deal.state = uint8(StateOfDeal.Closed);
@@ -308,12 +301,12 @@ contract InvestmentAgreement is
         return _deals[0].state;
     }
 
-    function isDeal(uint16 seq) external view returns (bool) {
+    function isDeal(uint16 seq) public view returns (bool) {
         return _dealsList.contains(_deals[seq].sn);
     }
 
     function counterOfDeals() external view returns (uint16) {
-        return uint16(_deals[0].unitPrice);
+        return uint16(_deals[0].paid);
     }
 
     function getDeal(uint16 seq)
@@ -336,16 +329,8 @@ contract InvestmentAgreement is
         hashLock = deal.hashLock;
     }
 
-    function unitPriceOfDeal(uint16 seq) external view returns (uint32) {
-        return _deals[seq].unitPrice;
-    }
-
     function closingDateOfDeal(uint16 seq) external view returns (uint32) {
         return _deals[seq].closingDate;
-    }
-
-    function shareNumberOfDeal(uint16 seq) external view returns (bytes32) {
-        return _deals[seq].shareNumber;
     }
 
     function dealsList() external view returns (bytes32[] memory) {

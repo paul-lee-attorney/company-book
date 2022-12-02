@@ -281,9 +281,11 @@ contract BookOfShares is IBookOfShares, ROMSetting {
         // require(paid != 0, "ZERO paid");
 
         Share storage share = _shares[ssn];
-        require(share.paid >= (share.cleanPar + paid), "paid overflow");
 
-        share.cleanPar += paid;
+        unchecked {
+            require(share.paid >= (share.cleanPar + paid), "paid overflow");
+            share.cleanPar += paid;            
+        }
 
         emit IncreaseCleanPar(share.shareNumber, paid);
     }

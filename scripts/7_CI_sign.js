@@ -99,7 +99,7 @@ module.exports = async function (callback) {
     sn = await web3.utils.padRight(sn, 64);
     console.log("sn: ", sn);
 
-    await ia.createDeal(sn, 100000000, 100000000, timestamp, {
+    await ia.createDeal(sn, 10000, 10000, timestamp, {
         from: accounts[7]
     });
 

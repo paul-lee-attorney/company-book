@@ -11,6 +11,7 @@ const LibRolesRepo = artifacts.require("RolesRepo");
 const LibSigsRepo = artifacts.require("SigsRepo");
 const LibSNFactory = artifacts.require("SNFactory");
 const LibSNParser = artifacts.require("SNParser");
+const ExtSNParser = artifacts.require("SNParserExt");
 const LibTopChain = artifacts.require("TopChain");
 
 const RC = artifacts.require("RegCenter");
@@ -64,6 +65,8 @@ module.exports = async function (deployer, network, accounts) {
 
     await deployer.deploy(LibSNParser);
     await deployer.link(LibSNParser, [BOA, IA, MR, SHA, AD, DA, LU, TA, BOM, BOO, BOP, BOS, BOH, LibMotionsRepo, LibOptionsRepo, BOAKeeper, BOHKeeper, BOMKeeper, BOOKeeper, BOPKeeper, BOSKeeper, SHAKeeper]);
+
+    await deployer.deploy(ExtSNParser);
 
     await deployer.deploy(LibSNFactory);
     await deployer.link(LibSNFactory, [BOP, BOS, LibOptionsRepo, BOMKeeper, SHAKeeper]);

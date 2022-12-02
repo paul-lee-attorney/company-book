@@ -234,7 +234,7 @@ contract BOAKeeper is
 
         uint32 ssn = sn.ssnOfDeal();
 
-        if (ssn != 0) {
+        if (ssn > 0) {
             _shareTransfer(ia, sn);
         } else issueNewShare(ia, sn);
 

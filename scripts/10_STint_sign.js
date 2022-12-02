@@ -45,17 +45,6 @@ module.exports = async function (callback) {
     let cur = null;
 
 
-    // ==== setTemplate ====
-
-    let ia = await IA.deployed();
-
-    await gk.setTempOfIA(ia.address, 0, {
-        from: accounts[1]
-    });
-    events = await boa.getPastEvents("SetTemplate");
-
-    console.log("SetTemplate: ", events[0].returnValues);
-
     // ==== 创建IA ====
     await gk.createIA(0, {
         from: accounts[2]
@@ -66,7 +55,7 @@ module.exports = async function (callback) {
 
     addr = list[len - 1];
 
-    ia = await IA.at(addr);
+    let ia = await IA.at(addr);
     console.log("get ia: ", ia.address);
 
     // ==== 设定 GeneralCounsel ====
@@ -82,7 +71,6 @@ module.exports = async function (callback) {
     console.log("GC to IA is: ", gc);
 
     // ==== 设定签署和生效截止期 ====
-    // cur = Date.parse(new Date()) / 1000;
     cur = await web3.eth.getBlock("latest");
     let timestamp = cur.timestamp;
     console.log("timestamp: ", timestamp);
@@ -94,29 +82,24 @@ module.exports = async function (callback) {
     });
     console.log("sigDeadline: ", timestamp);
 
-    timestamp = timestamp + 86400 * 23;
+    timestamp += 86400 * 23;
 
     await ia.setClosingDeadline(timestamp, {
         from: accounts[7]
     });
     console.log("closingDeadline: ", timestamp);
 
-    // ==== Draft IA ====
+    // ==== Capital Increase ====
 
-    // let acct5 = await rc.userNo(accounts[5], {
-    //     from: accounts[5]
-    // });
-    // acct5 = acct5.toNumber();
+    // let shareNumber = '0x' + '0001' + '00000000' + '00000000' + '0000000007' + '00000128';
+    // shareNumber = await web3.utils.padRight(shareNumber, 64);
+    // console.log("shareNumber: ", shareNumber);
 
-    // ==== 股转交易 ====
-
-    let share1 = await bos.getShare(1);
-
-    sn = '0x' + '0000' + '0001' + '02' + '0000000004' + '0000000007' + '0000' + '00000001' + '00000000000000c8';
-    sn = web3.utils.padRight(sn, 64);
+    sn = '0x' + '0000' + '0001' + '03' + '0000000004' + '0000000006' + '0000' + '00000001' + '00000000000000c8';
+    sn = await web3.utils.padRight(sn, 64);
     console.log("sn: ", sn);
 
-    await ia.createDeal(sn, 10000, 10000, timestamp, {
+    await ia.createDeal(sn, 20000, 20000, timestamp, {
         from: accounts[7]
     });
 
@@ -126,12 +109,27 @@ module.exports = async function (callback) {
     let parties = await ia.partiesOfDoc();
     console.log("parties: ", parties.map(v => v.toNumber()));
 
-    await ia.setTypeOfIA(2, {
+    await ia.setTypeOfIA(3, {
         from: accounts[7]
     });
 
     ret = await ia.typeOfIA();
     console.log("typeOfIA: ", ret.toNumber());
+
+    // await ia.addParty(4, {
+    //     from: accounts[7]
+    // });
+
+    // await ia.addParty(5, {
+    //     from: accounts[7]
+    // });
+
+    // await ia.addParty(6, {
+    //     from: accounts[7]
+    // });
+
+    parties = await ia.partiesOfDoc();
+    console.log("parties: ", parties.map(v => v.toNumber()));
 
     // ==== circulate IA ====
 
@@ -148,17 +146,35 @@ module.exports = async function (callback) {
     events = await boa.getPastEvents("UpdateStateOfDoc");
     console.log("Event 'UpdateStateOfDoc': ", events[0].returnValues);
 
-    // ==== 签署IA ====
+    // ==== 签署IA === =
     await gk.signIA(ia.address, "0xd3cbe222ebe6a7fa1dc87ecc76555c40943e8ec1f6a91c5cf479509accb1ef5a", {
         from: accounts[2]
     });
+    console.log("acct2 signed.")
 
-    await gk.signIA(ia.address, "0xe5b0e7ffcb90dc5ee09f49282b47da64e12e0b36c689866cb8363f0be8027ffb", {
-        from: accounts[5]
+    await gk.signIA(ia.address, "0xd3cbe222ebe6a7fa1dc87ecc76555c40943e8ec1f6a91c5cf479509accb1ef5a", {
+        from: accounts[4]
     });
+    console.log("acct4 signed.")
+
+    // await gk.signIA(ia.address, "0xe5b0e7ffcb90dc5ee09f49282b47da64e12e0b36c689866cb8363f0be8027ffb", {
+    //     from: accounts[5]
+    // });
+    // console.log("acct5 signed.")
 
     ret = await ia.established();
     console.log("ia established: ", ret);
+
+    ret = await boa.currentState(ia.address);
+    console.log("docsRepo status: ", ret.toNumber());
+
+    // await gk.signIA(ia.address, "0xe5b0e7ffcb90dc5ee09f49282b47da64e12e0b36c689866cb8363f0be8027ffb", {
+    //     from: accounts[4]
+    // });
+    // console.log("acct4 signed.")
+
+    // ret = await ia.established();
+    // console.log("ia established: ", ret);
 
     ret = await boa.currentState(ia.address);
     console.log("docsRepo status: ", ret.toNumber());

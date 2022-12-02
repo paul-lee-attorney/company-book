@@ -25,10 +25,12 @@ library SNFactory {
         uint256 len
     ) internal pure returns (bytes memory) {
         for (uint256 i = 0; i < len; i++) {
-            uint256 bits = (len - i - 1) << 3;
-            uint256 temp = input >> bits;
+            unchecked {
+                uint256 bits = (len - i - 1) << 3;
+                uint256 temp = input >> bits;
 
-            sn[pointer + i] = bytes1(uint8(temp));
+                sn[pointer + i] = bytes1(uint8(temp));                
+            }
         }
 
         return sn;
@@ -39,8 +41,10 @@ library SNFactory {
         uint256 pointer,
         uint16 input
     ) internal pure returns (bytes memory) {
-        sn[pointer] = bytes1(uint8(input >> 8));
-        sn[pointer + 1] = bytes1(uint8(input));
+        unchecked {
+            sn[pointer] = bytes1(uint8(input >> 8));
+            sn[pointer + 1] = bytes1(uint8(input));            
+        }
 
         return sn;
     }

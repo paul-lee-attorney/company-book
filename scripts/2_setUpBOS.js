@@ -70,7 +70,7 @@ module.exports = async function (callback) {
     shareNumber = web3.utils.padRight(shareNumber, 64);
     console.log("shareNumber: ", shareNumber);
 
-    await bos.issueShare(shareNumber, 500000000, 500000000, cur + 86400);
+    await bos.issueShare(shareNumber, 50000, 50000, cur + 86400);
 
     events = await rom.getPastEvents("AddMember");
     console.log("Event 'AddMember': ", events[0].returnValues);
@@ -98,7 +98,7 @@ module.exports = async function (callback) {
     shareNumber = web3.utils.padRight(shareNumber, 64);
     console.log("shareNumber: ", shareNumber);
 
-    await bos.issueShare(shareNumber, 300000000, 300000000, cur + 86400);
+    await bos.issueShare(shareNumber, 30000, 30000, cur + 86400);
 
     events = await rom.getPastEvents("AddMember");
     console.log("Event 'AddMember': ", events[0].returnValues);
@@ -126,7 +126,7 @@ module.exports = async function (callback) {
     shareNumber = web3.utils.padRight(shareNumber, 64);
     console.log("shareNumber: ", shareNumber);
 
-    await bos.issueShare(shareNumber, 100000000, 200000000, cur + 86400);
+    await bos.issueShare(shareNumber, 10000, 20000, cur + 86400);
 
     events = await rom.getPastEvents("AddMember");
     console.log("Event 'AddMember': ", events[0].returnValues);
@@ -163,10 +163,13 @@ module.exports = async function (callback) {
 
     console.log("sn: ", sn);
 
-    await bos.setPayInAmount(sn, 100000000);
+    await bos.setPayInAmount(sn, 10000);
 
     events = await bos.getPastEvents("SetPayInAmount");
     console.log("Event 'SetPayInAmount': ", events[0].returnValues);
+
+    ret = await bos.getLocker(sn);
+    console.log("payInLocker: ", ret.toNumber());
 
     await bos.requestPaidInCapital(sn, "Paul is an attorney.");
 
@@ -181,7 +184,7 @@ module.exports = async function (callback) {
 
     // ==== decreaseCapital ====
 
-    await bos.decreaseCapital(1, 100000000, 100000000);
+    await bos.decreaseCapital(1, 10000, 10000);
 
     events = await bos.getPastEvents("SubAmountFromShare");
     console.log("Event 'SubAmountFromShare': ", events[0].returnValues);

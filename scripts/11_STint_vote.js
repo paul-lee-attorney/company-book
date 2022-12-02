@@ -52,7 +52,31 @@ module.exports = async function (callback) {
     let motionId = await web3.utils.hexToNumberString(ia.address);
     console.log("motionId: ", motionId);
 
-    // // ==== 快进7天（BlockNumber 和 timestamp）====
+    await gk.castGMVote(motionId, 2, "0xe5b0e7ffcb90dc5ee09f49282b47da64e12e0b36c689866cb8363f0be8027ffb", {
+        from: accounts[3]
+    });
+
+    let acct3 = await rc.userNo.call(accounts[3], {
+        from: accounts[3]
+    });
+    acct3 = acct3.toNumber();
+
+    let res = await bom.getVote(motionId, acct3);
+    console.log("vote of Acct3: ", res);
+
+    // await gk.castGMVote(motionId, 2, "0xe5b0e7ffcb90dc5ee09f49282b47da64e12e0b36c689866cb8363f0be8027ffb", {
+    //     from: accounts[4]
+    // });
+
+    // let acct4 = await rc.userNo.call(accounts[4], {
+    //     from: accounts[4]
+    // });
+    // acct4 = acct4.toNumber();
+
+    // res = await bom.getVote(motionId, acct4);
+    // console.log("vote of Acct4: ", res);
+
+    // ==== 快进7天（BlockNumber 和 timestamp）====
 
     let bn = await web3.eth.getBlockNumber();
     console.log("current BN: ", bn);

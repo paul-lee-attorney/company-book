@@ -37,7 +37,7 @@ library OptionsRepo {
 
     // bytes32 snInfo{
     //      uint8 typeOfOpt; 0, 1  //0-call(price); 1-put(price); 2-call(roe); 3-put(roe); 4-call(price) & cnds; 5-put(price) & cnds; 6-call(roe) & cnds; 7-put(roe) & cnds;
-    //      uint40 sequenceOfOpt; 1, 5
+    //      uint40 seqOfOpt; 1, 5
     //      uint32 triggerBN; 6, 4
     //      uint8 exerciseDays; 10, 1
     //      uint8 closingDays; 11, 1

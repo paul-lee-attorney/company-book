@@ -269,7 +269,7 @@ contract SHAKeeper is
             uint8(ShareholdersAgreement.TermTitle.ANTI_DILUTION)
         );
 
-        uint64 giftPar = IAntiDilution(ad).giftPar(ia, sn, shareNumber);
+        uint64 giftPar = IAntiDilution(ad).giftPar(sn, shareNumber);
         uint40[] memory obligors = IAntiDilution(ad).obligors(
             shareNumber.class()
         );

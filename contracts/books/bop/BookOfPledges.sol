@@ -59,8 +59,8 @@ contract BookOfPledges is IBookOfPledges, AccessControl {
         uint64 guaranteedAmt
     ) external onlyDK {
         sn = _updateSNDate(sn);
-        uint32 ssn = sn.ssnOfPledge();
-        uint32 seq = sn.sequenceOfPledge();
+        uint32 ssn = sn.ssnOfPld();
+        uint32 seq = sn.seqOfPld();
 
         require(pledgedPar != 0, "BOP.createPledge: ZERO pledgedPar");
 
@@ -100,7 +100,7 @@ contract BookOfPledges is IBookOfPledges, AccessControl {
     ) external onlyDK pledgeExist(sn) {
         require(pledgedPar != 0, "ZERO pledged parvalue");
 
-        Pledge storage pld = _pledges[sn.ssnOfPledge()][sn.sequenceOfPledge()];
+        Pledge storage pld = _pledges[sn.ssnOfPld()][sn.seqOfPld()];
 
         pld.creditor = creditor;
         pld.pledgedPar = pledgedPar;
@@ -133,10 +133,10 @@ contract BookOfPledges is IBookOfPledges, AccessControl {
     }
 
     function isPledge(bytes32 sn) public view returns (bool) {
-        uint32 ssn = sn.ssnOfPledge();
-        uint32 seq = sn.sequenceOfPledge();
+        uint32 ssn = sn.ssnOfPld();
+        uint32 seq = sn.seqOfPld();
 
-        return ssn != 0 && _pledges[ssn][seq].sn.sequenceOfPledge() == seq;
+        return ssn != 0 && _pledges[ssn][seq].sn.seqOfPld() == seq;
     }
 
     function getPledge(bytes32 sn)
@@ -149,7 +149,7 @@ contract BookOfPledges is IBookOfPledges, AccessControl {
             uint64 guaranteedAmt
         )
     {
-        Pledge storage pld = _pledges[sn.ssnOfPledge()][sn.sequenceOfPledge()];
+        Pledge storage pld = _pledges[sn.ssnOfPld()][sn.seqOfPld()];
 
         creditor = pld.creditor;
         pledgedPar = pld.pledgedPar;

@@ -31,7 +31,7 @@ contract BOPKeeper is IBOPKeeper, BOPSetting, BOSSetting {
         uint40 caller
     ) external onlyDK {
         require(
-            sn.ssnOfPledge() == shareNumber.ssn(),
+            sn.ssnOfPld() == shareNumber.ssn(),
             "BOPKeeper.createPledge: wrong shareNumber"
         );
         require(shareNumber.shareholder() == caller, "NOT shareholder");
@@ -50,7 +50,7 @@ contract BOPKeeper is IBOPKeeper, BOPSetting, BOSSetting {
     ) external onlyDK {
         require(pledgedPar != 0, "BOPKeeper.updatePledge: ZERO pledgedPar");
 
-        uint32 shortShareNumber = sn.ssnOfPledge();
+        uint32 shortShareNumber = sn.ssnOfPld();
 
         (uint40 orgCreditor, uint64 orgPledgedPar, ) = _bop.getPledge(sn);
 
@@ -62,7 +62,7 @@ contract BOPKeeper is IBOPKeeper, BOPSetting, BOSSetting {
             _bos.increaseCleanPar(shortShareNumber, orgPledgedPar - pledgedPar);
         } else if (pledgedPar > orgPledgedPar) {
             require(
-                caller == sn.pledgorOfPledge(),
+                caller == sn.pledgorOfPld(),
                 "BOPKeeper.updatePledge: NOT pledgor"
             );
             _bos.decreaseCleanPar(shortShareNumber, pledgedPar - orgPledgedPar);
@@ -83,7 +83,7 @@ contract BOPKeeper is IBOPKeeper, BOPSetting, BOSSetting {
 
         require(caller == creditor, "NOT creditor");
 
-        _bos.increaseCleanPar(sn.ssnOfPledge(), pledgedPar);
+        _bos.increaseCleanPar(sn.ssnOfPld(), pledgedPar);
 
         _bop.updatePledge(sn, creditor, 0, 0);
     }

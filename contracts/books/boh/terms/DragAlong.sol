@@ -235,14 +235,14 @@ contract DragAlong is IAlongs, ROMSetting, BOSSetting, BOASetting {
         uint64 issuePrice,
         uint32 closingDate,
         uint32 issueDateOfShare
-    ) internal pure returns (uint16 roe) {
+    ) internal pure returns (uint32 roe) {
         require(dealPrice > issuePrice, "NEGATIVE selling price");
         require(closingDate > issueDateOfShare, "NEGATIVE holding period");
 
         uint64 deltaPrice = dealPrice - issuePrice;
         uint32 deltaDate = closingDate - issueDateOfShare;
 
-        roe = uint16(
+        roe = uint32(
             (((deltaPrice * 10000) / issuePrice) * 31536000) / deltaDate
         );
     }

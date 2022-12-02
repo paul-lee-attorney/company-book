@@ -9,7 +9,7 @@ pragma solidity ^0.8.8;
 
 import "./ITerm.sol";
 
-interface IAntiDilution is ITerm{
+interface IAntiDilution is ITerm {
     // ################
     // ##   Event    ##
     // ################
@@ -44,9 +44,8 @@ interface IAntiDilution is ITerm{
 
     function obligors(uint16 class) external view returns (uint40[] memory);
 
-    function giftPar(
-        address ia,
-        bytes32 snOfDeal,
-        bytes32 shareNumber
-    ) external view returns (uint64);
+    function giftPar(bytes32 snOfDeal, bytes32 shareNumber)
+        external
+        view
+        returns (uint64);
 }

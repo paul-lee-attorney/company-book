@@ -78,32 +78,32 @@ library SNParser {
 
     // ======== LinkRule ========
 
-    function dragerOfLink(bytes32 sn) internal pure returns (uint32) {
-        return uint32(bytes4(sn));
+    function dragerOfLink(bytes32 sn) internal pure returns (uint40) {
+        return uint40(bytes5(sn));
     }
 
     function dragerGroupOfLink(bytes32 sn) internal pure returns (uint16) {
-        return uint16(bytes2(sn << 32));
+        return uint16(bytes2(sn << 40));
     }
 
     function triggerTypeOfLink(bytes32 sn) internal pure returns (uint8) {
-        return uint8(sn[6]);
+        return uint8(sn[7]);
     }
 
-    function thresholdOfLink(bytes32 sn) internal pure returns (uint32) {
-        return uint32(bytes4(sn << 56));
+    function thresholdOfLink(bytes32 sn) internal pure returns (uint64) {
+        return uint64(bytes8(sn << 64));
     }
 
     function proRataOfLink(bytes32 sn) internal pure returns (bool) {
-        return uint8(sn[11]) == 1;
+        return uint8(sn[16]) == 1;
     }
 
-    function unitPriceOfLink(bytes32 sn) internal pure returns (uint32) {
-        return uint32(bytes4(sn << 96));
+    function unitPriceOfLink(bytes32 sn) internal pure returns (uint64) {
+        return uint64(bytes8(sn << 136));
     }
 
     function roeOfLink(bytes32 sn) internal pure returns (uint32) {
-        return uint32(bytes4(sn << 128));
+        return uint32(bytes4(sn << 200));
     }
 
     // ======== OptionSN ========
@@ -112,7 +112,7 @@ library SNParser {
         return uint8(sn[0]);
     }
 
-    function sequenceOfOpt(bytes32 sn) internal pure returns (uint32) {
+    function seqOfOpt(bytes32 sn) internal pure returns (uint32) {
         return uint32(bytes4(sn << 8));
     }
 
@@ -198,24 +198,24 @@ library SNParser {
 
     // ======== Pledge ========
 
-    function ssnOfPledge(bytes32 sn) internal pure returns (uint32) {
+    function ssnOfPld(bytes32 sn) internal pure returns (uint32) {
         return uint32(bytes4(sn));
     }
 
-    function sequenceOfPledge(bytes32 sn) internal pure returns (uint16) {
+    function seqOfPld(bytes32 sn) internal pure returns (uint16) {
         return uint16(bytes2(sn << 32));
     }
 
-    function createDateOfPledge(bytes32 sn) internal pure returns (uint32) {
+    function createDateOfPld(bytes32 sn) internal pure returns (uint32) {
         return uint32(bytes4(sn << 48));
     }
 
-    function pledgorOfPledge(bytes32 sn) internal pure returns (uint32) {
-        return uint32(bytes4(sn << 80));
+    function pledgorOfPld(bytes32 sn) internal pure returns (uint40) {
+        return uint40(bytes5(sn << 80));
     }
 
-    function debtorOfPledge(bytes32 sn) internal pure returns (uint32) {
-        return uint32(bytes4(sn << 112));
+    function debtorOfPld(bytes32 sn) internal pure returns (uint40) {
+        return uint40(bytes5(sn << 120));
     }
 
     // ========= Rules ========
@@ -306,8 +306,8 @@ library SNParser {
         return uint16(bytes2(sn << 8));
     }
 
-    function memberOfGUO(bytes32 sn) internal pure returns (uint32) {
-        return uint32(bytes4(sn << 24));
+    function memberOfGUO(bytes32 sn) internal pure returns (uint40) {
+        return uint40(bytes5(sn << 24));
     }
 
     // ======== MotionSN ========
@@ -316,12 +316,12 @@ library SNParser {
         return uint8(sn[0]);
     }
 
-    function submitterOfMotion(bytes32 sn) internal pure returns (uint32) {
-        return uint32(bytes4(sn << 8));
+    function submitterOfMotion(bytes32 sn) internal pure returns (uint40) {
+        return uint40(bytes5(sn << 8));
     }
 
     function proposeBNOfMotion(bytes32 sn) internal pure returns (uint32) {
-        return uint32(bytes4(sn << 40));
+        return uint32(bytes4(sn << 48));
     }
 
     function votingDeadlineBNOfMotion(bytes32 sn)
@@ -329,15 +329,15 @@ library SNParser {
         pure
         returns (uint32)
     {
-        return uint32(bytes4(sn << 72));
+        return uint32(bytes4(sn << 80));
     }
 
     function weightRegBNOfMotion(bytes32 sn) internal pure returns (uint32) {
-        return uint32(bytes4(sn << 104));
+        return uint32(bytes4(sn << 112));
     }
 
-    function candidateOfMotion(bytes32 sn) internal pure returns (uint32) {
-        return uint32(bytes4(sn << 136));
+    function candidateOfMotion(bytes32 sn) internal pure returns (uint40) {
+        return uint40(bytes5(sn << 144));
     }
 
     // ======== RegCenter ========

@@ -102,11 +102,12 @@ contract AntiDilution is IAntiDilution, BOSSetting, ROMSetting, BOMSetting {
         return _obligors[class].valuesToUint40();
     }
 
-    function giftPar(
-        address ia,
-        bytes32 snOfDeal,
-        bytes32 shareNumber
-    ) external view onlyMarked(shareNumber.class()) returns (uint64 gift) {
+    function giftPar(bytes32 snOfDeal, bytes32 shareNumber)
+        external
+        view
+        onlyMarked(shareNumber.class())
+        returns (uint64 gift)
+    {
         uint64 markPrice = _benchmarks.markedValue(shareNumber.class());
 
         uint64 dealPrice = snOfDeal.priceOfDeal();

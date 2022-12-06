@@ -7,12 +7,12 @@
 
 pragma solidity ^0.8.8;
 
-import "./TopChain_.sol";
+import "./TopChain.sol";
 
 contract TopChainExt {
-    using TopChain_ for TopChain_.Chain;
+    using TopChain for TopChain.Chain;
 
-    TopChain_.Chain private _gm;
+    TopChain.Chain private _gm;
 
     /* Node[0] {
         prev: tail;
@@ -67,7 +67,7 @@ contract TopChainExt {
 
     // ==== restoreChain ====
 
-    function restoreChain(TopChain_.Node[] memory snapshot) external {
+    function restoreChain(TopChain.Node[] memory snapshot) external {
         _gm.restoreChain(snapshot);
     }
 
@@ -173,7 +173,7 @@ contract TopChainExt {
 
     // ==== backup ====
 
-    function getSnapshot() external view returns (TopChain_.Node[] memory) {
+    function getSnapshot() external view returns (TopChain.Node[] memory) {
         return _gm.getSnapshot();
     }
 }

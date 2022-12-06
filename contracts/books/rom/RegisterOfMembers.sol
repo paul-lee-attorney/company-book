@@ -84,7 +84,7 @@ contract RegisterOfMembers is IRegisterOfMembers, BOSSetting {
         require(
             _gm.qtyOfMembers() < _gm.maxQtyOfMembers() ||
                 _gm.maxQtyOfMembers() == 0,
-            "Qty of Members overflow"
+            "ROM.addMember: Qty of Members overflow"
         );
 
         if (_gm.addMember(acct)) emit AddMember(acct, _gm.qtyOfMembers());

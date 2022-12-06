@@ -143,7 +143,6 @@ contract InvestmentAgreement is
 
     function setTypeOfIA(uint8 t) external onlyPending onlyAttorney {
         _deals[0].state = t;
-        // emit SetTypeOfIA(t);
     }
 
     function delDeal(uint16 seq) external onlyPending onlyAttorney {
@@ -220,6 +219,7 @@ contract InvestmentAgreement is
         external
         onlyCleared(seq)
         onlyDK
+        returns (bool)
     {
         Deal storage deal = _deals[seq];
 
@@ -229,19 +229,40 @@ contract InvestmentAgreement is
         );
 
         require(
-            block.timestamp + 15 minutes <= deal.closingDate,
+            uint32(block.timestamp) + 900 <= deal.closingDate,
             "IA.closeDeal: MISSED closing date"
         );
 
         deal.state = uint8(StateOfDeal.Closed);
 
         emit CloseDeal(deal.sn, hashKey);
+
+        return _checkCompletionOfIA();
+    }
+
+    function _checkCompletionOfIA() private view returns (bool) {
+        bytes32[] memory list = _dealsList.values();
+
+        uint256 len = list.length;
+
+        while (len > 0) {
+            bytes32 sn = list[len - 1];
+
+            uint16 seq = sn.seqOfDeal();
+
+            if (_deals[seq].state < uint8(StateOfDeal.Closed)) return false;
+
+            len--;
+        }
+
+        return true;
     }
 
     function revokeDeal(uint16 seq, string memory hashKey)
         external
         onlyCleared(seq)
         onlyDK
+        returns (bool)
     {
         Deal storage deal = _deals[seq];
 
@@ -268,6 +289,8 @@ contract InvestmentAgreement is
         deal.state = uint8(StateOfDeal.Terminated);
 
         emit RevokeDeal(deal.sn, hashKey);
+
+        return _checkCompletionOfIA();
     }
 
     function takeGift(uint16 seq)

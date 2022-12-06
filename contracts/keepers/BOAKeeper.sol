@@ -230,29 +230,14 @@ contract BOAKeeper is
         uint16 seq = sn.seqOfDeal();
 
         //验证hashKey, 执行Deal
-        IInvestmentAgreement(ia).closeDeal(seq, hashKey);
+        if (IInvestmentAgreement(ia).closeDeal(seq, hashKey))
+            _boa.pushToNextState(ia);
 
         uint32 ssn = sn.ssnOfDeal();
 
         if (ssn > 0) {
             _shareTransfer(ia, sn);
         } else issueNewShare(ia, sn);
-
-        _checkCompletionOfIA(ia);
-    }
-
-    function _checkCompletionOfIA(address ia) private {
-        bytes32[] memory snList = IInvestmentAgreement(ia).dealsList();
-
-        uint256 len = snList.length;
-        while (len > 0) {
-            uint16 seq = snList[len - 1].seqOfDeal();
-            (, , , uint8 state, ) = IInvestmentAgreement(ia).getDeal(seq);
-            if (state < uint8(InvestmentAgreement.StateOfDeal.Closed)) break;
-            len--;
-        }
-
-        if (len == 0) _boa.pushToNextState(ia);
     }
 
     function _shareTransfer(address ia, bytes32 sn) private {
@@ -262,9 +247,10 @@ contract BOAKeeper is
         (, uint64 paid, uint64 par, , ) = IInvestmentAgreement(ia).getDeal(seq);
 
         uint64 unitPrice = sn.priceOfDeal();
+        uint40 buyer = sn.buyerOfDeal();
 
         _bos.increaseCleanPar(ssn, paid);
-        _bos.transferShare(ssn, paid, par, sn.buyerOfDeal(), unitPrice);
+        _bos.transferShare(ssn, paid, par, buyer, unitPrice);
     }
 
     function issueNewShare(address ia, bytes32 sn) public onlyDK {
@@ -320,32 +306,28 @@ contract BOAKeeper is
         uint40 caller,
         string memory hashKey
     ) external onlyDK {
-        require(_boa.isRegistered(ia), "IA NOT registered");
+        require(
+            _boa.isRegistered(ia),
+            "BOAKeeper.revokeDeal: IA NOT registered"
+        );
         require(
             _boa.currentState(ia) == uint8(DocumentsRepo.BODStates.Voted),
-            "wrong State"
+            "BOAKeeper.revokeDeal: wrong State"
         );
 
         uint16 seq = sn.seqOfDeal();
 
-        require(caller == sn.sellerOfDeal(), "NOT seller");
+        require(
+            caller == sn.sellerOfDeal(),
+            "BOAKeeper.revokeDeal: NOT seller"
+        );
 
-        IInvestmentAgreement(ia).revokeDeal(seq, hashKey);
+        if (IInvestmentAgreement(ia).revokeDeal(seq, hashKey))
+            _boa.pushToNextState(ia);
 
         (, , uint64 par, , ) = IInvestmentAgreement(ia).getDeal(seq);
 
         if (IInvestmentAgreement(ia).releaseDealSubject(seq))
             _bos.increaseCleanPar(sn.ssnOfDeal(), par);
-
-        // _releaseCleanParOfDeal(ia, sn);
-
-        _checkCompletionOfIA(ia);
     }
-
-    // function _releaseCleanParOfDeal(address ia, bytes32 sn) private {
-    //     (, , uint64 par, , ) = IInvestmentAgreement(ia).getDeal(sn.seqOfDeal());
-
-    //     if (IInvestmentAgreement(ia).releaseDealSubject(sn.seqOfDeal()))
-    //         _bos.increaseCleanPar(sn.ssnOfDeal(), par);
-    // }
 }

@@ -83,9 +83,13 @@ interface IInvestmentAgreement is ISigPage {
         uint32 closingDate
     ) external;
 
-    function closeDeal(uint16 seq, string memory hashKey) external;
+    function closeDeal(uint16 seq, string memory hashKey)
+        external
+        returns (bool);
 
-    function revokeDeal(uint16 seq, string memory hashKey) external;
+    function revokeDeal(uint16 seq, string memory hashKey)
+        external
+        returns (bool);
 
     function takeGift(uint16 seq) external;
 

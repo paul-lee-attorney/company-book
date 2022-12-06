@@ -86,9 +86,13 @@ module.exports = async function (callback) {
 
     // -- --IssueShare No .2-- --
 
-    cur = Date.parse(new Date()) / 1000;
+    // cur = Date.parse(new Date()) / 1000;
 
-    ssn = '00000002';
+    block = await web3.eth.getBlock("latest");
+    cur = block.timestamp;
+
+
+    ssn = '00000000';
 
     shareholder = web3.utils.numberToHex(acct3);
     shareholder = web3.utils.padLeft(shareholder.slice(2, ), 10);
@@ -114,9 +118,13 @@ module.exports = async function (callback) {
 
     // ---- IssueShare No.3 ----
 
-    cur = Date.parse(new Date()) / 1000;
+    // cur = Date.parse(new Date()) / 1000;
 
-    ssn = '00000003';
+    block = await web3.eth.getBlock("latest");
+    cur = block.timestamp;
+
+
+    ssn = '00000000';
 
     shareholder = web3.utils.numberToHex(acct4);
     shareholder = web3.utils.padLeft(shareholder.slice(2, ), 10);
@@ -142,7 +150,10 @@ module.exports = async function (callback) {
 
     // ==== PayInCapital ====
 
-    cur = Date.parse(new Date()) / 1000;
+    // cur = Date.parse(new Date()) / 1000;
+
+    block = await web3.eth.getBlock("latest");
+    cur = block.timestamp;
 
     ssn = '00000003';
 
@@ -212,10 +223,10 @@ module.exports = async function (callback) {
 
     // ==== UpdatePaidInDeadline ====
 
-    cur = Date.parse(new Date()) / 1000;
+    // cur = Date.parse(new Date()) / 1000;
 
-    // let block = web3.eth.getblock("latest");
-    // cur = block.timestamp;
+    block = await web3.eth.getBlock("latest");
+    cur = block.timestamp;
 
     await bos.updatePaidInDeadline(1, cur + 172800);
 
@@ -306,13 +317,32 @@ module.exports = async function (callback) {
     res = await rom.membersList();
     console.log("membersList: ", res.map(v => v.toNumber()));
 
+    // // ==== transfer share ====
+    // await bos.transferShare(1, 10000, 10000, 6, 200);
+
+    // events = await rom.getPastEvents("AddMember");
+    // console.log("Event 'AddMember': ", events[0].returnValues);
+
+    // events = await bos.getPastEvents("SubAmountFromShare");
+    // console.log("Event 'SubAmountFromShare': ", events[0].returnValues);
+
+    // events = await rom.getPastEvents("ChangeAmtOfMember");
+    // console.log("Event 'ChangeAmtOfMember': ", events[0].returnValues);
+
+    // events = await bos.getPastEvents("IssueShare");
+    // console.log("Event 'IssueShare': ", events[0].returnValues);
+
+    // events = await bos.getPastEvents("AddShareToMember");
+    // console.log("Event 'AddShareToMember': ", events[0].returnValues);
+
+
     // ==== HandOver keeper rights ====
 
-    const bosKeeper = await BOSKeeper.deployed();
-    await bos.setDirectKeeper(bosKeeper.address);
+    // const bosKeeper = await BOSKeeper.deployed();
+    // await bos.setDirectKeeper(bosKeeper.address);
 
-    const romKeeper = await ROMKeeper.deployed();
-    await rom.setDirectKeeper(romKeeper.address);
+    // const romKeeper = await ROMKeeper.deployed();
+    // await rom.setDirectKeeper(romKeeper.address);
 
     callback();
 }

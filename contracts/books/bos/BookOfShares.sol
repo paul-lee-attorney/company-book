@@ -188,35 +188,42 @@ contract BookOfShares is IBookOfShares, ROMSetting {
         require(
             _gk.isKeeper(uint8(TitleOfKeepers.BOAKeeper), msg.sender) ||
                 _gk.isKeeper(uint8(TitleOfKeepers.BOOKeeper), msg.sender) ||
-                _gk.isKeeper(uint8(TitleOfKeepers.SHAKeeper), msg.sender),
+                _gk.isKeeper(uint8(TitleOfKeepers.SHAKeeper), msg.sender) ||
+                msg.sender == getBookeeper(),
             "BOS.transferShare: caller not right keeper"
         );
 
-        bytes32 shareNumber = _shares[ssn].shareNumber;
+        uint16 class = _shares[ssn].shareNumber.class();
 
-        require(to != 0, "shareholder userNo is ZERO");
+        require(to != 0, "BOS.transferShare: shareholder userNo is ZERO");
         // require(to <= _rc.counterOfUsers(), "shareholder userNo overflow");
+
+        _decreaseShareAmount(ssn, paid, par);
 
         // 判断是否需要新增股东，若需要判断是否超过法定人数上限
         _rom.addMember(to);
 
-        _decreaseShareAmount(ssn, paid, par);
-
         _increaseCounterOfShares();
+
+        uint32 issueDate;
+
+        unchecked {
+            issueDate = uint32(block.timestamp);
+        }
 
         // 在“新股东”名下增加新的股票
         bytes32 shareNumber_1 = createShareNumber(
-            shareNumber.class(),
+            class,
             counterOfShares(),
-            uint32(block.timestamp),
+            issueDate,
             to,
             unitPrice,
-            shareNumber.ssn()
+            ssn
         );
 
         _issueShare(shareNumber_1, paid, par, _shares[ssn].paidInDeadline);
 
-        _rom.addShareToMember(shareNumber_1.ssn(), to);
+        _rom.addShareToMember(counterOfShares(), to);
     }
 
     function createShareNumber(
@@ -282,10 +289,8 @@ contract BookOfShares is IBookOfShares, ROMSetting {
 
         Share storage share = _shares[ssn];
 
-        unchecked {
-            require(share.paid >= (share.cleanPar + paid), "paid overflow");
-            share.cleanPar += paid;            
-        }
+        require(share.paid >= (share.cleanPar + paid), "paid overflow");
+        share.cleanPar += paid;
 
         emit IncreaseCleanPar(share.shareNumber, paid);
     }

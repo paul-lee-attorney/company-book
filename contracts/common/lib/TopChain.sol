@@ -326,15 +326,15 @@ library TopChain {
             }
         }
 
-        if (n.amt != 0) {
-            if (n.group != 0) {
+        if (n.amt > 0) {
+            if (n.group > 0) {
                 updateSumOfLeader(chain, deltaAmt, acct, decrease);
                 vMove(chain, acct, decrease);
             } else {
                 hMove(chain, acct, decrease);
             }
         } else {
-            if (n.group != 0) vCarveOut(chain, acct);
+            if (n.group > 0) vCarveOut(chain, acct);
             else hCarveOut(chain, acct);
         }
     }
@@ -495,12 +495,12 @@ library TopChain {
         bool decrease
     ) internal view returns (uint40, uint40) {
         if (decrease)
-            while (next != 0 && chain.nodes[next].sum > amount) {
+            while (next > 0 && chain.nodes[next].sum > amount) {
                 prev = next;
                 next = chain.nodes[next].next;
             }
         else
-            while (prev != 0 && chain.nodes[prev].sum < amount) {
+            while (prev > 0 && chain.nodes[prev].sum < amount) {
                 next = prev;
                 prev = chain.nodes[prev].prev;
             }
@@ -516,12 +516,12 @@ library TopChain {
         bool decrease
     ) internal view returns (uint40, uint40) {
         if (decrease)
-            while (down != 0 && chain.nodes[down].amt > amount) {
+            while (down > 0 && chain.nodes[down].amt > amount) {
                 up = down;
                 down = chain.nodes[down].down;
             }
         else
-            while (up != 0 && chain.nodes[up].amt < amount) {
+            while (up > 0 && chain.nodes[up].amt < amount) {
                 down = up;
                 up = chain.nodes[up].up;
             }
@@ -536,9 +536,9 @@ library TopChain {
     {
         Node storage n = chain.nodes[acct];
 
-        if (n.down != 0) next = n.down;
-        else if (n.next != 0) next = n.next;
-        else if (n.up != 0) {
+        if (n.down > 0) next = n.down;
+        else if (n.next > 0) next = n.next;
+        else if (n.up > 0) {
             next = topOfBranch(chain, acct);
             next = chain.nodes[next].next;
         }

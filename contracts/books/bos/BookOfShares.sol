@@ -156,7 +156,7 @@ contract BookOfShares is IBookOfShares, ROMSetting {
         // 增加“股票”项下实缴出资金额
         _payInCapital(sn.ssn(), amount);
 
-        _rom.changeAmtOfMember(sn.shareholder(), amount, 0, false);
+        _rom.changeAmtOfMember(sn.shareholder(), amount, 0, true);
 
         // 增加公司的“实缴出资”总额
         _rom.capIncrease(amount, 0);
@@ -183,7 +183,7 @@ contract BookOfShares is IBookOfShares, ROMSetting {
         uint64 paid,
         uint64 par,
         uint40 to,
-        uint64 unitPrice
+        uint32 unitPrice
     ) external shareExist(ssn) notFreezed(ssn) {
         require(
             _gk.isKeeper(uint8(TitleOfKeepers.BOAKeeper), msg.sender) ||
@@ -231,7 +231,7 @@ contract BookOfShares is IBookOfShares, ROMSetting {
         uint32 ssn,
         uint32 issueDate,
         uint40 shareholder,
-        uint64 unitPrice,
+        uint32 unitPrice,
         uint32 preSSN
     ) public pure returns (bytes32 shareNumber) {
         bytes memory _sn = new bytes(32);
@@ -240,8 +240,8 @@ contract BookOfShares is IBookOfShares, ROMSetting {
         _sn = _sn.dateToSN(2, ssn);
         _sn = _sn.dateToSN(6, issueDate);
         _sn = _sn.acctToSN(10, shareholder);
-        _sn = _sn.amtToSN(15, unitPrice);
-        _sn = _sn.dateToSN(23, preSSN);
+        _sn = _sn.dateToSN(15, unitPrice);
+        _sn = _sn.dateToSN(19, preSSN);
 
         shareNumber = _sn.bytesToBytes32();
     }
@@ -423,7 +423,7 @@ contract BookOfShares is IBookOfShares, ROMSetting {
                 share.shareNumber.shareholder(),
                 paid,
                 par,
-                true
+                false
             );
         }
     }

@@ -285,13 +285,12 @@ library TopChain {
             r.cat = 1;
 
             n.next = 0;
-            n.prev = root;
         } else if (r.cat == 1) {
             n.next = r.ptr;
-            n.prev = chain.nodes[n.next].prev;
             chain.nodes[n.next].prev = acct;
         }
 
+        n.prev = root;
         n.ptr = root;
         n.cat = 2;
 
@@ -352,7 +351,7 @@ library TopChain {
         view
         returns (bool)
     {
-        return chain.nodes[acct].ptr != 0;
+        return acct > 0 && chain.nodes[acct].ptr != 0;
     }
 
     // ==== Zero Node ====
@@ -455,9 +454,7 @@ library TopChain {
         returns (uint40 group)
     {
         Node storage n = chain.nodes[acct];
-
-        if (n.cat < 2) group = acct;
-        else group = n.ptr;
+        group = (n.cat < 2) ? acct : n.ptr;
     }
 
     function qtyOfBranches(Chain storage chain)
@@ -476,15 +473,14 @@ library TopChain {
     function deepOfBranch(Chain storage chain, uint40 acct)
         internal
         view
+        memberExist(chain, acct)
         returns (uint32 deep)
     {
         Node storage n = chain.nodes[acct];
 
-        if (n.ptr > 0) {
-            if (n.cat == 0) deep = 1;
-            else if (n.cat == 1) deep = _deepOfBranch(chain, acct);
-            else deep = _deepOfBranch(chain, n.ptr);
-        } else revert("TC.deepOfBranch: acct not a member");
+        if (n.cat == 0) deep = 1;
+        else if (n.cat == 1) deep = _deepOfBranch(chain, acct);
+        else deep = _deepOfBranch(chain, n.ptr);
     }
 
     function _deepOfBranch(Chain storage chain, uint40 root)
@@ -526,11 +522,15 @@ library TopChain {
         Chain storage chain,
         uint40 acct1,
         uint40 acct2
-    ) internal view returns (bool) {
+    )
+        internal
+        view
+        memberExist(chain, acct1)
+        memberExist(chain, acct2)
+        returns (bool)
+    {
         Node storage n1 = chain.nodes[acct1];
         Node storage n2 = chain.nodes[acct2];
-
-        require(n1.ptr > 0 && n2.ptr > 0, "TC.affiliated: not members");
 
         return n1.ptr == n2.ptr || n1.ptr == acct2 || n2.ptr == acct1;
     }

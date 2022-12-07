@@ -91,11 +91,17 @@ module.exports = async function (callback) {
 
     // ==== Capital Increase ====
 
-    // let shareNumber = '0x' + '0001' + '00000000' + '00000000' + '0000000007' + '00000128';
-    // shareNumber = await web3.utils.padRight(shareNumber, 64);
-    // console.log("shareNumber: ", shareNumber);
+    let classOfShare = '0000';
+    let seq = '0001';
+    let typeOfDeal = '03';
+    let seller = '0000000004';
+    let buyer = '0000000006';
+    let groupOfBuyer = '0000000006';
+    let ssn = '00000001';
+    let price = '000000c8';
 
-    sn = '0x' + '0000' + '0001' + '03' + '0000000004' + '0000000006' + '0000' + '00000001' + '00000000000000c8';
+    sn = '0x' + classOfShare + seq + typeOfDeal + seller + buyer + groupOfBuyer + ssn + price;
+
     sn = await web3.utils.padRight(sn, 64);
     console.log("sn: ", sn);
 
@@ -115,18 +121,6 @@ module.exports = async function (callback) {
 
     ret = await ia.typeOfIA();
     console.log("typeOfIA: ", ret.toNumber());
-
-    // await ia.addParty(4, {
-    //     from: accounts[7]
-    // });
-
-    // await ia.addParty(5, {
-    //     from: accounts[7]
-    // });
-
-    // await ia.addParty(6, {
-    //     from: accounts[7]
-    // });
 
     parties = await ia.partiesOfDoc();
     console.log("parties: ", parties.map(v => v.toNumber()));
@@ -157,24 +151,11 @@ module.exports = async function (callback) {
     });
     console.log("acct4 signed.")
 
-    // await gk.signIA(ia.address, "0xe5b0e7ffcb90dc5ee09f49282b47da64e12e0b36c689866cb8363f0be8027ffb", {
-    //     from: accounts[5]
-    // });
-    // console.log("acct5 signed.")
-
     ret = await ia.established();
     console.log("ia established: ", ret);
 
     ret = await boa.currentState(ia.address);
     console.log("docsRepo status: ", ret.toNumber());
-
-    // await gk.signIA(ia.address, "0xe5b0e7ffcb90dc5ee09f49282b47da64e12e0b36c689866cb8363f0be8027ffb", {
-    //     from: accounts[4]
-    // });
-    // console.log("acct4 signed.")
-
-    // ret = await ia.established();
-    // console.log("ia established: ", ret);
 
     ret = await boa.currentState(ia.address);
     console.log("docsRepo status: ", ret.toNumber());

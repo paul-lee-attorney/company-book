@@ -110,9 +110,17 @@ module.exports = async function (callback) {
 
     // ==== 股转交易 ====
 
-    let share1 = await bos.getShare(1);
+    let classOfShare = '0000';
+    let seq = '0001';
+    let typeOfDeal = '02';
+    let seller = '0000000004';
+    let buyer = '0000000007';
+    let groupOfBuyer = '0000000007';
+    let ssn = '00000001';
+    let price = '000000c8';
 
-    sn = '0x' + '0000' + '0001' + '02' + '0000000004' + '0000000007' + '0000' + '00000001' + '00000000000000c8';
+    sn = '0x' + classOfShare + seq + typeOfDeal + seller + buyer + groupOfBuyer + ssn + price;
+
     sn = web3.utils.padRight(sn, 64);
     console.log("sn: ", sn);
 

@@ -91,11 +91,18 @@ module.exports = async function (callback) {
 
     // ==== Capital Increase ====
 
-    // let shareNumber = '0x' + '0001' + '00000000' + '00000000' + '0000000007' + '00000128';
-    // shareNumber = await web3.utils.padRight(shareNumber, 64);
-    // console.log("shareNumber: ", shareNumber);
 
-    sn = '0x' + '0000' + '0001' + '01' + '0000000000' + '0000000007' + '0000' + '00000000' + '00000000000000c8';
+    let classOfShare = '0000';
+    let seq = '0001';
+    let typeOfDeal = '01';
+    let seller = '0000000000';
+    let buyer = '0000000007';
+    let groupOfBuyer = '0000000007';
+    let ssn = '00000000';
+    let price = '00000128';
+
+    sn = '0x' + classOfShare + seq + typeOfDeal + seller + buyer + groupOfBuyer + ssn + price;
+
     sn = await web3.utils.padRight(sn, 64);
     console.log("sn: ", sn);
 

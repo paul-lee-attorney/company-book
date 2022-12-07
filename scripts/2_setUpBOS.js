@@ -60,7 +60,7 @@ module.exports = async function (callback) {
     let classOfShare = '0000';
     let ssn = '00000000';
     let issueDate = '00000000';
-    let unitPrice = '0000000000000064';
+    let unitPrice = '00000064';
     let shareholder = web3.utils.numberToHex(acct2);
 
     shareholder = web3.utils.padLeft(shareholder.slice(2, ), 10);
@@ -280,8 +280,8 @@ module.exports = async function (callback) {
     res = await rom.sharesList();
     console.log("sharesList: ", res);
 
-    res = await rom.sharenumberExist(shareNumber);
-    console.log("sharenumberExist: ", res);
+    res = await rom.isShareNumber(shareNumber);
+    console.log("isShareNumber: ", res);
 
     let acct5 = await rc.userNo.call(accounts[5], {
         from: accounts[5]
@@ -308,41 +308,40 @@ module.exports = async function (callback) {
     res = await rom.sharesInHand(acct2);
     console.log("sharesInHand of acct2: ", res);
 
-    res = await rom.groupNo(acct2);
-    console.log("groupNo of acct2: ", res.toNumber());
+    res = await rom.groupRep(acct2);
+    console.log("groupRep of acct2: ", res.toNumber());
 
     res = await rom.qtyOfMembers();
     console.log("qtyOfMembers: ", res.toNumber());
 
+    res = await rom.qtyOfGroups();
+    console.log("qtyOfGroups: ", res.toNumber());
+
     res = await rom.membersList();
     console.log("membersList: ", res.map(v => v.toNumber()));
 
-    // // ==== transfer share ====
-    // await bos.transferShare(1, 10000, 10000, 6, 200);
+    // ==== transfer share ====
+    await bos.transferShare(1, 10000, 10000, 6, 200);
 
-    // events = await rom.getPastEvents("AddMember");
-    // console.log("Event 'AddMember': ", events[0].returnValues);
+    events = await bos.getPastEvents("SubAmountFromShare");
+    console.log("Event 'SubAmountFromShare': ", events[0].returnValues);
 
-    // events = await bos.getPastEvents("SubAmountFromShare");
-    // console.log("Event 'SubAmountFromShare': ", events[0].returnValues);
+    events = await rom.getPastEvents("ChangeAmtOfMember");
+    console.log("Event 'ChangeAmtOfMember': ", events[0].returnValues);
 
-    // events = await rom.getPastEvents("ChangeAmtOfMember");
-    // console.log("Event 'ChangeAmtOfMember': ", events[0].returnValues);
+    events = await bos.getPastEvents("IssueShare");
+    console.log("Event 'IssueShare': ", events[0].returnValues);
 
-    // events = await bos.getPastEvents("IssueShare");
-    // console.log("Event 'IssueShare': ", events[0].returnValues);
+    events = await rom.getPastEvents("AddShareToMember");
+    console.log("Event 'AddShareToMember': ", events[0].returnValues);
 
-    // events = await bos.getPastEvents("AddShareToMember");
-    // console.log("Event 'AddShareToMember': ", events[0].returnValues);
+    //==== HandOver keeper rights === =
 
+    const bosKeeper = await BOSKeeper.deployed();
+    await bos.setDirectKeeper(bosKeeper.address);
 
-    // ==== HandOver keeper rights ====
-
-    // const bosKeeper = await BOSKeeper.deployed();
-    // await bos.setDirectKeeper(bosKeeper.address);
-
-    // const romKeeper = await ROMKeeper.deployed();
-    // await rom.setDirectKeeper(romKeeper.address);
+    const romKeeper = await ROMKeeper.deployed();
+    await rom.setDirectKeeper(romKeeper.address);
 
     callback();
 }

@@ -36,7 +36,7 @@ interface IRegisterOfMembers {
         uint40 indexed acct,
         uint64 paid,
         uint64 par,
-        bool decrease,
+        bool increase,
         uint64 blocknumber
     );
 

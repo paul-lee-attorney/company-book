@@ -70,7 +70,7 @@ interface IBookOfShares {
         uint64 paid,
         uint64 par,
         uint40 to,
-        uint64 unitPrice
+        uint32 unitPrice
     ) external;
 
     function createShareNumber(
@@ -78,7 +78,7 @@ interface IBookOfShares {
         uint32 ssn,
         uint32 issueDate,
         uint40 shareholder,
-        uint64 unitPrice,
+        uint32 unitPrice,
         uint32 preSSN
     ) external pure returns (bytes32 sn);
 

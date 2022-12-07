@@ -246,7 +246,7 @@ contract BOAKeeper is
 
         (, uint64 paid, uint64 par, , ) = IInvestmentAgreement(ia).getDeal(seq);
 
-        uint64 unitPrice = sn.priceOfDeal();
+        uint32 unitPrice = sn.priceOfDeal();
         uint40 buyer = sn.buyerOfDeal();
 
         _bos.increaseCleanPar(ssn, paid);
@@ -276,13 +276,13 @@ contract BOAKeeper is
     function _createShareNumber(
         uint16 class,
         uint40 shareholder,
-        uint64 unitPrice
+        uint32 unitPrice
     ) private pure returns (bytes32) {
         bytes memory _sn = new bytes(32);
 
         _sn = _sn.seqToSN(0, class);
         _sn = _sn.acctToSN(10, shareholder);
-        _sn = _sn.amtToSN(15, unitPrice);
+        _sn = _sn.dateToSN(15, unitPrice);
 
         return _sn.bytesToBytes32();
     }

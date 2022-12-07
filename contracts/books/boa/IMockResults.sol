@@ -44,21 +44,10 @@ interface IMockResults {
     //##    读接口    ##
     //##################
 
-    function topGroup()
-        external
-        view
-        returns (
-            uint40 controllor,
-            uint16 group,
-            uint64 ratio
-        );
+    function topGroup() external view returns (uint40 controllor, uint64 ratio);
 
     function mockResults(uint40 acct)
         external
         view
-        returns (
-            uint40 top,
-            uint16 group,
-            uint64 sum
-        );
+        returns (uint40 group, uint64 sum);
 }

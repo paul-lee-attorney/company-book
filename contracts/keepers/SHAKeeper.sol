@@ -189,7 +189,7 @@ contract SHAKeeper is
                 typeOfDeal,
                 shareNumber.shareholder(),
                 buyer,
-                _rom.groupNo(buyer),
+                _rom.groupRep(buyer),
                 shareNumber.ssn(),
                 sn.priceOfDeal(),
                 sn.seqOfDeal()
@@ -362,7 +362,7 @@ contract SHAKeeper is
                 uint8(InvestmentAgreement.TypeOfDeal.FreeGift),
                 shareNumber.shareholder(),
                 caller,
-                _rom.groupNo(caller),
+                _rom.groupRep(caller),
                 shareNumber.ssn(),
                 0,
                 sn.seqOfDeal()
@@ -451,7 +451,7 @@ contract SHAKeeper is
                 : uint8(InvestmentAgreement.TypeOfDeal.FirstRefusal),
             shareNumber.shareholder(),
             caller,
-            _rom.groupNo(caller),
+            _rom.groupRep(caller),
             shareNumber.ssn(),
             snOfOD.priceOfDeal(),
             seqOfOD
@@ -474,9 +474,9 @@ contract SHAKeeper is
         uint8 typeOfDeal,
         uint40 seller,
         uint40 buyer,
-        uint16 group,
+        uint40 group,
         uint32 ssn,
-        uint64 unitPrice,
+        uint32 unitPrice,
         uint16 preSeq
     ) public pure returns (bytes32 sn) {
         bytes memory _sn = new bytes(32);
@@ -486,10 +486,10 @@ contract SHAKeeper is
         _sn[4] = bytes1(typeOfDeal);
         _sn = _sn.acctToSN(5, seller);
         _sn = _sn.acctToSN(10, buyer);
-        _sn = _sn.seqToSN(15, group);
-        _sn = _sn.dateToSN(17, ssn);
-        _sn = _sn.amtToSN(21, unitPrice);
-        _sn = _sn.seqToSN(29, preSeq);
+        _sn = _sn.acctToSN(15, group);
+        _sn = _sn.dateToSN(20, ssn);
+        _sn = _sn.dateToSN(24, unitPrice);
+        _sn = _sn.seqToSN(28, preSeq);
 
         sn = _sn.bytesToBytes32();
     }
@@ -508,7 +508,7 @@ contract SHAKeeper is
             uint8(InvestmentAgreement.TypeOfDeal.CapitalIncrease)
         )
             require(
-                _rom.groupNo(caller) == _rom.controllor(),
+                _rom.groupRep(caller) == _rom.controllor(),
                 "caller not belong to controller group"
             );
         else require(caller == snOfOD.sellerOfDeal(), "not seller of Deal");

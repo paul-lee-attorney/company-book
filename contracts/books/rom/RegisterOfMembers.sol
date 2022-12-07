@@ -36,8 +36,8 @@ contract RegisterOfMembers is IRegisterOfMembers, BOSSetting {
         _;
     }
 
-    modifier groupExist(uint16 group) {
-        require(isGroup(group), "ROM.groupExist: NOT group");
+    modifier groupExist(uint40 group) {
+        require(isGroupRep(group), "ROM.groupExist: NOT group");
         _;
     }
 
@@ -71,12 +71,12 @@ contract RegisterOfMembers is IRegisterOfMembers, BOSSetting {
     }
 
     function capIncrease(uint64 paid, uint64 par) external onlyBOS {
-        uint64 blocknumber = _gm.changeAmtOfCap(paid, par, false);
+        uint64 blocknumber = _gm.changeAmtOfCap(paid, par, true);
         emit CapIncrease(paid, par, blocknumber);
     }
 
     function capDecrease(uint64 paid, uint64 par) external onlyBOS {
-        uint64 blocknumber = _gm.changeAmtOfCap(paid, par, true);
+        uint64 blocknumber = _gm.changeAmtOfCap(paid, par, false);
         emit CapDecrease(paid, par, blocknumber);
     }
 
@@ -94,7 +94,7 @@ contract RegisterOfMembers is IRegisterOfMembers, BOSSetting {
         (bytes32 shareNumber, uint64 paid, uint64 par, , ) = _bos.getShare(ssn);
 
         if (_gm.addShareToMember(shareNumber, acct)) {
-            _gm.changeAmtOfMember(acct, paid, par, false);
+            _gm.changeAmtOfMember(acct, paid, par, true);
             emit AddShareToMember(shareNumber, acct);
         }
     }
@@ -102,7 +102,7 @@ contract RegisterOfMembers is IRegisterOfMembers, BOSSetting {
     function removeShareFromMember(uint32 ssn, uint40 acct) external onlyBOS {
         (bytes32 shareNumber, uint64 paid, uint64 par, , ) = _bos.getShare(ssn);
 
-        changeAmtOfMember(acct, paid, par, true);
+        changeAmtOfMember(acct, paid, par, false);
 
         if (_gm.removeShareFromMember(shareNumber, acct)) {
             if (_gm.qtyOfSharesInHand(acct) == 0) _gm.delMember(acct);
@@ -115,9 +115,9 @@ contract RegisterOfMembers is IRegisterOfMembers, BOSSetting {
         uint40 acct,
         uint64 deltaPaid,
         uint64 deltaPar,
-        bool decrease
+        bool increase
     ) public onlyBOS {
-        if (decrease) {
+        if (!increase) {
             require(
                 _gm.paidOfMember(acct) > deltaPaid,
                 "BOS._changeAmtOfMember: paid amount not enough"
@@ -132,43 +132,40 @@ contract RegisterOfMembers is IRegisterOfMembers, BOSSetting {
             acct,
             deltaPaid,
             deltaPar,
-            decrease
+            increase
         );
 
         emit ChangeAmtOfMember(
             acct,
             deltaPaid,
             deltaPar,
-            decrease,
+            increase,
             blocknumber
         );
     }
 
-    function addMemberToGroup(uint40 acct, uint16 group)
+    function addMemberToGroup(uint40 acct, uint40 root)
         external
         onlyKeeper(uint8(TitleOfKeepers.BOHKeeper))
     {
-        require(
-            _gm.groupNo(acct) == 0,
-            "BOS.addMemberToGroup: remove acct from group first"
-        );
-
-        _gm.removeMemberFromChain(acct);
-        _gm.addMemberToGroup(acct, group);
-
-        emit AddMemberToGroup(acct, group);
+        if (_gm.addMemberToGroup(acct, root)) emit AddMemberToGroup(acct, root);
     }
 
-    function removeMemberFromGroup(uint40 acct, uint16 group)
+    function removeMemberFromGroup(uint40 acct, uint40 root)
         external
         onlyKeeper(uint8(TitleOfKeepers.BOHKeeper))
     {
         require(
-            group == _gm.groupNo(acct),
-            "BOS.removeMemberFromGroup: Acct is not member of Group"
+            root == _gm.groupRep(acct),
+            "BOS.removeMemberFromGroup: Root is not groupRep of Acct"
         );
-        _gm.removeMemberFromGroup(acct);
-        emit RemoveMemberFromGroup(acct, group);
+
+        uint40 next = _gm.nextMember(acct);
+
+        if (_gm.removeMemberFromGroup(acct)) {
+            emit RemoveMemberFromGroup(acct, root);
+            if (acct == root) emit ChangeGroupRep(root, next);
+        }
     }
 
     // ##################
@@ -179,7 +176,7 @@ contract RegisterOfMembers is IRegisterOfMembers, BOSSetting {
         return _gm.basedOnPar();
     }
 
-    function maxQtyOfMembers() external view returns (uint16) {
+    function maxQtyOfMembers() external view returns (uint32) {
         return _gm.maxQtyOfMembers();
     }
 
@@ -207,12 +204,8 @@ contract RegisterOfMembers is IRegisterOfMembers, BOSSetting {
         return _gm.sharesList();
     }
 
-    function sharenumberExist(bytes32 sharenumber)
-        external
-        view
-        returns (bool)
-    {
-        return _gm.shareNumberExist(sharenumber);
+    function isShareNumber(bytes32 sharenumber) external view returns (bool) {
+        return _gm.isShareNumber(sharenumber);
     }
 
     function isMember(uint40 acct) public view returns (bool) {
@@ -251,7 +244,7 @@ contract RegisterOfMembers is IRegisterOfMembers, BOSSetting {
         view
         returns (uint64)
     {
-        return _gm.votesAtBlock(acct, blocknumber, _gm.basedOnPar());
+        return _gm.votesAtBlock(acct, blocknumber);
     }
 
     function sharesInHand(uint40 acct)
@@ -263,16 +256,7 @@ contract RegisterOfMembers is IRegisterOfMembers, BOSSetting {
         return _gm.sharesInHand(acct);
     }
 
-    function groupNo(uint40 acct)
-        external
-        view
-        memberExist(acct)
-        returns (uint16)
-    {
-        return _gm.groupNo(acct);
-    }
-
-    function qtyOfMembers() external view returns (uint16) {
+    function qtyOfMembers() external view returns (uint32) {
         return _gm.qtyOfMembers();
     }
 
@@ -292,15 +276,15 @@ contract RegisterOfMembers is IRegisterOfMembers, BOSSetting {
 
     // ==== group ====
 
-    function isGroup(uint16 group) public view returns (bool) {
-        return _gm.isGroup(group);
+    function groupRep(uint40 acct) external view returns (uint40) {
+        return _gm.groupRep(acct);
     }
 
-    function counterOfGroups() external view returns (uint16) {
-        return _gm.counterOfGroups();
+    function isGroupRep(uint40 acct) public view returns (bool) {
+        return _gm.isGroupRep(acct);
     }
 
-    function qtyOfGroups() external view returns (uint64) {
+    function qtyOfGroups() external view returns (uint32) {
         return _gm.qtyOfGroups();
     }
 
@@ -312,40 +296,20 @@ contract RegisterOfMembers is IRegisterOfMembers, BOSSetting {
         return _gm.votesOfHead();
     }
 
-    function votesOfGroup(uint16 group)
-        external
-        view
-        groupExist(group)
-        returns (uint64)
-    {
-        return _gm.votesOfGroup(group);
+    function votesOfGroup(uint40 acct) external view returns (uint64) {
+        return _gm.votesOfGroup(acct);
     }
 
-    function leaderOfGroup(uint16 group)
+    function membersOfGroup(uint40 acct)
         external
         view
-        groupExist(group)
-        returns (uint64)
-    {
-        return _gm.leaderOfGroup(group);
-    }
-
-    function membersOfGroup(uint16 group)
-        external
-        view
-        groupExist(group)
         returns (uint40[] memory)
     {
-        return _gm.membersOfGroup(group);
+        return _gm.membersOfGroup(acct);
     }
 
-    function deepOfGroup(uint16 group)
-        external
-        view
-        groupExist(group)
-        returns (uint16)
-    {
-        return _gm.deepOfGroup(group);
+    function deepOfGroup(uint40 acct) external view returns (uint32) {
+        return _gm.deepOfGroup(acct);
     }
 
     // ==== snapshot ====

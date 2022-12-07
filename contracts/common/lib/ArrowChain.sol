@@ -10,7 +10,7 @@ pragma solidity ^0.8.8;
 library ArrowChain {
     struct Mark {
         uint40 key;
-        uint64 value;
+        uint32 value;
         uint40 prev;
         uint40 next;
     }
@@ -31,7 +31,7 @@ library ArrowChain {
     function addMark(
         MarkChain storage c,
         uint40 key,
-        uint64 value
+        uint32 value
     ) internal returns (bool flag) {
         if (key != 0 && c.marks[key].key == 0) {
             Mark storage m = c.marks[key];
@@ -70,7 +70,7 @@ library ArrowChain {
     function updateMark(
         MarkChain storage c,
         uint40 key,
-        uint64 value
+        uint32 value
     ) internal returns (bool flag) {
         Mark storage m = c.marks[key];
 
@@ -111,12 +111,12 @@ library ArrowChain {
     function markedValue(MarkChain storage c, uint40 key)
         internal
         view
-        returns (uint64 value)
+        returns (uint32 value)
     {
         if (contains(c, key)) value = c.marks[key].value;
     }
 
-    function topValue(MarkChain storage c) internal view returns (uint64) {
+    function topValue(MarkChain storage c) internal view returns (uint32) {
         return c.marks[c.marks[0].prev].value;
     }
 

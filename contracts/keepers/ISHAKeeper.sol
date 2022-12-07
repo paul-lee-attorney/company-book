@@ -14,9 +14,9 @@ interface ISHAKeeper {
         uint8 typeOfDeal,
         uint40 seller,
         uint40 buyer,
-        uint16 group,
+        uint40 group,
         uint32 ssn,
-        uint64 unitPrice,
+        uint32 unitPrice,
         uint16 preSeq
     ) external pure returns (bytes32 sn);
 

@@ -26,12 +26,12 @@ contract SNParserExt {
         return uint40(bytes5(shareNumber << 80));
     }
 
-    function issuePrice(bytes32 shareNumber) public pure returns (uint64) {
-        return uint64(bytes8(shareNumber << 120));
+    function issuePrice(bytes32 shareNumber) public pure returns (uint32) {
+        return uint32(bytes4(shareNumber << 120));
     }
 
     function preSSN(bytes32 shareNumber) public pure returns (uint32) {
-        return uint32(bytes4(shareNumber << 184));
+        return uint32(bytes4(shareNumber << 152));
     }
 
     function hashLockOfBOSLocker(bytes32 sn) public pure returns (bytes16) {
@@ -60,20 +60,20 @@ contract SNParserExt {
         return uint40(bytes5(sn << 80));
     }
 
-    function groupOfBuyer(bytes32 sn) public pure returns (uint16) {
-        return uint16(bytes2(sn << 120));
+    function groupOfBuyer(bytes32 sn) public pure returns (uint40) {
+        return uint40(bytes5(sn << 120));
     }
 
     function ssnOfDeal(bytes32 sn) public pure returns (uint32) {
-        return uint32(bytes4(sn << 136));
+        return uint32(bytes4(sn << 160));
     }
 
-    function priceOfDeal(bytes32 sn) public pure returns (uint64) {
-        return uint64(bytes8(sn << 168));
+    function priceOfDeal(bytes32 sn) public pure returns (uint32) {
+        return uint32(bytes4(sn << 192));
     }
 
     function preSeqOfDeal(bytes32 sn) public pure returns (uint16) {
-        return uint16(bytes2(sn << 232));
+        return uint16(bytes2(sn << 224));
     }
 
     // ======== LinkRule ========
@@ -82,28 +82,28 @@ contract SNParserExt {
         return uint40(bytes5(sn));
     }
 
-    function dragerGroupOfLink(bytes32 sn) public pure returns (uint16) {
-        return uint16(bytes2(sn << 40));
+    function dragerGroupOfLink(bytes32 sn) public pure returns (uint40) {
+        return uint40(bytes5(sn << 40));
     }
 
     function triggerTypeOfLink(bytes32 sn) public pure returns (uint8) {
-        return uint8(sn[7]);
+        return uint8(sn[10]);
     }
 
     function thresholdOfLink(bytes32 sn) public pure returns (uint64) {
-        return uint64(bytes8(sn << 64));
+        return uint64(bytes8(sn << 88));
     }
 
     function proRataOfLink(bytes32 sn) public pure returns (bool) {
-        return uint8(sn[16]) == 1;
+        return uint8(sn[19]) == 1;
     }
 
-    function unitPriceOfLink(bytes32 sn) public pure returns (uint64) {
-        return uint64(bytes8(sn << 136));
+    function unitPriceOfLink(bytes32 sn) public pure returns (uint32) {
+        return uint32(bytes4(sn << 160));
     }
 
     function roeOfLink(bytes32 sn) public pure returns (uint32) {
-        return uint32(bytes4(sn << 200));
+        return uint32(bytes4(sn << 192));
     }
 
     // ======== OptionSN ========
@@ -132,28 +132,28 @@ contract SNParserExt {
         return uint16(bytes2(sn << 88));
     }
 
-    function rateOfOpt(bytes32 sn) public pure returns (uint64) {
-        return uint64(bytes8(sn << 104));
+    function rateOfOpt(bytes32 sn) public pure returns (uint32) {
+        return uint32(bytes4(sn << 104));
     }
 
     function logOperator(bytes32 sn) public pure returns (uint8) {
-        return uint8(sn[21]);
+        return uint8(sn[17]);
     }
 
     function compOperator_1(bytes32 sn) public pure returns (uint8) {
-        return uint8(sn[22]);
+        return uint8(sn[18]);
     }
 
     function para_1(bytes32 sn) public pure returns (uint32) {
-        return uint32(bytes4(sn << 184));
+        return uint32(bytes4(sn << 152));
     }
 
     function compOperator_2(bytes32 sn) public pure returns (uint8) {
-        return uint8(sn[27]);
+        return uint8(sn[23]);
     }
 
     function para_2(bytes32 sn) public pure returns (uint32) {
-        return uint32(bytes4(sn << 224));
+        return uint32(bytes4(sn << 192));
     }
 
     function checkConditions(
@@ -302,12 +302,12 @@ contract SNParserExt {
         return uint8(sn[0]) == 1;
     }
 
-    function groupNoOfGUO(bytes32 sn) public pure returns (uint16) {
-        return uint16(bytes2(sn << 8));
+    function groupNoOfGUO(bytes32 sn) public pure returns (uint40) {
+        return uint40(bytes5(sn << 8));
     }
 
     function memberOfGUO(bytes32 sn) public pure returns (uint40) {
-        return uint40(bytes5(sn << 24));
+        return uint40(bytes5(sn << 48));
     }
 
     // ======== MotionSN ========
@@ -324,11 +324,7 @@ contract SNParserExt {
         return uint32(bytes4(sn << 48));
     }
 
-    function votingDeadlineBNOfMotion(bytes32 sn)
-        public
-        pure
-        returns (uint32)
-    {
+    function votingDeadlineBNOfMotion(bytes32 sn) public pure returns (uint32) {
         return uint32(bytes4(sn << 80));
     }
 

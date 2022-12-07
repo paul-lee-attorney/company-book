@@ -82,8 +82,8 @@ contract MockResults is IMockResults, IASetting, BOSSetting, ROMSetting {
 
         _mgm.chain.changeAmt(buyer, amount, false);
 
-        uint16 group = sn.groupOfBuyer();
-        if (group != 0) {
+        uint40 group = sn.groupOfBuyer();
+        if (group != buyer) {
             _mgm.addMemberToGroup(buyer, group);
         }
 
@@ -95,10 +95,10 @@ contract MockResults is IMockResults, IASetting, BOSSetting, ROMSetting {
         bytes32 shareNumber,
         uint64 amount
     ) external onlyManager(0) {
-        uint16 dGroup = _mgm.groupNo(rule.dragerOfLink());
+        uint40 dGroup = _mgm.groupRep(rule.dragerOfLink());
 
         uint40 follower = shareNumber.shareholder();
-        uint16 fGroup = _mgm.groupNo(follower);
+        uint40 fGroup = _mgm.groupRep(follower);
 
         if (rule.proRataOfLink()) _proRataCheck(dGroup, fGroup, amount);
 
@@ -108,8 +108,8 @@ contract MockResults is IMockResults, IASetting, BOSSetting, ROMSetting {
     }
 
     function _proRataCheck(
-        uint16 dGroup,
-        uint16 fGroup,
+        uint40 dGroup,
+        uint40 fGroup,
         uint64 amount
     ) private view {
         uint64 orgDGVotes = _rom.votesOfGroup(dGroup);
@@ -129,35 +129,18 @@ contract MockResults is IMockResults, IASetting, BOSSetting, ROMSetting {
     //##    读接口    ##
     //##################
 
-    function topGroup()
-        public
-        view
-        returns (
-            uint40 controllor,
-            uint16 group,
-            uint64 ratio
-        )
-    {
+    function topGroup() public view returns (uint40 controllor, uint64 ratio) {
         controllor = _mgm.controllor();
 
-        TopChain.Node storage c = _mgm.chain.nodes[controllor];
-
-        group = c.group;
-
-        ratio = (c.sum * 10000) / _mgm.chain.totalVotes();
+        ratio = (_mgm.votesOfHead() * 10000) / _mgm.totalVotes();
     }
 
     function mockResults(uint40 acct)
         external
         view
-        returns (
-            uint40 top,
-            uint16 group,
-            uint64 sum
-        )
+        returns (uint40 group, uint64 sum)
     {
-        top = _mgm.chain.topOfBranch(acct);
-        group = _mgm.chain.nodes[top].group;
-        sum = _mgm.chain.nodes[top].sum;
+        group = _mgm.groupRep(acct);
+        sum = _mgm.votesOfGroup(acct);
     }
 }

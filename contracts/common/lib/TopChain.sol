@@ -41,7 +41,7 @@ library TopChain {
 
     // ==== Setting ====
 
-    function setMaxQtyOfMembers(Chain storage chain, uint64 max) internal {
+    function setMaxQtyOfMembers(Chain storage chain, uint32 max) internal {
         chain.nodes[0].amt = max;
     }
 
@@ -86,10 +86,6 @@ library TopChain {
         internal
         returns (bool flag)
     {
-        Node storage n = chain.nodes[acct];
-
-        require(n.amt == 0 && n.sum == 0, "TC.delNode: amt or sum not zero");
-
         if (_carveOut(chain, acct)) {
             delete chain.nodes[acct];
             _decreaseQtyOfMembers(chain);
@@ -105,7 +101,6 @@ library TopChain {
         uint64 deltaAmt,
         bool increase
     ) internal memberExist(chain, acct) returns (bool flag) {
-
         Node storage n = chain.nodes[acct];
 
         if (increase) {
@@ -136,16 +131,18 @@ library TopChain {
         Chain storage chain,
         uint40 acct,
         uint40 root
-    ) internal memberExist(chain, acct)
+    )
+        internal
+        memberExist(chain, acct)
         memberExist(chain, root)
-        returns (bool flag) 
+        returns (bool flag)
     {
         require(acct != root, "TC.to2Sub: self grouping");
 
         require(chain.nodes[acct].cat == 0, "TC.top2Sub: already in a branch");
 
         require(chain.nodes[root].cat < 2, "TC.top2Sub: leaf as root");
-        
+
         flag = _carveOut(chain, acct) && _vInsert(chain, acct, root);
     }
 
@@ -159,7 +156,6 @@ library TopChain {
         require(n.cat > 0, "TC.sub2Top: not in a branch");
 
         if (_carveOut(chain, acct)) {
-
             n.cat = 0;
             n.sum = n.amt;
 
@@ -256,7 +252,6 @@ library TopChain {
 
             flag = true;
         }
-        
     }
 
     // ==== Insert ====
@@ -283,7 +278,6 @@ library TopChain {
         uint40 acct,
         uint40 root
     ) private returns (bool flag) {
-
         Node storage n = chain.nodes[acct];
         Node storage r = chain.nodes[root];
 
@@ -307,7 +301,6 @@ library TopChain {
         _move(chain, root, true);
 
         flag = true;
-
     }
 
     // ==== Move ====
@@ -372,16 +365,16 @@ library TopChain {
         return chain.nodes[0].next;
     }
 
-    function qtyOfMembers(Chain storage chain) internal view returns (uint16) {
-        return uint16(chain.nodes[0].ptr);
+    function qtyOfMembers(Chain storage chain) internal view returns (uint32) {
+        return uint32(chain.nodes[0].ptr);
     }
 
     function maxQtyOfMembers(Chain storage chain)
         internal
         view
-        returns (uint16)
+        returns (uint32)
     {
-        return uint16(chain.nodes[0].amt);
+        return uint32(chain.nodes[0].amt);
     }
 
     function totalVotes(Chain storage chain) internal view returns (uint64) {
@@ -455,10 +448,10 @@ library TopChain {
 
     // ==== group ====
 
-    function groupNo(Chain storage chain, uint40 acct)
+    function rootOf(Chain storage chain, uint40 acct)
         internal
-        memberExist(chain, acct)
         view
+        memberExist(chain, acct)
         returns (uint40 group)
     {
         Node storage n = chain.nodes[acct];
@@ -467,10 +460,23 @@ library TopChain {
         else group = n.ptr;
     }
 
+    function qtyOfBranches(Chain storage chain)
+        internal
+        view
+        returns (uint32 len)
+    {
+        uint40 cur = head(chain);
+
+        while (cur > 0) {
+            len++;
+            cur = chain.nodes[cur].next;
+        }
+    }
+
     function deepOfBranch(Chain storage chain, uint40 acct)
         internal
         view
-        returns (uint16 deep)
+        returns (uint32 deep)
     {
         Node storage n = chain.nodes[acct];
 
@@ -484,7 +490,7 @@ library TopChain {
     function _deepOfBranch(Chain storage chain, uint40 root)
         private
         view
-        returns (uint16 deep)
+        returns (uint32 deep)
     {
         deep = 1;
 
@@ -501,7 +507,7 @@ library TopChain {
         view
         returns (uint64 votes)
     {
-        uint40 group = groupNo(chain, acct);
+        uint40 group = rootOf(chain, acct);
         votes = chain.nodes[group].sum;
     }
 
@@ -510,7 +516,7 @@ library TopChain {
         view
         returns (uint40[] memory)
     {
-        uint40 start = groupNo(chain, acct);
+        uint40 start = rootOf(chain, acct);
         uint256 len = deepOfBranch(chain, acct);
 
         return _subList(chain, start, len);

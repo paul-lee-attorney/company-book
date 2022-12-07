@@ -89,11 +89,11 @@ contract TopChainExt {
         return _gm.head();
     }
 
-    function qtyOfMembers() public view returns (uint16) {
+    function qtyOfMembers() public view returns (uint32) {
         return _gm.qtyOfMembers();
     }
 
-    function maxQtyOfMembers() public view returns (uint16) {
+    function maxQtyOfMembers() public view returns (uint32) {
         return _gm.maxQtyOfMembers();
     }
 
@@ -137,11 +137,11 @@ contract TopChainExt {
 
     // ==== group ====
 
-    function groupNo(uint40 acct) public view returns (uint40 group) {
-        return _gm.groupNo(acct);
+    function groupRep(uint40 acct) public view returns (uint40) {
+        return _gm.rootOf(acct);
     }
 
-    function deepOfBranch(uint40 acct) public view returns (uint16 deep) {
+    function deepOfBranch(uint40 acct) public view returns (uint32 deep) {
         return _gm.deepOfBranch(acct);
     }
 

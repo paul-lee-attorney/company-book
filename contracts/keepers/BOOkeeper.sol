@@ -147,7 +147,7 @@ contract BOOKeeper is IBOOKeeper, BOOSetting, BOSSetting {
         // uint32 closingDate,
         uint40 caller
     ) external onlyDK onlyBuyer(sn, caller) {
-        uint64 price = sn.rateOfOpt();
+        uint32 price = sn.rateOfOpt();
 
         _boo.closeOption(sn, hashKey);
 

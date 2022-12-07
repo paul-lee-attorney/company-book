@@ -24,7 +24,7 @@ contract TagAlong is DragAlong, BOMSetting {
 
     // struct linkRule {
     //     uint40 drager;
-    //     uint16 group;
+    //     uint40 group;
     //     // 0-no condition; 1- biggest && shareRatio > threshold;
     //     uint8 triggerType;
     //     bool basedOnPar;

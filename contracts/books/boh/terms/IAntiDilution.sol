@@ -14,7 +14,7 @@ interface IAntiDilution is ITerm {
     // ##   Event    ##
     // ################
 
-    event SetBenchmark(uint16 indexed class, uint64 price);
+    event SetBenchmark(uint16 indexed class, uint32 price);
 
     event DelBenchmark(uint16 indexed class);
 

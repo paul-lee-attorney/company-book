@@ -124,7 +124,7 @@ contract AntiDilution is IAntiDilution, BOSSetting, ROMSetting, BOMSetting {
     // ################
 
     function isTriggered(address ia, bytes32 sn) public view returns (bool) {
-        uint64 unitPrice = sn.priceOfDeal();
+        uint32 unitPrice = sn.priceOfDeal();
 
         if (
             sn.typeOfDeal() !=
@@ -137,7 +137,7 @@ contract AntiDilution is IAntiDilution, BOSSetting, ROMSetting, BOMSetting {
         return false;
     }
 
-    function _isExempted(uint64 price, uint40[] memory consentParties)
+    function _isExempted(uint32 price, uint40[] memory consentParties)
         private
         view
         returns (bool)
@@ -208,7 +208,7 @@ contract AntiDilution is IAntiDilution, BOSSetting, ROMSetting, BOMSetting {
 
         (uint40[] memory consentParties, ) = _bom.getYea(uint256(uint160(ia)));
 
-        uint64 unitPrice = sn.priceOfDeal();
+        uint32 unitPrice = sn.priceOfDeal();
 
         return _isExempted(unitPrice, consentParties);
     }

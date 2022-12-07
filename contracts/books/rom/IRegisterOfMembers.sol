@@ -24,9 +24,9 @@ interface IRegisterOfMembers {
 
     event SetAmtBase(bool basedOnPar);
 
-    event AddMember(uint40 indexed acct, uint16 qtyOfMembers);
+    event AddMember(uint40 indexed acct, uint32 qtyOfMembers);
 
-    event RemoveMember(uint40 indexed acct, uint16 qtyOfMembers);
+    event RemoveMember(uint40 indexed acct, uint32 qtyOfMembers);
 
     event AddShareToMember(bytes32 indexed sharenumber, uint40 indexed acct);
 
@@ -47,9 +47,11 @@ interface IRegisterOfMembers {
         uint64 blocknumber
     );
 
-    event AddMemberToGroup(uint40 indexed acct, uint16 indexed group);
+    event AddMemberToGroup(uint40 indexed acct, uint40 indexed root);
 
-    event RemoveMemberFromGroup(uint40 indexed acct, uint16 indexed group);
+    event RemoveMemberFromGroup(uint40 indexed acct, uint40 indexed root);
+
+    event ChangeGroupRep(uint40 indexed orgRep, uint40 indexed newRep);
 
     //##################
     //##    写接口    ##
@@ -78,9 +80,9 @@ interface IRegisterOfMembers {
         bool decrease
     ) external;
 
-    function addMemberToGroup(uint40 acct, uint16 group) external;
+    function addMemberToGroup(uint40 acct, uint40 root) external;
 
-    function removeMemberFromGroup(uint40 acct, uint16 group) external;
+    function removeMemberFromGroup(uint40 acct, uint40 root) external;
 
     // ##################
     // ##   查询接口   ##
@@ -88,7 +90,7 @@ interface IRegisterOfMembers {
 
     function basedOnPar() external view returns (bool);
 
-    function maxQtyOfMembers() external view returns (uint16);
+    function maxQtyOfMembers() external view returns (uint32);
 
     function paidCap() external view returns (uint64);
 
@@ -103,7 +105,7 @@ interface IRegisterOfMembers {
 
     function sharesList() external view returns (bytes32[] memory);
 
-    function sharenumberExist(bytes32 sharenumbre) external view returns (bool);
+    function isShareNumber(bytes32 sharenumbre) external view returns (bool);
 
     function isMember(uint40 acct) external view returns (bool);
 
@@ -120,9 +122,9 @@ interface IRegisterOfMembers {
 
     function sharesInHand(uint40 acct) external view returns (bytes32[] memory);
 
-    function groupNo(uint40 acct) external view returns (uint16);
+    function groupRep(uint40 acct) external view returns (uint40);
 
-    function qtyOfMembers() external view returns (uint16);
+    function qtyOfMembers() external view returns (uint32);
 
     function membersList() external view returns (uint40[] memory);
 
@@ -133,26 +135,22 @@ interface IRegisterOfMembers {
 
     // ==== group ====
 
-    function isGroup(uint16 group) external view returns (bool);
+    function isGroupRep(uint40 acct) external view returns (bool);
 
-    function counterOfGroups() external view returns (uint16);
-
-    function qtyOfGroups() external view returns (uint64);
+    function qtyOfGroups() external view returns (uint32);
 
     function controllor() external view returns (uint40);
 
     function votesOfController() external view returns (uint64);
 
-    function votesOfGroup(uint16 group) external view returns (uint64);
+    function votesOfGroup(uint40 acct) external view returns (uint64);
 
-    function leaderOfGroup(uint16 group) external view returns (uint64);
-
-    function membersOfGroup(uint16 group)
+    function membersOfGroup(uint40 acct)
         external
         view
         returns (uint40[] memory);
 
-    function deepOfGroup(uint16 group) external view returns (uint16);
+    function deepOfGroup(uint40 acct) external view returns (uint32);
 
     // ==== snapshot ====
 

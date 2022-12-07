@@ -35,7 +35,7 @@ contract DragAlong is IAlongs, ROMSetting, BOSSetting, BOASetting {
 
     // struct linkRule {
     //     uint40 drager;
-    //     uint16 group;
+    //     uint40 group;
     //     // 0-no condition; 1- not biggest || biggest but shareRatio < threshold; 2- 1 && price >= uintPrice; 3- 1 && roe >= ROE
     //     uint8 triggerType;
     //     // threshold to define material control party
@@ -154,7 +154,7 @@ contract DragAlong is IAlongs, ROMSetting, BOSSetting, BOASetting {
             "DA.PriceCheck: caller and target shareholder NOT linked"
         );
 
-        uint64 dealPrice = sn.priceOfDeal();
+        uint32 dealPrice = sn.priceOfDeal();
         uint32 closingDate = IInvestmentAgreement(ia).closingDateOfDeal(
             sn.seqOfDeal()
         );
@@ -174,7 +174,7 @@ contract DragAlong is IAlongs, ROMSetting, BOSSetting, BOASetting {
             else return false;
         }
 
-        uint64 issuePrice = shareNumber.issuePrice();
+        uint32 issuePrice = shareNumber.issuePrice();
         uint32 issueDate = shareNumber.issueDate();
 
         if (
@@ -209,21 +209,14 @@ contract DragAlong is IAlongs, ROMSetting, BOSSetting, BOASetting {
             return true;
 
         uint40 controllor = _rom.controllor();
-        uint16 conGroup = _rom.groupNo(controllor);
 
-        if (
-            (controllor != seller) &&
-            (conGroup == 0 || conGroup != _rom.groupNo(seller))
-        ) return false;
+        if (controllor != _rom.groupRep(seller)) return false;
 
-        (uint40 newControllor, uint16 newConGroup, uint64 ratio) = IMockResults(
+        (uint40 newControllor, uint64 ratio) = IMockResults(
             _boa.mockResultsOfIA(ia)
         ).topGroup();
 
-        if (
-            (controllor != newControllor) &&
-            (conGroup == 0 || conGroup != newConGroup)
-        ) return true;
+        if (controllor != newControllor) return true;
 
         if (ratio <= rule.thresholdOfLink()) return true;
 
@@ -231,19 +224,17 @@ contract DragAlong is IAlongs, ROMSetting, BOSSetting, BOASetting {
     }
 
     function _roeOfDeal(
-        uint64 dealPrice,
-        uint64 issuePrice,
+        uint32 dealPrice,
+        uint32 issuePrice,
         uint32 closingDate,
         uint32 issueDateOfShare
     ) internal pure returns (uint32 roe) {
         require(dealPrice > issuePrice, "NEGATIVE selling price");
         require(closingDate > issueDateOfShare, "NEGATIVE holding period");
 
-        uint64 deltaPrice = dealPrice - issuePrice;
+        uint32 deltaPrice = dealPrice - issuePrice;
         uint32 deltaDate = closingDate - issueDateOfShare;
 
-        roe = uint32(
-            (((deltaPrice * 10000) / issuePrice) * 31536000) / deltaDate
-        );
+        roe = (((deltaPrice * 10000) / issuePrice) * 31536000) / deltaDate;
     }
 }

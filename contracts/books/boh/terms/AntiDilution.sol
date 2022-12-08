@@ -17,19 +17,19 @@ import "../../../common/ruting/BOMSetting.sol";
 import "../../../common/lib/ArrayUtils.sol";
 import "../../../common/lib/SNParser.sol";
 import "../../../common/lib/EnumerableSet.sol";
-import "../../../common/lib/ArrowChain.sol";
+import "../../../common/lib/TopChain.sol";
 
 import "./IAntiDilution.sol";
 
 contract AntiDilution is IAntiDilution, BOSSetting, ROMSetting, BOMSetting {
     using SNParser for bytes32;
     using EnumerableSet for EnumerableSet.UintSet;
-    using ArrowChain for ArrowChain.MarkChain;
+    using TopChain for TopChain.Chain;
     using ArrayUtils for uint40[];
 
     mapping(uint256 => EnumerableSet.UintSet) private _obligors;
 
-    ArrowChain.MarkChain private _benchmarks;
+    TopChain.Chain private _marks;
 
     // #################
     // ##   修饰器    ##
@@ -37,7 +37,7 @@ contract AntiDilution is IAntiDilution, BOSSetting, ROMSetting, BOMSetting {
 
     modifier onlyMarked(uint16 class) {
         require(
-            _benchmarks.contains(class),
+            _marks.isMember(class),
             "AD.onlyMarked: no uint price maked for the class"
         );
         _;
@@ -47,33 +47,36 @@ contract AntiDilution is IAntiDilution, BOSSetting, ROMSetting, BOMSetting {
     // ##   写接口   ##
     // ################
 
-    function setBenchmark(uint16 class, uint32 price) external onlyAttorney {
-        if (_benchmarks.addMark(class, price)) emit SetBenchmark(class, price);
+    function setMaxQtyOfMarks(uint16 max) external onlyAttorney {
+        _marks.setMaxQtyOfMembers(max);
     }
 
-    function delBenchmark(uint16 class)
-        external
-        onlyAttorney
-        onlyMarked(class)
-    {
-        if (_benchmarks.removeMark(class)) emit DelBenchmark(class);
+    function addBenchmark(uint16 class, uint32 price) external onlyAttorney {
+        _marks.addNode(class);
+        _marks.changeAmt(class, price, true);
     }
 
-    function addObligor(uint16 class, uint40 obligor)
-        external
-        onlyAttorney
-        onlyMarked(class)
-    {
-        if (_obligors[class].add(obligor)) emit AddObligor(class, obligor);
+    function updteBenchmark(
+        uint16 class,
+        uint32 deltaPrice,
+        bool increase
+    ) external onlyAttorney {
+        _marks.changeAmt(class, deltaPrice, increase);
     }
 
-    function removeObligor(uint16 class, uint40 obligor)
-        external
-        onlyAttorney
-        onlyMarked(class)
-    {
-        if (_obligors[class].remove(obligor))
-            emit RemoveObligor(class, obligor);
+    function delBenchmark(uint16 class) external onlyAttorney {
+        (, , , uint64 price, , ) = _marks.getNode(class);
+
+        _marks.changeAmt(class, price, false);
+        _marks.delNode(class);
+    }
+
+    function addObligor(uint16 class, uint40 obligor) external onlyAttorney {
+        _obligors[class].add(obligor);
+    }
+
+    function removeObligor(uint16 class, uint40 obligor) external onlyAttorney {
+        _obligors[class].remove(obligor);
     }
 
     // ################
@@ -81,16 +84,20 @@ contract AntiDilution is IAntiDilution, BOSSetting, ROMSetting, BOMSetting {
     // ################
 
     function isMarked(uint16 class) external view returns (bool) {
-        return _benchmarks.contains(class);
+        return _marks.isMember(class);
+    }
+
+    function markedClasses() external view returns (uint40[] memory) {
+        return _marks.membersList();
     }
 
     function getBenchmark(uint16 class)
         external
         view
         onlyMarked(class)
-        returns (uint64)
+        returns (uint64 price)
     {
-        return _benchmarks.markedValue(class);
+        (, , , price, , ) = _marks.getNode(class);
     }
 
     function obligors(uint16 class)
@@ -108,9 +115,9 @@ contract AntiDilution is IAntiDilution, BOSSetting, ROMSetting, BOMSetting {
         onlyMarked(shareNumber.class())
         returns (uint64 gift)
     {
-        uint64 markPrice = _benchmarks.markedValue(shareNumber.class());
+        (, , , uint64 markPrice, , ) = _marks.getNode(shareNumber.class());
 
-        uint64 dealPrice = snOfDeal.priceOfDeal();
+        uint64 dealPrice = uint64(snOfDeal.priceOfDeal());
 
         require(markPrice > dealPrice, "AntiDilution not triggered");
 
@@ -132,9 +139,10 @@ contract AntiDilution is IAntiDilution, BOSSetting, ROMSetting, BOMSetting {
             sn.typeOfDeal() != uint8(InvestmentAgreement.TypeOfDeal.PreEmptive)
         ) return false;
 
-        if (unitPrice < _benchmarks.topValue()) return true;
+        uint40 topMark = _marks.head();
 
-        return false;
+        if (unitPrice < _marks.nodes[topMark].amt) return true;
+        else return false;
     }
 
     function _isExempted(uint32 price, uint40[] memory consentParties)
@@ -147,17 +155,17 @@ contract AntiDilution is IAntiDilution, BOSSetting, ROMSetting, BOMSetting {
             "AD.isExempted: zero consentParties"
         );
 
-        uint16 cur = uint16(_benchmarks.topKey());
+        uint40 cur = _marks.head();
 
-        while (cur != 0) {
-            if (_benchmarks.markedValue(cur) <= price) break;
+        while (cur > 0) {
+            if (_marks.nodes[cur].amt <= price) break;
 
-            uint40[] memory classMember = _membersOfClass(cur);
+            uint40[] memory classMember = _membersOfClass(uint16(cur));
 
             if (classMember.length > consentParties.length) return false;
             else if (!classMember.fullyCoveredBy(consentParties)) return false;
 
-            cur = uint8(_benchmarks.prevKey(cur));
+            cur = _marks.nodes[cur].next;
         }
 
         return true;
@@ -168,36 +176,31 @@ contract AntiDilution is IAntiDilution, BOSSetting, ROMSetting, BOMSetting {
         view
         returns (uint40[] memory)
     {
-        require(class < _bos.counterOfClasses(), "class over flow");
+        uint40[] memory members = _rom.membersList();
+        uint256 len = members.length;
 
-        bytes32[] memory list = _rom.sharesList();
+        uint40[] memory list = new uint40[](len);
+        uint256 counter = 0;
 
-        uint256 len = _rom.qtyOfMembers();
-        uint40[] memory members = new uint40[](len);
+        while (len > 0) {
+            bytes32[] memory sharesInHand = _rom.sharesInHand(members[len - 1]);
+            uint256 i = sharesInHand.length;
 
-        uint256 numOfMembers;
-        len = list.length;
-
-        while (len != 0) {
-            if (list[len - 1].class() == class) {
-                uint256 lenOfM = numOfMembers;
-                while (lenOfM != 0) {
-                    if (members[lenOfM - 1] == list[len - 1].shareholder())
-                        break;
-                    lenOfM--;
-                }
-                if (lenOfM == 0) {
-                    numOfMembers++;
-                    members[numOfMembers - 1] = list[len - 1].shareholder();
-                }
+            while (i > 0) {
+                if (sharesInHand[i - 1].class() == class) {
+                    list[counter] = members[len - 1];
+                    counter++;
+                    break;
+                } else i--;
             }
+
             len--;
         }
 
-        uint40[] memory output = new uint40[](numOfMembers);
+        uint40[] memory output = new uint40[](counter);
 
         assembly {
-            output := members
+            output := list
         }
 
         return output;

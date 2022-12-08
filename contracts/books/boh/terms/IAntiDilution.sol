@@ -11,22 +11,17 @@ import "./ITerm.sol";
 
 interface IAntiDilution is ITerm {
     // ################
-    // ##   Event    ##
-    // ################
-
-    event SetBenchmark(uint16 indexed class, uint32 price);
-
-    event DelBenchmark(uint16 indexed class);
-
-    event AddObligor(uint16 indexed class, uint40 obligor);
-
-    event RemoveObligor(uint16 indexed class, uint40 obligor);
-
-    // ################
     // ##   Write    ##
     // ################
+    function setMaxQtyOfMarks(uint16 max) external;
 
-    function setBenchmark(uint16 class, uint32 price) external;
+    function addBenchmark(uint16 class, uint32 price) external;
+
+    function updateBenchmark(
+        uint16 class,
+        uint32 deltaPrice,
+        bool increase
+    ) external;
 
     function delBenchmark(uint16 class) external;
 
@@ -39,6 +34,8 @@ interface IAntiDilution is ITerm {
     // ############
 
     function isMarked(uint16 class) external view returns (bool);
+
+    function markedClasses() external view returns (uint40[] memory);
 
     function getBenchmark(uint16 class) external view returns (uint64);
 

@@ -1,5 +1,4 @@
 const LibArrayUtils = artifacts.require("ArrayUtils");
-const LibArrowChain = artifacts.require("ArrowChain");
 const LibBallotsBox = artifacts.require("BallotsBox");
 const LibCheckpoints = artifacts.require("Checkpoints");
 const LibDelegateMap = artifacts.require("DelegateMap");
@@ -73,13 +72,11 @@ module.exports = async function (deployer, network, accounts) {
     await deployer.link(LibSNFactory, [BOP, BOS, LibOptionsRepo, BOMKeeper, SHAKeeper]);
 
     await deployer.deploy(LibTopChain);
-    await deployer.link(LibTopChain, [MR, ROM, LibMembersRepo]);
+    await deployer.link(LibTopChain, [MR, ROM, LibMembersRepo, AD]);
 
     await deployer.deploy(LibArrayUtils);
     await deployer.link(LibArrayUtils, [AD, LU]);
 
-    await deployer.deploy(LibArrowChain);
-    await deployer.link(LibArrowChain, AD);
 
     await deployer.deploy(LibMembersRepo);
     await deployer.link(LibMembersRepo, [MR, ROM]);

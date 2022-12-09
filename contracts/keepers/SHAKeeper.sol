@@ -203,7 +203,7 @@ contract SHAKeeper is
         uint64 paid,
         uint64 par
     ) private {
-        uint32 closingDate = IInvestmentAgreement(ia).closingDateOfDeal(
+        uint48 closingDate = IInvestmentAgreement(ia).closingDateOfDeal(
             sn.seqOfDeal()
         );
 
@@ -325,7 +325,7 @@ contract SHAKeeper is
         if (targetCleanPar != 0) {
             snOfGiftDeal = _createGiftDealSN(ia, sn, shareNumber, caller);
 
-            uint32 closingDate = IInvestmentAgreement(ia).closingDateOfDeal(
+            uint48 closingDate = IInvestmentAgreement(ia).closingDateOfDeal(
                 sn.seqOfDeal()
             );
 
@@ -461,7 +461,7 @@ contract SHAKeeper is
             seqOfOD
         );
 
-        uint32 closingDate = IInvestmentAgreement(ia).closingDateOfDeal(
+        uint48 closingDate = IInvestmentAgreement(ia).closingDateOfDeal(
             seqOfOD
         );
 
@@ -487,8 +487,8 @@ contract SHAKeeper is
         _sn = _sn.acctToSN(5, seller);
         _sn = _sn.acctToSN(10, buyer);
         _sn = _sn.acctToSN(15, group);
-        _sn = _sn.dateToSN(20, ssn);
-        _sn = _sn.dateToSN(24, unitPrice);
+        _sn = _sn.ssnToSN(20, ssn);
+        _sn = _sn.ssnToSN(24, unitPrice);
         _sn = _sn.seqToSN(28, preSeq);
 
         sn = _sn.bytesToBytes32();
@@ -544,7 +544,7 @@ contract SHAKeeper is
         (, uint64 paid, uint64 par, , ) = IInvestmentAgreement(ia).getDeal(
             ssnOfOD
         );
-        uint32 closingDate = IInvestmentAgreement(ia).closingDateOfDeal(
+        uint48 closingDate = IInvestmentAgreement(ia).closingDateOfDeal(
             ssnOfOD
         );
 

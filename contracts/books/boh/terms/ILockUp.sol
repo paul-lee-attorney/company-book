@@ -11,22 +11,10 @@ import "./ITerm.sol";
 
 interface ILockUp is ITerm {
     // ################
-    // ##   Event   ##
-    // ################
-
-    event SetLocker(uint32 indexed ssn, uint32 dueDate);
-
-    event AddKeyholder(uint32 indexed ssn, uint40 keyholder);
-
-    event RemoveKeyholder(uint32 indexed ssn, uint40 keyholder);
-
-    event DelLocker(uint32 indexed ssn);
-
-    // ################
     // ##   Write    ##
     // ################
 
-    function setLocker(uint32 ssn, uint32 dueDate) external;
+    function setLocker(uint32 ssn, uint48 dueDate) external;
 
     function delLocker(uint32 ssn) external;
 
@@ -43,7 +31,7 @@ interface ILockUp is ITerm {
     function getLocker(uint32 ssn)
         external
         view
-        returns (uint32 dueDate, uint40[] memory keyHolders);
+        returns (uint48 dueDate, uint40[] memory keyHolders);
 
     function lockedShares() external view returns (uint32[] memory);
 }

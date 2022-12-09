@@ -79,7 +79,7 @@ contract BODKeeper is
             "BODKeeper.takePosition: caller is not the candidate"
         );
 
-        _bod.takePosition(candidate, head.submitter);
+        _bod.takePosition(candidate, head.executor);
     }
 
     function removeDirector(uint40 director, uint40 appointer) external onlyDK {
@@ -120,7 +120,8 @@ contract BODKeeper is
         uint256[] memory values,
         bytes[] memory params,
         bytes32 desHash,
-        uint40 submitter
+        uint40 submitter,
+        uint40 executor
     ) external onlyDK directorExist(submitter) {
         _bod.proposeAction(
             actionType,
@@ -128,7 +129,8 @@ contract BODKeeper is
             values,
             params,
             desHash,
-            submitter
+            submitter,
+            executor
         );
     }
 
@@ -158,6 +160,14 @@ contract BODKeeper is
         uint40 caller
     ) external directorExist(caller) returns (uint256) {
         require(!_rc.isCOA(caller), "caller is not an EOA");
-        return _bod.execAction(actionType, targets, values, params, desHash);
+        return
+            _bod.execAction(
+                actionType,
+                targets,
+                values,
+                params,
+                caller,
+                desHash
+            );
     }
 }

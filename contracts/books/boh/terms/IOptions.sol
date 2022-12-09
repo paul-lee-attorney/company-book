@@ -9,19 +9,6 @@ pragma solidity ^0.8.8;
 
 interface IOptions {
     // ################
-    // ##   Event    ##
-    // ################
-
-    event CreateOpt(
-        bytes32 indexed sn,
-        uint64 paid,
-        uint64 par,
-        uint40 rightholder
-    );
-
-    event DelOpt(bytes32 sn);
-
-    // ################
     // ##   写接口   ##
     // ################
 
@@ -31,7 +18,7 @@ interface IOptions {
         uint40[] memory obligors,
         uint64 paid,
         uint64 par
-    ) external returns(bytes32 _sn);
+    ) external returns (bytes32 _sn);
 
     function delOption(bytes32 sn) external;
 
@@ -39,23 +26,20 @@ interface IOptions {
     // ##  查询接口  ##
     // ################
 
-    function counterOfOpts() external view returns (uint40);
+    function counterOfOpts() external view returns (uint32);
 
     function isOption(bytes32 sn) external view returns (bool);
 
-    function qtyOfOpts() external view returns(uint40);
+    function qtyOfOpts() external view returns (uint256);
 
-    function isObligor(bytes32 sn, uint40 acct)
-        external
-        view
-        returns (bool);
+    function isObligor(bytes32 sn, uint40 acct) external view returns (bool);
 
     function getOption(bytes32 sn)
         external
         view
         returns (
             uint40 rightholder,
-            uint64 paid, 
+            uint64 paid,
             uint64 par
         );
 
@@ -64,5 +48,5 @@ interface IOptions {
         view
         returns (uint40[] memory);
 
-    function snList() external view returns (bytes32[] memory);
+    function optsList() external view returns (bytes32[] memory);
 }

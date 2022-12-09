@@ -20,7 +20,6 @@ interface IBODKeeper {
 
     function quitPosition(uint40 director) external;
 
-
     // ==== resolution ====
 
     function entrustDelegate(
@@ -35,7 +34,8 @@ interface IBODKeeper {
         uint256[] memory values,
         bytes[] memory params,
         bytes32 desHash,
-        uint40 submitter
+        uint40 submitter,
+        uint40 executor
     ) external;
 
     function castVote(
@@ -54,6 +54,5 @@ interface IBODKeeper {
         bytes[] memory params,
         bytes32 desHash,
         uint40 caller
-    ) external returns(uint256);
-
+    ) external returns (uint256);
 }

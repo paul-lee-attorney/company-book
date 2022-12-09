@@ -13,31 +13,28 @@ library BallotsBox {
     using EnumerableSet for EnumerableSet.UintSet;
 
     enum AttitudeOfVote {
-        ZeroPoint,
+        All,
         Support,
         Against,
         Abstain
     }
 
     struct Ballot {
-        uint40 voter;
-        uint64 weight;
         uint8 attitude;
+        uint64 weight;
         uint64 blocknumber;
-        uint32 sigDate;
+        uint48 sigDate;
         bytes32 sigHash;
     }
 
-    struct Box {
+    struct Case {
         uint64 sumOfWeight;
-        uint64 sumOfYea;
-        uint64 sumOfNay;
-        uint64 sumOfAbs;
-        EnumerableSet.UintSet supportVoters;
-        EnumerableSet.UintSet againstVoters;
-        EnumerableSet.UintSet abstainVoters;
+        EnumerableSet.UintSet voters;
+    }
+
+    struct Box {
+        Case[4] cases;
         mapping(uint256 => Ballot) ballots;
-        uint40[] voters;
     }
 
     // #################
@@ -51,141 +48,138 @@ library BallotsBox {
         uint64 weight,
         bytes32 sigHash
     ) internal returns (bool flag) {
+        require(
+            attitude == uint8(AttitudeOfVote.Support) ||
+                attitude == uint8(AttitudeOfVote.Against) ||
+                attitude == uint8(AttitudeOfVote.Abstain),
+            "BB.castVote: attitude overflow"
+        );
+
         if (box.ballots[acct].sigDate == 0) {
             box.ballots[acct] = Ballot({
-                voter: acct,
                 weight: weight,
                 attitude: attitude,
                 blocknumber: uint64(block.number),
-                sigDate: uint32(block.timestamp),
+                sigDate: uint48(block.timestamp),
                 sigHash: sigHash
             });
 
-            box.sumOfWeight += weight;
+            box.cases[attitude].sumOfWeight += weight;
+            box.cases[attitude].voters.add(acct);
 
-            box.voters.push(acct);
-
-            if (attitude == uint8(AttitudeOfVote.Support)) {
-                box.supportVoters.add(acct);
-                box.sumOfYea += weight;
-            } else if (attitude == uint8(AttitudeOfVote.Against)) {
-                box.againstVoters.add(acct);
-                box.sumOfNay += weight;
-            } else if (attitude == uint8(AttitudeOfVote.Abstain)) {
-                box.abstainVoters.add(acct);
-                box.sumOfAbs += weight;
-            } else revert("BB.add: attitude overflow");
+            box.cases[uint8(AttitudeOfVote.All)].sumOfWeight += weight;
+            box.cases[uint8(AttitudeOfVote.All)].voters.add(acct);
 
             flag = true;
         }
     }
 
-    // #################
-    // ##    Read     ##
-    // #################
+    // // #################
+    // // ##    Read     ##
+    // // #################
 
-    function votedYea(Box storage box, uint40 acct)
-        internal
-        view
-        returns (bool)
-    {
-        return box.supportVoters.contains(acct);
-    }
+    // function votedYea(Box storage box, uint40 acct)
+    //     internal
+    //     view
+    //     returns (bool)
+    // {
+    //     return box.supportVoters.contains(acct);
+    // }
 
-    function votedNay(Box storage box, uint40 acct)
-        internal
-        view
-        returns (bool)
-    {
-        return box.againstVoters.contains(acct);
-    }
+    // function votedNay(Box storage box, uint40 acct)
+    //     internal
+    //     view
+    //     returns (bool)
+    // {
+    //     return box.againstVoters.contains(acct);
+    // }
 
-    function votedAbs(Box storage box, uint40 acct)
-        internal
-        view
-        returns (bool)
-    {
-        return box.abstainVoters.contains(acct);
-    }
+    // function votedAbs(Box storage box, uint40 acct)
+    //     internal
+    //     view
+    //     returns (bool)
+    // {
+    //     return box.abstainVoters.contains(acct);
+    // }
 
-    function getYea(Box storage box)
-        internal
-        view
-        returns (uint40[] memory members, uint64 weights)
-    {
-        members = box.supportVoters.valuesToUint40();
-        weights = box.sumOfYea;
-    }
+    // function getYea(Box storage box)
+    //     internal
+    //     view
+    //     returns (uint40[] memory members, uint64 weights)
+    // {
+    //     members = box.supportVoters.valuesToUint40();
+    //     weights = box.sumOfYea;
+    // }
 
-    function qtyOfYea(Box storage box) internal view returns (uint256) {
-        return box.supportVoters.length();
-    }
+    // function qtyOfYea(Box storage box) internal view returns (uint256) {
+    //     return box.supportVoters.length();
+    // }
 
-    function getNay(Box storage box)
-        internal
-        view
-        returns (uint40[] memory members, uint64 weights)
-    {
-        members = box.againstVoters.valuesToUint40();
-        weights = box.sumOfNay;
-    }
+    // function getNay(Box storage box)
+    //     internal
+    //     view
+    //     returns (uint40[] memory members, uint64 weights)
+    // {
+    //     members = box.againstVoters.valuesToUint40();
+    //     weights = box.sumOfNay;
+    // }
 
-    function qtyOfNay(Box storage box) internal view returns (uint256) {
-        return box.againstVoters.length();
-    }
+    // function qtyOfNay(Box storage box) internal view returns (uint256) {
+    //     return box.againstVoters.length();
+    // }
 
-    function getAbs(Box storage box)
-        internal
-        view
-        returns (uint40[] memory members, uint64 weight)
-    {
-        members = box.abstainVoters.valuesToUint40();
-        weight = box.sumOfAbs;
-    }
+    // function getAbs(Box storage box)
+    //     internal
+    //     view
+    //     returns (uint40[] memory members, uint64 weight)
+    // {
+    //     members = box.abstainVoters.valuesToUint40();
+    //     weight = box.sumOfAbs;
+    // }
 
-    function qtyOfAbs(Box storage box) internal view returns (uint256) {
-        return box.abstainVoters.length();
-    }
+    // function qtyOfAbs(Box storage box) internal view returns (uint256) {
+    //     return box.abstainVoters.length();
+    // }
 
-    function allVoters(Box storage box)
-        internal
-        view
-        returns (uint40[] memory)
-    {
-        return box.voters;
-    }
+    // function allVoters(Box storage box)
+    //     internal
+    //     view
+    //     returns (uint40[] memory)
+    // {
+    //     return box.voters;
+    // }
 
-    function qtyOfAllVoters(Box storage box) internal view returns (uint256) {
-        return box.voters.length;
-    }
+    // function qtyOfAllVoters(Box storage box) internal view returns (uint256) {
+    //     return box.voters.length;
+    // }
 
-    function isVoted(Box storage box, uint40 acct)
-        internal
-        view
-        returns (bool)
-    {
-        return box.ballots[acct].sigDate != 0;
-    }
+    // function isVoted(Box storage box, uint40 acct)
+    //     internal
+    //     view
+    //     returns (bool)
+    // {
+    //     return box.ballots[acct].sigDate != 0;
+    // }
 
-    function getVote(Box storage box, uint40 acct)
-        internal
-        view
-        returns (
-            uint40 voter,
-            uint64 weight,
-            uint8 attitude,
-            uint64 blocknumber,
-            uint32 sigDate,
-            bytes32 sigHash
-        )
-    {
-        Ballot storage b = box.ballots[acct];
+    // function getVote(Box storage box, uint40 acct)
+    //     internal
+    //     view
+    //     returns (
+    //         uint40 voter,
+    //         uint64 weight,
+    //         uint8 attitude,
+    //         uint64 blocknumber,
+    //         uint48 sigDate,
+    //         bytes32 sigHash
+    //     )
+    // {
+    //     Ballot storage b = box.ballots[acct];
 
-        voter = b.voter;
-        weight = b.weight;
-        attitude = b.attitude;
-        blocknumber = b.blocknumber;
-        sigDate = b.sigDate;
-        sigHash = b.sigHash;
-    }
+    //     voter = b.voter;
+    //     weight = b.weight;
+    //     attitude = b.attitude;
+    //     blocknumber = b.blocknumber;
+    //     sigDate = b.sigDate;
+    //     sigHash = b.sigHash;
+    // }
 }

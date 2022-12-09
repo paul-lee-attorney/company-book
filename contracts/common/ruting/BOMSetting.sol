@@ -14,10 +14,7 @@ import "../access/AccessControl.sol";
 contract BOMSetting is AccessControl {
     IBookOfMotions internal _bom;
 
-    event SetBOM(address bom);
-
     function setBOM(address bom) external onlyDK {
         _bom = IBookOfMotions(bom);
-        emit SetBOM(bom);
     }
 }

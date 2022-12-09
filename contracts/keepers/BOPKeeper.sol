@@ -26,6 +26,7 @@ contract BOPKeeper is IBOPKeeper, BOPSetting, BOSSetting {
         bytes32 sn,
         bytes32 shareNumber,
         uint40 creditor,
+        uint16 monOfGuarantee,
         uint64 pledgedPar,
         uint64 guaranteedAmt,
         uint40 caller
@@ -38,12 +39,19 @@ contract BOPKeeper is IBOPKeeper, BOPSetting, BOSSetting {
 
         _bos.decreaseCleanPar(shareNumber.ssn(), pledgedPar);
 
-        _bop.createPledge(sn, creditor, pledgedPar, guaranteedAmt);
+        _bop.createPledge(
+            sn,
+            creditor,
+            monOfGuarantee,
+            pledgedPar,
+            guaranteedAmt
+        );
     }
 
     function updatePledge(
         bytes32 sn,
         uint40 creditor,
+        uint64 expireBN,
         uint64 pledgedPar,
         uint64 guaranteedAmt,
         uint40 caller
@@ -52,15 +60,16 @@ contract BOPKeeper is IBOPKeeper, BOPSetting, BOSSetting {
 
         uint32 shortShareNumber = sn.ssnOfPld();
 
-        (uint40 orgCreditor, uint64 orgPledgedPar, ) = _bop.getPledge(sn);
+        (uint40 orgCreditor, uint64 orgExpireBN, uint64 orgPledgedPar, ) = _bop
+            .getPledge(sn);
 
-        if (pledgedPar < orgPledgedPar) {
+        if (pledgedPar < orgPledgedPar || expireBN < orgExpireBN) {
             require(
                 caller == orgCreditor,
                 "BOPKeeper.updatePledge: NOT creditor"
             );
             _bos.increaseCleanPar(shortShareNumber, orgPledgedPar - pledgedPar);
-        } else if (pledgedPar > orgPledgedPar) {
+        } else if (pledgedPar > orgPledgedPar || expireBN > orgExpireBN) {
             require(
                 caller == sn.pledgorOfPld(),
                 "BOPKeeper.updatePledge: NOT pledgor"
@@ -75,16 +84,18 @@ contract BOPKeeper is IBOPKeeper, BOPSetting, BOSSetting {
             );
         }
 
-        _bop.updatePledge(sn, creditor, pledgedPar, guaranteedAmt);
+        _bop.updatePledge(sn, creditor, expireBN, pledgedPar, guaranteedAmt);
     }
 
     function delPledge(bytes32 sn, uint40 caller) external onlyDK {
-        (uint40 creditor, uint64 pledgedPar, ) = _bop.getPledge(sn);
+        (uint40 creditor, uint64 expireBN, uint64 pledgedPar, ) = _bop
+            .getPledge(sn);
 
-        require(caller == creditor, "NOT creditor");
+        if (block.number < expireBN)
+            require(caller == creditor, "NOT creditor");
 
         _bos.increaseCleanPar(sn.ssnOfPld(), pledgedPar);
 
-        _bop.updatePledge(sn, creditor, 0, 0);
+        _bop.updatePledge(sn, creditor, 0, 0, 0);
     }
 }

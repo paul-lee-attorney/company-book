@@ -25,12 +25,10 @@ library SNFactory {
         uint256 len
     ) internal pure returns (bytes memory) {
         for (uint256 i = 0; i < len; i++) {
-            unchecked {
-                uint256 bits = (len - i - 1) << 3;
-                uint256 temp = input >> bits;
+            uint256 bits = (len - i - 1) << 3;
+            uint256 temp = input >> bits;
 
-                sn[pointer + i] = bytes1(uint8(temp));                
-            }
+            sn[pointer + i] = bytes1(uint8(temp));
         }
 
         return sn;
@@ -41,20 +39,27 @@ library SNFactory {
         uint256 pointer,
         uint16 input
     ) internal pure returns (bytes memory) {
-        unchecked {
-            sn[pointer] = bytes1(uint8(input >> 8));
-            sn[pointer + 1] = bytes1(uint8(input));            
-        }
+        sn[pointer] = bytes1(uint8(input >> 8));
+        sn[pointer + 1] = bytes1(uint8(input));
 
         return sn;
     }
 
-    function dateToSN(
+    function ssnToSN(
         bytes memory sn,
         uint256 pointer,
         uint32 input
     ) internal pure returns (bytes memory) {
         uint256 len = 4;
+        return intToSN(sn, pointer, input, len);
+    }
+
+    function dateToSN(
+        bytes memory sn,
+        uint256 pointer,
+        uint48 input
+    ) internal pure returns (bytes memory) {
+        uint256 len = 6;
         return intToSN(sn, pointer, input, len);
     }
 

@@ -22,32 +22,32 @@ library OptionsRepo {
     using SNParser for bytes32;
 
     struct Option {
-        bytes32 sn;
+        // bytes32 sn;
         bytes32 hashLock;
         uint40 rightholder;
-        uint32 closingBN;
+        uint64 closingBN;
         uint8 state; // 0-pending; 1-issued; 2-executed; 3-futureReady; 4-pledgeReady; 5-closed; 6-revoked; 7-expired;
-        uint64[3] paid; // 0-optValue; 1-futureValue;
         uint64[2] par;
+        uint64[3] paid; // 0-optValue; 1-futureValue;
         EnumerableSet.UintSet obligors;
-        Checkpoints.History oracles; //64
+        Checkpoints.History oracles;
         EnumerableSet.Bytes32Set futures;
         EnumerableSet.Bytes32Set pledges;
     }
 
     // bytes32 snInfo{
     //      uint8 typeOfOpt; 0, 1  //0-call(price); 1-put(price); 2-call(roe); 3-put(roe); 4-call(price) & cnds; 5-put(price) & cnds; 6-call(roe) & cnds; 7-put(roe) & cnds;
-    //      uint40 seqOfOpt; 1, 5
-    //      uint32 triggerBN; 6, 4
-    //      uint8 exerciseDays; 10, 1
-    //      uint8 closingDays; 11, 1
-    //      uint16 class; 12, 2
-    //      uint32 rate; 14, 4 // Price, ROE, IRR or other key rate to deduce price.
-    //      uint8 logicOperator; 18, 1 // 0-not applicable; 1-and; 2-or; ...
-    //      uint8 compareOperator_1; 19, 1 // 0-not applicable; 1-bigger; 2-smaller; 3-bigger or equal; 4-smaller or equal; ...
-    //      uint32 para_1; 20, 4
-    //      uint8 compareOperator_2; 24, 1 // 0-not applicable; 1-bigger; 2-smaller; 3-bigger or equal; 4-smaller or equal; ...
-    //      uint32 para_2; 25, 4
+    //      uint32 seqOfOpt; 1, 4
+    //      uint64 triggerBN; 5, 8
+    //      uint8 exerciseDays; 13, 1
+    //      uint8 closingDays; 14, 1
+    //      uint16 class; 15, 2
+    //      uint32 rate; 17, 4 // Price, ROE, IRR or other key rate to deduce price.
+    //      uint8 logicOperator; 21, 1 // 0-not applicable; 1-and; 2-or; ...
+    //      uint8 compareOperator_1; 22, 1 // 0-not applicable; 1-bigger; 2-smaller; 3-bigger or equal; 4-smaller or equal; ...
+    //      uint32 para_1; 23, 4
+    //      uint8 compareOperator_2; 27, 1 // 0-not applicable; 1-bigger; 2-smaller; 3-bigger or equal; 4-smaller or equal; ...
+    //      uint32 para_2; 28, 4
     // }
 
     // struct Oracle {
@@ -65,7 +65,6 @@ library OptionsRepo {
     // _options[0].rightholder: counterOfOpts;
 
     struct Repo {
-        // seq(uint40) => Option
         mapping(bytes32 => Option) options;
         EnumerableSet.Bytes32Set snList;
     }
@@ -75,7 +74,7 @@ library OptionsRepo {
     // ################
 
     modifier optionExist(Repo storage repo, bytes32 sn) {
-        require(isOption(repo, sn), "OR.optionExist: option NOT exist");
+        require(repo.snList.contains(sn), "OR.optionExist: option NOT exist");
         _;
     }
 
@@ -96,19 +95,16 @@ library OptionsRepo {
             "OR.createOption: trigger block number has passed"
         );
         require(
-            sn.exerciseDaysOfOpt() != 0,
+            sn.exerciseDaysOfOpt() > 0,
             "OR.createOption: ZERO exerciseDays"
         );
-        require(
-            sn.closingDaysOfOpt() != 0,
-            "OR.createOption: ZERO closingDays"
-        );
-        require(sn.rateOfOpt() != 0, "OR.createOption: rate is ZERO");
+        require(sn.closingDaysOfOpt() > 0, "OR.createOption: ZERO closingDays");
+        require(sn.rateOfOpt() > 0, "OR.createOption: rate is ZERO");
 
-        require(rightholder != 0, "OR.createOption: ZERO rightholder");
-        require(obligors.length != 0, "OR.createOption: ZERO obligors");
+        require(rightholder > 0, "OR.createOption: ZERO rightholder");
+        require(obligors.length > 0, "OR.createOption: ZERO obligors");
 
-        require(paid != 0, "OR.createOption: ZERO paid");
+        require(paid > 0, "OR.createOption: ZERO paid");
         require(par >= paid, "OR.createOption: INSUFFICIENT par");
 
         repo.options[0].rightholder++;
@@ -120,7 +116,7 @@ library OptionsRepo {
         if (repo.snList.add(_sn)) {
             Option storage opt = repo.options[_sn];
 
-            opt.sn = _sn;
+            // opt.sn = _sn;
             opt.rightholder = rightholder;
             opt.state = 1;
             opt.paid[0] = paid;
@@ -144,7 +140,7 @@ library OptionsRepo {
     {
         bytes memory _sn = abi.encodePacked(sn);
 
-        _sn = _sn.dateToSN(1, seq);
+        _sn = _sn.ssnToSN(1, seq);
 
         return _sn.bytesToBytes32();
     }
@@ -153,10 +149,8 @@ library OptionsRepo {
         Repo storage repo,
         bytes32 sn,
         uint40 obligor
-    ) internal returns (bool flag) {
-        if (
-            repo.snList.contains(sn) && repo.options[sn].obligors.add(obligor)
-        ) {
+    ) internal optionExist(repo, sn) returns (bool flag) {
+        if (repo.options[sn].obligors.add(obligor)) {
             flag = true;
         }
     }
@@ -165,11 +159,8 @@ library OptionsRepo {
         Repo storage repo,
         bytes32 sn,
         uint40 obligor
-    ) internal returns (bool flag) {
-        if (
-            repo.snList.contains(sn) &&
-            repo.options[sn].obligors.remove(obligor)
-        ) {
+    ) internal optionExist(repo, sn) returns (bool flag) {
+        if (repo.options[sn].obligors.remove(obligor)) {
             flag = true;
         }
     }
@@ -200,9 +191,9 @@ library OptionsRepo {
     ) internal optionExist(repo, sn) {
         Option storage opt = repo.options[sn];
 
-        uint32 triggerBN = sn.triggerBNOfOpt();
-        uint32 exerciseDays = uint32(sn.exerciseDaysOfOpt());
-        uint32 closingDays = uint32(sn.closingDaysOfOpt());
+        uint64 triggerBN = sn.triggerBNOfOpt();
+        uint64 exerciseDays = sn.exerciseDaysOfOpt();
+        uint64 closingDays = sn.closingDaysOfOpt();
 
         require(
             opt.state == 1,
@@ -227,7 +218,7 @@ library OptionsRepo {
                 "OR.createOption: conditions NOT satisfied"
             );
 
-        opt.closingBN = uint32(block.number) + closingDays * 24 * blocksPerHour;
+        opt.closingBN = uint64(block.number) + closingDays * 24 * blocksPerHour;
         opt.state = 2;
     }
 
@@ -286,9 +277,9 @@ library OptionsRepo {
     ) private pure returns (bytes32 sn) {
         bytes memory _sn = new bytes(32);
 
-        _sn = _sn.dateToSN(0, ssn);
-        _sn = _sn.intToSN(4, paid, 8);
-        _sn = _sn.intToSN(12, par, 8);
+        _sn = _sn.ssnToSN(0, ssn);
+        _sn = _sn.amtToSN(4, paid);
+        _sn = _sn.amtToSN(12, par);
 
         sn = _sn.bytesToBytes32();
     }
@@ -383,104 +374,104 @@ library OptionsRepo {
     }
 
     // ################
-    // ##  查询接口   ##
-    // ###############
+    // ##  查询接口  ##
+    // ################
 
     function counterOfOptions(Repo storage repo)
         internal
         view
-        returns (uint40)
+        returns (uint32)
     {
-        return repo.options[0].rightholder;
+        return uint32(repo.options[0].rightholder);
     }
 
-    function qtyOfOptions(Repo storage repo) internal view returns (uint40) {
-        return uint40(repo.snList.length());
-    }
+    // function qtyOfOptions(Repo storage repo) internal view returns (uint256) {
+    //     return repo.snList.length();
+    // }
 
-    function isOption(Repo storage repo, bytes32 sn)
-        internal
-        view
-        returns (bool)
-    {
-        return repo.snList.contains(sn);
-    }
+    // function isOption(Repo storage repo, bytes32 sn)
+    //     internal
+    //     view
+    //     returns (bool)
+    // {
+    //     return repo.snList.contains(sn);
+    // }
 
-    function getOption(Repo storage repo, bytes32 sn)
-        internal
-        view
-        returns (
-            uint40 rightholder,
-            uint32 closingBN,
-            uint64 paid,
-            uint64 par,
-            bytes32 hashLock
-        )
-    {
-        Option storage opt = repo.options[sn];
-        rightholder = opt.rightholder;
-        closingBN = opt.closingBN;
-        paid = opt.paid[0];
-        par = opt.par[0];
-        hashLock = opt.hashLock;
-    }
+    // function getOption(Repo storage repo, bytes32 sn)
+    //     internal
+    //     view
+    //     returns (
+    //         uint40 rightholder,
+    //         uint64 closingBN,
+    //         uint64 paid,
+    //         uint64 par,
+    //         bytes32 hashLock
+    //     )
+    // {
+    //     Option storage opt = repo.options[sn];
+    //     rightholder = opt.rightholder;
+    //     closingBN = opt.closingBN;
+    //     paid = opt.paid[0];
+    //     par = opt.par[0];
+    //     hashLock = opt.hashLock;
+    // }
 
-    function isObligor(
-        Repo storage repo,
-        bytes32 sn,
-        uint40 acct
-    ) internal view returns (bool) {
-        return repo.options[sn].obligors.contains(acct);
-    }
+    // function isObligor(
+    //     Repo storage repo,
+    //     bytes32 sn,
+    //     uint40 acct
+    // ) internal view returns (bool) {
+    //     return repo.options[sn].obligors.contains(acct);
+    // }
 
-    function obligorsOfOption(Repo storage repo, bytes32 sn)
-        internal
-        view
-        returns (uint40[] memory)
-    {
-        return repo.options[sn].obligors.valuesToUint40();
-    }
+    // function obligorsOfOption(Repo storage repo, bytes32 sn)
+    //     internal
+    //     view
+    //     returns (uint40[] memory)
+    // {
+    //     return repo.options[sn].obligors.valuesToUint40();
+    // }
 
-    function stateOfOption(Repo storage repo, bytes32 sn)
-        internal
-        view
-        returns (uint8)
-    {
-        return repo.options[sn].state;
-    }
+    // function stateOfOption(Repo storage repo, bytes32 sn)
+    //     internal
+    //     view
+    //     returns (uint8)
+    // {
+    //     return repo.options[sn].state;
+    // }
 
-    function futures(Repo storage repo, bytes32 sn)
-        internal
-        view
-        returns (bytes32[] memory)
-    {
-        return repo.options[sn].futures.values();
-    }
+    // function futures(Repo storage repo, bytes32 sn)
+    //     internal
+    //     view
+    //     returns (bytes32[] memory)
+    // {
+    //     return repo.options[sn].futures.values();
+    // }
 
-    function pledges(Repo storage repo, bytes32 sn)
-        internal
-        view
-        returns (bytes32[] memory)
-    {
-        return repo.options[sn].pledges.values();
-    }
+    // function pledges(Repo storage repo, bytes32 sn)
+    //     internal
+    //     view
+    //     returns (bytes32[] memory)
+    // {
+    //     return repo.options[sn].pledges.values();
+    // }
 
-    function oracle(
-        Repo storage repo,
-        bytes32 sn,
-        uint64 blocknumber
-    ) internal view returns (uint32, uint32) {
-        (uint64 d1, uint64 d2) = repo.options[sn].oracles.getAtBlock(
-            blocknumber
-        );
-        return (uint32(d1), uint32(d2));
-    }
+    // function oracle(
+    //     Repo storage repo,
+    //     bytes32 sn,
+    //     uint64 blocknumber
+    // ) internal view returns (uint32, uint32) {
+    //     (uint64 d1, uint64 d2) = repo.options[sn].oracles.getAtBlock(
+    //         blocknumber
+    //     );
+    //     return (uint32(d1), uint32(d2));
+    // }
 
-    function optsList(Repo storage repo)
-        internal
-        view
-        returns (bytes32[] memory)
-    {
-        return repo.snList.values();
-    }
+    // function optsList(Repo storage repo)
+    //     internal
+    //     view
+    //     returns (bytes32[] memory)
+    // {
+    //     return repo.snList.values();
+    // }
 }

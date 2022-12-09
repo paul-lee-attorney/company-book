@@ -52,13 +52,13 @@ module.exports = async function (deployer, network, accounts) {
     // ==== Libraries ====
 
     await deployer.deploy(LibEnumerableSet);
-    await deployer.link(LibEnumerableSet, [IA, BOD, AD, DA, LU, TA, BOA, BOH, LibBallotsBox, LibCheckpoints, LibMembersRepo, LibMotionsRepo, LibOptionsRepo, LibSigsRepo]);
+    await deployer.link(LibEnumerableSet, [IA, BOD, BOO, AD, DA, LU, OP, TA, BOA, BOH, LibBallotsBox, LibCheckpoints, LibMembersRepo, LibMotionsRepo, LibOptionsRepo, LibSigsRepo]);
 
     await deployer.deploy(LibBallotsBox);
     await deployer.link(LibBallotsBox, [BOD, BOM, LibMotionsRepo]);
 
     await deployer.deploy(LibCheckpoints);
-    await deployer.link(LibCheckpoints, [LibMembersRepo, LibOptionsRepo]);
+    await deployer.link(LibCheckpoints, [BOO, LibMembersRepo, LibOptionsRepo]);
 
     await deployer.deploy(LibDelegateMap);
     await deployer.link(LibDelegateMap, [BOD, BOM, LibMotionsRepo]);

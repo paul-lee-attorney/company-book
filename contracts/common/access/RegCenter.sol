@@ -34,7 +34,7 @@ contract RegCenter is IRegCenter {
     // key => userNo
     mapping(address => uint40) private _userNo;
 
-    // from && to && expireDate && hashLock(kaccak256(3-18)) => amount
+    // from && to && expireDate && hashLock(kaccak256(4-18)) => amount
     mapping(bytes32 => uint96) private _lockers;
 
     struct OptionsSetting {

@@ -54,7 +54,7 @@ contract InvestmentAgreement is
         bytes32 sn;
         uint64 paid;
         uint64 par;
-        uint32 closingDate;
+        uint48 closingDate;
         uint8 state;
         bytes32 hashLock;
     }
@@ -89,7 +89,7 @@ contract InvestmentAgreement is
         bytes32 sn,
         uint64 paid,
         uint64 par,
-        uint32 closingDate
+        uint48 closingDate
     ) external attorneyOrKeeper(uint8(TitleOfKeepers.SHAKeeper)) {
         require(par != 0, "IA.createDeal: par is ZERO");
         require(par >= paid, "IA.createDeal: paid overflow");
@@ -129,7 +129,7 @@ contract InvestmentAgreement is
         uint16 seq,
         uint64 paid,
         uint64 par,
-        uint32 closingDate
+        uint48 closingDate
     ) external attorneyOrKeeper(uint8(TitleOfKeepers.SHAKeeper)) {
         require(isDeal(seq), "IA.updateDeal: deal not exist");
 
@@ -190,7 +190,7 @@ contract InvestmentAgreement is
     function clearDealCP(
         uint16 seq,
         bytes32 hashLock,
-        uint32 closingDate
+        uint48 closingDate
     ) external onlyDK {
         Deal storage deal = _deals[seq];
 
@@ -229,7 +229,7 @@ contract InvestmentAgreement is
         );
 
         require(
-            uint32(block.timestamp) + 900 <= deal.closingDate,
+            block.timestamp + 900 <= deal.closingDate,
             "IA.closeDeal: MISSED closing date"
         );
 
@@ -352,7 +352,7 @@ contract InvestmentAgreement is
         hashLock = deal.hashLock;
     }
 
-    function closingDateOfDeal(uint16 seq) external view returns (uint32) {
+    function closingDateOfDeal(uint16 seq) external view returns (uint48) {
         return _deals[seq].closingDate;
     }
 

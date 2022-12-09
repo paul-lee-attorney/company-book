@@ -9,22 +9,6 @@ pragma solidity ^0.8.8;
 
 interface IAlongs {
     // ################
-    // ##   Event    ##
-    // ################
-
-    event CreateRule(bytes32 indexed rule);
-
-    event SetLink(uint40 indexed drager, bytes32 indexed rule);
-
-    event AddFollower(uint40 indexed drager, uint40 follower);
-
-    event RemoveFollower(uint40 indexed drager, uint40 follower);
-
-    event RemoveDrager(uint40 indexed drager);
-
-    event DelLink(bytes32 indexed rule);
-
-    // ################
     // ##   Write    ##
     // ################
 

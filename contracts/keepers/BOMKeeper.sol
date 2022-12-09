@@ -158,7 +158,8 @@ contract BOMKeeper is
         uint256[] memory values,
         bytes[] memory params,
         bytes32 desHash,
-        uint40 submitter
+        uint40 submitter,
+        uint40 executor
     ) external onlyDK memberExist(submitter) {
         _bom.proposeAction(
             actionType,
@@ -166,7 +167,8 @@ contract BOMKeeper is
             values,
             params,
             desHash,
-            submitter
+            submitter,
+            executor
         );
     }
 
@@ -213,7 +215,15 @@ contract BOMKeeper is
     ) external returns (uint256) {
         require(_bod.isDirector(caller), "caller is not a Director");
         require(!_rc.isCOA(caller), "caller is not an EOA");
-        return _bom.execAction(actionType, targets, values, params, desHash);
+        return
+            _bom.execAction(
+                actionType,
+                targets,
+                values,
+                params,
+                caller,
+                desHash
+            );
     }
 
     function requestToBuy(
@@ -233,18 +243,18 @@ contract BOMKeeper is
         require(caller == sn.sellerOfDeal(), "NOT Seller of the Deal");
 
         uint32 unitPrice = sn.priceOfDeal();
-        uint32 closingDate = IInvestmentAgreement(ia).closingDateOfDeal(seq);
+        uint48 closingDate = IInvestmentAgreement(ia).closingDateOfDeal(seq);
 
         (uint64 paid, uint64 par) = _bom.requestToBuy(ia, sn);
 
         uint8 closingDays = uint8(
-            (closingDate - uint32(block.number) + 12 * _rc.blocksPerHour()) /
+            (closingDate - block.number + 12 * _rc.blocksPerHour()) /
                 (24 * _rc.blocksPerHour())
         );
 
         bytes32 snOfOpt = _createOptSN(
             uint8(BookOfOptions.TypeOfOption.Put_Price),
-            uint32(block.number),
+            uint48(block.number),
             1,
             closingDays,
             sn.classOfDeal(),
@@ -264,7 +274,7 @@ contract BOMKeeper is
 
     function _createOptSN(
         uint8 typeOfOpt,
-        uint32 triggerBN,
+        uint64 triggerBN,
         uint8 execDays,
         uint8 closingDays,
         uint16 classOfOpt,
@@ -273,11 +283,11 @@ contract BOMKeeper is
         bytes memory _sn = new bytes(32);
 
         _sn[0] = bytes1(typeOfOpt);
-        _sn = _sn.dateToSN(5, triggerBN);
-        _sn[9] = bytes1(execDays);
-        _sn[10] = bytes1(closingDays);
-        _sn = _sn.seqToSN(11, classOfOpt);
-        _sn = _sn.dateToSN(13, rateOfOpt);
+        _sn = _sn.amtToSN(5, triggerBN);
+        _sn[13] = bytes1(execDays);
+        _sn[14] = bytes1(closingDays);
+        _sn = _sn.seqToSN(15, classOfOpt);
+        _sn = _sn.ssnToSN(17, rateOfOpt);
 
         sn = _sn.bytesToBytes32();
     }

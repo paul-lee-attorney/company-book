@@ -27,8 +27,8 @@ contract BookOfDirectors is IBookOfDirectors, MeetingMinutes {
         uint8 title; // 1-Chairman; 2-ViceChairman; 3-Director;
         uint40 acct;
         uint40 appointer;
-        uint32 startBN;
-        uint32 endBN;
+        uint64 startBN;
+        uint64 endBN;
     }
 
     /*
@@ -88,10 +88,10 @@ contract BookOfDirectors is IBookOfDirectors, MeetingMinutes {
                 "BOD.addDirector: number of directors overflow"
             );
 
-        uint32 startBN = uint32(block.number);
+        uint64 startBN = uint64(block.number);
 
-        uint32 endBN = startBN +
-            uint32(_getSHA().tenureOfBoard()) *
+        uint64 endBN = startBN +
+            _getSHA().tenureOfBoard() *
             8760 *
             _rc.blocksPerHour();
 
@@ -208,7 +208,7 @@ contract BookOfDirectors is IBookOfDirectors, MeetingMinutes {
         external
         view
         directorExist(acct)
-        returns (uint32)
+        returns (uint64)
     {
         return _directors[acct].startBN;
     }
@@ -217,7 +217,7 @@ contract BookOfDirectors is IBookOfDirectors, MeetingMinutes {
         external
         view
         directorExist(acct)
-        returns (uint32)
+        returns (uint64)
     {
         return _directors[acct].endBN;
     }

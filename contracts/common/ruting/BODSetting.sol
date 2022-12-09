@@ -14,8 +14,6 @@ import "../access/AccessControl.sol";
 contract BODSetting is AccessControl {
     IBookOfDirectors internal _bod;
 
-    event SetBOD(address bod);
-
     modifier directorExist(uint40 acct) {
         require(_bod.isDirector(acct), "director NOT exist");
         _;
@@ -23,6 +21,5 @@ contract BODSetting is AccessControl {
 
     function setBOD(address bod) external onlyDK {
         _bod = IBookOfDirectors(bod);
-        emit SetBOD(bod);
     }
 }

@@ -38,7 +38,8 @@ interface IBOMKeeper {
         uint256[] memory values,
         bytes[] memory params,
         bytes32 desHash,
-        uint40 submitter
+        uint40 submitter,
+        uint40 executor
     ) external;
 
     function castVote(

@@ -14,10 +14,7 @@ import "../access/AccessControl.sol";
 contract BOASetting is AccessControl {
     IBookOfIA internal _boa;
 
-    event SetBOA(address boa);
-
     function setBOA(address boa) external onlyDK {
         _boa = IBookOfIA(boa);
-        emit SetBOA(boa);
     }
 }

@@ -15,11 +15,8 @@ import "../access/AccessControl.sol";
 contract BOHSetting is AccessControl {
     IBookOfSHA internal _boh;
 
-    event SetBOH(address boh);
-
     function setBOH(address boh) external onlyDK {
         _boh = IBookOfSHA(boh);
-        emit SetBOH(boh);
     }
 
     function _getSHA() internal view returns (IShareholdersAgreement) {

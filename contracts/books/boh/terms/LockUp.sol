@@ -27,12 +27,12 @@ contract LockUp is ILockUp, BOMSetting {
 
     // 股票锁定柜
     struct Locker {
-        uint32 dueDate;
+        uint48 dueDate;
         EnumerableSet.UintSet keyHolders;
     }
 
     // 基准日条件未成就时，按“2105-09-19”设定到期日
-    uint32 constant REMOTE_FUTURE = 4282732800;
+    uint48 constant REMOTE_FUTURE = 4282732800;
 
     // lockers[0].keyHolders: ssnList;
 
@@ -43,26 +43,20 @@ contract LockUp is ILockUp, BOMSetting {
     // ##   写接口   ##
     // ################
 
-    function setLocker(uint32 ssn, uint32 dueDate) external onlyAttorney {
+    function setLocker(uint32 ssn, uint48 dueDate) external onlyAttorney {
         _lockers[ssn].dueDate = dueDate == 0 ? REMOTE_FUTURE : dueDate;
-
         _lockers[0].keyHolders.add(ssn);
-        emit SetLocker(ssn, _lockers[ssn].dueDate);
     }
 
     function delLocker(uint32 ssn) external onlyAttorney {
         if (_lockers[0].keyHolders.remove(ssn)) {
             delete _lockers[ssn];
-            emit DelLocker(ssn);
         }
     }
 
     function addKeyholder(uint32 ssn, uint40 keyholder) external onlyAttorney {
         require(ssn != 0, "LU.addKeyholder: zero ssn");
-
-        if (_lockers[ssn].keyHolders.add(keyholder)) {
-            emit AddKeyholder(ssn, keyholder);
-        }
+        _lockers[ssn].keyHolders.add(keyholder);
     }
 
     function removeKeyholder(uint32 ssn, uint40 keyholder)
@@ -70,10 +64,7 @@ contract LockUp is ILockUp, BOMSetting {
         onlyAttorney
     {
         require(ssn != 0, "LU.removeKeyholder: zero ssn");
-
-        if (_lockers[ssn].keyHolders.remove(keyholder)) {
-            emit RemoveKeyholder(ssn, keyholder);
-        }
+        _lockers[ssn].keyHolders.remove(keyholder);
     }
 
     // ################
@@ -87,7 +78,7 @@ contract LockUp is ILockUp, BOMSetting {
     function getLocker(uint32 ssn)
         external
         view
-        returns (uint32 dueDate, uint40[] memory keyHolders)
+        returns (uint48 dueDate, uint40[] memory keyHolders)
     {
         dueDate = _lockers[ssn].dueDate;
         keyHolders = _lockers[ssn].keyHolders.valuesToUint40();
@@ -102,7 +93,7 @@ contract LockUp is ILockUp, BOMSetting {
     // ################
 
     function isTriggered(address ia, bytes32 sn) external view returns (bool) {
-        uint32 closingDate = IInvestmentAgreement(ia).closingDateOfDeal(
+        uint48 closingDate = IInvestmentAgreement(ia).closingDateOfDeal(
             sn.seqOfDeal()
         );
 
@@ -138,7 +129,10 @@ contract LockUp is ILockUp, BOMSetting {
     }
 
     function isExempted(address ia, bytes32 sn) external view returns (bool) {
-        (uint40[] memory consentParties, ) = _bom.getYea(uint256(uint160(ia)));
+        (uint40[] memory consentParties, ) = _bom.getCaseOf(
+            uint256(uint160(ia)),
+            1
+        );
 
         uint40[] memory signers = ISigPage(ia).partiesOfDoc();
 

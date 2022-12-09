@@ -31,7 +31,7 @@ library DelegateMap {
             "DM.entrustDelegate: self delegate not allowed"
         );
 
-        if (!isPrincipal(map, acct) && !isPrincipal(map, delegate)) {
+        if (map.delegateOf[acct] == 0 && map.delegateOf[delegate] == 0) {
             map.delegateOf[acct] = delegate;
             map.principalsOf[delegate].push(acct);
 
@@ -43,35 +43,35 @@ library DelegateMap {
     // ##    Read     ##
     // #################
 
-    function isPrincipal(Map storage map, uint40 acct)
-        internal
-        view
-        returns (bool)
-    {
-        return map.delegateOf[acct] != 0;
-    }
+    // function isPrincipal(Map storage map, uint40 acct)
+    //     internal
+    //     view
+    //     returns (bool)
+    // {
+    //     return map.delegateOf[acct] != 0;
+    // }
 
-    function isDelegate(Map storage map, uint40 acct)
-        internal
-        view
-        returns (bool)
-    {
-        return map.principalsOf[acct].length != 0;
-    }
+    // function isDelegate(Map storage map, uint40 acct)
+    //     internal
+    //     view
+    //     returns (bool)
+    // {
+    //     return map.principalsOf[acct].length != 0;
+    // }
 
-    function getDelegate(Map storage map, uint40 acct)
-        internal
-        view
-        returns (uint40)
-    {
-        return map.delegateOf[acct];
-    }
+    // function getDelegate(Map storage map, uint40 acct)
+    //     internal
+    //     view
+    //     returns (uint40)
+    // {
+    //     return map.delegateOf[acct];
+    // }
 
-    function getPrincipals(Map storage map, uint40 acct)
-        internal
-        view
-        returns (uint40[] memory)
-    {
-        return map.principalsOf[acct];
-    }
+    // function getPrincipals(Map storage map, uint40 acct)
+    //     internal
+    //     view
+    //     returns (uint40[] memory)
+    // {
+    //     return map.principalsOf[acct];
+    // }
 }

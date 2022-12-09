@@ -10,6 +10,7 @@ pragma solidity ^0.8.8;
 import "../../common/ruting/BOHSetting.sol";
 import "../../common/ruting/ROMSetting.sol";
 
+import "../../common/lib/EnumerableSet.sol";
 import "../../common/lib/SNParser.sol";
 import "../../common/lib/MotionsRepo.sol";
 import "../../common/lib/DelegateMap.sol";
@@ -22,8 +23,24 @@ contract MeetingMinutes is IMeetingMinutes, BOHSetting, ROMSetting {
     using MotionsRepo for MotionsRepo.Repo;
     using DelegateMap for DelegateMap.Map;
     using BallotsBox for BallotsBox.Box;
+    using EnumerableSet for EnumerableSet.UintSet;
+
+    enum StateOfMotion {
+        Pending,
+        Proposed,
+        Passed,
+        Rejected,
+        Rejected_NotToBuy,
+        Rejected_ToBuy,
+        Executed
+    }
 
     MotionsRepo.Repo internal _mm;
+
+    modifier allowedAtti(uint8 atti) {
+        require(atti > 0 && atti < 4, "MM.votedFor: attitude overflow");
+        _;
+    }
 
     //##################
     //##    Write     ##
@@ -43,7 +60,7 @@ contract MeetingMinutes is IMeetingMinutes, BOHSetting, ROMSetting {
     // ==== propose ====
 
     function _hashAction(
-        uint8 actionType,
+        uint16 actionType,
         address[] memory targets,
         uint256[] memory values,
         bytes[] memory params,
@@ -58,12 +75,13 @@ contract MeetingMinutes is IMeetingMinutes, BOHSetting, ROMSetting {
     }
 
     function proposeAction(
-        uint8 actionType,
+        uint16 actionType,
         address[] memory targets,
         uint256[] memory values,
         bytes[] memory params,
         bytes32 desHash,
-        uint40 submitter
+        uint40 submitter,
+        uint40 executor
     ) external onlyDK {
         uint256 actionId = _hashAction(
             actionType,
@@ -81,27 +99,25 @@ contract MeetingMinutes is IMeetingMinutes, BOHSetting, ROMSetting {
 
         bytes32 rule = _getSHA().votingRules(actionType);
 
-        MotionsRepo.Head memory head = MotionsRepo.Head({
-            typeOfMotion: actionType,
-            state: 0,
-            submitter: submitter,
-            executor: 0,
-            proposeBN: uint32(block.number),
-            weightRegBN: uint32(block.number) +
-                uint32(rule.reviewDaysOfVR()) *
-                24 *
-                _rc.blocksPerHour(),
-            voteStartBN: uint32(block.number) +
-                uint32(rule.reviewDaysOfVR()) *
-                24 *
-                _rc.blocksPerHour(),
-            voteEndBN: uint32(block.number) +
-                uint32(rule.votingDaysOfVR()) *
-                24 *
-                _rc.blocksPerHour()
-        });
+        // uint64 blocknumber = uint64(block.number);
+        // uint64 blocksPerHour = _rc.blocksPerHour();
+        // uint64 voteStartBN = blocknumber +
+        //     rule.reviewDaysOfVR() *
+        //     24 *
+        //     blocksPerHour;
 
-        if (_mm.proposeMotion(actionId, rule, head))
+        // MotionsRepo.Head memory head = MotionsRepo.Head({
+        //     typeOfMotion: actionType,
+        //     state: 0,
+        //     submitter: submitter,
+        //     executor: 0,
+        //     proposeBN: blocknumber,
+        //     weightRegBN: voteStartBN,
+        //     voteStartBN: voteStartBN,
+        //     voteEndBN: voteStartBN + rule.votingDaysOfVR() * 24 * blocksPerHour
+        // });
+
+        if (_mm.proposeMotion(actionId, rule, executor, _rc.blocksPerHour()))
             emit ProposeAction(actionId, actionType, submitter);
     }
 
@@ -110,9 +126,9 @@ contract MeetingMinutes is IMeetingMinutes, BOHSetting, ROMSetting {
         view
         returns (uint64)
     {
-        uint40[] memory principals = _mm.motions[actionId].map.getPrincipals(
+        uint40[] memory principals = _mm.motions[actionId].map.principalsOf[
             acct
-        );
+        ];
         uint256 len = principals.length;
         uint64 weight = _rom.votesInHand(acct);
 
@@ -132,52 +148,28 @@ contract MeetingMinutes is IMeetingMinutes, BOHSetting, ROMSetting {
         uint40 caller,
         bytes32 sigHash
     ) external onlyDK {
-        MotionsRepo.Head memory head = _mm.headOf(motionId);
-
-        uint64 voteAmt;
-
-        if (_mm.motions[motionId].map.isDelegate(caller))
-            voteAmt = _voteWeight(motionId, caller, head.weightRegBN);
-        else voteAmt = uint64(_rom.votesAtBlock(caller, head.weightRegBN));
-
-        _mm.castVote(motionId, attitude, caller, sigHash, voteAmt);
-    }
-
-    function _voteWeight(
-        uint256 motionId,
-        uint40 acct,
-        uint64 blocknumber
-    ) private view returns (uint64) {
-        uint40[] memory principals = _mm.motions[motionId].map.getPrincipals(
-            acct
-        );
-        uint256 len = principals.length;
-        uint64 weight = _rom.votesAtBlock(acct, blocknumber);
-
-        while (len != 0) {
-            weight += _rom.votesAtBlock(principals[len - 1], blocknumber);
-            len--;
-        }
-
-        return weight;
+        if (_mm.castVote(motionId, attitude, caller, sigHash, _rom))
+            emit CastVote(motionId, attitude, caller, sigHash);
     }
 
     // ==== counting ====
 
     function voteCounting(uint256 motionId) external onlyDK {
         if (
-            _mm.state(motionId) == uint8(MotionsRepo.StateOfMotion.Proposed) &&
+            _mm.motions[motionId].head.state ==
+            uint8(MotionsRepo.StateOfMotion.Proposed) &&
             _mm.voteCounting(motionId, _rom)
-        ) emit VoteCounting(motionId, _mm.state(motionId));
+        ) emit VoteCounting(motionId, _mm.motions[motionId].head.state);
     }
 
     // ==== execute ====
 
     function execAction(
-        uint8 actionType,
+        uint16 actionType,
         address[] memory targets,
         uint256[] memory values,
         bytes[] memory params,
+        uint40 caller,
         bytes32 desHash
     ) external onlyDK returns (uint256) {
         uint256 motionId = _hashAction(
@@ -189,7 +181,13 @@ contract MeetingMinutes is IMeetingMinutes, BOHSetting, ROMSetting {
         );
 
         require(
-            _mm.state(motionId) == uint8(MotionsRepo.StateOfMotion.Passed),
+            _mm.motions[motionId].head.state ==
+                uint8(MotionsRepo.StateOfMotion.Passed),
+            "BOD.execAction: voting NOT end"
+        );
+
+        require(
+            _mm.motions[motionId].head.executor == caller,
             "BOD.execAction: voting NOT end"
         );
 
@@ -226,7 +224,7 @@ contract MeetingMinutes is IMeetingMinutes, BOHSetting, ROMSetting {
         view
         returns (bool)
     {
-        return _mm.motions[motionId].map.isPrincipal(acct);
+        return _mm.motions[motionId].map.delegateOf[acct] != 0;
     }
 
     function isDelegate(uint256 motionId, uint40 acct)
@@ -234,7 +232,7 @@ contract MeetingMinutes is IMeetingMinutes, BOHSetting, ROMSetting {
         view
         returns (bool)
     {
-        return _mm.motions[motionId].map.isDelegate(acct);
+        return _mm.motions[motionId].map.principalsOf[acct].length != 0;
     }
 
     function delegateOf(uint256 motionId, uint40 acct)
@@ -242,7 +240,7 @@ contract MeetingMinutes is IMeetingMinutes, BOHSetting, ROMSetting {
         view
         returns (uint40)
     {
-        return _mm.motions[motionId].map.getDelegate(acct);
+        return _mm.motions[motionId].map.delegateOf[acct];
     }
 
     function principalsOf(uint256 motionId, uint40 acct)
@@ -250,13 +248,13 @@ contract MeetingMinutes is IMeetingMinutes, BOHSetting, ROMSetting {
         view
         returns (uint40[] memory)
     {
-        return _mm.motions[motionId].map.getPrincipals(acct);
+        return _mm.motions[motionId].map.principalsOf[acct];
     }
 
     // ==== motion ====
 
     function isProposed(uint256 motionId) external view returns (bool) {
-        return _mm.isProposed(motionId);
+        return _mm.motionIds.contains(motionId);
     }
 
     function headOf(uint256 motionId)
@@ -264,77 +262,44 @@ contract MeetingMinutes is IMeetingMinutes, BOHSetting, ROMSetting {
         view
         returns (MotionsRepo.Head memory)
     {
-        return _mm.headOf(motionId);
+        return _mm.motions[motionId].head;
     }
 
     function votingRule(uint256 motionId) external view returns (bytes32) {
-        return _mm.votingRule(motionId);
+        return _mm.motions[motionId].votingRule;
     }
 
     function state(uint256 motionId) external view returns (uint8) {
-        return _mm.state(motionId);
+        return _mm.motions[motionId].head.state;
     }
 
     // ==== voting ====
 
-    function votedYea(uint256 motionId, uint40 acct)
+    function votedFor(
+        uint256 motionId,
+        uint40 acct,
+        uint8 atti
+    ) external view allowedAtti(atti) returns (bool) {
+        return _mm.motions[motionId].box.cases[atti].voters.contains(acct);
+    }
+
+    function getCaseOf(uint256 motionId, uint8 atti)
         external
         view
-        returns (bool)
+        allowedAtti(atti)
+        returns (uint40[] memory voters, uint64 sumOfWeight)
     {
-        return _mm.motions[motionId].box.votedYea(acct);
+        voters = _mm.motions[motionId].box.cases[atti].voters.valuesToUint40();
+        sumOfWeight = _mm.motions[motionId].box.cases[atti].sumOfWeight;
     }
 
-    function votedNay(uint256 motionId, uint40 acct)
+    function qtyOfVotersFor(uint256 motionId, uint8 atti)
         external
         view
-        returns (bool)
+        allowedAtti(atti)
+        returns (uint256)
     {
-        return _mm.motions[motionId].box.votedNay(acct);
-    }
-
-    function votedAbs(uint256 motionId, uint40 acct)
-        external
-        view
-        returns (bool)
-    {
-        return _mm.motions[motionId].box.votedAbs(acct);
-    }
-
-    function getYea(uint256 motionId)
-        external
-        view
-        returns (uint40[] memory, uint64)
-    {
-        return _mm.motions[motionId].box.getYea();
-    }
-
-    function qtyOfYea(uint256 motionId) external view returns (uint256) {
-        return _mm.motions[motionId].box.qtyOfYea();
-    }
-
-    function getNay(uint256 motionId)
-        external
-        view
-        returns (uint40[] memory, uint64)
-    {
-        return _mm.motions[motionId].box.getNay();
-    }
-
-    function qtyOfNay(uint256 motionId) external view returns (uint256) {
-        return _mm.motions[motionId].box.qtyOfNay();
-    }
-
-    function getAbs(uint256 motionId)
-        external
-        view
-        returns (uint40[] memory, uint64)
-    {
-        return _mm.motions[motionId].box.getAbs();
-    }
-
-    function qtyOfAbs(uint256 motionId) external view returns (uint256) {
-        return _mm.motions[motionId].box.qtyOfAbs();
+        return _mm.motions[motionId].box.cases[atti].voters.length();
     }
 
     function allVoters(uint256 motionId)
@@ -342,15 +307,15 @@ contract MeetingMinutes is IMeetingMinutes, BOHSetting, ROMSetting {
         view
         returns (uint40[] memory)
     {
-        return _mm.motions[motionId].box.allVoters();
+        return _mm.motions[motionId].box.cases[0].voters.valuesToUint40();
     }
 
     function qtyOfAllVoters(uint256 motionId) external view returns (uint256) {
-        return _mm.motions[motionId].box.qtyOfAllVoters();
+        return _mm.motions[motionId].box.cases[0].voters.length();
     }
 
     function sumOfVoteAmt(uint256 motionId) external view returns (uint64) {
-        return _mm.motions[motionId].box.sumOfWeight;
+        return _mm.motions[motionId].box.cases[0].sumOfWeight;
     }
 
     function isVoted(uint256 motionId, uint40 acct)
@@ -358,33 +323,46 @@ contract MeetingMinutes is IMeetingMinutes, BOHSetting, ROMSetting {
         view
         returns (bool)
     {
-        return _mm.motions[motionId].box.isVoted(acct);
+        return _mm.motions[motionId].box.cases[0].voters.contains(acct);
     }
 
     function getVote(uint256 motionId, uint40 acct)
         external
         view
         returns (
-            uint40 voter,
-            uint64 weight,
             uint8 attitude,
+            uint64 weight,
             uint64 blocknumber,
-            uint32 sigDate,
+            uint48 sigDate,
             bytes32 sigHash
         )
     {
-        return _mm.motions[motionId].box.getVote(acct);
+        BallotsBox.Ballot storage b = _mm.motions[motionId].box.ballots[acct];
+
+        attitude = b.attitude;
+        weight = b.weight;
+        blocknumber = b.blocknumber;
+        sigDate = b.sigDate;
+        sigHash = b.sigHash;
     }
 
     function isPassed(uint256 motionId) external view returns (bool) {
-        return _mm.isPassed(motionId);
+        return
+            _mm.motions[motionId].head.state == uint8(StateOfMotion.Passed) ||
+            _mm.motions[motionId].head.state == uint8(StateOfMotion.Executed);
     }
 
     function isExecuted(uint256 motionId) external view returns (bool) {
-        return _mm.isExecuted(motionId);
+        return
+            _mm.motions[motionId].head.state == uint8(StateOfMotion.Executed);
     }
 
     function isRejected(uint256 motionId) external view returns (bool) {
-        return _mm.isRejected(motionId);
+        return
+            _mm.motions[motionId].head.state == uint8(StateOfMotion.Rejected) ||
+            _mm.motions[motionId].head.state ==
+            uint8(StateOfMotion.Rejected_NotToBuy) ||
+            _mm.motions[motionId].head.state ==
+            uint8(StateOfMotion.Rejected_ToBuy);
     }
 }

@@ -24,16 +24,16 @@ contract BookOfShares is IBookOfShares, ROMSetting {
         uint64 paid; //实缴出资
         uint64 par; //票面金额（注册资本面值）
         uint64 cleanPar; //清洁金额（扣除出质、远期票面金额）
-        uint32 paidInDeadline; //出资期限（时间戳）
+        uint48 paidInDeadline; //出资期限（时间戳）
         uint8 state; //股票状态 （0:正常，1:查封）
     }
 
     // SNInfo: 股票编号编码规则
     // struct SNInfo {
     //     uint16 class; //股份类别（投资轮次）
-    //     uint32 sequence; //顺序编码
-    //     uint32 issueDate; //发行日期
-    //     uint64 unitPrice; //取得价格
+    //     uint32 ssn; //顺序编码
+    //     uint48 issueDate; //发行日期
+    //     uint32 issuePrice; //取得价格
     //     uint40 shareholder; //股东编号
     //     uint32 preSN; //来源股票编号索引
     // }
@@ -84,7 +84,7 @@ contract BookOfShares is IBookOfShares, ROMSetting {
         bytes32 shareNumber,
         uint64 paid,
         uint64 par,
-        uint32 paidInDeadline
+        uint48 paidInDeadline
     ) external {
         require(
             _gk.isKeeper(uint8(TitleOfKeepers.BOAKeeper), msg.sender) ||
@@ -97,11 +97,11 @@ contract BookOfShares is IBookOfShares, ROMSetting {
             "BOS.issueShare: zero shareholder"
         );
 
-        uint32 issueDate = shareNumber.issueDate();
-        if (issueDate == 0) issueDate = uint32(block.timestamp);
+        uint48 issueDate = shareNumber.issueDate();
+        if (issueDate == 0) issueDate = uint48(block.timestamp);
         else
             require(
-                issueDate <= block.timestamp,
+                issueDate <= block.timestamp + 15 minutes,
                 "BOS.issueShare: future issueDate"
             );
 
@@ -142,7 +142,7 @@ contract BookOfShares is IBookOfShares, ROMSetting {
         onlyDK
     {
         require(
-            sn.issueDate() >= block.timestamp,
+            _shares[sn.ssn()].paidInDeadline >= block.timestamp + 15 minutes,
             "BOS.requestPaidInCapital: missed expireDate"
         );
 
@@ -167,7 +167,7 @@ contract BookOfShares is IBookOfShares, ROMSetting {
 
     function withdrawPayInAmount(bytes32 sn) external onlyDK {
         require(
-            sn.issueDate() < block.timestamp - 15 minutes,
+            _shares[sn.ssn()].paidInDeadline < block.timestamp - 15 minutes,
             "BOS.withdrawPayInAmount: still within effective period"
         );
 
@@ -205,11 +205,7 @@ contract BookOfShares is IBookOfShares, ROMSetting {
 
         _increaseCounterOfShares();
 
-        uint32 issueDate;
-
-        unchecked {
-            issueDate = uint32(block.timestamp);
-        }
+        uint48 issueDate = uint48(block.timestamp);
 
         // 在“新股东”名下增加新的股票
         bytes32 shareNumber_1 = createShareNumber(
@@ -229,7 +225,7 @@ contract BookOfShares is IBookOfShares, ROMSetting {
     function createShareNumber(
         uint16 class,
         uint32 ssn,
-        uint32 issueDate,
+        uint48 issueDate,
         uint40 shareholder,
         uint32 unitPrice,
         uint32 preSSN
@@ -237,11 +233,11 @@ contract BookOfShares is IBookOfShares, ROMSetting {
         bytes memory _sn = new bytes(32);
 
         _sn = _sn.seqToSN(0, class);
-        _sn = _sn.dateToSN(2, ssn);
+        _sn = _sn.ssnToSN(2, ssn);
         _sn = _sn.dateToSN(6, issueDate);
-        _sn = _sn.acctToSN(10, shareholder);
-        _sn = _sn.dateToSN(15, unitPrice);
-        _sn = _sn.dateToSN(19, preSSN);
+        _sn = _sn.acctToSN(12, shareholder);
+        _sn = _sn.ssnToSN(17, unitPrice);
+        _sn = _sn.ssnToSN(21, preSSN);
 
         shareNumber = _sn.bytesToBytes32();
     }
@@ -272,7 +268,10 @@ contract BookOfShares is IBookOfShares, ROMSetting {
 
         Share storage share = _shares[ssn];
 
-        require(paid <= share.cleanPar, "INSUFFICIENT cleanPar");
+        require(
+            paid <= share.cleanPar,
+            "BOS.decreaseCleanPar: INSUFFICIENT cleanPar"
+        );
 
         share.cleanPar -= paid;
 
@@ -289,7 +288,10 @@ contract BookOfShares is IBookOfShares, ROMSetting {
 
         Share storage share = _shares[ssn];
 
-        require(share.paid >= (share.cleanPar + paid), "paid overflow");
+        require(
+            share.paid >= (share.cleanPar + paid),
+            "BOS.increaseCleanPar: paid overflow"
+        );
         share.cleanPar += paid;
 
         emit IncreaseCleanPar(share.shareNumber, paid);
@@ -311,7 +313,7 @@ contract BookOfShares is IBookOfShares, ROMSetting {
 
     /// @param ssn - 股票短号
     /// @param paidInDeadline - 实缴出资期限
-    function updatePaidInDeadline(uint32 ssn, uint32 paidInDeadline)
+    function updatePaidInDeadline(uint32 ssn, uint48 paidInDeadline)
         external
         onlyDK
         shareExist(ssn)
@@ -331,7 +333,7 @@ contract BookOfShares is IBookOfShares, ROMSetting {
         _shares[0].par++;
     }
 
-    function _assignSSN(bytes32 shareNumber, uint32 issueDate)
+    function _assignSSN(bytes32 shareNumber, uint48 issueDate)
         private
         returns (bytes32)
     {
@@ -346,7 +348,7 @@ contract BookOfShares is IBookOfShares, ROMSetting {
 
         _increaseCounterOfShares();
 
-        _sn = _sn.dateToSN(2, counterOfShares());
+        _sn = _sn.ssnToSN(2, counterOfShares());
         _sn = _sn.dateToSN(6, issueDate);
 
         return _sn.bytesToBytes32();
@@ -356,7 +358,7 @@ contract BookOfShares is IBookOfShares, ROMSetting {
         bytes32 shareNumber,
         uint64 paid,
         uint64 par,
-        uint32 paidInDeadline
+        uint48 paidInDeadline
     ) private {
         uint32 ssn = shareNumber.ssn();
 
@@ -380,7 +382,7 @@ contract BookOfShares is IBookOfShares, ROMSetting {
     }
 
     function _payInCapital(uint32 ssn, uint64 amount) private {
-        uint32 paidInDate = uint32(block.timestamp);
+        uint48 paidInDate = uint48(block.timestamp);
 
         Share storage share = _shares[ssn];
 
@@ -406,7 +408,7 @@ contract BookOfShares is IBookOfShares, ROMSetting {
     ) private {
         Share storage share = _shares[ssn];
 
-        require(par != 0, "par is ZERO");
+        require(par > 0, "par is ZERO");
         // require(share.par >= par, "par OVERFLOW");
         require(share.cleanPar >= par, "cleanPar OVERFLOW");
         // require(share.state < 4, "FREEZED share");
@@ -458,7 +460,7 @@ contract BookOfShares is IBookOfShares, ROMSetting {
     // ==== SharesRepo ====
 
     function isShare(uint32 ssn) public view returns (bool) {
-        return _shares[ssn].shareNumber != bytes32(0);
+        return _shares[ssn].shareNumber > bytes32(0);
     }
 
     function cleanPar(uint32 ssn)
@@ -478,7 +480,7 @@ contract BookOfShares is IBookOfShares, ROMSetting {
             bytes32 shareNumber,
             uint64 paid,
             uint64 par,
-            uint32 paidInDeadline,
+            uint48 paidInDeadline,
             uint8 state
         )
     {

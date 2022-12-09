@@ -20,9 +20,9 @@ interface ISigPage {
     //##    设置接口    ##
     //####################
 
-    function setSigDeadline(uint32 deadline) external;
+    function setSigDeadline(uint48 deadline) external;
 
-    function setClosingDeadline(uint32 deadline) external;
+    function setClosingDeadline(uint48 deadline) external;
 
     function signDoc(uint40 caller, bytes32 sigHash) external;
 
@@ -46,9 +46,9 @@ interface ISigPage {
 
     function established() external view returns (bool);
 
-    function sigDeadline() external view returns (uint32);
+    function sigDeadline() external view returns (uint48);
 
-    function closingDeadline() external view returns (uint32);
+    function closingDeadline() external view returns (uint48);
 
     function isParty(uint40 acct) external view returns (bool);
 
@@ -65,11 +65,11 @@ interface ISigPage {
         view
         returns (
             uint64 blocknumber,
-            uint32 sigDate,
+            uint48 sigDate,
             bytes32 sigHash
         );
 
-    function sigDateOfDoc(uint40 acct) external view returns (uint32);
+    function sigDateOfDoc(uint40 acct) external view returns (uint48);
 
     function sigHashOfDoc(uint40 acct) external view returns (bytes32);
 

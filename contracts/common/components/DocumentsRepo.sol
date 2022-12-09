@@ -33,11 +33,10 @@ contract DocumentsRepo is IDocumentsRepo, CloneFactory, AccessControl {
 
     struct Doc {
         uint8 docType;
-        uint32 sequence;
         uint40 creator;
-        uint32 createDate;
-        uint32 reviewDeadlineBN;
-        uint32 votingDeadlineBN;
+        uint48 createDate;
+        uint64 reviewDeadlineBN;
+        uint64 votingDeadlineBN;
         uint8 state;
         bytes32 docHash;
     }
@@ -45,10 +44,8 @@ contract DocumentsRepo is IDocumentsRepo, CloneFactory, AccessControl {
     // docType => address
     mapping(uint256 => address) private _templates;
 
-    // _docs[0].sequence: counterOfDoc;
-
     // addrOfBody => Doc
-    mapping(address => Doc) internal _docs;
+    mapping(address => Doc) private _docs;
 
     EnumerableSet.AddressSet private _docsList;
 
@@ -100,21 +97,20 @@ contract DocumentsRepo is IDocumentsRepo, CloneFactory, AccessControl {
         tempReady(docType)
         returns (address body)
     {
-        body = createClone(_templates[docType]);
+        address temp = createClone(_templates[docType]);
 
-        _docs[address(0)].reviewDeadlineBN++;
+        if (_docsList.add(temp)) {
+            body = temp;
 
-        Doc storage doc = _docs[body];
+            Doc storage doc = _docs[body];
 
-        doc.docType = docType;
-        doc.sequence = _docs[address(0)].reviewDeadlineBN;
-        doc.creator = creator;
-        doc.createDate = uint32(block.timestamp);
-        doc.state = uint8(BODStates.Created);
+            doc.docType = docType;
+            doc.creator = creator;
+            doc.createDate = uint48(block.timestamp);
+            doc.state = uint8(BODStates.Created);
 
-        _docsList.add(body);
-
-        emit UpdateStateOfDoc(body, doc.state);
+            emit UpdateStateOfDoc(body, doc.state);
+        }
     }
 
     function removeDoc(address body) external onlyDK onlyForPending(body) {
@@ -133,14 +129,14 @@ contract DocumentsRepo is IDocumentsRepo, CloneFactory, AccessControl {
         Doc storage doc = _docs[body];
 
         doc.reviewDeadlineBN =
-            uint32(block.number) +
-            uint32(rule.reviewDaysOfVR()) *
+            uint64(block.number) +
+            rule.reviewDaysOfVR() *
             24 *
             _rc.blocksPerHour();
 
         doc.votingDeadlineBN =
             doc.reviewDeadlineBN +
-            uint32(rule.votingDaysOfVR()) *
+            rule.votingDaysOfVR() *
             24 *
             _rc.blocksPerHour();
 
@@ -174,10 +170,6 @@ contract DocumentsRepo is IDocumentsRepo, CloneFactory, AccessControl {
         return _docsList.contains(body);
     }
 
-    function counterOfDocs() external view returns (uint32) {
-        return _docs[address(0)].sequence;
-    }
-
     function passedReview(address body)
         external
         view
@@ -188,7 +180,7 @@ contract DocumentsRepo is IDocumentsRepo, CloneFactory, AccessControl {
 
         if (doc.state < uint8(BODStates.Established)) return false;
         else if (doc.state > uint8(BODStates.Established)) return true;
-        else if (doc.reviewDeadlineBN > uint32(block.number)) return false;
+        else if (doc.reviewDeadlineBN > block.number) return false;
         else return true;
     }
 
@@ -215,16 +207,14 @@ contract DocumentsRepo is IDocumentsRepo, CloneFactory, AccessControl {
         onlyRegistered(body)
         returns (
             uint8 docType,
-            uint32 sequence,
             uint40 creator,
-            uint32 createDate,
+            uint48 createDate,
             bytes32 docHash
         )
     {
         Doc storage doc = _docs[body];
 
         docType = doc.docType;
-        sequence = doc.sequence;
         creator = doc.creator;
         createDate = doc.createDate;
         docHash = doc.docHash;
@@ -243,7 +233,7 @@ contract DocumentsRepo is IDocumentsRepo, CloneFactory, AccessControl {
         external
         view
         onlyRegistered(body)
-        returns (uint32)
+        returns (uint64)
     {
         return _docs[body].reviewDeadlineBN;
     }
@@ -252,7 +242,7 @@ contract DocumentsRepo is IDocumentsRepo, CloneFactory, AccessControl {
         external
         view
         onlyRegistered(body)
-        returns (uint32)
+        returns (uint64)
     {
         return _docs[body].votingDeadlineBN;
     }

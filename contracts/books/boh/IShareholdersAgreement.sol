@@ -79,20 +79,20 @@ interface IShareholdersAgreement is ISigPage {
 
     function boardSeatsOf(uint40 acct) external view returns (uint8);
 
-    function votingRules(uint8 typeOfVote) external view returns (bytes32);
+    function votingRules(uint16 typeOfVote) external view returns (bytes32);
 
     // ==== FirstRefusal ====
 
-    function isSubjectToFR(uint8 typeOfDeal) external view returns (bool);
+    function isSubjectToFR(uint16 typeOfDeal) external view returns (bool);
 
-    function ruleOfFR(uint8 typeOfDeal) external view returns (bytes32);
+    function ruleOfFR(uint16 typeOfDeal) external view returns (bytes32);
 
-    function isRightholderOfFR(uint8 typeOfDeal, uint40 acct)
+    function isRightholderOfFR(uint16 typeOfDeal, uint40 acct)
         external
         view
         returns (bool);
 
-    function rightholdersOfFR(uint8 typeOfDeal)
+    function rightholdersOfFR(uint16 typeOfDeal)
         external
         view
         returns (uint40[] memory);

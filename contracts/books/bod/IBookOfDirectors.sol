@@ -9,8 +9,7 @@ pragma solidity ^0.8.8;
 
 import "../../common/components/IMeetingMinutes.sol";
 
-interface IBookOfDirectors is IMeetingMinutes{
-
+interface IBookOfDirectors is IMeetingMinutes {
     //###################
     //##    events    ##
     //##################
@@ -21,8 +20,8 @@ interface IBookOfDirectors is IMeetingMinutes{
         uint8 title,
         uint40 acct,
         uint40 appointer,
-        uint32 startBN,
-        uint32 endBN
+        uint64 startBN,
+        uint64 endBN
     );
 
     event RemoveDirector(uint40 user);
@@ -45,7 +44,6 @@ interface IBookOfDirectors is IMeetingMinutes{
 
     function takePosition(uint40 candidate, uint40 nominator) external;
 
-
     //##################
     //##    读接口    ##
     //##################
@@ -61,32 +59,17 @@ interface IBookOfDirectors is IMeetingMinutes{
 
     function isDirector(uint40 acct) external view returns (bool flag);
 
-    function inTenure(uint40 acct)
-        external
-        view
-        returns (bool);
+    function inTenure(uint40 acct) external view returns (bool);
 
     function whoIs(uint8 title) external view returns (uint40);
 
-    function titleOfDirector(uint40 acct)
-        external
-        view
-        returns (uint8);
+    function titleOfDirector(uint40 acct) external view returns (uint8);
 
-    function appointerOfDirector(uint40 acct)
-        external
-        view
-        returns (uint40);
+    function appointerOfDirector(uint40 acct) external view returns (uint40);
 
-    function startBNOfDirector(uint40 acct)
-        external
-        view
-        returns (uint32);
+    function startBNOfDirector(uint40 acct) external view returns (uint64);
 
-    function endBNOfDirector(uint40 acct)
-        external
-        view
-        returns (uint32);
+    function endBNOfDirector(uint40 acct) external view returns (uint64);
 
     function directors() external view returns (uint40[] memory);
 }

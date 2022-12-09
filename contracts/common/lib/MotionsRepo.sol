@@ -12,6 +12,7 @@ import "./EnumerableSet.sol";
 import "./BallotsBox.sol";
 import "./DelegateMap.sol";
 
+// import "../access/IRegCenter.sol";
 import "../components/ISigPage.sol";
 
 import "../../books/rom/IRegisterOfMembers.sol";
@@ -33,15 +34,22 @@ library MotionsRepo {
         Executed
     }
 
+    enum AttitudeOfVote {
+        All,
+        Support,
+        Against,
+        Abstain
+    }
+
     struct Head {
-        uint8 typeOfMotion;
+        uint16 typeOfVote;
         uint8 state; // 0-pending 1-proposed  2-passed 3-rejected(not to buy) 4-rejected (to buy)
-        uint40 submitter;
+        // uint40 submitter;
         uint40 executor;
-        uint32 proposeBN;
-        uint32 weightRegBN;
-        uint32 voteStartBN;
-        uint32 voteEndBN;
+        uint64 proposeBN;
+        // uint64 voteStartBN;
+        uint64 voteStartBN;
+        uint64 voteEndBN;
     }
 
     struct Motion {
@@ -68,7 +76,12 @@ library MotionsRepo {
         uint40 delegate,
         uint256 motionId
     ) internal returns (bool flag) {
-        if (!repo.motions[motionId].box.isVoted(acct)) {
+        Motion storage m = repo.motions[motionId];
+
+        if (
+            m.box.ballots[acct].sigDate == 0 &&
+            block.number < m.head.voteStartBN
+        ) {
             flag = repo.motions[motionId].map.entrustDelegate(acct, delegate);
         }
     }
@@ -79,16 +92,30 @@ library MotionsRepo {
         Repo storage repo,
         uint256 motionId,
         bytes32 rule,
-        Head memory head
+        uint40 executor,
+        uint32 blocksPerHour
     ) internal returns (bool flag) {
-        if (!isProposed(repo, motionId)) {
+        if (repo.motionIds.add(motionId)) {
             Motion storage m = repo.motions[motionId];
 
             m.votingRule = rule;
-            m.head = head;
-            m.head.state = uint8(StateOfMotion.Proposed);
 
-            repo.motionIds.add(motionId);
+            m.head.typeOfVote = rule.seqOfRule();
+            m.head.executor = executor;
+
+            m.head.proposeBN = uint64(block.number);
+            m.head.voteStartBN =
+                m.head.proposeBN +
+                rule.reviewDaysOfVR() *
+                24 *
+                blocksPerHour;
+            m.head.voteEndBN =
+                m.head.voteStartBN +
+                rule.votingDaysOfVR() *
+                24 *
+                blocksPerHour;
+
+            m.head.state = uint8(StateOfMotion.Proposed);
 
             flag = true;
         }
@@ -102,19 +129,46 @@ library MotionsRepo {
         uint8 attitude,
         uint40 caller,
         bytes32 sigHash,
-        uint64 weight
+        IRegisterOfMembers _rom
     ) internal returns (bool flag) {
+        Motion storage m = repo.motions[motionId];
+
         if (
-            onVoting(repo, motionId) &&
-            !repo.motions[motionId].map.isPrincipal(caller)
+            m.head.voteStartBN <= block.number &&
+            block.number <= m.head.voteEndBN &&
+            m.map.delegateOf[caller] == 0
         ) {
-            flag = repo.motions[motionId].box.castVote(
-                caller,
-                attitude,
-                weight,
-                sigHash
-            );
+            uint64 voteWeight;
+
+            if (m.map.principalsOf[caller].length > 0)
+                voteWeight = _voteWeight(
+                    m.map,
+                    caller,
+                    m.head.voteStartBN,
+                    _rom
+                );
+            else voteWeight = _rom.votesAtBlock(caller, m.head.voteStartBN);
+
+            flag = m.box.castVote(caller, attitude, voteWeight, sigHash);
         }
+    }
+
+    function _voteWeight(
+        DelegateMap.Map storage map,
+        uint40 acct,
+        uint64 blocknumber,
+        IRegisterOfMembers _rom
+    ) private view returns (uint64) {
+        uint40[] memory principals = map.principalsOf[acct];
+        uint256 len = principals.length;
+        uint64 weight = _rom.votesAtBlock(acct, blocknumber);
+
+        while (len > 0) {
+            weight += _rom.votesAtBlock(principals[len - 1], blocknumber);
+            len--;
+        }
+
+        return weight;
     }
 
     // ==== counting ====
@@ -124,7 +178,7 @@ library MotionsRepo {
         uint256 motionId,
         IRegisterOfMembers _rom
     ) internal returns (bool flag) {
-        if (afterVoteEnd(repo, motionId)) {
+        if (repo.motions[motionId].head.voteEndBN < block.number) {
             (
                 uint64 totalHead,
                 uint64 totalAmt,
@@ -135,34 +189,41 @@ library MotionsRepo {
             bool flag1;
             bool flag2;
 
-            Motion storage motion = repo.motions[motionId];
+            Motion storage m = repo.motions[motionId];
 
             if (
-                !_isVetoed(motion, motion.votingRule.vetoerOfVR()) &&
-                !_isVetoed(motion, motion.votingRule.vetoer2OfVR()) &&
-                !_isVetoed(motion, motion.votingRule.vetoer3OfVR()) &&
-                !_isVetoed(motion, motion.votingRule.vetoer4OfVR())
+                !_isVetoed(m, m.votingRule.vetoerOfVR()) &&
+                !_isVetoed(m, m.votingRule.vetoer2OfVR()) &&
+                !_isVetoed(m, m.votingRule.vetoer3OfVR()) &&
+                !_isVetoed(m, m.votingRule.vetoer4OfVR())
             ) {
-                flag1 = motion.votingRule.ratioHeadOfVR() != 0
-                    ? totalHead != 0
-                        ? ((motion.box.qtyOfYea() + consentHead) * 10000) /
+                flag1 = m.votingRule.ratioHeadOfVR() > 0
+                    ? totalHead > 0
+                        ? ((m
+                            .box
+                            .cases[uint8(AttitudeOfVote.Support)]
+                            .voters
+                            .length() + consentHead) * 10000) /
                             totalHead >=
-                            motion.votingRule.ratioHeadOfVR()
+                            m.votingRule.ratioHeadOfVR()
                         : false
                     : true;
 
-                flag2 = motion.votingRule.ratioAmountOfVR() != 0
-                    ? totalAmt != 0
-                        ? ((motion.box.sumOfYea + consentAmt) * 10000) /
+                flag2 = m.votingRule.ratioAmountOfVR() > 0
+                    ? totalAmt > 0
+                        ? ((m
+                            .box
+                            .cases[uint8(AttitudeOfVote.Support)]
+                            .sumOfWeight + consentAmt) * 10000) /
                             totalAmt >=
-                            motion.votingRule.ratioAmountOfVR()
+                            m.votingRule.ratioAmountOfVR()
                         : false
                     : true;
             }
 
-            motion.head.state = flag1 && flag2
+            m.head.state = flag1 && flag2
                 ? uint8(StateOfMotion.Passed)
-                : motion.votingRule.againstShallBuyOfVR()
+                : m.votingRule.againstShallBuyOfVR()
                 ? uint8(StateOfMotion.Rejected_ToBuy)
                 : uint8(StateOfMotion.Rejected_NotToBuy);
 
@@ -170,12 +231,14 @@ library MotionsRepo {
         }
     }
 
-    function _isVetoed(Motion storage motion, uint40 vetoer)
+    function _isVetoed(Motion storage m, uint40 vetoer)
         internal
         view
         returns (bool)
     {
-        return vetoer != 0 && motion.box.votedNay(vetoer);
+        return
+            vetoer > 0 &&
+            m.box.cases[uint8(AttitudeOfVote.Against)].voters.contains(vetoer);
     }
 
     function _getParas(
@@ -192,17 +255,19 @@ library MotionsRepo {
             uint64 consentAmt
         )
     {
-        Motion storage motion = repo.motions[motionId];
+        Motion storage m = repo.motions[motionId];
 
-        if (motion.votingRule.onlyAttendanceOfVR()) {
-            totalHead = uint64(motion.box.qtyOfAllVoters());
-            totalAmt = motion.box.sumOfWeight;
+        if (m.votingRule.onlyAttendanceOfVR()) {
+            totalHead = uint64(
+                m.box.cases[uint8(AttitudeOfVote.All)].voters.length()
+            );
+            totalAmt = m.box.cases[uint8(AttitudeOfVote.All)].sumOfWeight;
         } else {
             // members hold voting rights at block
             totalHead = _rom.qtyOfMembers();
-            totalAmt = _rom.votesAtBlock(0, motion.head.weightRegBN);
+            totalAmt = _rom.votesAtBlock(0, m.head.voteStartBN);
 
-            if (motion.head.typeOfMotion < 8) {
+            if (m.head.typeOfVote < 8) {
                 // 1-7 typeOfIA; 8-external deal
 
                 // minus parties of IA;
@@ -213,12 +278,12 @@ library MotionsRepo {
                 while (len != 0) {
                     uint64 voteAmt = _rom.votesAtBlock(
                         parties[len - 1],
-                        motion.head.weightRegBN
+                        m.head.voteStartBN
                     );
 
                     // party has voting right at block
                     if (voteAmt != 0) {
-                        if (motion.votingRule.partyAsConsentOfVR()) {
+                        if (m.votingRule.partyAsConsentOfVR()) {
                             consentHead++;
                             consentAmt += voteAmt;
                         } else {
@@ -232,9 +297,13 @@ library MotionsRepo {
             }
 
             // members not cast vote
-            if (motion.votingRule.impliedConsentOfVR()) {
-                consentHead += (totalHead - uint64(motion.box.voters.length));
-                consentAmt += (totalAmt - motion.box.sumOfWeight);
+            if (m.votingRule.impliedConsentOfVR()) {
+                consentHead += (totalHead -
+                    uint64(
+                        m.box.cases[uint8(AttitudeOfVote.All)].voters.length()
+                    ));
+                consentAmt += (totalAmt -
+                    (m.box.cases[uint8(AttitudeOfVote.All)].sumOfWeight));
             }
         }
     }
@@ -243,89 +312,89 @@ library MotionsRepo {
     //##    Read     ##
     //################
 
-    function beforeVoteStart(Repo storage repo, uint256 motionId)
-        internal
-        view
-        returns (bool)
-    {
-        return repo.motions[motionId].head.voteStartBN > block.number;
-    }
+    // function beforeVoteStart(Repo storage repo, uint256 motionId)
+    //     internal
+    //     view
+    //     returns (bool)
+    // {
+    //     return repo.motions[motionId].head.voteStartBN > block.number;
+    // }
 
-    function afterVoteEnd(Repo storage repo, uint256 motionId)
-        internal
-        view
-        returns (bool)
-    {
-        return repo.motions[motionId].head.voteEndBN < block.number;
-    }
+    // function afterVoteEnd(Repo storage repo, uint256 motionId)
+    //     internal
+    //     view
+    //     returns (bool)
+    // {
+    //     return repo.motions[motionId].head.voteEndBN < block.number;
+    // }
 
-    function onVoting(Repo storage repo, uint256 motionId)
-        internal
-        view
-        returns (bool)
-    {
-        return
-            repo.motions[motionId].head.voteStartBN <= block.number &&
-            block.number <= repo.motions[motionId].head.voteEndBN;
-    }
+    // function onVoting(Repo storage repo, uint256 motionId)
+    //     internal
+    //     view
+    //     returns (bool)
+    // {
+    //     return
+    //         repo.motions[motionId].head.voteStartBN <= block.number &&
+    //         block.number <= repo.motions[motionId].head.voteEndBN;
+    // }
 
-    function isProposed(Repo storage repo, uint256 motionId)
-        internal
-        view
-        returns (bool)
-    {
-        return repo.motionIds.contains(motionId);
-    }
+    // function isProposed(Repo storage repo, uint256 motionId)
+    //     internal
+    //     view
+    //     returns (bool)
+    // {
+    //     return repo.motionIds.contains(motionId);
+    // }
 
-    function headOf(Repo storage repo, uint256 motionId)
-        internal
-        view
-        returns (Head memory)
-    {
-        return repo.motions[motionId].head;
-    }
+    // function headOf(Repo storage repo, uint256 motionId)
+    //     internal
+    //     view
+    //     returns (Head memory)
+    // {
+    //     return repo.motions[motionId].head;
+    // }
 
-    function votingRule(Repo storage repo, uint256 motionId)
-        internal
-        view
-        returns (bytes32)
-    {
-        return repo.motions[motionId].votingRule;
-    }
+    // function votingRule(Repo storage repo, uint256 motionId)
+    //     internal
+    //     view
+    //     returns (bytes32)
+    // {
+    //     return repo.motions[motionId].votingRule;
+    // }
 
-    function state(Repo storage repo, uint256 motionId)
-        internal
-        view
-        returns (uint8)
-    {
-        return repo.motions[motionId].head.state;
-    }
+    // function state(Repo storage repo, uint256 motionId)
+    //     internal
+    //     view
+    //     returns (uint8)
+    // {
+    //     return repo.motions[motionId].head.state;
+    // }
 
-    function isPassed(Repo storage repo, uint256 motionId)
-        internal
-        view
-        returns (bool)
-    {
-        return repo.motions[motionId].head.state == uint8(StateOfMotion.Passed);
-    }
+    // function isPassed(Repo storage repo, uint256 motionId)
+    //     internal
+    //     view
+    //     returns (bool)
+    // {
+    //     return repo.motions[motionId].head.state == uint8(StateOfMotion.Passed);
+    // }
 
-    function isExecuted(Repo storage repo, uint256 motionId)
-        internal
-        view
-        returns (bool)
-    {
-        return
-            repo.motions[motionId].head.state == uint8(StateOfMotion.Executed);
-    }
+    // function isExecuted(Repo storage repo, uint256 motionId)
+    //     internal
+    //     view
+    //     returns (bool)
+    // {
+    //     return
+    //         repo.motions[motionId].head.state == uint8(StateOfMotion.Executed);
+    // }
 
-    function isRejected(Repo storage repo, uint256 motionId)
-        internal
-        view
-        returns (bool)
-    {
-        return (repo.motions[motionId].head.state ==
-            uint8(StateOfMotion.Rejected_NotToBuy) ||
-            repo.motions[motionId].head.state ==
-            uint8(StateOfMotion.Rejected_ToBuy));
-    }
+    // function isRejected(Repo storage repo, uint256 motionId)
+    //     internal
+    //     view
+    //     returns (bool)
+    // {
+    //     return (repo.motions[motionId].head.state ==
+    //         uint8(StateOfMotion.Rejected_NotToBuy) ||
+    //         repo.motions[motionId].head.state ==
+    //         uint8(StateOfMotion.Rejected_ToBuy));
+    // }
 }

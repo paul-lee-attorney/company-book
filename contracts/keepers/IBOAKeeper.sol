@@ -32,7 +32,7 @@ interface IBOAKeeper {
         address ia,
         bytes32 sn,
         bytes32 hashLock,
-        uint32 closingDate,
+        uint48 closingDate,
         uint40 caller
     ) external;
 

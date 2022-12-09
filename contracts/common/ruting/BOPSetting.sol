@@ -14,10 +14,7 @@ import "../access/AccessControl.sol";
 contract BOPSetting is AccessControl {
     IBookOfPledges internal _bop;
 
-    event SetBOP(address bop);
-
     function setBOP(address bop) external onlyDK {
         _bop = IBookOfPledges(bop);
-        emit SetBOP(bop);
     }
 }

@@ -18,24 +18,24 @@ library SNParser {
         return uint32(bytes4(shareNumber << 16));
     }
 
-    function issueDate(bytes32 shareNumber) internal pure returns (uint32) {
-        return uint32(bytes4(shareNumber << 48));
+    function issueDate(bytes32 shareNumber) internal pure returns (uint48) {
+        return uint48(bytes6(shareNumber << 48));
     }
 
     function shareholder(bytes32 shareNumber) internal pure returns (uint40) {
-        return uint40(bytes5(shareNumber << 80));
+        return uint40(bytes5(shareNumber << 96));
     }
 
     function issuePrice(bytes32 shareNumber) internal pure returns (uint32) {
-        return uint32(bytes4(shareNumber << 120));
+        return uint32(bytes4(shareNumber << 136));
     }
 
     function preSSN(bytes32 shareNumber) internal pure returns (uint32) {
-        return uint32(bytes4(shareNumber << 152));
+        return uint32(bytes4(shareNumber << 168));
     }
 
-    function hashLockOfBOSLocker(bytes32 sn) internal pure returns (bytes16) {
-        return bytes16(sn << 120);
+    function hashLockOfBOSLocker(bytes32 sn) internal pure returns (bytes15) {
+        return bytes15(sn << 136);
     }
 
     // ======== DealSN ========
@@ -116,44 +116,44 @@ library SNParser {
         return uint32(bytes4(sn << 8));
     }
 
-    function triggerBNOfOpt(bytes32 sn) internal pure returns (uint32) {
-        return uint32(bytes4(sn << 40));
+    function triggerBNOfOpt(bytes32 sn) internal pure returns (uint64) {
+        return uint64(bytes8(sn << 40));
     }
 
     function exerciseDaysOfOpt(bytes32 sn) internal pure returns (uint8) {
-        return uint8(sn[9]);
+        return uint8(sn[13]);
     }
 
     function closingDaysOfOpt(bytes32 sn) internal pure returns (uint8) {
-        return uint8(sn[10]);
+        return uint8(sn[14]);
     }
 
     function classOfOpt(bytes32 sn) internal pure returns (uint16) {
-        return uint16(bytes2(sn << 88));
+        return uint16(bytes2(sn << 120));
     }
 
     function rateOfOpt(bytes32 sn) internal pure returns (uint32) {
-        return uint32(bytes4(sn << 104));
+        return uint32(bytes4(sn << 136));
     }
 
     function logOperator(bytes32 sn) internal pure returns (uint8) {
-        return uint8(sn[17]);
+        return uint8(sn[21]);
     }
 
     function compOperator_1(bytes32 sn) internal pure returns (uint8) {
-        return uint8(sn[18]);
+        return uint8(sn[22]);
     }
 
     function para_1(bytes32 sn) internal pure returns (uint32) {
-        return uint32(bytes4(sn << 152));
+        return uint32(bytes4(sn << 184));
     }
 
     function compOperator_2(bytes32 sn) internal pure returns (uint8) {
-        return uint8(sn[23]);
+        return uint8(sn[27]);
     }
 
     function para_2(bytes32 sn) internal pure returns (uint32) {
-        return uint32(bytes4(sn << 192));
+        return uint32(bytes4(sn << 224));
     }
 
     function checkConditions(
@@ -206,16 +206,16 @@ library SNParser {
         return uint16(bytes2(sn << 32));
     }
 
-    function createDateOfPld(bytes32 sn) internal pure returns (uint32) {
-        return uint32(bytes4(sn << 48));
+    function createDateOfPld(bytes32 sn) internal pure returns (uint48) {
+        return uint48(bytes6(sn << 48));
     }
 
     function pledgorOfPld(bytes32 sn) internal pure returns (uint40) {
-        return uint40(bytes5(sn << 80));
+        return uint40(bytes5(sn << 96));
     }
 
     function debtorOfPld(bytes32 sn) internal pure returns (uint40) {
-        return uint40(bytes5(sn << 120));
+        return uint40(bytes5(sn << 136));
     }
 
     // ========= Rules ========
@@ -354,11 +354,11 @@ library SNParser {
         return uint32(bytes4(sn << 80));
     }
 
-    function hashLockOfRCLocker(bytes32 sn) internal pure returns (bytes16) {
-        return bytes16(sn << 112);
+    function hashLockOfRCLocker(bytes32 sn) internal pure returns (bytes15) {
+        return bytes15(sn << 112);
     }
 
-    function hashTrim(bytes32 hashValue) internal pure returns (bytes16) {
-        return bytes16(hashValue << 24);
+    function hashTrim(bytes32 hashValue) internal pure returns (bytes15) {
+        return bytes15(hashValue << 32);
     }
 }

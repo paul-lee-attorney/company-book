@@ -14,8 +14,6 @@ import "../../books/boa/IInvestmentAgreement.sol";
 contract IASetting is AccessControl {
     IInvestmentAgreement internal _ia;
 
-    event SetIA(address ia);
-
     //##################
     //##   Modifier   ##
     //##################
@@ -31,6 +29,5 @@ contract IASetting is AccessControl {
 
     function setIA(address ia) external onlyDK {
         _ia = IInvestmentAgreement(ia);
-        emit SetIA(ia);
     }
 }

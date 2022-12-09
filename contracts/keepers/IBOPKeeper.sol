@@ -16,6 +16,7 @@ interface IBOPKeeper {
         bytes32 sn,
         bytes32 shareNumber,
         uint40 creditor,
+        uint16 monOfGuarantee,
         uint64 pledgedPar,
         uint64 guaranteedAmt,
         uint40 caller
@@ -24,6 +25,7 @@ interface IBOPKeeper {
     function updatePledge(
         bytes32 sn,
         uint40 creditor,
+        uint64 expireBN,
         uint64 pledgedPar,
         uint64 guaranteedAmt,
         uint40 caller

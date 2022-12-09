@@ -144,7 +144,7 @@ contract GeneralKeeper is IGeneralKeeper, AccessControl {
         address ia,
         bytes32 sn,
         bytes32 hashLock,
-        uint32 closingDate
+        uint48 closingDate
     ) external {
         _BOAKeeper.pushToCoffer(ia, sn, hashLock, closingDate, _msgSender());
     }
@@ -206,7 +206,8 @@ contract GeneralKeeper is IGeneralKeeper, AccessControl {
         address[] memory targets,
         uint256[] memory values,
         bytes[] memory params,
-        bytes32 desHash
+        bytes32 desHash,
+        uint40 executor
     ) external {
         _BODKeeper.proposeAction(
             actionType,
@@ -214,7 +215,8 @@ contract GeneralKeeper is IGeneralKeeper, AccessControl {
             values,
             params,
             desHash,
-            _msgSender()
+            _msgSender(),
+            executor
         );
     }
 
@@ -316,7 +318,8 @@ contract GeneralKeeper is IGeneralKeeper, AccessControl {
         address[] memory targets,
         uint256[] memory values,
         bytes[] memory params,
-        bytes32 desHash
+        bytes32 desHash,
+        uint40 executor
     ) external {
         _BOMKeeper.proposeAction(
             actionType,
@@ -324,7 +327,8 @@ contract GeneralKeeper is IGeneralKeeper, AccessControl {
             values,
             params,
             desHash,
-            _msgSender()
+            _msgSender(),
+            executor
         );
     }
 
@@ -444,12 +448,14 @@ contract GeneralKeeper is IGeneralKeeper, AccessControl {
         bytes32 shareNumber,
         uint64 pledgedPar,
         uint40 creditor,
+        uint16 monOfGuarantee,
         uint64 guaranteedAmt
     ) external {
         _BOPKeeper.createPledge(
             sn,
             shareNumber,
             creditor,
+            monOfGuarantee,
             pledgedPar,
             guaranteedAmt,
             _msgSender()
@@ -459,16 +465,22 @@ contract GeneralKeeper is IGeneralKeeper, AccessControl {
     function updatePledge(
         bytes32 sn,
         uint40 creditor,
+        uint64 expireBN,
         uint64 pledgedPar,
         uint64 guaranteedAmt
     ) external {
         _BOPKeeper.updatePledge(
             sn,
             creditor,
+            expireBN,
             pledgedPar,
             guaranteedAmt,
             _msgSender()
         );
+    }
+
+    function delPledge(bytes32 sn) external {
+        _BOPKeeper.delPledge(sn, _msgSender());
     }
 
     // ###################

@@ -69,40 +69,31 @@ contract DragAlong is IAlongs, ROMSetting, BOSSetting, BOASetting {
     // ################
 
     function createLink(bytes32 rule, uint40 drager) external onlyAttorney {
-        if (_dragers.add(drager)) {
-            if (_rules.add(rule)) {
-                emit CreateRule(rule);
-            }
-
+        if (_dragers.add(drager) && _rules.add(rule)) {
             _links[drager] = rule;
-            emit SetLink(drager, rule);
         }
     }
 
     function addFollower(uint40 drager, uint40 follower) external onlyAttorney {
-        if (_followers[_links[drager]].add(follower))
-            emit AddFollower(drager, follower);
+        _followers[_links[drager]].add(follower);
     }
 
     function removeFollower(uint40 drager, uint40 follower)
         external
         onlyAttorney
     {
-        if (_followers[_links[drager]].remove(follower))
-            emit RemoveFollower(drager, follower);
+        _followers[_links[drager]].remove(follower);
     }
 
     function removeDrager(uint40 drager) external onlyAttorney {
         if (_dragers.remove(drager)) {
             delete _links[drager];
-            emit RemoveDrager(drager);
         }
     }
 
     function delLink(bytes32 rule) external onlyAttorney {
         if (_rules.remove(rule)) {
             delete _followers[rule];
-            emit DelLink(rule);
         }
     }
 
@@ -155,7 +146,7 @@ contract DragAlong is IAlongs, ROMSetting, BOSSetting, BOASetting {
         );
 
         uint32 dealPrice = sn.priceOfDeal();
-        uint32 closingDate = IInvestmentAgreement(ia).closingDateOfDeal(
+        uint48 closingDate = IInvestmentAgreement(ia).closingDateOfDeal(
             sn.seqOfDeal()
         );
 
@@ -175,7 +166,7 @@ contract DragAlong is IAlongs, ROMSetting, BOSSetting, BOASetting {
         }
 
         uint32 issuePrice = shareNumber.issuePrice();
-        uint32 issueDate = shareNumber.issueDate();
+        uint48 issueDate = shareNumber.issueDate();
 
         if (
             _roeOfDeal(dealPrice, issuePrice, closingDate, issueDate) >=
@@ -226,14 +217,14 @@ contract DragAlong is IAlongs, ROMSetting, BOSSetting, BOASetting {
     function _roeOfDeal(
         uint32 dealPrice,
         uint32 issuePrice,
-        uint32 closingDate,
-        uint32 issueDateOfShare
+        uint48 closingDate,
+        uint48 issueDateOfShare
     ) internal pure returns (uint32 roe) {
         require(dealPrice > issuePrice, "NEGATIVE selling price");
         require(closingDate > issueDateOfShare, "NEGATIVE holding period");
 
         uint32 deltaPrice = dealPrice - issuePrice;
-        uint32 deltaDate = closingDate - issueDateOfShare;
+        uint32 deltaDate = uint32(closingDate - issueDateOfShare);
 
         roe = (((deltaPrice * 10000) / issuePrice) * 31536000) / deltaDate;
     }

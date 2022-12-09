@@ -15,6 +15,7 @@ interface IBookOfPledges {
     event CreatePledge(
         bytes32 indexed sn,
         uint40 creditor,
+        uint16 monOfGuarantee,
         uint64 pledgedPar,
         uint64 guaranteedAmt
     );
@@ -22,6 +23,7 @@ interface IBookOfPledges {
     event UpdatePledge(
         bytes32 indexed sn,
         uint40 creditor,
+        uint64 expireBN,
         uint64 pledgedPar,
         uint64 guaranteedAmt
     );
@@ -33,6 +35,7 @@ interface IBookOfPledges {
     function createPledge(
         bytes32 sn,
         uint40 creditor,
+        uint16 monOfGuarantee,
         uint64 pledgedPar,
         uint64 guaranteedAmt
     ) external;
@@ -40,6 +43,7 @@ interface IBookOfPledges {
     function updatePledge(
         bytes32 sn,
         uint40 creditor,
+        uint64 expireBN,
         uint64 pledgedPar,
         uint64 guaranteedAmt
     ) external;
@@ -50,7 +54,7 @@ interface IBookOfPledges {
 
     function pledgesOf(uint32 ssn) external view returns (bytes32[] memory);
 
-    function counterOfPledges(uint32 ssn) external view returns (uint32);
+    function counterOfPledges(uint32 ssn) external view returns (uint16);
 
     function isPledge(bytes32 sn) external view returns (bool);
 
@@ -59,6 +63,7 @@ interface IBookOfPledges {
         view
         returns (
             uint40 creditor,
+            uint64 expireBN,
             uint64 pledgedPar,
             uint64 guaranteedAmt
         );

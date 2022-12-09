@@ -15,7 +15,7 @@ library SigsRepo {
     struct Signature {
         uint40 signer;
         uint64 blocknumber;
-        uint32 sigDate;
+        uint48 sigDate;
         bytes32 sigHash;
     }
 
@@ -26,7 +26,7 @@ library SigsRepo {
     //     sigHash: established;
     // }
 
-    struct Page{
+    struct Page {
         // userNo => seq => Signature
         mapping(uint256 => mapping(uint256 => Signature)) signatures;
         uint16 blankCounter;
@@ -42,8 +42,11 @@ library SigsRepo {
     //     _;
     // }
 
-    modifier onlyFutureTime(uint32 date) {
-        require(uint256(date) > block.timestamp + 15 minutes, "SP.onlyFutureTime: NOT FUTURE time");
+    modifier onlyFutureTime(uint48 date) {
+        require(
+            date > block.timestamp + 15 minutes,
+            "SP.onlyFutureTime: NOT FUTURE time"
+        );
         _;
     }
 
@@ -51,22 +54,27 @@ library SigsRepo {
     //##    设置接口    ##
     //####################
 
-    function setSigDeadline(Page storage p, uint32 deadline)
+    function setSigDeadline(Page storage p, uint48 deadline)
         internal
         onlyFutureTime(deadline)
     {
         p.signatures[0][0].blocknumber = deadline;
     }
 
-    function setClosingDeadline(Page storage p, uint32 deadline)
+    function setClosingDeadline(Page storage p, uint48 deadline)
         internal
         onlyFutureTime(deadline)
     {
         p.signatures[0][0].sigDate = deadline;
     }
 
-    function addBlank(Page storage p, uint40 acct, uint16 ssn) internal returns (bool flag) {
-        if (p.signatures[0][0].sigHash != bytes32(0)) p.signatures[0][0].sigHash = bytes32(0);
+    function addBlank(
+        Page storage p,
+        uint40 acct,
+        uint16 ssn
+    ) internal returns (bool flag) {
+        if (p.signatures[0][0].sigHash != bytes32(0))
+            p.signatures[0][0].sigHash = bytes32(0);
 
         if (!blankExist(p, acct, ssn)) {
             p.signatures[acct][ssn].signer = acct;
@@ -79,14 +87,15 @@ library SigsRepo {
         }
     }
 
-    function removeBlank(Page storage p, uint40 acct, uint16 ssn)
-        internal
-        returns (bool flag)
-    {
+    function removeBlank(
+        Page storage p,
+        uint40 acct,
+        uint16 ssn
+    ) internal returns (bool flag) {
         if (blankExist(p, acct, ssn) && !dealIsSigned(p, acct, ssn)) {
             delete p.signatures[acct][ssn];
             p.parties.remove(acct);
-            
+
             p.blankCounter--;
 
             flag = true;
@@ -99,9 +108,7 @@ library SigsRepo {
         uint16 ssn,
         bytes32 sigHash
     ) internal {
-
         if (blankExist(p, caller, ssn) && !dealIsSigned(p, caller, ssn)) {
-            
             p.signatures[caller][ssn] = Signature({
                 signer: caller,
                 blocknumber: uint64(block.number),
@@ -112,7 +119,7 @@ library SigsRepo {
             p.signatures[0][0].signer++;
 
             if (p.blankCounter == uint16(p.signatures[0][0].signer)) {
-                p.signatures[0][0].sigHash = bytes32('true');
+                p.signatures[0][0].sigHash = bytes32("true");
             }
         }
     }
@@ -121,31 +128,31 @@ library SigsRepo {
     //##    查询接口    ##
     //####################
 
-    function blankExist(Page storage p, uint40 acct, uint16 ssn) 
-        internal 
-        view 
-        returns(bool) 
-    {
+    function blankExist(
+        Page storage p,
+        uint40 acct,
+        uint16 ssn
+    ) internal view returns (bool) {
         return p.signatures[acct][ssn].signer == acct;
     }
 
-    function dealIsSigned(Page storage p, uint40 acct, uint16 ssn) 
-        internal 
-        view 
-        returns(bool) 
-    {
+    function dealIsSigned(
+        Page storage p,
+        uint40 acct,
+        uint16 ssn
+    ) internal view returns (bool) {
         return p.signatures[acct][ssn].sigDate != 0;
     }
 
     function established(Page storage p) internal view returns (bool) {
-        return p.signatures[0][0].sigHash == bytes32('true');
+        return p.signatures[0][0].sigHash == bytes32("true");
     }
 
-    function sigDeadline(Page storage p) internal view returns (uint32) {
-        return uint32(p.signatures[0][0].blocknumber);
+    function sigDeadline(Page storage p) internal view returns (uint48) {
+        return uint48(p.signatures[0][0].blocknumber);
     }
 
-    function closingDeadline(Page storage p) internal view returns (uint32) {
+    function closingDeadline(Page storage p) internal view returns (uint48) {
         return p.signatures[0][0].sigDate;
     }
 
@@ -153,23 +160,23 @@ library SigsRepo {
         return p.parties.contains(acct);
     }
 
-    function isInitSigner(Page storage p, uint40 acct) internal view returns (bool) {
+    function isInitSigner(Page storage p, uint40 acct)
+        internal
+        view
+        returns (bool)
+    {
         return blankExist(p, acct, 0);
     }
 
-    function partiesOfDoc(Page storage p) 
-        internal 
-        view 
-        returns (uint40[] memory) 
+    function partiesOfDoc(Page storage p)
+        internal
+        view
+        returns (uint40[] memory)
     {
         return p.parties.valuesToUint40();
     }
 
-    function qtyOfParties(Page storage p) 
-        internal 
-        view 
-        returns (uint256) 
-    {
+    function qtyOfParties(Page storage p) internal view returns (uint256) {
         return p.parties.length();
     }
 
@@ -177,17 +184,20 @@ library SigsRepo {
         return p.blankCounter;
     }
 
-
     function sigCounter(Page storage p) internal view returns (uint16) {
         return uint16(p.signatures[0][0].signer);
     }
 
-    function sigOfDeal(Page storage p, uint40 acct, uint16 ssn)
+    function sigOfDeal(
+        Page storage p,
+        uint40 acct,
+        uint16 ssn
+    )
         internal
         view
         returns (
             uint64 blocknumber,
-            uint32 sigDate,
+            uint48 sigDate,
             bytes32 sigHash
         )
     {
@@ -206,7 +216,7 @@ library SigsRepo {
         uint16 ssn,
         string memory src
     ) internal view returns (bool) {
-        // require(dealIsSigned(p, acct, ssn), "SP.sigDateOfDeal: deal not signed");        
+        // require(dealIsSigned(p, acct, ssn), "SP.sigDateOfDeal: deal not signed");
         return p.signatures[acct][ssn].sigHash == keccak256(bytes(src));
     }
 }

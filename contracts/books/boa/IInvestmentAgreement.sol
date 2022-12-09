@@ -20,14 +20,14 @@ interface IInvestmentAgreement is ISigPage {
         bytes32 indexed sn,
         uint64 paid,
         uint64 par,
-        uint32 closingDate
+        uint48 closingDate
     );
 
     event UpdateDeal(
         bytes32 indexed sn,
         uint64 paid,
         uint64 par,
-        uint32 closingDate
+        uint48 closingDate
     );
 
     event SetTypeOfIA(uint8 t);
@@ -42,7 +42,7 @@ interface IInvestmentAgreement is ISigPage {
         bytes32 indexed sn,
         uint8 state,
         bytes32 hashLock,
-        uint32 closingDate
+        uint48 closingDate
     );
 
     event CloseDeal(bytes32 indexed sn, string hashKey);
@@ -59,14 +59,14 @@ interface IInvestmentAgreement is ISigPage {
         bytes32 sn,
         uint64 paid,
         uint64 par,
-        uint32 closingDate
+        uint48 closingDate
     ) external;
 
     function updateDeal(
         uint16 seq,
         uint64 paid,
         uint64 par,
-        uint32 closingDate
+        uint48 closingDate
     ) external;
 
     function setTypeOfIA(uint8 t) external;
@@ -80,7 +80,7 @@ interface IInvestmentAgreement is ISigPage {
     function clearDealCP(
         uint16 seq,
         bytes32 hashLock,
-        uint32 closingDate
+        uint48 closingDate
     ) external;
 
     function closeDeal(uint16 seq, string memory hashKey)
@@ -115,7 +115,7 @@ interface IInvestmentAgreement is ISigPage {
             bytes32 hashLock
         );
 
-    function closingDateOfDeal(uint16 seq) external view returns (uint32);
+    function closingDateOfDeal(uint16 seq) external view returns (uint48);
 
     function dealsList() external view returns (bytes32[] memory);
 }

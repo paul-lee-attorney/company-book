@@ -42,8 +42,6 @@ interface IDocumentsRepo {
 
     function isRegistered(address body) external view returns (bool);
 
-    function counterOfDocs() external view returns (uint32);
-
     function passedReview(address body) external view returns (bool);
 
     function isCirculated(address body) external view returns (bool);
@@ -57,15 +55,14 @@ interface IDocumentsRepo {
         view
         returns (
             uint8 docType,
-            uint32 sequence,
             uint40 creator,
-            uint32 createDate,
+            uint48 createDate,
             bytes32 docHash
         );
 
     function currentState(address body) external view returns (uint8);
 
-    function reviewDeadlineBNOf(address body) external view returns (uint32);
+    function reviewDeadlineBNOf(address body) external view returns (uint64);
 
-    function votingDeadlineBNOf(address body) external view returns (uint32);
+    function votingDeadlineBNOf(address body) external view returns (uint64);
 }

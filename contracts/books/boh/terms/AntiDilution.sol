@@ -56,7 +56,7 @@ contract AntiDilution is IAntiDilution, BOSSetting, ROMSetting, BOMSetting {
         _marks.changeAmt(class, price, true);
     }
 
-    function updteBenchmark(
+    function updateBenchmark(
         uint16 class,
         uint32 deltaPrice,
         bool increase
@@ -84,7 +84,7 @@ contract AntiDilution is IAntiDilution, BOSSetting, ROMSetting, BOMSetting {
     // ################
 
     function isMarked(uint16 class) external view returns (bool) {
-        return _marks.isMember(class);
+        return class > 0 && _marks.nodes[class].ptr == class;
     }
 
     function markedClasses() external view returns (uint40[] memory) {
@@ -97,7 +97,7 @@ contract AntiDilution is IAntiDilution, BOSSetting, ROMSetting, BOMSetting {
         onlyMarked(class)
         returns (uint64 price)
     {
-        (, , , price, , ) = _marks.getNode(class);
+        price = _marks.nodes[class].amt;
     }
 
     function obligors(uint16 class)
@@ -115,11 +115,14 @@ contract AntiDilution is IAntiDilution, BOSSetting, ROMSetting, BOMSetting {
         onlyMarked(shareNumber.class())
         returns (uint64 gift)
     {
-        (, , , uint64 markPrice, , ) = _marks.getNode(shareNumber.class());
+        uint64 markPrice = _marks.nodes[shareNumber.class()].amt;
 
-        uint64 dealPrice = uint64(snOfDeal.priceOfDeal());
+        uint32 dealPrice = snOfDeal.priceOfDeal();
 
-        require(markPrice > dealPrice, "AntiDilution not triggered");
+        require(
+            markPrice > dealPrice,
+            "AD.giftPar: AntiDilution not triggered"
+        );
 
         (, uint64 paid, , , ) = _bos.getShare(shareNumber.ssn());
 
@@ -139,10 +142,14 @@ contract AntiDilution is IAntiDilution, BOSSetting, ROMSetting, BOMSetting {
             sn.typeOfDeal() != uint8(InvestmentAgreement.TypeOfDeal.PreEmptive)
         ) return false;
 
-        uint40 topMark = _marks.head();
+        uint40 mark = _marks.nodes[0].next;
 
-        if (unitPrice < _marks.nodes[topMark].amt) return true;
-        else return false;
+        while (mark > 0) {
+            if (unitPrice < _marks.nodes[mark].amt) return true;
+            else mark = _marks.nodes[mark].next;
+        }
+
+        return false;
     }
 
     function _isExempted(uint32 price, uint40[] memory consentParties)
@@ -155,7 +162,7 @@ contract AntiDilution is IAntiDilution, BOSSetting, ROMSetting, BOMSetting {
             "AD.isExempted: zero consentParties"
         );
 
-        uint40 cur = _marks.head();
+        uint40 cur = _marks.nodes[0].next;
 
         while (cur > 0) {
             if (_marks.nodes[cur].amt <= price) break;
@@ -209,7 +216,10 @@ contract AntiDilution is IAntiDilution, BOSSetting, ROMSetting, BOMSetting {
     function isExempted(address ia, bytes32 sn) external view returns (bool) {
         if (!isTriggered(ia, sn)) return true;
 
-        (uint40[] memory consentParties, ) = _bom.getYea(uint256(uint160(ia)));
+        (uint40[] memory consentParties, ) = _bom.getCaseOf(
+            uint256(uint160(ia)),
+            1
+        );
 
         uint32 unitPrice = sn.priceOfDeal();
 

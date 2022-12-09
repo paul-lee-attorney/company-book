@@ -33,10 +33,10 @@ contract BookOfMotions is IBookOfMotions, MeetingMinutes, BOASetting {
         STE_STI,
         CI_STE_STI,
         CI_STE,
-        ElectDirector,
-        ReviseAOA,
-        NomalAction,
-        SpecialAction
+        OrdinaryIssuesOfGM,
+        SpecialIssuesOfGM,
+        OrdinaryIssuesOfBoard,
+        SpecialIssuesOfBoard
     }
 
     bytes32 private _regNumHash;
@@ -66,31 +66,37 @@ contract BookOfMotions is IBookOfMotions, MeetingMinutes, BOASetting {
         external
         onlyDK
     {
-        bytes32 rule = _getSHA().votingRules(uint8(TypeOfVoting.ElectDirector));
+        bytes32 rule = _getSHA().votingRules(
+            uint8(TypeOfVoting.OrdinaryIssuesOfGM)
+        );
 
-        MotionsRepo.Head memory head = MotionsRepo.Head({
-            typeOfMotion: uint8(TypeOfVoting.ElectDirector),
-            state: 0,
-            submitter: nominator,
-            executor: candidate,
-            proposeBN: uint32(block.number),
-            weightRegBN: uint32(block.number) +
-                uint32(rule.reviewDaysOfVR()) *
-                24 *
-                _rc.blocksPerHour(),
-            voteStartBN: uint32(block.number) +
-                uint32(rule.reviewDaysOfVR()) *
-                24 *
-                _rc.blocksPerHour(),
-            voteEndBN: uint32(block.number) +
-                uint32(rule.votingDaysOfVR()) *
-                24 *
-                _rc.blocksPerHour()
-        });
+        // MotionsRepo.Head memory head = MotionsRepo.Head({
+        //     typeOfMotion: uint8(TypeOfVoting.ElectDirector),
+        //     state: 0,
+        //     submitter: nominator,
+        //     executor: candidate,
+        //     proposeBN: uint32(block.number),
+        //     weightRegBN: uint32(block.number) +
+        //         uint32(rule.reviewDaysOfVR()) *
+        //         24 *
+        //         _rc.blocksPerHour(),
+        //     voteStartBN: uint32(block.number) +
+        //         uint32(rule.reviewDaysOfVR()) *
+        //         24 *
+        //         _rc.blocksPerHour(),
+        //     voteEndBN: uint32(block.number) +
+        //         uint32(rule.votingDaysOfVR()) *
+        //         24 *
+        //         _rc.blocksPerHour()
+        // });
 
-        uint256 motionId = uint256(keccak256(abi.encode(head)));
+        uint256 motionId = uint256(
+            keccak256(
+                abi.encode(rule, candidate, nominator, uint64(block.number))
+            )
+        );
 
-        if (_mm.proposeMotion(motionId, rule, head))
+        if (_mm.proposeMotion(motionId, rule, candidate, _rc.blocksPerHour()))
             emit NominateDirector(motionId, candidate, nominator);
     }
 
@@ -103,18 +109,18 @@ contract BookOfMotions is IBookOfMotions, MeetingMinutes, BOASetting {
 
         bytes32 rule = _getSHA().votingRules(motionType);
 
-        MotionsRepo.Head memory head = MotionsRepo.Head({
-            typeOfMotion: motionType,
-            state: 0,
-            submitter: submitter,
-            executor: 0,
-            proposeBN: uint32(block.number),
-            weightRegBN: _boa.reviewDeadlineBNOf(ia),
-            voteStartBN: _boa.reviewDeadlineBNOf(ia),
-            voteEndBN: _boa.votingDeadlineBNOf(ia)
-        });
+        // MotionsRepo.Head memory head = MotionsRepo.Head({
+        //     typeOfMotion: motionType,
+        //     state: 0,
+        //     submitter: submitter,
+        //     executor: 0,
+        //     proposeBN: uint32(block.number),
+        //     weightRegBN: _boa.reviewDeadlineBNOf(ia),
+        //     voteStartBN: _boa.reviewDeadlineBNOf(ia),
+        //     voteEndBN: _boa.votingDeadlineBNOf(ia)
+        // });
 
-        if (_mm.proposeMotion(motionId, rule, head))
+        if (_mm.proposeMotion(motionId, rule, submitter, _rc.blocksPerHour()))
             emit ProposeIA(motionId, ia, submitter);
     }
 

@@ -58,7 +58,7 @@ interface IBookOfOptions {
         uint40[] memory obligors,
         uint64 paid,
         uint64 par
-    ) external returns(bytes32 _sn);
+    ) external returns (bytes32 _sn);
 
     function registerOption(address opts) external;
 
@@ -81,7 +81,7 @@ interface IBookOfOptions {
         uint64 par
     ) external;
 
-    function removeFuture( bytes32 sn, bytes32 ft) external;
+    function removeFuture(bytes32 sn, bytes32 ft) external;
 
     function requestPledge(
         bytes32 sn,
@@ -108,7 +108,7 @@ interface IBookOfOptions {
         view
         returns (
             uint40 rightholder,
-            uint32 closingBN,
+            uint64 closingBN,
             uint64 paid,
             uint64 par,
             bytes32 hashLock
@@ -116,7 +116,10 @@ interface IBookOfOptions {
 
     function isObligor(bytes32 sn, uint40 acct) external view returns (bool);
 
-    function obligorsOfOption(bytes32 sn) external view returns (uint40[] memory);
+    function obligorsOfOption(bytes32 sn)
+        external
+        view
+        returns (uint40[] memory);
 
     function stateOfOption(bytes32 sn) external view returns (uint8);
 
@@ -124,7 +127,10 @@ interface IBookOfOptions {
 
     function pledges(bytes32 sn) external view returns (bytes32[] memory);
 
-    function oracle(bytes32 sn, uint64 blocknumber) external view returns (uint32 d1, uint32 d2);
+    function oracle(bytes32 sn, uint64 blocknumber)
+        external
+        view
+        returns (uint32 d1, uint32 d2);
 
-    function optsList() external view returns(bytes32[] memory);
+    function optsList() external view returns (bytes32[] memory);
 }

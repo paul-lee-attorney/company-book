@@ -56,7 +56,10 @@ contract TagAlong is DragAlong, BOMSetting {
 
         if (!isTriggered(ia, sn)) return true;
 
-        (uint40[] memory consentParties, ) = _bom.getYea(uint256(uint160(ia)));
+        (uint40[] memory consentParties, ) = _bom.getCaseOf(
+            uint256(uint160(ia)),
+            1
+        );
 
         uint40[] memory signers = ISigPage(ia).partiesOfDoc();
 

@@ -14,8 +14,6 @@ import "../access/AccessControl.sol";
 contract BOSSetting is AccessControl {
     IBookOfShares internal _bos;
 
-    event SetBOS(address bos);
-
     modifier shareExist(uint32 ssn) {
         require(_bos.isShare(ssn), "shareNumber NOT exist");
         _;
@@ -27,6 +25,5 @@ contract BOSSetting is AccessControl {
 
     function setBOS(address bos) external onlyDK {
         _bos = IBookOfShares(bos);
-        emit SetBOS(bos);
     }
 }

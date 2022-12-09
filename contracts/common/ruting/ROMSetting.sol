@@ -14,8 +14,6 @@ import "../access/AccessControl.sol";
 contract ROMSetting is AccessControl {
     IRegisterOfMembers internal _rom;
 
-    event SetROM(address rom);
-
     modifier onlyMember() {
         require(_rom.isMember(_msgSender()), "NOT Member");
         _;
@@ -28,6 +26,5 @@ contract ROMSetting is AccessControl {
 
     function setROM(address rom) external onlyDK {
         _rom = IRegisterOfMembers(rom);
-        emit SetROM(rom);
     }
 }

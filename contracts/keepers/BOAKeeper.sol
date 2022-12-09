@@ -166,7 +166,7 @@ contract BOAKeeper is
         address ia,
         bytes32 sn,
         bytes32 hashLock,
-        uint32 closingDate,
+        uint48 closingDate,
         uint40 caller
     ) external onlyDK {
         require(
@@ -264,10 +264,10 @@ contract BOAKeeper is
             sn.priceOfDeal()
         );
 
-        uint32 paidInDeadline;
+        uint48 paidInDeadline;
 
         unchecked {
-            paidInDeadline = uint32(block.timestamp) + 1800;
+            paidInDeadline = uint48(block.timestamp) + 1800;
         }
 
         _bos.issueShare(shareNumber, paid, par, paidInDeadline);
@@ -281,8 +281,8 @@ contract BOAKeeper is
         bytes memory _sn = new bytes(32);
 
         _sn = _sn.seqToSN(0, class);
-        _sn = _sn.acctToSN(10, shareholder);
-        _sn = _sn.dateToSN(15, unitPrice);
+        _sn = _sn.acctToSN(12, shareholder);
+        _sn = _sn.ssnToSN(17, unitPrice);
 
         return _sn.bytesToBytes32();
     }

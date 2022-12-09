@@ -16,13 +16,13 @@ interface IBookOfShares {
         bytes32 indexed shareNumber,
         uint64 paid,
         uint64 par,
-        uint32 paidInDeadline
+        uint48 paidInDeadline
     );
 
     event PayInCapital(
         bytes32 indexed shareNumber,
         uint64 amount,
-        uint32 paidInDate
+        uint48 paidInDate
     );
 
     event SubAmountFromShare(
@@ -37,7 +37,7 @@ interface IBookOfShares {
 
     event UpdatePaidInDeadline(
         bytes32 indexed shareNumber,
-        uint32 paidInDeadline
+        uint48 paidInDeadline
     );
 
     event DecreaseCleanPar(bytes32 indexed shareNumber, uint64 paid);
@@ -56,7 +56,7 @@ interface IBookOfShares {
         bytes32 shareNumber,
         uint64 paid,
         uint64 par,
-        uint32 paidInDeadline
+        uint48 paidInDeadline
     ) external;
 
     function setPayInAmount(bytes32 sn, uint64 amount) external;
@@ -76,7 +76,7 @@ interface IBookOfShares {
     function createShareNumber(
         uint16 class,
         uint32 ssn,
-        uint32 issueDate,
+        uint48 issueDate,
         uint40 shareholder,
         uint32 unitPrice,
         uint32 preSSN
@@ -98,7 +98,7 @@ interface IBookOfShares {
 
     function updateStateOfShare(uint32 ssn, uint8 state) external;
 
-    function updatePaidInDeadline(uint32 ssn, uint32 paidInDeadline) external;
+    function updatePaidInDeadline(uint32 ssn, uint48 paidInDeadline) external;
 
     // ##################
     // ##   查询接口   ##
@@ -121,7 +121,7 @@ interface IBookOfShares {
             bytes32 shareNumber,
             uint64 paid,
             uint64 par,
-            uint32 paidInDeadline,
+            uint48 paidInDeadline,
             uint8 state
         );
 

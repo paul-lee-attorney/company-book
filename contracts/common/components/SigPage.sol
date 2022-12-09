@@ -22,11 +22,11 @@ contract SigPage is ISigPage, AccessControl {
     //##    设置接口    ##
     //####################
 
-    function setSigDeadline(uint32 deadline) external onlyAttorney {
+    function setSigDeadline(uint48 deadline) external onlyAttorney {
         _sigPage.setSigDeadline(deadline);
     }
 
-    function setClosingDeadline(uint32 deadline) external onlyAttorney {
+    function setClosingDeadline(uint48 deadline) external onlyAttorney {
         _sigPage.setClosingDeadline(deadline);
     }
 
@@ -71,11 +71,11 @@ contract SigPage is ISigPage, AccessControl {
         return _sigPage.established();
     }
 
-    function sigDeadline() external view returns (uint32) {
+    function sigDeadline() external view returns (uint48) {
         return _sigPage.sigDeadline();
     }
 
-    function closingDeadline() public view returns (uint32) {
+    function closingDeadline() public view returns (uint48) {
         return _sigPage.closingDeadline();
     }
 
@@ -108,14 +108,14 @@ contract SigPage is ISigPage, AccessControl {
         view
         returns (
             uint64 blocknumber,
-            uint32 sigDate,
+            uint48 sigDate,
             bytes32 sigHash
         )
     {
         return _sigPage.sigOfDeal(acct, ssn);
     }
 
-    function sigDateOfDoc(uint40 acct) external view returns (uint32 sigDate) {
+    function sigDateOfDoc(uint40 acct) external view returns (uint48 sigDate) {
         (, sigDate, ) = _sigPage.sigOfDeal(acct, 0);
     }
 

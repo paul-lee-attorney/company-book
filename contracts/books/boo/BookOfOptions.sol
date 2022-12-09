@@ -11,12 +11,17 @@ import "./IBookOfOptions.sol";
 
 import "../boh/terms/IOptions.sol";
 
+import "../../common/lib/Checkpoints.sol";
+import "../../common/lib/EnumerableSet.sol";
 import "../../common/lib/SNParser.sol";
 import "../../common/lib/OptionsRepo.sol";
 
 import "../../common/ruting/BOSSetting.sol";
 
 contract BookOfOptions is IBookOfOptions, BOSSetting {
+    using Checkpoints for Checkpoints.History;
+    using EnumerableSet for EnumerableSet.Bytes32Set;
+    using EnumerableSet for EnumerableSet.UintSet;
     using OptionsRepo for OptionsRepo.Repo;
     using SNParser for bytes32;
 
@@ -53,6 +58,11 @@ contract BookOfOptions is IBookOfOptions, BOSSetting {
         _;
     }
 
+    modifier optionExist(bytes32 sn) {
+        require(_options.snList.contains(sn), "BOO.optionExist: opt not exist");
+        _;
+    }
+
     // ################
     // ##   写接口   ##
     // ################
@@ -72,7 +82,7 @@ contract BookOfOptions is IBookOfOptions, BOSSetting {
         external
         onlyKeeper(uint8(TitleOfKeepers.BOHKeeper))
     {
-        bytes32[] memory list = IOptions(opts).snList();
+        bytes32[] memory list = IOptions(opts).optsList();
         uint256 len = list.length;
 
         while (len != 0) {
@@ -174,56 +184,88 @@ contract BookOfOptions is IBookOfOptions, BOSSetting {
     }
 
     function isOption(bytes32 sn) public view returns (bool) {
-        return _options.isOption(sn);
+        return _options.snList.contains(sn);
     }
 
     function getOption(bytes32 sn)
         external
         view
+        optionExist(sn)
         returns (
             uint40 rightholder,
-            uint32 closingBN,
+            uint64 closingBN,
             uint64 paid,
             uint64 par,
             bytes32 hashLock
         )
     {
-        return _options.getOption(sn);
+        OptionsRepo.Option storage opt = _options.options[sn];
+
+        rightholder = opt.rightholder;
+        closingBN = opt.closingBN;
+        paid = opt.paid[0];
+        par = opt.par[0];
+        hashLock = opt.hashLock;
     }
 
-    function isObligor(bytes32 sn, uint40 acct) external view returns (bool) {
-        return _options.isObligor(sn, acct);
+    function isObligor(bytes32 sn, uint40 acct)
+        external
+        view
+        optionExist(sn)
+        returns (bool)
+    {
+        return _options.options[sn].obligors.contains(acct);
     }
 
     function obligorsOfOption(bytes32 sn)
         external
         view
+        optionExist(sn)
         returns (uint40[] memory)
     {
-        return _options.obligorsOfOption(sn);
+        return _options.options[sn].obligors.valuesToUint40();
     }
 
-    function stateOfOption(bytes32 sn) external view returns (uint8) {
-        return _options.stateOfOption(sn);
+    function stateOfOption(bytes32 sn)
+        external
+        view
+        optionExist(sn)
+        returns (uint8)
+    {
+        return _options.options[sn].state;
     }
 
-    function futures(bytes32 sn) external view returns (bytes32[] memory) {
-        return _options.futures(sn);
+    function futures(bytes32 sn)
+        external
+        view
+        optionExist(sn)
+        returns (bytes32[] memory)
+    {
+        return _options.options[sn].futures.values();
     }
 
-    function pledges(bytes32 sn) external view returns (bytes32[] memory) {
-        return _options.pledges(sn);
+    function pledges(bytes32 sn)
+        external
+        view
+        optionExist(sn)
+        returns (bytes32[] memory)
+    {
+        return _options.options[sn].pledges.values();
     }
 
     function oracle(bytes32 sn, uint64 blocknumber)
         external
         view
+        optionExist(sn)
         returns (uint32, uint32)
     {
-        return _options.oracle(sn, blocknumber);
+        (uint64 d1, uint64 d2) = _options.options[sn].oracles.getAtBlock(
+            blocknumber
+        );
+        return (uint32(d1), uint32(d2));
     }
 
     function optsList() external view returns (bytes32[] memory) {
-        return _options.optsList();
+        return _options.snList.values();
     }
 }

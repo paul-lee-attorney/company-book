@@ -35,8 +35,8 @@ contract DocumentsRepo is IDocumentsRepo, CloneFactory, AccessControl {
         uint8 docType;
         uint40 creator;
         uint48 createDate;
-        uint64 reviewDeadlineBN;
-        uint64 votingDeadlineBN;
+        uint64 shaExecDeadlineBN;
+        uint64 proposeDeadlineBN;
         uint8 state;
         bytes32 docHash;
     }
@@ -120,25 +120,26 @@ contract DocumentsRepo is IDocumentsRepo, CloneFactory, AccessControl {
         }
     }
 
-    function circulateDoc(address body, bytes32 rule)
-        public
-        onlyDK
-        onlyRegistered(body)
-        onlyForPending(body)
-    {
+    function circulateDoc(
+        address body,
+        bytes32 rule,
+        bytes32 docHash
+    ) public onlyDK onlyRegistered(body) onlyForPending(body) {
         Doc storage doc = _docs[body];
 
-        doc.reviewDeadlineBN =
+        doc.shaExecDeadlineBN =
             uint64(block.number) +
+            rule.shaExecDaysOfVR() *
+            24 *
+            _rc.blocksPerHour();
+
+        doc.proposeDeadlineBN =
+            doc.shaExecDeadlineBN +
             rule.reviewDaysOfVR() *
             24 *
             _rc.blocksPerHour();
 
-        doc.votingDeadlineBN =
-            doc.reviewDeadlineBN +
-            rule.votingDaysOfVR() *
-            24 *
-            _rc.blocksPerHour();
+        doc.docHash = docHash;
 
         doc.state = uint8(BODStates.Circulated);
 
@@ -170,7 +171,7 @@ contract DocumentsRepo is IDocumentsRepo, CloneFactory, AccessControl {
         return _docsList.contains(body);
     }
 
-    function passedReview(address body)
+    function passedExecPeriod(address body)
         external
         view
         onlyRegistered(body)
@@ -180,7 +181,7 @@ contract DocumentsRepo is IDocumentsRepo, CloneFactory, AccessControl {
 
         if (doc.state < uint8(BODStates.Established)) return false;
         else if (doc.state > uint8(BODStates.Established)) return true;
-        else if (doc.reviewDeadlineBN > block.number) return false;
+        else if (doc.shaExecDeadlineBN > block.number) return false;
         else return true;
     }
 
@@ -229,21 +230,21 @@ contract DocumentsRepo is IDocumentsRepo, CloneFactory, AccessControl {
         return _docs[body].state;
     }
 
-    function reviewDeadlineBNOf(address body)
+    function shaExecDeadlineBNOf(address body)
         external
         view
         onlyRegistered(body)
         returns (uint64)
     {
-        return _docs[body].reviewDeadlineBN;
+        return _docs[body].shaExecDeadlineBN;
     }
 
-    function votingDeadlineBNOf(address body)
+    function proposeDeadlineBNOf(address body)
         external
         view
         onlyRegistered(body)
         returns (uint64)
     {
-        return _docs[body].votingDeadlineBN;
+        return _docs[body].proposeDeadlineBN;
     }
 }

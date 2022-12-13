@@ -22,4 +22,8 @@ contract BODSetting is AccessControl {
     function setBOD(address bod) external onlyDK {
         _bod = IBookOfDirectors(bod);
     }
+
+    function bodAddr() external view returns (address) {
+        return address(_bod);
+    }
 }

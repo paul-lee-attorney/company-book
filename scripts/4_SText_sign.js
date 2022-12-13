@@ -9,6 +9,13 @@ const GK = artifacts.require("GeneralKeeper");
 const IA = artifacts.require("InvestmentAgreement");
 const RC = artifacts.require("RegCenter");
 
+const {
+    getCurrentTime,
+    getCurrentBN,
+    advanceDays
+} = require("./advanceDays");
+
+
 module.exports = async function (callback) {
 
     const gk = await GK.deployed();
@@ -45,17 +52,6 @@ module.exports = async function (callback) {
     let cur = null;
 
 
-    // ==== setTemplate ====
-
-    let ia = await IA.deployed();
-
-    await gk.setTempOfIA(ia.address, 0, {
-        from: accounts[1]
-    });
-    events = await boa.getPastEvents("SetTemplate");
-
-    console.log("SetTemplate: ", events[0].returnValues);
-
     // ==== 创建IA ====
     await gk.createIA(0, {
         from: accounts[2]
@@ -66,7 +62,7 @@ module.exports = async function (callback) {
 
     addr = list[len - 1];
 
-    ia = await IA.at(addr);
+    let ia = await IA.at(addr);
     console.log("get ia: ", ia.address);
 
     // ==== 设定 GeneralCounsel ====
@@ -100,13 +96,6 @@ module.exports = async function (callback) {
         from: accounts[7]
     });
     console.log("closingDeadline: ", timestamp);
-
-    // ==== Draft IA ====
-
-    // let acct5 = await rc.userNo(accounts[5], {
-    //     from: accounts[5]
-    // });
-    // acct5 = acct5.toNumber();
 
     // ==== 股转交易 ====
 
@@ -143,7 +132,9 @@ module.exports = async function (callback) {
 
     // ==== circulate IA ====
 
-    await gk.circulateIA(ia.address, {
+    let docHash = '0xd3cbe222ebe6a7fa1dc87ecc76555c40943e8ec1f6a91c5cf479509accb1ef5a';
+
+    await gk.circulateIA(ia.address, docHash, {
         from: accounts[2]
     });
 
@@ -171,31 +162,20 @@ module.exports = async function (callback) {
     ret = await boa.currentState(ia.address);
     console.log("docsRepo status: ", ret.toNumber());
 
+    // ==== ProposeIA ====
+
+    await gk.proposeIA(ia.address, {
+        from: accounts[2]
+    });
+
+    events = await boa.getPastEvents("UpdateStateOfDoc");
+    console.log("Event 'UpdateStateOfDoc': ", events[0].returnValues);
+
     // ==== 快进15天（BlockNumber 和 timestamp）====
 
-    let bn = await web3.eth.getBlockNumber();
-    console.log("current BN: ", bn);
-
-    cur = await web3.eth.getBlock("latest");
-    console.log("current timestamp: ", cur.timestamp);
-
-    await web3.currentProvider.send({
-        method: "evm_increaseTime",
-        params: [86400 * 15]
-    }, () => {});
-
-    await web3.currentProvider.send({
-        method: "evm_mine",
-        params: [{
-            blocks: 240 * 15
-        }]
-    }, () => {});
-
-    bn = await web3.eth.getBlockNumber();
-    console.log("current BN: ", bn);
-
-    cur = await web3.eth.getBlock("latest");
-    console.log("current timestamp: ", cur.timestamp);
+    console.log("start: ", await getCurrentBN(web3), await getCurrentTime(web3));
+    await advanceDays(15, web3);
+    console.log("end: ", await getCurrentBN(web3), await getCurrentTime(web3));
 
     callback();
 }

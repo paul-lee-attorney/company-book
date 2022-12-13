@@ -9,6 +9,12 @@ const GK = artifacts.require("GeneralKeeper");
 const IA = artifacts.require("InvestmentAgreement");
 const RC = artifacts.require("RegCenter");
 
+const {
+    getCurrentTime,
+    getCurrentBN,
+    advanceDays
+} = require("./advanceDays");
+
 module.exports = async function (callback) {
 
     const rc = await RC.deployed();
@@ -37,15 +43,6 @@ module.exports = async function (callback) {
 
     let ia = await IA.at(list[len - 1]);
     console.log("ia address: ", ia.address);
-
-    // ==== 提交IA ====
-
-    await gk.proposeIA(ia.address, {
-        from: accounts[2]
-    });
-
-    events = await boa.getPastEvents("UpdateStateOfDoc");
-    console.log("Event 'UpdateStateOfDoc': ", events[0].returnValues);
 
     // ==== Vote ====
 
@@ -78,29 +75,9 @@ module.exports = async function (callback) {
 
     // ==== 快进7天（BlockNumber 和 timestamp）====
 
-    let bn = await web3.eth.getBlockNumber();
-    console.log("current BN: ", bn);
-
-    cur = await web3.eth.getBlock("latest");
-    console.log("current timestamp: ", cur.timestamp);
-
-    await web3.currentProvider.send({
-        method: "evm_increaseTime",
-        params: [86400 * 7]
-    }, () => {});
-
-    await web3.currentProvider.send({
-        method: "evm_mine",
-        params: [{
-            blocks: 240 * 7
-        }]
-    }, () => {});
-
-    bn = await web3.eth.getBlockNumber();
-    console.log("current BN: ", bn);
-
-    cur = await web3.eth.getBlock("latest");
-    console.log("current timestamp: ", cur.timestamp);
+    console.log("start: ", await getCurrentBN(web3), await getCurrentTime(web3));
+    await advanceDays(7, web3);
+    console.log("end: ", await getCurrentBN(web3), await getCurrentTime(web3));
 
     callback();
 }

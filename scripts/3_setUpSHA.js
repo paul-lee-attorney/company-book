@@ -47,17 +47,6 @@ module.exports = async function (callback) {
     let boh = await BOH.deployed();
     console.log("BookOfSHA: ", boh.address)
 
-    let sha = await SHA.deployed();
-    console.log("SHA: ", sha.address)
-
-    // ==== set template of SHA ====
-
-    await gk.setTempOfSHA(sha.address, 0, {
-        from: accounts[1]
-    });
-    let events = await boh.getPastEvents("SetTemplate");
-    console.log("Event 'SetTemplate': ", events[0].returnValues);
-
     // ==== 创建SHA ====
 
     let ret = await gk.createSHA(0, {
@@ -70,7 +59,7 @@ module.exports = async function (callback) {
     let addr = ret.logs[0].address;
     console.log("addr of SHA: ", addr);
 
-    sha = await SHA.at(addr);
+    let sha = await SHA.at(addr);
     console.log("get SHA: ", sha.address);
 
     events = await sha.getPastEvents("SetRegCenter");
@@ -81,18 +70,6 @@ module.exports = async function (callback) {
 
     events = await sha.getPastEvents("Init");
     console.log("Event 'Init': ", events[0].returnValues);
-
-    events = await sha.getPastEvents("SetBOA");
-    console.log("Event 'SetBOA': ", events[0].returnValues);
-
-    events = await sha.getPastEvents("SetBOH");
-    console.log("Event 'SetBOH': ", events[0].returnValues);
-
-    events = await sha.getPastEvents("SetBOS");
-    console.log("Event 'SetBOS': ", events[0].returnValues);
-
-    events = await sha.getPastEvents("SetROM");
-    console.log("Event 'SetROM': ", events[0].returnValues);
 
     // ==== 设定 GeneralCounsel ====
     await sha.setManager(1, acct7, {
@@ -111,22 +88,27 @@ module.exports = async function (callback) {
     await sha.addParty(acct2, {
         from: accounts[7]
     });
+    console.log("add Acct2 as party.")
 
     await sha.addParty(acct3, {
         from: accounts[7]
     });
+    console.log("add Acct3 as party.")
 
     await sha.addParty(acct4, {
         from: accounts[7]
     });
+    console.log("add Acct4 as party.")
 
     await sha.addParty(acct5, {
         from: accounts[7]
     });
+    console.log("add Acct5 as party.")
 
     await sha.removeBlank(acct5, 0, {
         from: accounts[7]
     });
+    console.log("remove Acct5.")
 
     ret = await sha.partiesOfDoc();
     console.log("Parties of SHA: ", ret.map(v => v.toNumber()));
@@ -146,6 +128,7 @@ module.exports = async function (callback) {
     await sha.addRule(rule, {
         from: accounts[7]
     });
+    console.log("Governing Rule already set.")
 
     ret = await sha.basedOnPar();
     console.log("Event 'basedOnPar': ", ret);
@@ -168,11 +151,12 @@ module.exports = async function (callback) {
     let impliedConsent = '00';
     let partyAsConsent = '01';
     let againstShallBuy = '00';
+    let shaExecDays = '00';
     let reviewDays = '0f';
     let votingDays = '07';
     let execDaysForPutOpt = '07';
 
-    rule = '0x' + seqOfRule + ratioHead + ratioAmount + onlyAttendance + impliedConsent + partyAsConsent + againstShallBuy + reviewDays + votingDays + execDaysForPutOpt;
+    rule = '0x' + seqOfRule + ratioHead + ratioAmount + onlyAttendance + impliedConsent + partyAsConsent + againstShallBuy + shaExecDays + reviewDays + votingDays + execDaysForPutOpt;
 
     rule = web3.utils.padRight(rule, 64);
     console.log("rule: ", rule);
@@ -193,11 +177,12 @@ module.exports = async function (callback) {
     impliedConsent = '01';
     partyAsConsent = '01';
     againstShallBuy = '01';
+    shaExecDays = '00';
     reviewDays = '0f';
     votingDays = '07';
     execDaysForPutOpt = '07';
 
-    rule = '0x' + seqOfRule + ratioHead + ratioAmount + onlyAttendance + impliedConsent + partyAsConsent + againstShallBuy + reviewDays + votingDays + execDaysForPutOpt;
+    rule = '0x' + seqOfRule + ratioHead + ratioAmount + onlyAttendance + impliedConsent + partyAsConsent + againstShallBuy + shaExecDays + reviewDays + votingDays + execDaysForPutOpt;
 
     rule = web3.utils.padRight(rule, 64);
     console.log("rule: ", rule);
@@ -218,11 +203,12 @@ module.exports = async function (callback) {
     impliedConsent = '01';
     partyAsConsent = '01';
     againstShallBuy = '01';
-    reviewDays = '0f';
-    votingDays = '07';
+    shaExecDays = '00';
+    reviewDays = '00';
+    votingDays = '00';
     execDaysForPutOpt = '07';
 
-    rule = '0x' + seqOfRule + ratioHead + ratioAmount + onlyAttendance + impliedConsent + partyAsConsent + againstShallBuy + reviewDays + votingDays + execDaysForPutOpt;
+    rule = '0x' + seqOfRule + ratioHead + ratioAmount + onlyAttendance + impliedConsent + partyAsConsent + againstShallBuy + shaExecDays + reviewDays + votingDays + execDaysForPutOpt;
 
     rule = web3.utils.padRight(rule, 64);
     console.log("rule: ", rule);
@@ -243,11 +229,12 @@ module.exports = async function (callback) {
     impliedConsent = '00';
     partyAsConsent = '01';
     againstShallBuy = '00';
+    shaExecDays = '00';
     reviewDays = '0f';
     votingDays = '07';
     execDaysForPutOpt = '07';
 
-    rule = '0x' + seqOfRule + ratioHead + ratioAmount + onlyAttendance + impliedConsent + partyAsConsent + againstShallBuy + reviewDays + votingDays + execDaysForPutOpt;
+    rule = '0x' + seqOfRule + ratioHead + ratioAmount + onlyAttendance + impliedConsent + partyAsConsent + againstShallBuy + shaExecDays + reviewDays + votingDays + execDaysForPutOpt;
 
     rule = web3.utils.padRight(rule, 64);
     console.log("rule: ", rule);
@@ -267,11 +254,12 @@ module.exports = async function (callback) {
     impliedConsent = '01';
     partyAsConsent = '01';
     againstShallBuy = '01';
+    shaExecDays = '00';
     reviewDays = '0f';
     votingDays = '07';
     execDaysForPutOpt = '07';
 
-    rule = '0x' + seqOfRule + ratioHead + ratioAmount + onlyAttendance + impliedConsent + partyAsConsent + againstShallBuy + reviewDays + votingDays + execDaysForPutOpt;
+    rule = '0x' + seqOfRule + ratioHead + ratioAmount + onlyAttendance + impliedConsent + partyAsConsent + againstShallBuy + shaExecDays + reviewDays + votingDays + execDaysForPutOpt;
 
     rule = web3.utils.padRight(rule, 64);
     console.log("rule: ", rule);
@@ -292,11 +280,12 @@ module.exports = async function (callback) {
     impliedConsent = '00';
     partyAsConsent = '01';
     againstShallBuy = '00';
+    shaExecDays = '00';
     reviewDays = '0f';
     votingDays = '07';
     execDaysForPutOpt = '07';
 
-    rule = '0x' + seqOfRule + ratioHead + ratioAmount + onlyAttendance + impliedConsent + partyAsConsent + againstShallBuy + reviewDays + votingDays + execDaysForPutOpt;
+    rule = '0x' + seqOfRule + ratioHead + ratioAmount + onlyAttendance + impliedConsent + partyAsConsent + againstShallBuy + shaExecDays + reviewDays + votingDays + execDaysForPutOpt;
 
     rule = web3.utils.padRight(rule, 64);
     console.log("rule: ", rule);
@@ -317,10 +306,11 @@ module.exports = async function (callback) {
     impliedConsent = '00';
     partyAsConsent = '01';
     againstShallBuy = '00';
+    shaExecDays = '00';
     reviewDays = '0f';
     votingDays = '07';
 
-    rule = '0x' + seqOfRule + ratioHead + ratioAmount + onlyAttendance + impliedConsent + partyAsConsent + againstShallBuy + reviewDays + votingDays + execDaysForPutOpt;
+    rule = '0x' + seqOfRule + ratioHead + ratioAmount + onlyAttendance + impliedConsent + partyAsConsent + againstShallBuy + shaExecDays + reviewDays + votingDays + execDaysForPutOpt;
 
     rule = web3.utils.padRight(rule, 64);
     console.log("rule: ", rule);
@@ -410,7 +400,9 @@ module.exports = async function (callback) {
 
     // ==== circulate SHA ====
 
-    await gk.circulateSHA(sha.address, {
+    let docHash = "0x49893d3f1021aa92c3103b3901e47aeb766de80f8c731731424df8f70ecc0d85";
+
+    await gk.circulateSHA(sha.address, docHash, {
         from: accounts[2]
     });
 

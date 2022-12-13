@@ -17,4 +17,8 @@ contract BOMSetting is AccessControl {
     function setBOM(address bom) external onlyDK {
         _bom = IBookOfMotions(bom);
     }
+
+    function bomAddr() external view returns (address) {
+        return address(_bom);
+    }
 }

@@ -14,7 +14,7 @@ interface IRegCenter {
 
     // ==== Options ====
 
-    event SetBlockSpeed(uint32 speed);
+    event SetBlockSpeed(uint64 speed);
 
     event SetRewards(
         uint32 eoaRewards,
@@ -59,7 +59,7 @@ interface IRegCenter {
 
     // ==== Opts Setting ====
 
-    function setBlockSpeed(uint32 speed) external;
+    function setBlockSpeed(uint64 speed) external;
 
     function setRewards(
         uint32 eoaRewards,
@@ -106,7 +106,7 @@ interface IRegCenter {
 
     function getBookeeper() external view returns (address);
 
-    function blocksPerHour() external view returns (uint32);
+    function blocksPerHour() external view returns (uint64);
 
     function getRewards()
         external

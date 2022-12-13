@@ -17,4 +17,8 @@ contract BOASetting is AccessControl {
     function setBOA(address boa) external onlyDK {
         _boa = IBookOfIA(boa);
     }
+
+    function boaAddr() external view returns (address) {
+        return address(_boa);
+    }
 }

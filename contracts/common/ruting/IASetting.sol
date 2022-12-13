@@ -30,4 +30,8 @@ contract IASetting is AccessControl {
     function setIA(address ia) external onlyDK {
         _ia = IInvestmentAgreement(ia);
     }
+
+    function iaAddr() external view returns (address) {
+        return address(_ia);
+    }
 }

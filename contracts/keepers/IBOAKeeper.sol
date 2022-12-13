@@ -18,7 +18,11 @@ interface IBOAKeeper {
 
     function removeIA(address ia, uint40 caller) external;
 
-    function circulateIA(address ia, uint40 caller) external;
+    function circulateIA(
+        address ia,
+        uint40 caller,
+        bytes32 docHash
+    ) external;
 
     function signIA(
         address ia,

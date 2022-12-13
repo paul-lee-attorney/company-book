@@ -120,12 +120,12 @@ library SNParser {
         return uint64(bytes8(sn << 40));
     }
 
-    function exerciseDaysOfOpt(bytes32 sn) internal pure returns (uint8) {
-        return uint8(sn[13]);
+    function exerciseDaysOfOpt(bytes32 sn) internal pure returns (uint64) {
+        return uint64(uint8(sn[13]));
     }
 
-    function closingDaysOfOpt(bytes32 sn) internal pure returns (uint8) {
-        return uint8(sn[14]);
+    function closingDaysOfOpt(bytes32 sn) internal pure returns (uint64) {
+        return uint64(uint8(sn[14]));
     }
 
     function classOfOpt(bytes32 sn) internal pure returns (uint16) {
@@ -220,7 +220,7 @@ library SNParser {
 
     // ========= Rules ========
 
-    // ==== Voting Rule ====
+    // ==== VotingRule ====
 
     function seqOfRule(bytes32 rule) internal pure returns (uint16) {
         return uint16(bytes2(rule));
@@ -250,32 +250,32 @@ library SNParser {
         return uint8(sn[9]) == 1;
     }
 
-    function reviewDaysOfVR(bytes32 sn) internal pure returns (uint8) {
-        return uint8(sn[10]);
+    function shaExecDaysOfVR(bytes32 sn) internal pure returns (uint64) {
+        return uint64(uint8(sn[10]));
     }
 
-    function votingDaysOfVR(bytes32 sn) internal pure returns (uint8) {
-        return uint8(sn[11]);
+    function reviewDaysOfVR(bytes32 sn) internal pure returns (uint64) {
+        return uint64(uint8(sn[11]));
     }
 
-    function execDaysForPutOptOfVR(bytes32 sn) internal pure returns (uint8) {
-        return uint8(sn[12]);
+    function votingDaysOfVR(bytes32 sn) internal pure returns (uint64) {
+        return uint64(uint8(sn[12]));
+    }
+
+    function execDaysForPutOptOfVR(bytes32 sn) internal pure returns (uint64) {
+        return uint64(uint8(sn[13]));
     }
 
     function vetoerOfVR(bytes32 sn) internal pure returns (uint40) {
-        return uint40(bytes5(sn << 104));
+        return uint40(bytes5(sn << 112));
     }
 
     function vetoer2OfVR(bytes32 sn) internal pure returns (uint40) {
-        return uint40(bytes5(sn << 144));
+        return uint40(bytes5(sn << 152));
     }
 
     function vetoer3OfVR(bytes32 sn) internal pure returns (uint40) {
-        return uint40(bytes5(sn << 184));
-    }
-
-    function vetoer4OfVR(bytes32 sn) internal pure returns (uint40) {
-        return uint40(bytes5(sn << 224));
+        return uint40(bytes5(sn << 192));
     }
 
     // ==== FirstRefusal Rule ====

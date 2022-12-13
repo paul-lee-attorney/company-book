@@ -70,26 +70,6 @@ contract BookOfMotions is IBookOfMotions, MeetingMinutes, BOASetting {
             uint8(TypeOfVoting.OrdinaryIssuesOfGM)
         );
 
-        // MotionsRepo.Head memory head = MotionsRepo.Head({
-        //     typeOfMotion: uint8(TypeOfVoting.ElectDirector),
-        //     state: 0,
-        //     submitter: nominator,
-        //     executor: candidate,
-        //     proposeBN: uint32(block.number),
-        //     weightRegBN: uint32(block.number) +
-        //         uint32(rule.reviewDaysOfVR()) *
-        //         24 *
-        //         _rc.blocksPerHour(),
-        //     voteStartBN: uint32(block.number) +
-        //         uint32(rule.reviewDaysOfVR()) *
-        //         24 *
-        //         _rc.blocksPerHour(),
-        //     voteEndBN: uint32(block.number) +
-        //         uint32(rule.votingDaysOfVR()) *
-        //         24 *
-        //         _rc.blocksPerHour()
-        // });
-
         uint256 motionId = uint256(
             keccak256(
                 abi.encode(rule, candidate, nominator, uint64(block.number))
@@ -108,17 +88,6 @@ contract BookOfMotions is IBookOfMotions, MeetingMinutes, BOASetting {
         uint8 motionType = IInvestmentAgreement(ia).typeOfIA();
 
         bytes32 rule = _getSHA().votingRules(motionType);
-
-        // MotionsRepo.Head memory head = MotionsRepo.Head({
-        //     typeOfMotion: motionType,
-        //     state: 0,
-        //     submitter: submitter,
-        //     executor: 0,
-        //     proposeBN: uint32(block.number),
-        //     weightRegBN: _boa.reviewDeadlineBNOf(ia),
-        //     voteStartBN: _boa.reviewDeadlineBNOf(ia),
-        //     voteEndBN: _boa.votingDeadlineBNOf(ia)
-        // });
 
         if (_mm.proposeMotion(motionId, rule, submitter, _rc.blocksPerHour()))
             emit ProposeIA(motionId, ia, submitter);
@@ -141,12 +110,10 @@ contract BookOfMotions is IBookOfMotions, MeetingMinutes, BOASetting {
         require(
             block.number <
                 _mm.motions[uint256(uint160(ia))].head.voteEndBN +
-                    uint32(
-                        _mm
-                            .motions[uint256(uint160(ia))]
-                            .votingRule
-                            .execDaysForPutOptOfVR()
-                    ) *
+                    _mm
+                        .motions[uint256(uint160(ia))]
+                        .votingRule
+                        .execDaysForPutOptOfVR() *
                     24 *
                     _rc.blocksPerHour(),
             "MISSED execute deadline"

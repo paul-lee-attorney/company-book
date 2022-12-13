@@ -18,11 +18,7 @@ import "../../common/lib/SNParser.sol";
 import "../../common/ruting/BOHSetting.sol";
 import "../../common/ruting/IBookSetting.sol";
 
-contract BookOfIA is
-    IBookOfIA,
-    BOHSetting,
-    DocumentsRepo
-{
+contract BookOfIA is IBookOfIA, BOHSetting, DocumentsRepo {
     using SNParser for bytes32;
 
     // ia => frd
@@ -35,9 +31,11 @@ contract BookOfIA is
     //##  Write I/O  ##
     //#################
 
-    function circulateIA(address ia) external onlyDK {
-        bytes32 rule = _getSHA().votingRules(IInvestmentAgreement(ia).typeOfIA());
-        circulateDoc(ia, rule);
+    function circulateIA(address ia, bytes32 docHash) external onlyDK {
+        bytes32 rule = _getSHA().votingRules(
+            IInvestmentAgreement(ia).typeOfIA()
+        );
+        circulateDoc(ia, rule, docHash);
     }
 
     function createFRDeals(address ia, uint40 creator)

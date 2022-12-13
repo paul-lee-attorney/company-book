@@ -22,4 +22,8 @@ contract BOHSetting is AccessControl {
     function _getSHA() internal view returns (IShareholdersAgreement) {
         return IShareholdersAgreement(_boh.pointer());
     }
+
+    function bohAddr() external view returns (address) {
+        return address(_boh);
+    }
 }

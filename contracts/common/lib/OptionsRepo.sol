@@ -187,7 +187,7 @@ library OptionsRepo {
     function execOption(
         Repo storage repo,
         bytes32 sn,
-        uint32 blocksPerHour
+        uint64 blocksPerHour
     ) internal optionExist(repo, sn) {
         Option storage opt = repo.options[sn];
 

@@ -17,4 +17,8 @@ contract BOOSetting is AccessControl {
     function setBOO(address boo) external onlyDK {
         _boo = IBookOfOptions(boo);
     }
+
+    function booAddr() external view returns (address) {
+        return address(_boo);
+    }
 }

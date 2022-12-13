@@ -27,4 +27,8 @@ contract ROMSetting is AccessControl {
     function setROM(address rom) external onlyDK {
         _rom = IRegisterOfMembers(rom);
     }
+
+    function romAddr() external view returns (address) {
+        return address(_rom);
+    }
 }

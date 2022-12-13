@@ -130,8 +130,8 @@ contract GeneralKeeper is IGeneralKeeper, AccessControl {
         _BOAKeeper.removeIA(body, _msgSender());
     }
 
-    function circulateIA(address body) external {
-        _BOAKeeper.circulateIA(body, _msgSender());
+    function circulateIA(address body, bytes32 docHash) external {
+        _BOAKeeper.circulateIA(body, _msgSender(), docHash);
     }
 
     function signIA(address ia, bytes32 sigHash) external {
@@ -269,8 +269,8 @@ contract GeneralKeeper is IGeneralKeeper, AccessControl {
         _BOHKeeper.removeSHA(body, _msgSender());
     }
 
-    function circulateSHA(address body) external {
-        _BOHKeeper.circulateSHA(body, _msgSender());
+    function circulateSHA(address body, bytes32 docHash) external {
+        _BOHKeeper.circulateSHA(body, _msgSender(), docHash);
     }
 
     function signSHA(address sha, bytes32 sigHash) external {

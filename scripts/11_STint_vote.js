@@ -9,6 +9,12 @@ const GK = artifacts.require("GeneralKeeper");
 const IA = artifacts.require("InvestmentAgreement");
 const RC = artifacts.require("RegCenter");
 
+const {
+    getCurrentTime,
+    getCurrentBN,
+    advanceDays
+} = require("./advanceDays");
+
 module.exports = async function (callback) {
 
     const rc = await RC.deployed();
@@ -52,55 +58,35 @@ module.exports = async function (callback) {
     let motionId = await web3.utils.hexToNumberString(ia.address);
     console.log("motionId: ", motionId);
 
-    await gk.castGMVote(motionId, 2, "0xe5b0e7ffcb90dc5ee09f49282b47da64e12e0b36c689866cb8363f0be8027ffb", {
-        from: accounts[3]
-    });
-
-    let acct3 = await rc.userNo.call(accounts[3], {
-        from: accounts[3]
-    });
-    acct3 = acct3.toNumber();
-
-    let res = await bom.getVote(motionId, acct3);
-    console.log("vote of Acct3: ", res);
-
     // await gk.castGMVote(motionId, 2, "0xe5b0e7ffcb90dc5ee09f49282b47da64e12e0b36c689866cb8363f0be8027ffb", {
-    //     from: accounts[4]
+    //     from: accounts[3]
     // });
 
-    // let acct4 = await rc.userNo.call(accounts[4], {
-    //     from: accounts[4]
+    // let acct3 = await rc.userNo.call(accounts[3], {
+    //     from: accounts[3]
     // });
-    // acct4 = acct4.toNumber();
+    // acct3 = acct3.toNumber();
 
-    // res = await bom.getVote(motionId, acct4);
-    // console.log("vote of Acct4: ", res);
+    // let res = await bom.getVote(motionId, acct3);
+    // console.log("vote of Acct3: ", res);
 
-    // ==== 快进7天（BlockNumber 和 timestamp）====
+    // // await gk.castGMVote(motionId, 2, "0xe5b0e7ffcb90dc5ee09f49282b47da64e12e0b36c689866cb8363f0be8027ffb", {
+    // //     from: accounts[4]
+    // // });
 
-    let bn = await web3.eth.getBlockNumber();
-    console.log("current BN: ", bn);
+    // // let acct4 = await rc.userNo.call(accounts[4], {
+    // //     from: accounts[4]
+    // // });
+    // // acct4 = acct4.toNumber();
 
-    cur = await web3.eth.getBlock("latest");
-    console.log("current timestamp: ", cur.timestamp);
+    // // res = await bom.getVote(motionId, acct4);
+    // // console.log("vote of Acct4: ", res);
 
-    await web3.currentProvider.send({
-        method: "evm_increaseTime",
-        params: [86400 * 7]
-    }, () => {});
+    // // ==== 快进7天（BlockNumber 和 timestamp）====
 
-    await web3.currentProvider.send({
-        method: "evm_mine",
-        params: [{
-            blocks: 240 * 7
-        }]
-    }, () => {});
-
-    bn = await web3.eth.getBlockNumber();
-    console.log("current BN: ", bn);
-
-    cur = await web3.eth.getBlock("latest");
-    console.log("current timestamp: ", cur.timestamp);
+    // console.log("start: ", await getCurrentBN(web3), await getCurrentTime(web3));
+    // await advanceDays(7, web3);
+    // console.log("end: ", await getCurrentBN(web3), await getCurrentTime(web3));
 
     callback();
 }

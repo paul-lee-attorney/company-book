@@ -52,7 +52,7 @@ module.exports = async function (deployer, network, accounts) {
     // ==== Libraries ====
 
     await deployer.deploy(LibEnumerableSet);
-    await deployer.link(LibEnumerableSet, [IA, BOD, BOO, AD, DA, LU, OP, TA, BOA, BOH, LibBallotsBox, LibCheckpoints, LibMembersRepo, LibMotionsRepo, LibOptionsRepo, LibSigsRepo]);
+    await deployer.link(LibEnumerableSet, [IA, BOD, SHA, BOO, AD, DA, LU, OP, TA, BOA, BOH, BOM, LibBallotsBox, LibCheckpoints, LibMembersRepo, LibMotionsRepo, LibOptionsRepo, LibSigsRepo]);
 
     await deployer.deploy(LibBallotsBox);
     await deployer.link(LibBallotsBox, [BOD, BOM, LibMotionsRepo]);
@@ -64,15 +64,15 @@ module.exports = async function (deployer, network, accounts) {
     await deployer.link(LibDelegateMap, [BOD, BOM, LibMotionsRepo]);
 
     await deployer.deploy(LibSNParser);
-    await deployer.link(LibSNParser, [BOA, IA, MR, SHA, AD, DA, LU, TA, BOM, BOO, BOP, BOS, BOH, LibMotionsRepo, LibOptionsRepo, BOAKeeper, BOHKeeper, BOMKeeper, BOOKeeper, BOPKeeper, BOSKeeper, SHAKeeper]);
+    await deployer.link(LibSNParser, [BOA, IA, MR, SHA, AD, DA, LU, TA, BOM, BOO, BOP, BOS, RC, BOH, BOD, LibMotionsRepo, LibOptionsRepo, BOAKeeper, BOHKeeper, BOMKeeper, BOOKeeper, BOPKeeper, BOSKeeper, SHAKeeper]);
 
     // await deployer.deploy(ExtSNParser);
 
     await deployer.deploy(LibSNFactory);
-    await deployer.link(LibSNFactory, [BOP, BOS, LibOptionsRepo, BOMKeeper, SHAKeeper]);
+    await deployer.link(LibSNFactory, [BOP, BOS, LibOptionsRepo, BOAKeeper, BOMKeeper, SHAKeeper]);
 
     await deployer.deploy(LibTopChain);
-    await deployer.link(LibTopChain, [MR, ROM, LibMembersRepo, AD]);
+    await deployer.link(LibTopChain, [MR, AD, ROM, LibMembersRepo]);
 
     await deployer.deploy(LibArrayUtils);
     await deployer.link(LibArrayUtils, [AD, LU]);

@@ -26,4 +26,8 @@ contract BOSSetting is AccessControl {
     function setBOS(address bos) external onlyDK {
         _bos = IBookOfShares(bos);
     }
+
+    function bosAddr() external view returns (address) {
+        return address(_bos);
+    }
 }

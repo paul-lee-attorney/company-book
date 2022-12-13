@@ -95,14 +95,16 @@ contract BOMKeeper is
             "InvestmentAgreement not on Established"
         );
 
-        if (_subjectToReview(ia))
-            require(
-                _boa.reviewDeadlineBNOf(ia) < block.number,
-                "BOMKeeper.proposeMotion: IA not passed review procedure"
-            );
+        uint64 execDeadline = _boa.shaExecDeadlineBNOf(ia);
+        uint64 proposeDeadline = _boa.proposeDeadlineBNOf(ia);
 
         require(
-            _boa.votingDeadlineBNOf(ia) >= block.number,
+            execDeadline < block.number,
+            "BOMKeeper.proposeMotion: IA not passed review procedure"
+        );
+
+        require(
+            proposeDeadline == execDeadline || proposeDeadline >= block.number,
             "missed votingDeadlineBN"
         );
 
@@ -120,7 +122,7 @@ contract BOMKeeper is
         bytes32[] memory dealsList = IInvestmentAgreement(ia).dealsList();
         uint256 len = dealsList.length;
 
-        while (len != 0) {
+        while (len > 0) {
             bytes32 sn = dealsList[len - 1];
             len--;
 

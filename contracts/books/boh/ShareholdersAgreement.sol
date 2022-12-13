@@ -306,7 +306,7 @@ contract ShareholdersAgreement is
     // ==== VotingRules ====
 
     function votingRules(uint16 typeOfVote) external view returns (bytes32) {
-        require(typeOfVote != 0, "SA.votingRules: zero typeOfVote");
+        require(typeOfVote > 0, "SA.votingRules: zero typeOfVote");
         require(typeOfVote < 21, "SA.votingRules: typeOfVote over flow");
 
         return _rules[typeOfVote];
@@ -317,7 +317,7 @@ contract ShareholdersAgreement is
         view
         returns (uint40[] memory)
     {
-        require(typeOfVote != 0, "SA.votingRules: zero typeOfVote");
+        require(typeOfVote > 0, "SA.votingRules: zero typeOfVote");
         require(typeOfVote < 21, "SA.votingRules: typeOfVote over flow");
 
         return _rightholders[typeOfVote].valuesToUint40();
@@ -325,26 +325,26 @@ contract ShareholdersAgreement is
 
     // ==== FirstRefusal Rule ====
 
-    function isSubjectToFR(uint16 typeOfDeal) external view returns (bool) {
-        require(typeOfDeal != 0, "SHA.isSubjectToFR: typeOfDeal overflow");
+    function isSubjectToFR(uint8 typeOfDeal) external view returns (bool) {
+        require(typeOfDeal > 0, "SHA.isSubjectToFR: typeOfDeal overflow");
         require(typeOfDeal < 4, "SHA.isSubjectToFR: typeOfDeal overflow");
 
         return _seqOfRules.contains(20 + typeOfDeal);
     }
 
-    function ruleOfFR(uint16 typeOfDeal) external view returns (bytes32) {
-        require(typeOfDeal != 0, "SHA.ruleOfFR: typeOfDeal overflow");
+    function ruleOfFR(uint8 typeOfDeal) external view returns (bytes32) {
+        require(typeOfDeal > 0, "SHA.ruleOfFR: typeOfDeal overflow");
         require(typeOfDeal < 4, "SHA.ruleOfFR: typeOfDeal overflow");
 
         return _rules[20 + typeOfDeal];
     }
 
-    function isRightholderOfFR(uint16 typeOfDeal, uint40 acct)
+    function isRightholderOfFR(uint8 typeOfDeal, uint40 acct)
         external
         view
         returns (bool)
     {
-        require(typeOfDeal != 0, "SHA.isRightholderOfFR: typeOfDeal overflow");
+        require(typeOfDeal > 0, "SHA.isRightholderOfFR: typeOfDeal overflow");
         require(typeOfDeal < 4, "SHA.isRightholderOfFR: typeOfDeal overflow");
 
         bytes32 rule = _rules[typeOfDeal + 20];
@@ -353,12 +353,12 @@ contract ShareholdersAgreement is
         else return _rightholders[typeOfDeal + 20].contains(acct);
     }
 
-    function rightholdersOfFR(uint16 typeOfDeal)
+    function rightholdersOfFR(uint8 typeOfDeal)
         external
         view
         returns (uint40[] memory)
     {
-        require(typeOfDeal != 0, "SHA.rightholdersOfFR: typeOfDeal overflow");
+        require(typeOfDeal > 0, "SHA.rightholdersOfFR: typeOfDeal overflow");
         require(typeOfDeal < 4, "SHA.rightholdersOfFR: typeOfDeal overflow");
 
         bytes32 rule = _rules[typeOfDeal + 20];

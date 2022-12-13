@@ -30,7 +30,11 @@ interface IDocumentsRepo {
 
     function removeDoc(address body) external;
 
-    function circulateDoc(address body, bytes32 rule) external;
+    function circulateDoc(
+        address body,
+        bytes32 rule,
+        bytes32 docHash
+    ) external;
 
     function pushToNextState(address body) external;
 
@@ -42,7 +46,7 @@ interface IDocumentsRepo {
 
     function isRegistered(address body) external view returns (bool);
 
-    function passedReview(address body) external view returns (bool);
+    function passedExecPeriod(address body) external view returns (bool);
 
     function isCirculated(address body) external view returns (bool);
 
@@ -62,7 +66,7 @@ interface IDocumentsRepo {
 
     function currentState(address body) external view returns (uint8);
 
-    function reviewDeadlineBNOf(address body) external view returns (uint64);
+    function shaExecDeadlineBNOf(address body) external view returns (uint64);
 
-    function votingDeadlineBNOf(address body) external view returns (uint64);
+    function proposeDeadlineBNOf(address body) external view returns (uint64);
 }

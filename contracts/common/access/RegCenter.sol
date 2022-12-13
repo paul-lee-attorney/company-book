@@ -38,7 +38,7 @@ contract RegCenter is IRegCenter {
     mapping(bytes32 => uint96) private _lockers;
 
     struct OptionsSetting {
-        uint32 blocksPerHour;
+        uint64 blocksPerHour;
         uint32 eoaRewards;
         uint32 coaRewards;
         uint32 offAmt;
@@ -98,7 +98,7 @@ contract RegCenter is IRegCenter {
     // ##    Opts Setting    ##
     // ########################
 
-    function setBlockSpeed(uint32 speed) external onlyKeeper {
+    function setBlockSpeed(uint64 speed) external onlyKeeper {
         _opts.blocksPerHour = speed;
 
         emit SetBlockSpeed(speed);
@@ -336,7 +336,7 @@ contract RegCenter is IRegCenter {
         return _users[0].backupKey;
     }
 
-    function blocksPerHour() external view returns (uint32) {
+    function blocksPerHour() external view returns (uint64) {
         return _opts.blocksPerHour;
     }
 

@@ -100,16 +100,16 @@ contract BOHKeeper is
         _boh.removeDoc(sha);
     }
 
-    function circulateSHA(address sha, uint40 caller)
-        external
-        onlyDK
-        onlyOwnerOf(sha, caller)
-    {
+    function circulateSHA(
+        address sha,
+        uint40 caller,
+        bytes32 docHash
+    ) external onlyDK onlyOwnerOf(sha, caller) {
         IShareholdersAgreement(sha).finalizeTerms();
 
         IAccessControl(sha).setManager(0, 0);
 
-        _boh.circulateDoc(sha, bytes32(0));
+        _boh.circulateDoc(sha, bytes32(0), docHash);
     }
 
     // ======== Sign SHA ========

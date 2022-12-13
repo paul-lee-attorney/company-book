@@ -17,4 +17,8 @@ contract BOPSetting is AccessControl {
     function setBOP(address bop) external onlyDK {
         _bop = IBookOfPledges(bop);
     }
+
+    function bopAddr() external view returns (address) {
+        return address(_bop);
+    }
 }

@@ -93,7 +93,7 @@ library MotionsRepo {
         uint256 motionId,
         bytes32 rule,
         uint40 executor,
-        uint32 blocksPerHour
+        uint64 blocksPerHour
     ) internal returns (bool flag) {
         if (repo.motionIds.add(motionId)) {
             Motion storage m = repo.motions[motionId];
@@ -133,24 +133,27 @@ library MotionsRepo {
     ) internal returns (bool flag) {
         Motion storage m = repo.motions[motionId];
 
-        if (
-            m.head.voteStartBN <= block.number &&
-            block.number <= m.head.voteEndBN &&
-            m.map.delegateOf[caller] == 0
-        ) {
-            uint64 voteWeight;
+        require(
+            block.number >= m.head.voteStartBN,
+            "MR. castVote: vote not start"
+        );
+        require(
+            block.number <= m.head.voteEndBN ||
+                m.head.voteEndBN == m.head.voteStartBN,
+            "MR.castVote: vote closed"
+        );
+        require(
+            m.map.delegateOf[caller] == 0,
+            "MR.castVote: entrused delegate"
+        );
 
-            if (m.map.principalsOf[caller].length > 0)
-                voteWeight = _voteWeight(
-                    m.map,
-                    caller,
-                    m.head.voteStartBN,
-                    _rom
-                );
-            else voteWeight = _rom.votesAtBlock(caller, m.head.voteStartBN);
+        uint64 voteWeight;
 
-            flag = m.box.castVote(caller, attitude, voteWeight, sigHash);
-        }
+        if (m.map.principalsOf[caller].length > 0)
+            voteWeight = _voteWeight(m.map, caller, m.head.voteStartBN, _rom);
+        else voteWeight = _rom.votesAtBlock(caller, m.head.voteStartBN);
+
+        flag = m.box.castVote(caller, attitude, voteWeight, sigHash);
     }
 
     function _voteWeight(
@@ -194,8 +197,7 @@ library MotionsRepo {
             if (
                 !_isVetoed(m, m.votingRule.vetoerOfVR()) &&
                 !_isVetoed(m, m.votingRule.vetoer2OfVR()) &&
-                !_isVetoed(m, m.votingRule.vetoer3OfVR()) &&
-                !_isVetoed(m, m.votingRule.vetoer4OfVR())
+                !_isVetoed(m, m.votingRule.vetoer3OfVR())
             ) {
                 flag1 = m.votingRule.ratioHeadOfVR() > 0
                     ? totalHead > 0

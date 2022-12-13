@@ -104,16 +104,16 @@ contract BOAKeeper is
 
     // ======== Circulate IA ========
 
-    function circulateIA(address ia, uint40 caller)
-        external
-        onlyDK
-        onlyOwnerOf(ia, caller)
-    {
+    function circulateIA(
+        address ia,
+        uint40 caller,
+        bytes32 docHash
+    ) external onlyDK onlyOwnerOf(ia, caller) {
         IAccessControl(ia).lockContents();
 
         IAccessControl(ia).setManager(0, 0);
 
-        _boa.circulateIA(ia);
+        _boa.circulateIA(ia, docHash);
     }
 
     // ======== Sign IA ========
@@ -179,7 +179,7 @@ contract BOAKeeper is
         bool isST = (sn.ssnOfDeal() != 0);
 
         if (isST) require(caller == sn.sellerOfDeal(), "NOT seller");
-        else require(_rom.controllor() == caller, "caller is not controller");
+        else require(_rom.isMember(caller), "caller is not member");
 
         bytes32 vr = _getSHA().votingRules(IInvestmentAgreement(ia).typeOfIA());
 

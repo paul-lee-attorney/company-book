@@ -46,17 +46,17 @@ contract SHAKeeper is
     // ##   Modifier   ##
     // ##################
 
-    modifier withinReviewPeriod(address ia) {
+    modifier withinExecPeriod(address ia) {
         require(
-            _boa.reviewDeadlineBNOf(ia) >= block.number,
+            _boa.shaExecDeadlineBNOf(ia) >= block.number,
             "missed review period"
         );
         _;
     }
 
-    modifier afterReviewPeriod(address ia) {
+    modifier afterExecPeriod(address ia) {
         require(
-            IDocumentsRepo(address(_boa)).reviewDeadlineBNOf(ia) < block.number,
+            _boa.shaExecDeadlineBNOf(ia) < block.number,
             "still within review period"
         );
         _;
@@ -86,7 +86,7 @@ contract SHAKeeper is
         uint64 par,
         uint40 caller,
         bytes32 sigHash
-    ) external onlyDK onlyEstablished(ia) withinReviewPeriod(ia) {
+    ) external onlyDK onlyEstablished(ia) withinExecPeriod(ia) {
         address mock = _boa.mockResultsOfIA(ia);
         if (mock == address(0)) {
             mock = _boa.createMockResults(ia, caller);
@@ -226,7 +226,7 @@ contract SHAKeeper is
         bytes32 sn,
         uint40 caller,
         bytes32 sigHash
-    ) external onlyDK onlyEstablished(ia) withinReviewPeriod(ia) {
+    ) external onlyDK onlyEstablished(ia) withinExecPeriod(ia) {
         require(caller == sn.buyerOfDeal(), "caller NOT buyer");
 
         address mock = _boa.mockResultsOfIA(ia);
@@ -254,7 +254,7 @@ contract SHAKeeper is
         bytes32 shareNumber,
         uint40 caller,
         bytes32 sigHash
-    ) external onlyDK onlyEstablished(ia) withinReviewPeriod(ia) {
+    ) external onlyDK onlyEstablished(ia) withinExecPeriod(ia) {
         require(
             caller == shareNumber.shareholder(),
             "caller is not shareholder"
@@ -396,7 +396,7 @@ contract SHAKeeper is
         bytes32 snOfOD,
         uint40 caller,
         bytes32 sigHash
-    ) external onlyDK onlyEstablished(ia) withinReviewPeriod(ia) {
+    ) external onlyDK onlyEstablished(ia) withinExecPeriod(ia) {
         require(!ISigPage(ia).isInitSigner(caller), "caller is an init signer");
 
         require(
@@ -500,7 +500,7 @@ contract SHAKeeper is
         uint16 ssnOfFR,
         uint40 caller,
         bytes32 sigHash
-    ) external onlyDK onlyEstablished(ia) afterReviewPeriod(ia) {
+    ) external onlyDK onlyEstablished(ia) afterExecPeriod(ia) {
         uint16 ssnOfOD = snOfOD.seqOfDeal();
 
         if (

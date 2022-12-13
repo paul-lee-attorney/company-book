@@ -20,7 +20,11 @@ interface IBOHKeeper {
 
     function removeSHA(address sha, uint40 caller) external;
 
-    function circulateSHA(address sha, uint40 caller) external;
+    function circulateSHA(
+        address sha,
+        uint40 caller,
+        bytes32 docHash
+    ) external;
 
     function signSHA(
         address sha,

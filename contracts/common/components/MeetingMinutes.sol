@@ -99,24 +99,6 @@ contract MeetingMinutes is IMeetingMinutes, BOHSetting, ROMSetting {
 
         bytes32 rule = _getSHA().votingRules(actionType);
 
-        // uint64 blocknumber = uint64(block.number);
-        // uint64 blocksPerHour = _rc.blocksPerHour();
-        // uint64 voteStartBN = blocknumber +
-        //     rule.reviewDaysOfVR() *
-        //     24 *
-        //     blocksPerHour;
-
-        // MotionsRepo.Head memory head = MotionsRepo.Head({
-        //     typeOfMotion: actionType,
-        //     state: 0,
-        //     submitter: submitter,
-        //     executor: 0,
-        //     proposeBN: blocknumber,
-        //     weightRegBN: voteStartBN,
-        //     voteStartBN: voteStartBN,
-        //     voteEndBN: voteStartBN + rule.votingDaysOfVR() * 24 * blocksPerHour
-        // });
-
         if (_mm.proposeMotion(actionId, rule, executor, _rc.blocksPerHour()))
             emit ProposeAction(actionId, actionType, submitter);
     }

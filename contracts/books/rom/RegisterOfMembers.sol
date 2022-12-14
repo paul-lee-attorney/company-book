@@ -119,12 +119,12 @@ contract RegisterOfMembers is IRegisterOfMembers, BOSSetting {
     ) public onlyBOS {
         if (!increase) {
             require(
-                _gm.paidOfMember(acct) > deltaPaid,
-                "BOS._changeAmtOfMember: paid amount not enough"
+                _gm.paidOfMember(acct) >= deltaPaid,
+                "ROm.changeAmtOfMember: paid amount not enough"
             );
             require(
-                _gm.parOfMember(acct) > deltaPar,
-                "BOS._changeAmtOfMember: par amount not enough"
+                _gm.parOfMember(acct) >= deltaPar,
+                "ROm.changeAmtOfMember: par amount not enough"
             );
         }
 

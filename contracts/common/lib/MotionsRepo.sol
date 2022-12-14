@@ -98,6 +98,9 @@ library MotionsRepo {
         if (repo.motionIds.add(motionId)) {
             Motion storage m = repo.motions[motionId];
 
+            uint64 reviewDays = rule.reviewDaysOfVR();
+            uint64 votingDays = rule.votingDaysOfVR();
+
             m.votingRule = rule;
 
             m.head.typeOfVote = rule.seqOfRule();
@@ -106,12 +109,12 @@ library MotionsRepo {
             m.head.proposeBN = uint64(block.number);
             m.head.voteStartBN =
                 m.head.proposeBN +
-                rule.reviewDaysOfVR() *
+                reviewDays *
                 24 *
                 blocksPerHour;
             m.head.voteEndBN =
                 m.head.voteStartBN +
-                rule.votingDaysOfVR() *
+                votingDays *
                 24 *
                 blocksPerHour;
 

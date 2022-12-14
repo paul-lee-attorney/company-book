@@ -17,6 +17,7 @@ import "../common/components/ISigPage.sol";
 
 import "../common/ruting/IBookSetting.sol";
 import "../common/ruting/BOASetting.sol";
+import "../common/ruting/BODSetting.sol";
 import "../common/ruting/BOMSetting.sol";
 import "../common/ruting/BOSSetting.sol";
 import "../common/ruting/BOHSetting.sol";
@@ -30,6 +31,7 @@ import "./IBOAKeeper.sol";
 contract BOAKeeper is
     IBOAKeeper,
     BOASetting,
+    BODSetting,
     BOHSetting,
     BOMSetting,
     BOSSetting,
@@ -179,7 +181,7 @@ contract BOAKeeper is
         bool isST = (sn.ssnOfDeal() != 0);
 
         if (isST) require(caller == sn.sellerOfDeal(), "NOT seller");
-        else require(_rom.isMember(caller), "caller is not member");
+        else require(_bod.isDirector(caller), "caller is not director");
 
         bytes32 vr = _getSHA().votingRules(IInvestmentAgreement(ia).typeOfIA());
 

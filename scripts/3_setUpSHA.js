@@ -4,6 +4,9 @@ const BOH = artifacts.require("BookOfSHA");
 const BOHKeeper = artifacts.require("BOHKeeper");
 const SHA = artifacts.require("ShareholdersAgreement");
 
+const BOD = artifacts.require("BookOfDirectors");
+const BODKeeper = artifacts.require("BODKeeper");
+
 const FR = artifacts.require("FirstRefusal");
 const GU = artifacts.require("GroupsUpdate");
 
@@ -452,6 +455,27 @@ module.exports = async function (callback) {
 
     events = await boh.getPastEvents("ChangePointer");
     console.log("Event 'ChangePointer': ", events[0].returnValues);
+
+    // ==== 设定 Chairman VC 和Director ====
+
+    let bod = await BOD.deployed();
+    await bod.appointDirector(acct2, 1, acct2);
+
+    events = await bod.getPastEvents("AddDirector");
+    console.log("Event 'AddDirector': ", events[0].returnValues);
+
+    await bod.appointDirector(acct3, 2, acct3);
+
+    events = await bod.getPastEvents("AddDirector");
+    console.log("Event 'AddDirector': ", events[0].returnValues);
+
+    await bod.appointDirector(acct4, 3, acct4);
+
+    events = await bod.getPastEvents("AddDirector");
+    console.log("Event 'AddDirector': ", events[0].returnValues);
+
+    const bodKeeper = await BODKeeper.deployed();
+    await bod.setDirectKeeper(bodKeeper.address);
 
     callback();
 }

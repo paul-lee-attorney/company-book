@@ -127,15 +127,18 @@ contract DocumentsRepo is IDocumentsRepo, CloneFactory, AccessControl {
     ) public onlyDK onlyRegistered(body) onlyForPending(body) {
         Doc storage doc = _docs[body];
 
+        uint64 execDays = rule.shaExecDaysOfVR();
+        uint64 reviewDays = rule.reviewDaysOfVR();
+
         doc.shaExecDeadlineBN =
             uint64(block.number) +
-            rule.shaExecDaysOfVR() *
+            execDays *
             24 *
             _rc.blocksPerHour();
 
         doc.proposeDeadlineBN =
             doc.shaExecDeadlineBN +
-            rule.reviewDaysOfVR() *
+            reviewDays *
             24 *
             _rc.blocksPerHour();
 

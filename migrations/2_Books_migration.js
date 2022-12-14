@@ -233,6 +233,7 @@ module.exports = async function (deployer, network, accounts) {
     await shaKeeper.setBOA(boa.address);
 
     // ==== BODSetting ==== 
+    await boaKeeper.setBOD(bod.address);
     await bodKeeper.setBOD(bod.address);
     await bohKeeper.setBOD(bod.address);
     await bomKeeper.setBOD(bod.address);
@@ -306,7 +307,7 @@ module.exports = async function (deployer, network, accounts) {
 
     // ==== DirectKeeper ====
     await boa.setDirectKeeper(boaKeeper.address);
-    await bod.setDirectKeeper(bodKeeper.address);
+    // await bod.setDirectKeeper(bodKeeper.address);
     await boh.setDirectKeeper(bohKeeper.address);
     await bom.setDirectKeeper(bomKeeper.address);
     await boo.setDirectKeeper(booKeeper.address);

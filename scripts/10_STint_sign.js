@@ -95,7 +95,7 @@ module.exports = async function (callback) {
     });
     console.log("closingDeadline: ", timestamp);
 
-    // ==== Capital Increase ====
+    // ==== STint ====
 
     let classOfShare = '0000';
     let seq = '0001';

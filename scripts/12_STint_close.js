@@ -68,12 +68,12 @@ module.exports = async function (callback) {
 
     // ==== closeDeal ====
 
-    // await gk.closeDeal(ia.address, res.sn, "Paul's private key.", {
-    //     from: accounts[4]
-    // });
+    await gk.closeDeal(ia.address, res.sn, "Paul's private key.", {
+        from: accounts[4]
+    });
 
-    // events = await ia.getPastEvents("CloseDeal");
-    // console.log("Event 'CloseDeal': ", events[0].returnValues);
+    events = await ia.getPastEvents("CloseDeal");
+    console.log("Event 'CloseDeal': ", events[0].returnValues);
 
     callback();
 }
